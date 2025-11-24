@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gorillas.js</title>
+    <style>
+        :root {
+            --bg-color: #0000AA; /* Classic QBasic Blue */
+            --building-color: #AAAAAA; /* Light Gray */
+            --gorilla-color: #FFDE00; /* Yellowish for visibility or standard primitive colors */
+            --ui-bg: #ccc;
+            --ui-border: #eee;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 4/3;
+            background-color: var(--bg-color);
+            border: 4px solid #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            margin-top: 10px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(0, 0, 170, 0.6);
+            text-shadow: 2px 2px #000;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .player-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        #controls-area {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #555;
+            pointer-events: auto;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Class to hide controls during animation or manual toggle */
+        .controls-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #view-btn {
+            position: absolute;
+            top: 70px; /* Moved to top so it doesn't conflict with bottom controls */
+            right: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: 2px solid #555;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+
+        #view-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: #fff;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        input {
+            width: 60px;
+            background: #222;
+            border: 1px solid #555;
+            color: white;
+            padding: 5px;
+            font-family: inherit;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        button {
+            background: #AA0000;
+            color: white;
+            border: 2px solid #FF5555;
+            padding: 5px 20px;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            height: 35px;
+            transition: background 0.1s;
+        }
+
+        button:hover {
+            background: #FF0000;
+        }
+
+        button:disabled {
+            background: #555;
+            border-color: #333;
+            cursor: not-allowed;
+        }
+
+        #turn-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            text-shadow: 4px 4px #000;
+            display: none;
+            z-index: 20;
+            text-align: center;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        #wind-arrow {
+            font-size: 24px;
+            display: inline-block;
+        }
+        
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            .header { font-size: 0.9rem; }
+            
+            /* Compact controls for mobile */
+            #controls-area { 
+                width: 95%; 
+                flex-wrap: wrap; 
+                justify-content: center; 
+                bottom: 5px; 
+                padding: 8px; 
+                gap: 8px;
+            }
+            
+            .input-group label { font-size: 0.7rem; }
+            input { width: 45px; font-size: 0.9rem; padding: 3px; }
+            
+            button {
+                padding: 5px 10px;
+                font-size: 0.9rem;
+                height: 32px;
+            }
+            
+            /* Ensure view button is accessible */
+            #view-btn {
+                top: 60px;
+                right: 5px;
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui-layer">
+            <div class="header">
+                <div class="player-info" id="p1-score" style="color: #55FFFF;">Player 1<br>Score: 0</div>
+                <div style="text-align: center;">
+                    <div id="wind-display">Wind <span id="wind-arrow">ERROR</span></div>
+                </div>
+                <div class="player-info" id="p2-score" style="color: #55FFFF; text-align: right;">Player 2<br>Score: 0</div>
+            </div>
+            
+            <div id="controls-area">
+                <div class="input-group">
+                    <label>Angle</label>
+                    <input type="number" id="angle" value="45" min="0" max="360" inputmode="numeric">
+                </div>
+                <div class="input-group">
+                    <label>Power</label>
+                    <input type="number" id="velocity" value="60" min="0" max="200" inputmode="numeric">
+                </div>
+                <button id="throwBtn">THROW!</button>
+                <button id="resetBtn" style="background: #005500; border-color: #00AA00; margin-left: 5px;">New</button>
+            </div>
+            <button id="view-btn" title="Toggle Menu">👁️</button>
+        </div>
+        <div id="turn-indicator">Player 1's Turn</div>
+    </div>
+
+    <script>
+        /**
+         * GORILLAS.JS
+         * A simplified HTML5 Canvas remake of the QBasic Classic.
+         */
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        
+        // Game Constants
+        const WIDTH = 800;
+        const HEIGHT = 600;
+        const GRAVITY = 9.8; 
+        const SKY_COLOR = '#0000AA';
+        const BUILDING_COLOR = '#AAAAAA';
+        const WINDOW_COLOR_ON = '#FFFF55';
+        const WINDOW_COLOR_OFF = '#555555';
+        const EXPLOSION_RADIUS = 30;
+        const GORILLA_WIDTH = 40;
+        const GORILLA_HEIGHT = 40;
+        
+        // Game State
+        let gameState = {
+            players: [],
+            currentPlayerIndex: 0,
+            buildings: [],
+            wind: 0, // -100 to 100
+            isAnimating: false,
+            sunState: 'happy' // happy, shocked
+        };
+
+        const angleInput = document.getElementById('angle');
+        const velocityInput = document.getElementById('velocity');
+        const throwBtn = document.getElementById('throwBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const turnIndicator = document.getElementById('turn-indicator');
+        const windArrow = document.getElementById('wind-arrow');
+        const controlsArea = document.getElementById('controls-area');
+        const viewBtn = document.getElementById('view-btn');
+        
+        // --- Initialization ---
+
+        function initGame() {
+            // Setup events
+            throwBtn.addEventListener('click', handleThrow);
+            resetBtn.addEventListener('click', startNewRound);
+            viewBtn.addEventListener('click', toggleControls);
+            
+            // Initial Start
+            startNewRound();
+        }
+
+        function toggleControls() {
+            controlsArea.classList.toggle('controls-hidden');
+        }
+
+        function startNewRound() {
+            gameState.isAnimating = false;
+            throwBtn.disabled = false;
+            gameState.sunState = 'happy';
+            gameState.currentPlayerIndex = 0;
+            
+            // Ensure controls are visible
+            controlsArea.classList.remove('controls-hidden');
+            
+            // Random Wind (-50 to 50)
+            gameState.wind = (Math.random() * 100) - 50;
+            updateWindDisplay();
+
+            generateCity();
+            placeGorillas();
+            
+            // Reset Inputs
+            angleInput.value = 45;
+            velocityInput.value = 60;
+            
+            draw();
+            announceTurn(`Player ${gameState.currentPlayerIndex + 1}'s Turn`);
+        }
+
+        // --- City Generation ---
+
+        function generateCity() {
+            gameState.buildings = [];
+            let currentX = 0;
+            
+            while (currentX < WIDTH) {
+                // Random width between 40 and 80
+                let w = Math.floor(Math.random() * 40) + 40;
+                // Random height, keeping some sky space
+                // Base height + random
+                let h = 100 + Math.floor(Math.random() * 300); 
+                
+                // Clamp width if it exceeds canvas
+                if (currentX + w > WIDTH) {
+                    w = WIDTH - currentX;
+                }
+
+                gameState.buildings.push({
+                    x: currentX,
+                    y: HEIGHT - h,
+                    w: w,
+                    h: h,
+                    color: BUILDING_COLOR,
+                    windows: generateWindows(w, h)
+                });
+
+                currentX += w;
+            }
+        }
+
+        function generateWindows(w, h) {
+            const windows = [];
+            const rows = Math.floor(h / 25);
+            const cols = Math.floor(w / 15);
+            
+            for(let r=1; r<rows-1; r++) {
+                for(let c=1; c<cols-1; c++) {
+                    if (Math.random() > 0.3) {
+                        windows.push({
+                            x: c * 15 + 3,
+                            y: r * 25 + 5,
+                            w: 8,
+                            h: 12,
+                            on: Math.random() > 0.5
+                        });
+                    }
+                }
+            }
+            return windows;
+        }
+
+        function placeGorillas() {
+            // Player 1 on the 2nd or 3rd building from left
+            const b1Index = 1 + Math.floor(Math.random() * 2);
+            // Player 2 on the 2nd or 3rd building from right
+            const b2Index = gameState.buildings.length - 2 - Math.floor(Math.random() * 2);
+
+            const b1 = gameState.buildings[b1Index];
+            const b2 = gameState.buildings[b2Index];
+
+            gameState.players = [
+                {
+                    x: b1.x + b1.w / 2 - GORILLA_WIDTH / 2,
+                    y: b1.y - GORILLA_HEIGHT,
+                    color: '#FFDDDD', // Pinkish
+                    score: gameState.players[0] ? gameState.players[0].score : 0,
+                    alive: true,
+                    facing: 'right'
+                },
+                {
+                    x: b2.x + b2.w / 2 - GORILLA_WIDTH / 2,
+                    y: b2.y - GORILLA_HEIGHT,
+                    color: '#DDDDFF', // Blueish
+                    score: gameState.players[1] ? gameState.players[1].score : 0,
+                    alive: true,
+                    facing: 'left'
+                }
+            ];
+            
+            updateScoreboard();
+        }
+
+        // --- Core Logic ---
+
+        function handleThrow() {
+            if (gameState.isAnimating) return;
+            
+            const angle = parseFloat(angleInput.value);
+            const velocity = parseFloat(velocityInput.value);
+            const player = gameState.players[gameState.currentPlayerIndex];
+            
+            if (isNaN(angle) || isNaN(velocity)) return;
+
+            gameState.isAnimating = true;
+            throwBtn.disabled = true;
+            
+            // Auto hide controls
+            controlsArea.classList.add('controls-hidden');
+
+            // Physics Setup
+            const rad = angle * (Math.PI / 180);
+            
+            // Adjust starting position based on facing direction
+            let vx, vy;
+            let startX, startY;
+
+            if (gameState.currentPlayerIndex === 0) {
+                // Player 1
+                vx = Math.cos(rad) * velocity;
+                vy = -Math.sin(rad) * velocity; // Canvas Y is inverted
+                startX = player.x + GORILLA_WIDTH / 2;
+                startY = player.y - 10;
+                player.facing = 'right'; // Arm raise logic later
+            } else {
+                // Player 2 - Input mirrors P1
+                vx = -Math.cos(rad) * velocity;
+                vy = -Math.sin(rad) * velocity;
+                startX = player.x + GORILLA_WIDTH / 2;
+                startY = player.y - 10;
+                player.facing = 'left';
+            }
+
+            // Wind adjustment (arbitrary scaling to make it fun)
+            let banana = {
+                x: startX,
+                y: startY,
+                vx: vx,
+                vy: vy,
+                radius: 4,
+                rotation: 0
+            };
+
+            animateBanana(banana);
+        }
+
+        function animateBanana(banana) {
+            let lastTime = performance.now();
+            let windAccel = gameState.wind / 50; // Scaling wind effect
+
+            function step(currentTime) {
+                if (!gameState.isAnimating) return; // Stop if round ended
+
+                const dt = (currentTime - lastTime) / 1000 * 10; // Time scaling for game speed
+                lastTime = currentTime;
+
+                // Physics
+                banana.vy += (GRAVITY * 0.5) * dt; // Gravity
+                banana.vx += windAccel * dt;       // Wind
+                banana.x += banana.vx * dt;
+                banana.y += banana.vy * dt;
+                banana.rotation += 0.2;
+
+                // Collision Detection
+                // 1. Out of bounds (Bottom/Sides)
+                if (banana.y > HEIGHT || banana.x < 0 || banana.x > WIDTH) {
+                    endTurn();
+                    return;
+                }
+
+                // 2. Pixel Collision
+                drawSceneWithoutBanana(); 
+                
+                // Check collision at banana tip
+                const hit = checkCollision(banana.x, banana.y);
+                
+                if (hit) {
+                    handleImpact(banana.x, banana.y, hit);
+                    return;
+                }
+
+                // Draw Banana
+                drawBanana(banana);
+
+                requestAnimationFrame(step);
+            }
+
+            requestAnimationFrame(step);
+        }
+
+        function checkCollision(x, y) {
+            if (y < 0) return null; // Above screen is safe
+            
+            // Get pixel data
+            const pixel = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
+            
+            // Check if it matches Sky Color
+            const isSky = (pixel[0] === 0 && pixel[1] === 0 && pixel[2] === 170);
+            
+            if (!isSky) {
+                // Check distance to players
+                for (let i = 0; i < gameState.players.length; i++) {
+                    const p = gameState.players[i];
+                    if (x >= p.x && x <= p.x + GORILLA_WIDTH &&
+                        y >= p.y && y <= p.y + GORILLA_HEIGHT) {
+                        return { type: 'gorilla', index: i };
+                    }
+                }
+                
+                return { type: 'building' };
+            }
+            return null;
+        }
+
+        function handleImpact(x, y, hitObj) {
+            gameState.sunState = 'shocked';
+            drawSceneWithoutBanana(); // Clear banana
+            drawExplosion(x, y, 0);   // Start explosion animation
+
+            // Modify Geometry (The "Bite")
+            gameState.buildings.push({
+                isHole: true,
+                x: x,
+                y: y,
+                r: EXPLOSION_RADIUS
+            });
+            
+            if (hitObj.type === 'gorilla') {
+                setTimeout(() => {
+                    endGame(hitObj.index);
+                }, 500);
+            } else {
+                setTimeout(() => {
+                    gameState.sunState = 'happy';
+                    endTurn();
+                }, 1000);
+            }
+        }
+
+        function drawExplosion(x, y, frame) {
+            if (frame > 15) return; // End animation
+
+            // Draw current frame
+            ctx.beginPath();
+            ctx.arc(x, y, frame * 2, 0, Math.PI * 2);
+            ctx.fillStyle = (frame % 2 === 0) ? 'red' : 'yellow';
+            ctx.fill();
+            
+            requestAnimationFrame(() => drawExplosion(x, y, frame + 1));
+        }
+
+        function endTurn() {
+            gameState.isAnimating = false;
+            throwBtn.disabled = false;
+            
+            // Show controls again
+            controlsArea.classList.remove('controls-hidden');
+            
+            gameState.sunState = 'happy';
+            
+            // Switch Player
+            gameState.currentPlayerIndex = (gameState.currentPlayerIndex === 1) ? 0 : 1;
+            
+            // Update UI
+            draw();
+            announceTurn(`Player ${gameState.currentPlayerIndex + 1}'s Turn`);
+            
+            // Set focus to angle input for convenience
+            angleInput.focus();
+            angleInput.select();
+        }
+
+        function endGame(loserIndex) {
+            const winnerIndex = (loserIndex === 1) ? 0 : 1;
+            gameState.players[winnerIndex].score++;
+            gameState.players[loserIndex].alive = false;
+            
+            updateScoreboard();
+            draw(); // Draw final state with dead gorilla
+            
+            announceTurn(`PLAYER ${winnerIndex + 1} WINS!`, true);
+            
+            setTimeout(() => {
+                resetBtn.style.boxShadow = "0 0 20px yellow"; // Highlight reset
+            }, 500);
+        }
+
+        function announceTurn(text, stick = false) {
+            turnIndicator.innerText = text;
+            turnIndicator.style.display = 'block';
+            
+            // Only hide after 900ms if it's not a sticky announcement (like Game Over)
+            if (!stick) {
+                setTimeout(() => {
+                    turnIndicator.style.display = 'none';
+                }, 900);
+            }
+        }
+
+        // --- Rendering ---
+
+        function draw() {
+            drawSceneWithoutBanana();
+        }
+
+        function drawSceneWithoutBanana() {
+            // 1. Sky
+            ctx.fillStyle = SKY_COLOR;
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+            // 2. Sun
+            drawSun();
+
+            // 3. Buildings
+            gameState.buildings.forEach(b => {
+                if (b.isHole) return; // Skip holes for now
+                ctx.fillStyle = b.color;
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+                
+                // Windows
+                if (b.windows) {
+                    b.windows.forEach(w => {
+                        ctx.fillStyle = w.on ? WINDOW_COLOR_ON : WINDOW_COLOR_OFF;
+                        // Coordinates relative to building
+                        ctx.fillRect(b.x + w.x, b.y + w.y, w.w, w.h);
+                    });
+                }
+            });
+
+            // 4. Holes (The damage)
+            ctx.globalCompositeOperation = 'destination-out'; // This cuts holes in the canvas
+            // We want the holes to be SKY colored.
+            // So we should use source-over with Sky Color.
+            ctx.globalCompositeOperation = 'source-over';
+            
+            gameState.buildings.forEach(b => {
+                if (b.isHole) {
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                    ctx.fillStyle = SKY_COLOR;
+                    ctx.fill();
+                }
+            });
+
+            // 5. Gorillas
+            gameState.players.forEach(p => {
+                if (!p.alive) return; // Or draw grave?
+                drawGorilla(p.x, p.y, p.facing, p === gameState.players[gameState.currentPlayerIndex]);
+            });
+        }
+
+        function drawGorilla(x, y, facing, isActive) {
+            ctx.save();
+            ctx.fillStyle = 'peru'; // Body
+            
+            // Body
+            ctx.fillRect(x + 10, y + 10, 20, 25);
+            
+            // Head
+            ctx.fillStyle = 'saddlebrown';
+            ctx.fillRect(x + 12, y, 16, 12);
+            
+            // Arms
+            ctx.fillStyle = 'peru';
+            if (isActive && gameState.isAnimating) {
+                // Throwing pose (Arms up)
+                ctx.fillRect(x, y + 5, 10, 20); // Left
+                ctx.fillRect(x + 30, y + 5, 10, 20); // Right
+            } else {
+                // Resting
+                ctx.fillRect(x + 5, y + 15, 8, 20);
+                ctx.fillRect(x + 27, y + 15, 8, 20);
+            }
+            
+            // Legs
+            ctx.fillRect(x + 10, y + 35, 8, 5);
+            ctx.fillRect(x + 22, y + 35, 8, 5);
+
+            // Eyes
+            ctx.fillStyle = 'white';
+            ctx.fillRect(x + 14, y + 3, 4, 4);
+            ctx.fillRect(x + 22, y + 3, 4, 4);
+            ctx.fillStyle = 'black';
+            ctx.fillRect(x + 15, y + 4, 2, 2);
+            ctx.fillRect(x + 23, y + 4, 2, 2);
+
+            ctx.restore();
+        }
+
+        function drawSun() {
+            const cx = WIDTH / 2;
+            const cy = 60;
+            const r = 25;
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFFF00';
+            ctx.fill();
+            
+            // Rays
+            ctx.strokeStyle = '#FFFF00';
+            ctx.lineWidth = 2;
+            for(let i=0; i<12; i++) {
+                const angle = (i * 30) * Math.PI / 180;
+                const sx = cx + Math.cos(angle) * (r + 5);
+                const sy = cy + Math.sin(angle) * (r + 5);
+                const ex = cx + Math.cos(angle) * (r + 15);
+                const ey = cy + Math.sin(angle) * (r + 15);
+                ctx.beginPath();
+                ctx.moveTo(sx, sy);
+                ctx.lineTo(ex, ey);
+                ctx.stroke();
+            }
+
+            // Face
+            ctx.fillStyle = 'black';
+            if (gameState.sunState === 'happy') {
+                // Sunglasses
+                ctx.fillRect(cx - 15, cy - 5, 30, 8); // Lens Bar
+                ctx.fillStyle = 'black'; 
+                // Smile
+                ctx.beginPath();
+                ctx.arc(cx, cy + 5, 12, 0, Math.PI, false);
+                ctx.stroke();
+            } else {
+                // Shocked
+                ctx.beginPath();
+                ctx.arc(cx, cy + 10, 8, 0, Math.PI * 2);
+                ctx.fillStyle = 'black';
+                ctx.fill(); // Open mouth
+                
+                // Eyes wide
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(cx - 10, cy - 5, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cx + 10, cy - 5, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawBanana(b) {
+            ctx.save();
+            ctx.translate(b.x, b.y);
+            ctx.rotate(b.rotation);
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath();
+            // Simple Banana Shape
+            ctx.arc(0, 0, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function updateWindDisplay() {
+            // Visualize wind
+            const w = gameState.wind;
+            let arrow = "";
+            if (w > 10) arrow = "===>";
+            else if (w > 0) arrow = "->";
+            else if (w < -10) arrow = "<===";
+            else if (w < 0) arrow = "<-";
+            else arrow = "No Wind";
+            
+            windArrow.innerText = arrow;
+            
+            // Optional: Color code intensity
+            windArrow.style.color = Math.abs(w) > 30 ? 'red' : 'lime';
+        }
+        
+        function updateScoreboard() {
+            document.getElementById('p1-score').innerHTML = `Player 1<br>Score: ${gameState.players[0].score}`;
+            document.getElementById('p2-score').innerHTML = `Player 2<br>Score: ${gameState.players[1].score}`;
+        }
+
+        // Start
+        window.onload = initGame;
+
+    </script>
+</body>
+</html>
