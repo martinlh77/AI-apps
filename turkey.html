@@ -602,8 +602,8 @@ const Game = {
     isWarmingUp: false,
     
     // Jump constants (Increased jump power and reduced gravity)
-    JUMP_VELOCITY: -15, // Increased from -10
-    GRAVITY: 0.7,      // Reduced from 0.8 to make jump longer
+    JUMP_VELOCITY: -15, 
+    GRAVITY: 0.7,      
 
     // Timer
     timerEnabled: false,
@@ -614,13 +614,13 @@ const Game = {
         this.resize();
         window.addEventListener('resize', () => this.resize());
         
-        // --- FIX 1: Prevent scrolling on arrow key press ---
+        // --- FIX 1: Prevent scrolling on arrow key/spacebar press globally ---
         window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                e.preventDefault(); // Stop default browser scrolling behavior on the parent page
+            }
+            
             if (this.state === 'RUN') {
-                if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ') {
-                    e.preventDefault(); // Stop default browser scrolling behavior
-                }
-                
                 if (e.key === 'ArrowUp') this.moveTurkey(-1);
                 if (e.key === 'ArrowDown') this.moveTurkey(1);
                 if (e.key === ' ' || e.key === 'ArrowRight') this.jumpTurkey();
