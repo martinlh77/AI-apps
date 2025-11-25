@@ -10,7 +10,8 @@
 
         body {
             font-family: 'Roboto Mono', monospace;
-            overflow: hidden;
+            /* Ensure the body of the IFRAME itself doesn't scroll */
+            overflow: hidden; 
             background-color: #2d3748;
             touch-action: none;
             user-select: none;
@@ -614,10 +615,14 @@ const Game = {
         this.resize();
         window.addEventListener('resize', () => this.resize());
         
-        // --- FIX 1: Prevent scrolling on arrow key/spacebar press globally ---
+        // --- FIX 2: Aggressive scroll prevention using the Capture Phase (true) ---
+        // This ensures our listener catches the event before it bubbles up 
+        // or before the browser's default action takes priority.
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                e.preventDefault(); // Stop default browser scrolling behavior on the parent page
+                e.preventDefault(); 
+                e.stopPropagation();
+                e.stopImmediatePropagation();
             }
             
             if (this.state === 'RUN') {
@@ -625,7 +630,13 @@ const Game = {
                 if (e.key === 'ArrowDown') this.moveTurkey(1);
                 if (e.key === ' ' || e.key === 'ArrowRight') this.jumpTurkey();
             }
-        });
+        }, true); // The critical 'true' enables the capture phase
+
+        // Ensure touch controls also stop propagation aggressively
+        document.getElementById('mobile-controls').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, { passive: false });
     },
 
     resize: function() {
@@ -837,13 +848,11 @@ const Game = {
             if (!obs.hit && Math.abs(obs.x - this.turkey.x) < 40) {
                 let hit = false;
                 if (Math.abs(this.turkey.y - obs.y) < 30) {
-                    // Check if the turkey is jumping high enough to clear the obstacle
-                    // A simple check is that only 'rock' and 'fence' can be jumped over.
-                    // If turkey is jumping AND obstacle is jumpable, collision is prevented.
+                    // Collision check logic is maintained
                     if (this.turkey.isJumping && (obs.type === 'rock' || obs.type === 'fence')) {
                          // Safe because of jump
                     } else if (!this.turkey.isJumping && obs.type === 'tree') {
-                        // Trees are tall and cannot be jumped over. They must be avoided by lane change.
+                        // Trees are tall and cannot be jumped over.
                         hit = true;
                     } else if (this.turkey.isJumping && obs.type === 'tree') {
                         // Even with a jump, a tree is too tall to clear by just changing lanes
@@ -980,6 +989,7 @@ function startGame() {
 }
 
 function handleInput(e, action) {
+    // This is important for touch controls inside the iframe too
     if (e && e.cancelable) e.preventDefault();
     if (e && e.stopPropagation) e.stopPropagation();
 
