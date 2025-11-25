@@ -371,6 +371,7 @@
 const AudioSys = {
     ctx: null,
     init: function() {
+        // Initialize Audio Context on first interaction
         window.AudioContext = window.AudioContext || window.webkitAudioContext;
         this.ctx = new AudioContext();
     },
@@ -600,6 +601,10 @@ const Game = {
     lastInputTime: 0,
     isWarmingUp: false,
     
+    // Jump constants (Increased jump power and reduced gravity)
+    JUMP_VELOCITY: -15, // Increased from -10
+    GRAVITY: 0.7,      // Reduced from 0.8 to make jump longer
+
     // Timer
     timerEnabled: false,
     startTime: 0,
@@ -608,8 +613,14 @@ const Game = {
     init: function() {
         this.resize();
         window.addEventListener('resize', () => this.resize());
+        
+        // --- FIX 1: Prevent scrolling on arrow key press ---
         window.addEventListener('keydown', (e) => {
             if (this.state === 'RUN') {
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ') {
+                    e.preventDefault(); // Stop default browser scrolling behavior
+                }
+                
                 if (e.key === 'ArrowUp') this.moveTurkey(-1);
                 if (e.key === 'ArrowDown') this.moveTurkey(1);
                 if (e.key === ' ' || e.key === 'ArrowRight') this.jumpTurkey();
@@ -758,7 +769,8 @@ const Game = {
     jumpTurkey: function() {
         if (this.state !== 'RUN' || this.isWarmingUp || this.turkey.isJumping) return;
         this.turkey.isJumping = true;
-        this.turkey.velY = -10;
+        // Apply the increased jump velocity
+        this.turkey.velY = this.JUMP_VELOCITY; 
         AudioSys.playJump();
     },
 
@@ -790,10 +802,12 @@ const Game = {
         let targetY = this.lanes[this.turkey.lane];
         if (this.turkey.isJumping) {
             this.turkey.y += this.turkey.velY;
-            this.turkey.velY += 0.8;
+            // Use the reduced gravity constant
+            this.turkey.velY += this.GRAVITY; 
             if (this.turkey.y >= targetY) {
                 this.turkey.y = targetY;
                 this.turkey.isJumping = false;
+                this.turkey.velY = 0; // Reset velocity when landing
             }
         } else {
             this.turkey.y += (targetY - this.turkey.y) * 0.2;
@@ -823,10 +837,20 @@ const Game = {
             if (!obs.hit && Math.abs(obs.x - this.turkey.x) < 40) {
                 let hit = false;
                 if (Math.abs(this.turkey.y - obs.y) < 30) {
+                    // Check if the turkey is jumping high enough to clear the obstacle
+                    // A simple check is that only 'rock' and 'fence' can be jumped over.
+                    // If turkey is jumping AND obstacle is jumpable, collision is prevented.
                     if (this.turkey.isJumping && (obs.type === 'rock' || obs.type === 'fence')) {
-                         // Safe
-                    } else {
+                         // Safe because of jump
+                    } else if (!this.turkey.isJumping && obs.type === 'tree') {
+                        // Trees are tall and cannot be jumped over. They must be avoided by lane change.
                         hit = true;
+                    } else if (this.turkey.isJumping && obs.type === 'tree') {
+                        // Even with a jump, a tree is too tall to clear by just changing lanes
+                         hit = true; 
+                    } else if (!this.turkey.isJumping && (obs.type === 'rock' || obs.type === 'fence')) {
+                         // Cannot jump over if not jumping
+                         hit = true;
                     }
                 }
                 if (hit) {
