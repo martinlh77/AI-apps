@@ -1,0 +1,162 @@
+[
+  {
+    "id": 1,
+    "name": "Aisha Khan",
+    "age_range": "Young Adult",
+    "ethnicity_note": "South Asian",
+    "gender": "Female",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20flat%20design%20cartoon%20headshot%20of%20a%20young%20South%20Asian%20woman%20with%20long%20dark%20hair%20and%20bright%20green%20eyes%2C%20wearing%20a%20stylish%20scarf%2C%20with%20a%20plain%20beige%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 2,
+    "name": "Marcus Jones",
+    "age_range": "Middle-Aged",
+    "ethnicity_note": "Black",
+    "gender": "Male",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20professional%202D%20cartoon%20headshot%20of%20a%20middle-aged%20Black%20man%20with%20short%20dreadlocks%20and%20glasses%2C%20wearing%20a%20business%20casual%20jacket%2C%20with%20a%20plain%20light-blue%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 3,
+    "name": "Leo Ramirez",
+    "age_range": "Senior",
+    "ethnicity_note": "Hispanic",
+    "gender": "Male",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20photorealistic%20cartoon%20headshot%20of%20a%20senior%20Hispanic%20man%20with%20a%20thick%20grey%20mustache%2C%20wearing%20a%20collared%20shirt%2C%20with%20a%20plain%20teal%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 4,
+    "name": "Maya Chen",
+    "age_range": "Child",
+    "ethnicity_note": "East Asian",
+    "gender": "Female",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/An%20anime%20style%20headshot%20of%20a%2010-year-old%20East%20Asian%20girl%20with%20short%20black%20hair%20and%20large%20expressive%20eyes%2C%20smiling%20happily%2C%20with%20a%20plain%20pink%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 5,
+    "name": "Klaus Schmidt",
+    "age_range": "Middle-Aged",
+    "ethnicity_note": "Caucasian (Germanic)",
+    "gender": "Male",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20hyper-detailed%20cartoon%20headshot%20of%20a%20burly%2C%20middle-aged%20Caucasian%20man%20with%20a%20neatly%20trimmed%20beard%2C%20wearing%20a%20flannel%20shirt%2C%20with%20a%20plain%20orange%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 6,
+    "name": "Willow Evergreen",
+    "age_range": "Child",
+    "ethnicity_note": "Fantasy/Mixed (Cartoon)",
+    "gender": "Female",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20cute%20chibi%20cartoon%20headshot%20of%20a%207-year-old%20girl%20with%20bright%20purple%20hair%20and%20a%20floral%20headband%2C%20looking%20curious%2C%20with%20a%20plain%20yellow%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 7,
+    "name": "Takeshi Sato",
+    "age_range": "Young Adult",
+    "ethnicity_note": "Japanese",
+    "gender": "Male",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20minimalist%20anime%20headshot%20of%20a%20handsome%20young%20Japanese%20man%20with%20spiky%20brown%20hair%20and%20a%20focused%20expression%2C%20wearing%20a%20high-collared%20shirt%2C%20with%20a%20plain%20grey%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 8,
+    "name": "Beatrice \"Bea\" Stone",
+    "age_range": "Senior",
+    "ethnicity_note": "Caucasian",
+    "gender": "Female",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20Pixar-style%203D%20rendered%20headshot%20of%20a%20cheerful%2C%20elderly%20Caucasian%20woman%20with%20white%20curly%20hair%20and%20red%20lipstick%2C%20wearing%20pearl%20earrings%2C%20with%20a%20plain%20lavender%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 9,
+    "name": "Javier \"Javi\" Cruz",
+    "age_range": "Teenager",
+    "ethnicity_note": "Mixed Indigenous/Hispanic",
+    "gender": "Male",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20dynamic%20anime%20headshot%20of%20a%20teen%20male%20of%20mixed%20indigenous%20and%20Hispanic%20heritage%2C%20with%20dark%2C%20wavy%20hair%2C%20looking%20confident%2C%20with%20a%20plain%20maroon%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 10,
+    "name": "Zephyr Al-Sayed",
+    "age_range": "Young Adult",
+    "ethnicity_note": "Ambiguously Middle Eastern/North African",
+    "gender": "Non-Binary",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20modern%20cartoon%20headshot%20of%20a%20non-binary%20young%20adult%20%28ambiguously%20Arab%2FMiddle%20Eastern%29%20with%20silver%20hair%20and%20large%20hoop%20earrings%2C%20with%20a%20plain%20deep-green%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 11,
+    "name": "Elena Volkova",
+    "age_range": "Middle-Aged",
+    "ethnicity_note": "Slavic/Eastern European",
+    "gender": "Female",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20soft%20watercolor%20cartoon%20headshot%20of%20a%20middle-aged%20Slavic%20woman%20with%20auburn%20hair%20tied%20back%20and%20kind%20eyes%2C%20wearing%20a%20simple%20turtleneck%2C%20with%20a%20plain%20light-brown%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 12,
+    "name": "David Brooks",
+    "age_range": "Senior",
+    "ethnicity_note": "Black",
+    "gender": "Male",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20retro%201950s%20style%20cartoon%20headshot%20of%20a%20senior%20Black%20man%20with%20a%20wide%20smile%20and%20a%20fedora%20hat%2C%20with%20a%20plain%20peach%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 13,
+    "name": "Finn O'Connell",
+    "age_range": "Child",
+    "ethnicity_note": "Caucasian (Irish/Scottish)",
+    "gender": "Male",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/An%20illustrated%20children's%20book%20style%20headshot%20of%20a%20very%20young%20Caucasian%20boy%20%28around%205%29%20with%20bright%20red%20hair%20and%20freckles%2C%20wearing%20a%20striped%20t-shirt%2C%20with%20a%20plain%20sky-blue%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 14,
+    "name": "Kali Ndlovu",
+    "age_range": "Young Adult",
+    "ethnicity_note": "African",
+    "gender": "Female",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20bold%2C%20graphic%20novel%20style%20headshot%20of%20a%20powerful%20African%20woman%20in%20her%20late%2020s%2C%20with%20intricate%20traditional%20tribal%20face%20paint%20and%20coiled%20hair%2C%20with%20a%20plain%20charcoal%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 15,
+    "name": "Raj Patel",
+    "age_range": "Middle-Aged",
+    "ethnicity_note": "South Asian (Indian)",
+    "gender": "Male",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20clean%2C%20vector-style%20cartoon%20headshot%20of%20a%20middle-aged%20South%20Asian%20man%20with%20a%20short%2C%20neat%20beard%2C%20wearing%20a%20formal%20suit%2C%20with%20a%20plain%20navy-blue%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 16,
+    "name": "Sora Kim",
+    "age_range": "Young Adult",
+    "ethnicity_note": "Korean",
+    "gender": "Female",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/An%20expressive%20K-pop%20inspired%20anime%20headshot%20of%20a%20young%20Korean%20woman%20with%20long%2C%20dyed%20pastel%20hair%20and%20modern%20street%20fashion%2C%20with%20a%20plain%20vibrant-yellow%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 17,
+    "name": "Henrietta Lowe",
+    "age_range": "Senior",
+    "ethnicity_note": "Caucasian",
+    "gender": "Female",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20simple%20line-art%20cartoon%20headshot%20of%20an%20elderly%20Caucasian%20woman%20with%20a%20severe%20but%20humorous%20expression%20and%20a%20massive%20beehive%20hairstyle%2C%20with%20a%20plain%20pale-green%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 18,
+    "name": "Tenzin Dorje",
+    "age_range": "Young Adult",
+    "ethnicity_note": "Tibetan",
+    "gender": "Male",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20detailed%2C%20comic-book%20style%20headshot%20of%20a%20young%20Tibetan%20man%20with%20closely%20shaved%20hair%20and%20a%20determined%20jawline%2C%20wearing%20a%20puffer%20vest%2C%20with%20a%20plain%20mountain-grey%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 19,
+    "name": "Amelia Vega",
+    "age_range": "Young Adult",
+    "ethnicity_note": "Latinx",
+    "gender": "Female",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20friendly%2C%20commercial%20cartoon%20headshot%20of%20a%20young%20adult%20Latinx%20woman%20with%20voluminous%20brown%20hair%20and%20a%20warm%2C%20approachable%20smile%2C%20with%20a%20plain%20orange-red%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  },
+  {
+    "id": 20,
+    "name": "Brock Samson",
+    "age_range": "Middle-Aged",
+    "ethnicity_note": "Caucasian (Nordic)",
+    "gender": "Male",
+    "image_url": "https://enter.pollinations.ai/api/generate/image/A%20cartoon%20headshot%20of%20a%20muscular%2C%20blonde%2C%2040-year-old%20man%20%28Nordic%20descent%29%20with%20a%20buzzcut%20and%20a%20tough-guy%20expression%2C%20wearing%20a%20simple%20black%20t-shirt%2C%20with%20a%20plain%20dark-red%20background?model=flux&seed=42&nologo=true&enhance=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL"
+  }
+]
