@@ -1,0 +1,317 @@
+[
+  {
+    "id": 1,
+    "name": "Car Prize",
+    "type": "Item",
+    "value": 50000,
+    "weight": 0.1,
+    "description": "Win a brand new car or equivalent cash value!",
+    "image prompt": "A gleaming, luxury sport utility vehicle (SUV) parked under spotlights on a game show stage, massive confetti falling."
+  },
+  {
+    "id": 2,
+    "name": "Luxury Safari Trip",
+    "type": "Item",
+    "value": 12000,
+    "weight": 0.5,
+    "description": "An incredible 10-day luxury safari experience for two in Africa.",
+    "image prompt": "A high-end safari jeep viewing a herd of elephants at sunset in the Serengeti, luxurious tent camp visible in the background."
+  },
+  {
+    "id": 3,
+    "name": "Super Jackpot",
+    "type": "Money",
+    "value": 10000,
+    "weight": 0.5,
+    "description": "An extremely rare, massive cash prize!",
+    "image prompt": "An overflowing vault of gold bars and massive stacks of currency, blindingly bright light reflecting off the wealth, representing the ultimate prize."
+  },
+  {
+    "id": 4,
+    "name": "High-Value Jewelry Set",
+    "type": "Item",
+    "value": 8000,
+    "weight": 0.8,
+    "description": "A dazzling diamond necklace and earring set.",
+    "image prompt": "A brilliant, multi-carat diamond necklace and matching earrings sparkling brightly against a dark velvet background."
+  },
+  {
+    "id": 5,
+    "name": "Luxury Yachting Vacation",
+    "type": "Item",
+    "value": 7000,
+    "weight": 1,
+    "description": "An all-inclusive week-long luxury yachting trip for two.",
+    "image prompt": "A pristine white luxury yacht sailing smoothly on turquoise water during sunset, tropical backdrop."
+  },
+  {
+    "id": 6,
+    "name": "Luxury Watch Set",
+    "type": "Item",
+    "value": 6000,
+    "weight": 1,
+    "description": "A set of two high-end, designer wristwatches (his and hers).",
+    "image prompt": "Two elegant, gold and stainless steel luxury wristwatches resting on a black velvet cushion, close-up, high-end photography."
+  },
+  {
+    "id": 7,
+    "name": "Home Gym Equipment",
+    "type": "Item",
+    "value": 5500,
+    "weight": 1,
+    "description": "A complete set of high-quality, modern home gym equipment.",
+    "image prompt": "A sleek, futuristic home gym setup with a multi-functional machine and free weights, in a brightly lit, modern room."
+  },
+  {
+    "id": 8,
+    "name": "Grand Prize",
+    "type": "Money",
+    "value": 5000,
+    "weight": 1,
+    "description": "The top jackpot cash prize!",
+    "image prompt": "A large, glittering stack of $100 bills and gold coins, dramatically lit, focused shot."
+  },
+  {
+    "id": 9,
+    "name": "Premium Cash Award",
+    "type": "Money",
+    "value": 4500,
+    "weight": 1.5,
+    "description": "An excellent cash prize segment.",
+    "image prompt": "A very tall, perfectly stacked column of crisp dollar bills, sharp focus, suggesting maximum value."
+  },
+  {
+    "id": 10,
+    "name": "Major Cash Award",
+    "type": "Money",
+    "value": 4000,
+    "weight": 2,
+    "description": "A significant cash prize.",
+    "image prompt": "A tall, impressive stack of clean $100 bills, studio lighting, suggesting high value."
+  },
+  {
+    "id": 11,
+    "name": "Master Chef Culinary Course",
+    "type": "Item",
+    "value": 4000,
+    "weight": 2,
+    "description": "All-expenses-paid enrollment in an elite, week-long culinary training program.",
+    "image prompt": "A professional chef guiding students in a gleaming, stainless steel kitchen, focused on precise knife work on fresh vegetables."
+  },
+  {
+    "id": 12,
+    "name": "Designer Puppy",
+    "type": "Item",
+    "value": 4000,
+    "weight": 1,
+    "description": "A lovable puppy of a high-end designer breed.",
+    "image prompt": "An adorable, fluffy, small puppy (like a Golden Doodle or French Bulldog) sitting in a basket with a large red bow, cozy lighting, high detail."
+  },
+  {
+    "id": 13,
+    "name": "Supreme Cash Award",
+    "type": "Money",
+    "value": 3800,
+    "weight": 2,
+    "description": "A very high cash prize amount.",
+    "image prompt": "A tightly stacked bundle of fresh $100 bills secured with a golden money clip, highly detailed."
+  },
+  {
+    "id": 14,
+    "name": "Luxury Shopping Spree",
+    "type": "Item",
+    "value": 3800,
+    "weight": 2,
+    "description": "A large gift certificate for a high-end department store.",
+    "image prompt": "An elegant woman walking through a luxurious, brightly lit designer boutique, holding several shopping bags."
+  },
+  {
+    "id": 15,
+    "name": "Elite Cash Award",
+    "type": "Money",
+    "value": 3600,
+    "weight": 2.5,
+    "description": "An elite level cash award.",
+    "image prompt": "Three rows of perfectly aligned paper currency on a reflective surface, suggesting precision and high value."
+  },
+  {
+    "id": 16,
+    "name": "High-Performance Gaming PC",
+    "type": "Item",
+    "value": 3600,
+    "weight": 2.5,
+    "description": "A custom-built, top-tier gaming computer system.",
+    "image prompt": "A powerful desktop gaming PC with clear side panels showing glowing RGB components, surrounded by glowing peripherals."
+  },
+  {
+    "id": 17,
+    "name": "High-End Electronic Device",
+    "type": "Item",
+    "value": 3500,
+    "weight": 3,
+    "description": "Win a high-end electronic device or vacation voucher.",
+    "image prompt": "A sleek, modern, high-end electronic device (like a large curved monitor or designer watch) on a velvet pedestal, luxurious setting."
+  },
+  {
+    "id": 18,
+    "name": "State-of-the-Art Robotic Vacuum",
+    "type": "Item",
+    "value": 3500,
+    "weight": 3,
+    "description": "The latest model, fully autonomous floor cleaning and mopping robot.",
+    "image prompt": "A futuristic, sleek black and silver robotic vacuum gliding silently across a hardwood floor in a clean, modern home."
+  },
+  {
+    "id": 19,
+    "name": "Grand Cash Award",
+    "type": "Money",
+    "value": 3400,
+    "weight": 3,
+    "description": "A grand level cash prize.",
+    "image prompt": "A cascade of gold coins falling onto a large stack of $50 bills, dynamic lighting."
+  },
+  {
+    "id": 20,
+    "name": "Professional Camera Kit",
+    "type": "Item",
+    "value": 3400,
+    "weight": 3,
+    "description": "A DSLR or mirrorless camera with multiple lenses and accessories.",
+    "image prompt": "A professional-grade mirrorless camera with a large telephoto lens resting on a tripod, in a minimalist studio setting."
+  },
+  {
+    "id": 21,
+    "name": "Distinguished Cash Prize",
+    "type": "Money",
+    "value": 3200,
+    "weight": 3.5,
+    "description": "A distinguished high-level cash prize.",
+    "image prompt": "A close-up of the security ribbon on a high denomination bill, emphasizing the value and quality of the money."
+  },
+  {
+    "id": 22,
+    "name": "Premium Home Appliance Set",
+    "type": "Item",
+    "value": 3200,
+    "weight": 3.5,
+    "description": "A set of high-end kitchen appliances like a stand mixer and espresso machine.",
+    "image prompt": "A gleaming, stainless steel espresso machine next to a matching stand mixer on a clean kitchen counter, bright morning light."
+  },
+  {
+    "id": 23,
+    "name": "Home Entertainment System",
+    "type": "Item",
+    "value": 3000,
+    "weight": 4,
+    "description": "A top-of-the-line television and soundbar package.",
+    "image prompt": "A large, ultra-thin 4K TV screen showing a vivid movie scene, surrounded by high-quality speakers in a modern living room setting."
+  },
+  {
+    "id": 24,
+    "name": "Substantial Cash Award",
+    "type": "Money",
+    "value": 3000,
+    "weight": 3,
+    "description": "A very respectable cash win.",
+    "image prompt": "Three neat bundles of paper currency secured with bands, elevated on a platform, crisp and clean."
+  },
+  {
+    "id": 25,
+    "name": "World-Class Chef's Knife Set",
+    "type": "Item",
+    "value": 3000,
+    "weight": 3,
+    "description": "A complete set of handcrafted Japanese or German chef's knives in a custom block.",
+    "image prompt": "A set of six immaculate, razor-sharp chef's knives in a sleek wooden magnetic knife block on a dark wood countertop."
+  },
+  {
+    "id": 26,
+    "name": "High Cash Prize",
+    "type": "Money",
+    "value": 2800,
+    "weight": 4,
+    "description": "A solid high cash prize.",
+    "image prompt": "A small leather money pouch slightly open, revealing a large amount of rolled cash inside."
+  },
+  {
+    "id": 27,
+    "name": "High-End Road Bicycle",
+    "type": "Item",
+    "value": 2800,
+    "weight": 4,
+    "description": "A lightweight carbon fiber road bike for performance cycling.",
+    "image prompt": "A sleek, modern carbon fiber road racing bicycle standing against a clean white wall, focused on the lightweight frame and components."
+  },
+  {
+    "id": 28,
+    "name": "Significant Cash Award",
+    "type": "Money",
+    "value": 2500,
+    "weight": 4,
+    "description": "A large cash segment.",
+    "image prompt": "Two large stacks of cash prominently displayed, conveying immediate financial boost."
+  },
+  {
+    "id": 29,
+    "name": "Premium Cash Payout",
+    "type": "Money",
+    "value": 2400,
+    "weight": 4.5,
+    "description": "A premium cash payout.",
+    "image prompt": "A pattern made of four overlapping piles of different denomination bills, neat and symmetrical."
+  },
+  {
+    "id": 30,
+    "name": "Advanced Drone Package",
+    "type": "Item",
+    "value": 2400,
+    "weight": 4.5,
+    "description": "A professional-grade quadcopter drone with 4K camera and extra batteries.",
+    "image prompt": "A high-tech quadcopter drone hovering over a scenic landscape, showing its compact design and powerful camera."
+  },
+  {
+    "id": 31,
+    "name": "Excellent Cash Prize",
+    "type": "Money",
+    "value": 2200,
+    "weight": 5,
+    "description": "An excellent cash prize.",
+    "image prompt": "A small chest slightly ajar, with a glow emanating from the pile of cash inside."
+  },
+  {
+    "id": 32,
+    "name": "Professional Coffee Station",
+    "type": "Item",
+    "value": 2200,
+    "weight": 5,
+    "description": "A high-end automatic espresso maker and grinder set.",
+    "image prompt": "A sleek, chrome professional espresso machine steaming gently on a dark counter, with a perfect cup of coffee being brewed."
+  },
+  {
+    "id": 33,
+    "name": "Valuable Cash Award",
+    "type": "Money",
+    "value": 2000,
+    "weight": 5,
+    "description": "A valuable cash prize segment.",
+    "image prompt": "A distinct pile of cash with a few bills peeling off the top, suggesting accessibility and readiness to spend."
+  },
+  {
+    "id": 34,
+    "name": "Premium Electric Scooter",
+    "type": "Item",
+    "value": 2100,
+    "weight": 5,
+    "description": "A top-tier, foldable electric scooter perfect for fast urban commuting.",
+    "image prompt": "A sleek, black and silver premium electric scooter parked on a city sidewalk, ready for a commute, minimalist design."
+  },
+  {
+    "id": 35,
+    "name": "Exotic Pet Parrot",
+    "type": "Item",
+    "value": 2000,
+    "weight": 1.5,
+    "description": "Win a beautiful, talking pet parrot and cage.",
+    "image prompt": "A brightly colored, vibrant pet parrot (like a Macaw) perched on a stand next to an ornate cage, tropical background, high detail."
+  }
+]
