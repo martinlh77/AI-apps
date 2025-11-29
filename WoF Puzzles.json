@@ -1,0 +1,3800 @@
+{
+  "puzzles": [
+    {
+      "category": "Phrase",
+      "answer": "A WHALE OF A TIME"
+    },
+    {
+      "category": "Phrase",
+      "answer": "THE DEVIL IS IN THE DETAILS"
+    },
+    {
+      "category": "Phrase",
+      "answer": "BETTER LATE THAN NEVER"
+    },
+    {
+      "category": "Phrase",
+      "answer": "CATCH TWENTY TWO"
+    },
+    {
+      "category": "Phrase",
+      "answer": "GETTING A HEAD START"
+    },
+    {
+      "category": "Phrase",
+      "answer": "IN THE NICK OF TIME"
+    },
+    {
+      "category": "Phrase",
+      "answer": "THE LION'S SHARE"
+    },
+    {
+      "category": "Phrase",
+      "answer": "PIECE OF CAKE"
+    },
+    {
+      "category": "Phrase",
+      "answer": "ONCE IN A BLUE MOON"
+    },
+    {
+      "category": "Phrase",
+      "answer": "THE BALL IS IN YOUR COURT"
+    },
+    {
+      "category": "Phrase",
+      "answer": "BARKING UP THE WRONG TREE"
+    },
+    {
+      "category": "Phrase",
+      "answer": "ACTIONS SPEAK LOUDER THAN WORDS"
+    },
+    {
+      "category": "Phrase",
+      "answer": "BITE THE BULLET"
+    },
+    {
+      "category": "Phrase",
+      "answer": "BREAK A LEG"
+    },
+    {
+      "category": "Phrase",
+      "answer": "COST AN ARM AND A LEG"
+    },
+    {
+      "category": "Phrase",
+      "answer": "CUTTING CORNERS"
+    },
+    {
+      "category": "Phrase",
+      "answer": "DON'T JUDGE A BOOK BY ITS COVER"
+    },
+    {
+      "category": "Phrase",
+      "answer": "EVERY CLOUD HAS A SILVER LINING"
+    },
+    {
+      "category": "Phrase",
+      "answer": "GET OFF YOUR HIGH HORSE"
+    },
+    {
+      "category": "Phrase",
+      "answer": "HIT THE NAIL ON THE HEAD"
+    },
+    {
+      "category": "Phrase",
+      "answer": "JUMP ON THE BANDWAGON"
+    },
+    {
+      "category": "Phrase",
+      "answer": "LET THE CAT OUT OF THE BAG"
+    },
+    {
+      "category": "Phrase",
+      "answer": "MAKE A LONG STORY SHORT"
+    },
+    {
+      "category": "Phrase",
+      "answer": "NO PAIN NO GAIN"
+    },
+    {
+      "category": "Phrase",
+      "answer": "PUTTING ALL YOUR EGGS IN ONE BASKET"
+    },
+    {
+      "category": "Phrase",
+      "answer": "SEE EYE TO EYE"
+    },
+    {
+      "category": "Phrase",
+      "answer": "SPEAK OF THE DEVIL"
+    },
+    {
+      "category": "Phrase",
+      "answer": "TAKE IT WITH A GRAIN OF SALT"
+    },
+    {
+      "category": "Phrase",
+      "answer": "TASTE OF YOUR OWN MEDICINE"
+    },
+    {
+      "category": "Phrase",
+      "answer": "WALKING ON THIN ICE"
+    },
+    {
+      "category": "Phrase",
+      "answer": "WHEN IT RAINS IT POURS"
+    },
+    {
+      "category": "Phrase",
+      "answer": "YOU CAN'T HAVE YOUR CAKE AND EAT IT TOO"
+    },
+    {
+      "category": "Phrase",
+      "answer": "CROSS THAT BRIDGE WHEN YOU COME TO IT"
+    },
+    {
+      "category": "Phrase",
+      "answer": "GET YOUR ACT TOGETHER"
+    },
+    {
+      "category": "Phrase",
+      "answer": "HANG IN THERE"
+    },
+    {
+      "category": "Phrase",
+      "answer": "HEAD OVER HEELS"
+    },
+    {
+      "category": "Phrase",
+      "answer": "HEART OF GOLD"
+    },
+    {
+      "category": "Phrase",
+      "answer": "IN HOT WATER"
+    },
+    {
+      "category": "Phrase",
+      "answer": "LIGHT AT THE END OF THE TUNNEL"
+    },
+    {
+      "category": "Phrase",
+      "answer": "LOSE YOUR TOUCH"
+    },
+    {
+      "category": "Phrase",
+      "answer": "MISS THE BOAT"
+    },
+    {
+      "category": "Phrase",
+      "answer": "ON CLOUD NINE"
+    },
+    {
+      "category": "Phrase",
+      "answer": "RAIN ON SOMEONE'S PARADE"
+    },
+    {
+      "category": "Phrase",
+      "answer": "SLEEP ON IT"
+    },
+    {
+      "category": "Phrase",
+      "answer": "STRIKE WHILE THE IRON IS HOT"
+    },
+    {
+      "category": "Phrase",
+      "answer": "THE JURY IS STILL OUT"
+    },
+    {
+      "category": "Phrase",
+      "answer": "TIME FLIES WHEN YOU'RE HAVING FUN"
+    },
+    {
+      "category": "Phrase",
+      "answer": "UP IN THE AIR"
+    },
+    {
+      "category": "Phrase",
+      "answer": "WASTE NOT WANT NOT"
+    },
+    {
+      "category": "Phrase",
+      "answer": "A DIME A DOZEN"
+    },
+    {
+      "category": "Occupation",
+      "answer": "SOFTWARE DEVELOPER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "LANDSCAPE ARCHITECT"
+    },
+    {
+      "category": "Occupation",
+      "answer": "VETERINARY TECHNICIAN"
+    },
+    {
+      "category": "Occupation",
+      "answer": "FIREFIGHTER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "ASTRONAUT"
+    },
+    {
+      "category": "Occupation",
+      "answer": "CHEF"
+    },
+    {
+      "category": "Occupation",
+      "answer": "PLUMBER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "NURSE PRACTITIONER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "JOURNALIST"
+    },
+    {
+      "category": "Occupation",
+      "answer": "CIVIL ENGINEER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "TEACHER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "DENTAL HYGIENIST"
+    },
+    {
+      "category": "Occupation",
+      "answer": "ELECTRICIAN"
+    },
+    {
+      "category": "Occupation",
+      "answer": "FINANCIAL ANALYST"
+    },
+    {
+      "category": "Occupation",
+      "answer": "MARKETING MANAGER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "POLICE OFFICER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "LIBRARIAN"
+    },
+    {
+      "category": "Occupation",
+      "answer": "GEOLOGIST"
+    },
+    {
+      "category": "Occupation",
+      "answer": "AIR TRAFFIC CONTROLLER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "CARPENTER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "PHYSICAL THERAPIST"
+    },
+    {
+      "category": "Occupation",
+      "answer": "COMMERCIAL PILOT"
+    },
+    {
+      "category": "Occupation",
+      "answer": "REAL ESTATE AGENT"
+    },
+    {
+      "category": "Occupation",
+      "answer": "GRAPHIC DESIGNER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "PARAMEDIC"
+    },
+    {
+      "category": "Occupation",
+      "answer": "METEOROLOGIST"
+    },
+    {
+      "category": "Occupation",
+      "answer": "ARCHITECT"
+    },
+    {
+      "category": "Occupation",
+      "answer": "ACCOUNTANT"
+    },
+    {
+      "category": "Occupation",
+      "answer": "WELDER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "COURT REPORTER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "WEB DESIGNER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "PHARMACIST"
+    },
+    {
+      "category": "Occupation",
+      "answer": "FLIGHT ATTENDANT"
+    },
+    {
+      "category": "Occupation",
+      "answer": "SURVEYOR"
+    },
+    {
+      "category": "Occupation",
+      "answer": "BIOMEDICAL SCIENTIST"
+    },
+    {
+      "category": "Occupation",
+      "answer": "SPEECH THERAPIST"
+    },
+    {
+      "category": "Occupation",
+      "answer": "BANK TELLER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "HUMAN RESOURCES MANAGER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "INDUSTRIAL DESIGNER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "BOOKKEEPER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "TAXI DRIVER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "LOCKSMITH"
+    },
+    {
+      "category": "Occupation",
+      "answer": "OPTOMETRIST"
+    },
+    {
+      "category": "Occupation",
+      "answer": "POSTAL WORKER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "MUSIC PRODUCER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "SOCIAL WORKER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "ELECTRICIAN'S APPRENTICE"
+    },
+    {
+      "category": "Occupation",
+      "answer": "PARK RANGER"
+    },
+    {
+      "category": "Occupation",
+      "answer": "VETERINARIAN"
+    },
+    {
+      "category": "Occupation",
+      "answer": "CRITICAL CARE PHYSICIAN"
+    },
+    {
+      "category": "Person",
+      "answer": "AMELIA EARHART"
+    },
+    {
+      "category": "Person",
+      "answer": "MARIE CURIE"
+    },
+    {
+      "category": "Person",
+      "answer": "ALBERT EINSTEIN"
+    },
+    {
+      "category": "Person",
+      "answer": "OPRAH WINFREY"
+    },
+    {
+      "category": "Person",
+      "answer": "WILLIAM SHAKESPEARE"
+    },
+    {
+      "category": "Person",
+      "answer": "LEONARDO DA VINCI"
+    },
+    {
+      "category": "Person",
+      "answer": "MARTIN LUTHER KING JUNIOR"
+    },
+    {
+      "category": "Person",
+      "answer": "ELON MUSK"
+    },
+    {
+      "category": "Person",
+      "answer": "MALALA YOUSAFZAI"
+    },
+    {
+      "category": "Person",
+      "answer": "NELSON MANDELA"
+    },
+    {
+      "category": "Person",
+      "answer": "QUEEN ELIZABETH THE SECOND"
+    },
+    {
+      "category": "Person",
+      "answer": "GEORGE WASHINGTON"
+    },
+    {
+      "category": "Person",
+      "answer": "VINCENT VAN GOGH"
+    },
+    {
+      "category": "Person",
+      "answer": "JANE AUSTEN"
+    },
+    {
+      "category": "Person",
+      "answer": "STEPHEN HAWKING"
+    },
+    {
+      "category": "Person",
+      "answer": "MICHELANGELO"
+    },
+    {
+      "category": "Person",
+      "answer": "MOTHER TERESA"
+    },
+    {
+      "category": "Person",
+      "answer": "WINSTON CHURCHILL"
+    },
+    {
+      "category": "Person",
+      "answer": "HEDY LAMARR"
+    },
+    {
+      "category": "Person",
+      "answer": "BENJAMIN FRANKLIN"
+    },
+    {
+      "category": "Person",
+      "answer": "ABRAHAM LINCOLN"
+    },
+    {
+      "category": "Person",
+      "answer": "HARRIET TUBMAN"
+    },
+    {
+      "category": "Person",
+      "answer": "MAHATMA GANDHI"
+    },
+    {
+      "category": "Person",
+      "answer": "J F KENNEDY"
+    },
+    {
+      "category": "Person",
+      "answer": "ROSA PARKS"
+    },
+    {
+      "category": "Person",
+      "answer": "BEETHOVEN"
+    },
+    {
+      "category": "Person",
+      "answer": "CHOPIN"
+    },
+    {
+      "category": "Person",
+      "answer": "MOZART"
+    },
+    {
+      "category": "Person",
+      "answer": "TAYLOR SWIFT"
+    },
+    {
+      "category": "Person",
+      "answer": "MICHAEL JORDAN"
+    },
+    {
+      "category": "Person",
+      "answer": "WALT DISNEY"
+    },
+    {
+      "category": "Person",
+      "answer": "MARK TWAIN"
+    },
+    {
+      "category": "Person",
+      "answer": "ERNEST HEMINGWAY"
+    },
+    {
+      "category": "Person",
+      "answer": "F SCOTT FITZGERALD"
+    },
+    {
+      "category": "Person",
+      "answer": "CHARLES DICKENS"
+    },
+    {
+      "category": "Person",
+      "answer": "J K ROWLING"
+    },
+    {
+      "category": "Person",
+      "answer": "STEVEN SPIELBERG"
+    },
+    {
+      "category": "Person",
+      "answer": "GEORGE LUCAS"
+    },
+    {
+      "category": "Person",
+      "answer": "BILL GATES"
+    },
+    {
+      "category": "Person",
+      "answer": "JEFF BEZOS"
+    },
+    {
+      "category": "Person",
+      "answer": "TIM COOK"
+    },
+    {
+      "category": "Person",
+      "answer": "WARREN BUFFETT"
+    },
+    {
+      "category": "Person",
+      "answer": "JACKIE ROBINSON"
+    },
+    {
+      "category": "Person",
+      "answer": "BABE RUTH"
+    },
+    {
+      "category": "Person",
+      "answer": "SERENA WILLIAMS"
+    },
+    {
+      "category": "Person",
+      "answer": "LIONEL MESSI"
+    },
+    {
+      "category": "Person",
+      "answer": "PELE"
+    },
+    {
+      "category": "Person",
+      "answer": "MUHAMMAD ALI"
+    },
+    {
+      "category": "Person",
+      "answer": "BARACK OBAMA"
+    },
+    {
+      "category": "Person",
+      "answer": "ANGELA MERKEL"
+    },
+    {
+      "category": "Activity",
+      "answer": "BAKING APPLE PIE"
+    },
+    {
+      "category": "Activity",
+      "answer": "LEARNING TO PLAY THE UKULELE"
+    },
+    {
+      "category": "Activity",
+      "answer": "MOUNTAIN BIKING DOWN A SLOPE"
+    },
+    {
+      "category": "Activity",
+      "answer": "SOLVING A RUBIK'S CUBE"
+    },
+    {
+      "category": "Activity",
+      "answer": "GOING FOR A LONG HIKE"
+    },
+    {
+      "category": "Activity",
+      "answer": "KNITTING A SCARF"
+    },
+    {
+      "category": "Activity",
+      "answer": "WRITING A POEM"
+    },
+    {
+      "category": "Activity",
+      "answer": "PAINTING A SUNSET"
+    },
+    {
+      "category": "Activity",
+      "answer": "VISITING A MUSEUM"
+    },
+    {
+      "category": "Activity",
+      "answer": "KAYAKING ON A RIVER"
+    },
+    {
+      "category": "Activity",
+      "answer": "COOKING DINNER FOR FRIENDS"
+    },
+    {
+      "category": "Activity",
+      "answer": "PLAYING A BOARD GAME"
+    },
+    {
+      "category": "Activity",
+      "answer": "TENDING A GARDEN"
+    },
+    {
+      "category": "Activity",
+      "answer": "PRACTICING YOGA"
+    },
+    {
+      "category": "Activity",
+      "answer": "TAKING A PHOTOGRAPHY CLASS"
+    },
+    {
+      "category": "Activity",
+      "answer": "STARGAZING WITH A TELESCOPE"
+    },
+    {
+      "category": "Activity",
+      "answer": "BUILDING A SANDCASTLE"
+    },
+    {
+      "category": "Activity",
+      "answer": "TRAINING FOR A MARATHON"
+    },
+    {
+      "category": "Activity",
+      "answer": "LEARNING A NEW LANGUAGE"
+    },
+    {
+      "category": "Activity",
+      "answer": "RESTORING VINTAGE FURNITURE"
+    },
+    {
+      "category": "Activity",
+      "answer": "CODING A WEBSITE"
+    },
+    {
+      "category": "Activity",
+      "answer": "EDITING A VIDEO"
+    },
+    {
+      "category": "Activity",
+      "answer": "READING A MYSTERY NOVEL"
+    },
+    {
+      "category": "Activity",
+      "answer": "SKETCHING A PORTRAIT"
+    },
+    {
+      "category": "Activity",
+      "answer": "HOSTING A BARBECUE"
+    },
+    {
+      "category": "Activity",
+      "answer": "SWIMMING LAPS IN A POOL"
+    },
+    {
+      "category": "Activity",
+      "answer": "PLAYING GUITAR BY THE CAMPFIRE"
+    },
+    {
+      "category": "Activity",
+      "answer": "VOLUNTEERING AT AN ANIMAL SHELTER"
+    },
+    {
+      "category": "Activity",
+      "answer": "BIRD WATCHING"
+    },
+    {
+      "category": "Activity",
+      "answer": "GOING ON A CRUISE"
+    },
+    {
+      "category": "Activity",
+      "answer": "RIDING A ROLLER COASTER"
+    },
+    {
+      "category": "Activity",
+      "answer": "ATTENDING A CONCERT"
+    },
+    {
+      "category": "Activity",
+      "answer": "DECORATING A CAKE"
+    },
+    {
+      "category": "Activity",
+      "answer": "DOING A JIGSAW PUZZLE"
+    },
+    {
+      "category": "Activity",
+      "answer": "CLEANING OUT THE GARAGE"
+    },
+    {
+      "category": "Activity",
+      "answer": "REPAIRING A BROKEN FAUCET"
+    },
+    {
+      "category": "Activity",
+      "answer": "CATCHING FIREFLIES IN A JAR"
+    },
+    {
+      "category": "Activity",
+      "answer": "WRITING THANK YOU NOTES"
+    },
+    {
+      "category": "Activity",
+      "answer": "VISITING A LOCAL WINERY"
+    },
+    {
+      "category": "Activity",
+      "answer": "FOLDING LAUNDRY"
+    },
+    {
+      "category": "Activity",
+      "answer": "MOWING THE LAWN"
+    },
+    {
+      "category": "Activity",
+      "answer": "SHAMPOOING THE CARPETS"
+    },
+    {
+      "category": "Activity",
+      "answer": "WATERING THE HOUSEPLANTS"
+    },
+    {
+      "category": "Activity",
+      "answer": "TAKING A NAP ON THE SOFA"
+    },
+    {
+      "category": "Activity",
+      "answer": "WATCHING A DOCUMENTARY"
+    },
+    {
+      "category": "Activity",
+      "answer": "CALLING A FAMILY MEMBER"
+    },
+    {
+      "category": "Activity",
+      "answer": "WINDOW SHOPPING"
+    },
+    {
+      "category": "Activity",
+      "answer": "WRITING IN A JOURNAL"
+    },
+    {
+      "category": "Activity",
+      "answer": "PRACTICING CARD TRICKS"
+    },
+    {
+      "category": "Activity",
+      "answer": "LEARNING HOW TO DANCE"
+    },
+    {
+      "category": "Place",
+      "answer": "THE GRAND CANYON"
+    },
+    {
+      "category": "Place",
+      "answer": "THE EIFFEL TOWER"
+    },
+    {
+      "category": "Place",
+      "answer": "THE GREAT WALL OF CHINA"
+    },
+    {
+      "category": "Place",
+      "answer": "ROME ITALY"
+    },
+    {
+      "category": "Place",
+      "answer": "SYDNEY OPERA HOUSE"
+    },
+    {
+      "category": "Place",
+      "answer": "TIMES SQUARE NEW YORK"
+    },
+    {
+      "category": "Place",
+      "answer": "THE AMAZON RAINFOREST"
+    },
+    {
+      "category": "Place",
+      "answer": "YELLOWSTONE NATIONAL PARK"
+    },
+    {
+      "category": "Place",
+      "answer": "THE PYRAMIDS OF GIZA"
+    },
+    {
+      "category": "Place",
+      "answer": "THE TAJ MAHAL"
+    },
+    {
+      "category": "Place",
+      "answer": "THE LOUVRE MUSEUM"
+    },
+    {
+      "category": "Place",
+      "answer": "HOLLYWOOD CALIFORNIA"
+    },
+    {
+      "category": "Place",
+      "answer": "LONDON BRIDGE"
+    },
+    {
+      "category": "Place",
+      "answer": "THE PALACE OF VERSAILLES"
+    },
+    {
+      "category": "Place",
+      "answer": "HAWAIIAN ISLANDS"
+    },
+    {
+      "category": "Place",
+      "answer": "TOKYO JAPAN"
+    },
+    {
+      "category": "Place",
+      "answer": "GOLDEN GATE BRIDGE"
+    },
+    {
+      "category": "Place",
+      "answer": "MACHU PICCHU PERU"
+    },
+    {
+      "category": "Place",
+      "answer": "THE DEAD SEA"
+    },
+    {
+      "category": "Place",
+      "answer": "MOUNT EVEREST"
+    },
+    {
+      "category": "Place",
+      "answer": "THE WHITE HOUSE"
+    },
+    {
+      "category": "Place",
+      "answer": "STATUE OF LIBERTY"
+    },
+    {
+      "category": "Place",
+      "answer": "THE ALPS"
+    },
+    {
+      "category": "Place",
+      "answer": "BIG BEN"
+    },
+    {
+      "category": "Place",
+      "answer": "THE SAHARA DESERT"
+    },
+    {
+      "category": "Place",
+      "answer": "VENICE ITALY"
+    },
+    {
+      "category": "Place",
+      "answer": "THE COLOSSEUM"
+    },
+    {
+      "category": "Place",
+      "answer": "THE PANAMA CANAL"
+    },
+    {
+      "category": "Place",
+      "answer": "NIAGARA FALLS"
+    },
+    {
+      "category": "Place",
+      "answer": "THE VATICAN CITY"
+    },
+    {
+      "category": "Place",
+      "answer": "THE KREMLIN"
+    },
+    {
+      "category": "Place",
+      "answer": "PARIS FRANCE"
+    },
+    {
+      "category": "Place",
+      "answer": "BERLIN GERMANY"
+    },
+    {
+      "category": "Place",
+      "answer": "THE CITY OF DUBAI"
+    },
+    {
+      "category": "Place",
+      "answer": "ANCIENT GREECE"
+    },
+    {
+      "category": "Place",
+      "answer": "THE BLACK FOREST"
+    },
+    {
+      "category": "Place",
+      "answer": "THE HIMALAYAS"
+    },
+    {
+      "category": "Place",
+      "answer": "CARIBBEAN BEACHES"
+    },
+    {
+      "category": "Place",
+      "answer": "THE GALAPAGOS ISLANDS"
+    },
+    {
+      "category": "Place",
+      "answer": "ICELAND'S BLUE LAGOON"
+    },
+    {
+      "category": "Place",
+      "answer": "THE WALT DISNEY WORLD RESORT"
+    },
+    {
+      "category": "Place",
+      "answer": "LAS VEGAS NEVADA"
+    },
+    {
+      "category": "Place",
+      "answer": "THE PENTAGON"
+    },
+    {
+      "category": "Place",
+      "answer": "THE WORLD TRADE CENTER SITE"
+    },
+    {
+      "category": "Place",
+      "answer": "A CORAL REEF"
+    },
+    {
+      "category": "Place",
+      "answer": "A MOUNTAIN CABIN"
+    },
+    {
+      "category": "Place",
+      "answer": "A DENSE JUNGLE"
+    },
+    {
+      "category": "Place",
+      "answer": "A RUSTIC BARN"
+    },
+    {
+      "category": "Place",
+      "answer": "AN UNDERWATER CAVE"
+    },
+    {
+      "category": "Place",
+      "answer": "A SKYSCRAPER OBSERVATION DECK"
+    },
+    {
+      "category": "Quote",
+      "answer": "TO BE OR NOT TO BE"
+    },
+    {
+      "category": "Quote",
+      "answer": "ALL THAT GLITTERS IS NOT GOLD"
+    },
+    {
+      "category": "Quote",
+      "answer": "THE ONLY THING WE HAVE TO FEAR IS FEAR ITSELF"
+    },
+    {
+      "category": "Quote",
+      "answer": "ASK NOT WHAT YOUR COUNTRY CAN DO FOR YOU"
+    },
+    {
+      "category": "Quote",
+      "answer": "THAT'S ONE SMALL STEP FOR A MAN ONE GIANT LEAP FOR MANKIND"
+    },
+    {
+      "category": "Quote",
+      "answer": "I HAVE A DREAM"
+    },
+    {
+      "category": "Quote",
+      "answer": "IT IS A TRUTH UNIVERSALLY ACKNOWLEDGED"
+    },
+    {
+      "category": "Quote",
+      "answer": "MAY THE FORCE BE WITH YOU"
+    },
+    {
+      "category": "Quote",
+      "answer": "LIFE IS LIKE A BOX OF CHOCOLATES"
+    },
+    {
+      "category": "Quote",
+      "answer": "YOU CAN'T HANDLE THE TRUTH"
+    },
+    {
+      "category": "Quote",
+      "answer": "HERE'S LOOKING AT YOU KID"
+    },
+    {
+      "category": "Quote",
+      "answer": "FRANKLY MY DEAR I DON'T GIVE A DAMN"
+    },
+    {
+      "category": "Quote",
+      "answer": "THERE'S NO PLACE LIKE HOME"
+    },
+    {
+      "category": "Quote",
+      "answer": "BOND JAMES BOND"
+    },
+    {
+      "category": "Quote",
+      "answer": "ELEMENTARY MY DEAR WATSON"
+    },
+    {
+      "category": "Quote",
+      "answer": "GET BUSY LIVING OR GET BUSY DYING"
+    },
+    {
+      "category": "Quote",
+      "answer": "NO ONE CAN MAKE YOU FEEL INFERIOR WITHOUT YOUR CONSENT"
+    },
+    {
+      "category": "Quote",
+      "answer": "WHERE THERE IS LOVE THERE IS LIFE"
+    },
+    {
+      "category": "Quote",
+      "answer": "BE THE CHANGE THAT YOU WISH TO SEE IN THE WORLD"
+    },
+    {
+      "category": "Quote",
+      "answer": "DO OR DO NOT THERE IS NO TRY"
+    },
+    {
+      "category": "Quote",
+      "answer": "HOUSTON WE HAVE A PROBLEM"
+    },
+    {
+      "category": "Quote",
+      "answer": "I AM YOUR FATHER"
+    },
+    {
+      "category": "Quote",
+      "answer": "JUST KEEP SWIMMING"
+    },
+    {
+      "category": "Quote",
+      "answer": "SHOW ME THE MONEY"
+    },
+    {
+      "category": "Quote",
+      "answer": "SAY HELLO TO MY LITTLE FRIEND"
+    },
+    {
+      "category": "Quote",
+      "answer": "I'LL BE BACK"
+    },
+    {
+      "category": "Quote",
+      "answer": "E T PHONE HOME"
+    },
+    {
+      "category": "Quote",
+      "answer": "WE'RE GOING TO NEED A BIGGER BOAT"
+    },
+    {
+      "category": "Quote",
+      "answer": "YOU SHALL NOT PASS"
+    },
+    {
+      "category": "Quote",
+      "answer": "THE TRUTH IS OUT THERE"
+    },
+    {
+      "category": "Quote",
+      "answer": "CARPE DIEM"
+    },
+    {
+      "category": "Quote",
+      "answer": "VINI VIDI VICI"
+    },
+    {
+      "category": "Quote",
+      "answer": "E PLURIBUS UNUM"
+    },
+    {
+      "category": "Quote",
+      "answer": "PAX ROMANA"
+    },
+    {
+      "category": "Quote",
+      "answer": "A ROOM WITH A VIEW"
+    },
+    {
+      "category": "Quote",
+      "answer": "IF YOU BUILD IT THEY WILL COME"
+    },
+    {
+      "category": "Quote",
+      "answer": "I THINK THEREFORE I AM"
+    },
+    {
+      "category": "Quote",
+      "answer": "THE ONLY WAY TO DO GREAT WORK IS TO LOVE WHAT YOU DO"
+    },
+    {
+      "category": "Quote",
+      "answer": "WORK HARD PLAY HARD"
+    },
+    {
+      "category": "Quote",
+      "answer": "KEEP YOUR FRIENDS CLOSE AND YOUR ENEMIES CLOSER"
+    },
+    {
+      "category": "Quote",
+      "answer": "WE ACCEPT THE LOVE WE THINK WE DESERVE"
+    },
+    {
+      "category": "Quote",
+      "answer": "IT WAS THE BEST OF TIMES IT WAS THE WORST OF TIMES"
+    },
+    {
+      "category": "Quote",
+      "answer": "THE PAST IS A FOREIGN COUNTRY THEY DO THINGS DIFFERENTLY THERE"
+    },
+    {
+      "category": "Quote",
+      "answer": "I KNEW I SHOULD'VE TAKEN THAT LEFT TURN AT ALBUQUERQUE"
+    },
+    {
+      "category": "Quote",
+      "answer": "A PENNY SAVED IS A PENNY EARNED"
+    },
+    {
+      "category": "Quote",
+      "answer": "EARLY TO BED AND EARLY TO RISE"
+    },
+    {
+      "category": "Quote",
+      "answer": "THE ONLY GOOD IS KNOWLEDGE AND THE ONLY EVIL IS IGNORANCE"
+    },
+    {
+      "category": "Quote",
+      "answer": "THE UNEXAMINED LIFE IS NOT WORTH LIVING"
+    },
+    {
+      "category": "Quote",
+      "answer": "A SHIP IN HARBOR IS SAFE BUT THAT IS NOT WHAT SHIPS ARE BUILT FOR"
+    },
+    {
+      "category": "Quote",
+      "answer": "THE FUTURE BELONGS TO THOSE WHO BELIEVE IN THE BEAUTY OF THEIR DREAMS"
+    },
+    {
+      "category": "Thing",
+      "answer": "BLUE JAY FEATHER"
+    },
+    {
+      "category": "Thing",
+      "answer": "VINTAGE POSTCARD COLLECTION"
+    },
+    {
+      "category": "Thing",
+      "answer": "A HAND-KNITTED SWEATER"
+    },
+    {
+      "category": "Thing",
+      "answer": "DIAMOND RING"
+    },
+    {
+      "category": "Thing",
+      "answer": "GRAND PIANO"
+    },
+    {
+      "category": "Thing",
+      "answer": "SUNGLASSES"
+    },
+    {
+      "category": "Thing",
+      "answer": "CELL PHONE CHARGER"
+    },
+    {
+      "category": "Thing",
+      "answer": "HOT AIR BALLOON"
+    },
+    {
+      "category": "Thing",
+      "answer": "COFFEE MUG"
+    },
+    {
+      "category": "Thing",
+      "answer": "LEATHER BRIEFCASE"
+    },
+    {
+      "category": "Thing",
+      "answer": "SNOW GLOBE"
+    },
+    {
+      "category": "Thing",
+      "answer": "BINOCULARS"
+    },
+    {
+      "category": "Thing",
+      "answer": "FAMILY PHOTO ALBUM"
+    },
+    {
+      "category": "Thing",
+      "answer": "SKATEBOARD"
+    },
+    {
+      "category": "Thing",
+      "answer": "ELECTRIC GUITAR"
+    },
+    {
+      "category": "Thing",
+      "answer": "GARDENING GLOVES"
+    },
+    {
+      "category": "Thing",
+      "answer": "PASSPORT"
+    },
+    {
+      "category": "Thing",
+      "answer": "MICROSCOPE"
+    },
+    {
+      "category": "Thing",
+      "answer": "GOLD WATCH"
+    },
+    {
+      "category": "Thing",
+      "answer": "MAPLE LEAF"
+    },
+    {
+      "category": "Thing",
+      "answer": "BOTTLE OF SUNSCREEN"
+    },
+    {
+      "category": "Thing",
+      "answer": "SCUBA DIVING MASK"
+    },
+    {
+      "category": "Thing",
+      "answer": "WET PAINT SIGN"
+    },
+    {
+      "category": "Thing",
+      "answer": "POCKET KNIFE"
+    },
+    {
+      "category": "Thing",
+      "answer": "FIRE EXTINGUISHER"
+    },
+    {
+      "category": "Thing",
+      "answer": "SILVER LOCKET"
+    },
+    {
+      "category": "Thing",
+      "answer": "WATERING CAN"
+    },
+    {
+      "category": "Thing",
+      "answer": "FISHING ROD"
+    },
+    {
+      "category": "Thing",
+      "answer": "HARMONICA"
+    },
+    {
+      "category": "Thing",
+      "answer": "BACKPACK"
+    },
+    {
+      "category": "Thing",
+      "answer": "TENNIS RACKET"
+    },
+    {
+      "category": "Thing",
+      "answer": "VASE OF FLOWERS"
+    },
+    {
+      "category": "Thing",
+      "answer": "COOKBOOK"
+    },
+    {
+      "category": "Thing",
+      "answer": "CANDLESTICK HOLDER"
+    },
+    {
+      "category": "Thing",
+      "answer": "RAINCOAT"
+    },
+    {
+      "category": "Thing",
+      "answer": "DIGITAL CAMERA"
+    },
+    {
+      "category": "Thing",
+      "answer": "BICYCLE HELMET"
+    },
+    {
+      "category": "Thing",
+      "answer": "BOARD GAME BOX"
+    },
+    {
+      "category": "Thing",
+      "answer": "ELECTRIC TOOTHBRUSH"
+    },
+    {
+      "category": "Thing",
+      "answer": "TIN OF COOKIES"
+    },
+    {
+      "category": "Thing",
+      "answer": "WOVEN BASKET"
+    },
+    {
+      "category": "Thing",
+      "answer": "CAR KEY FOB"
+    },
+    {
+      "category": "Thing",
+      "answer": "PORTABLE SPEAKER"
+    },
+    {
+      "category": "Thing",
+      "answer": "LED FLASHLIGHT"
+    },
+    {
+      "category": "Thing",
+      "answer": "ANTIQUE CLOCK"
+    },
+    {
+      "category": "Thing",
+      "answer": "SET OF WATERCOLORS"
+    },
+    {
+      "category": "Thing",
+      "answer": "BEACH TOWEL"
+    },
+    {
+      "category": "Thing",
+      "answer": "TELEVISION REMOTE CONTROL"
+    },
+    {
+      "category": "Thing",
+      "answer": "WOODEN ROCKING CHAIR"
+    },
+    {
+      "category": "Thing",
+      "answer": "BAG OF MARBLES"
+    },
+    {
+      "category": "Event",
+      "answer": "NEW YEAR'S EVE CELEBRATION"
+    },
+    {
+      "category": "Event",
+      "answer": "A ROYAL WEDDING"
+    },
+    {
+      "category": "Event",
+      "answer": "THE OLYMPIC GAMES"
+    },
+    {
+      "category": "Event",
+      "answer": "SUPER BOWL SUNDAY"
+    },
+    {
+      "category": "Event",
+      "answer": "THE ACADEMY AWARDS"
+    },
+    {
+      "category": "Event",
+      "answer": "CHRISTMAS MORNING"
+    },
+    {
+      "category": "Event",
+      "answer": "THANKSGIVING DINNER"
+    },
+    {
+      "category": "Event",
+      "answer": "INDEPENDENCE DAY PARADE"
+    },
+    {
+      "category": "Event",
+      "answer": "THE FIRST DAY OF SCHOOL"
+    },
+    {
+      "category": "Event",
+      "answer": "A COLLEGE GRADUATION"
+    },
+    {
+      "category": "Event",
+      "answer": "A BIRTHDAY PARTY"
+    },
+    {
+      "category": "Event",
+      "answer": "A BLACK TIE GALA"
+    },
+    {
+      "category": "Event",
+      "answer": "THE WORLD SERIES"
+    },
+    {
+      "category": "Event",
+      "answer": "A HIGH SCHOOL REUNION"
+    },
+    {
+      "category": "Event",
+      "answer": "MARDI GRAS PARADE"
+    },
+    {
+      "category": "Event",
+      "answer": "THE KENTUCKY DERBY"
+    },
+    {
+      "category": "Event",
+      "answer": "A COMIC CONVENTION"
+    },
+    {
+      "category": "Event",
+      "answer": "A MUSIC FESTIVAL"
+    },
+    {
+      "category": "Event",
+      "answer": "THE GIVING OF THANKS"
+    },
+    {
+      "category": "Event",
+      "answer": "THE BOSTON MARATHON"
+    },
+    {
+      "category": "Event",
+      "answer": "A CHARITY FUNDRAISER"
+    },
+    {
+      "category": "Event",
+      "answer": "EARTH DAY"
+    },
+    {
+      "category": "Event",
+      "answer": "A SCIENCE FAIR"
+    },
+    {
+      "category": "Event",
+      "answer": "A CHESS TOURNAMENT"
+    },
+    {
+      "category": "Event",
+      "answer": "A POLITICAL DEBATE"
+    },
+    {
+      "category": "Event",
+      "answer": "THE RUNNING OF THE BULLS"
+    },
+    {
+      "category": "Event",
+      "answer": "A GRAND OPENING"
+    },
+    {
+      "category": "Event",
+      "answer": "A PRESS CONFERENCE"
+    },
+    {
+      "category": "Event",
+      "answer": "A HOUSEWARMING PARTY"
+    },
+    {
+      "category": "Event",
+      "answer": "A SURPRISE ENGAGEMENT"
+    },
+    {
+      "category": "Event",
+      "answer": "A BABY SHOWER"
+    },
+    {
+      "category": "Event",
+      "answer": "A CAR RACE"
+    },
+    {
+      "category": "Event",
+      "answer": "THE PRESIDENTIAL INAUGURATION"
+    },
+    {
+      "category": "Event",
+      "answer": "A GLOBAL SUMMIT"
+    },
+    {
+      "category": "Event",
+      "answer": "A BOOK SIGNING"
+    },
+    {
+      "category": "Event",
+      "answer": "A JOB INTERVIEW"
+    },
+    {
+      "category": "Event",
+      "answer": "A COMPANY PICNIC"
+    },
+    {
+      "category": "Event",
+      "answer": "A FAMILY VACATION"
+    },
+    {
+      "category": "Event",
+      "answer": "A ROAD TRIP"
+    },
+    {
+      "category": "Event",
+      "answer": "A SCHOOL PLAY"
+    },
+    {
+      "category": "Event",
+      "answer": "A RELIGIOUS HOLIDAY"
+    },
+    {
+      "category": "Event",
+      "answer": "A CIVIL WAR REENACTMENT"
+    },
+    {
+      "category": "Event",
+      "answer": "THE WINTER SOLSTICE"
+    },
+    {
+      "category": "Event",
+      "answer": "A COMET SIGHTING"
+    },
+    {
+      "category": "Event",
+      "answer": "A MAJOR POWER OUTAGE"
+    },
+    {
+      "category": "Event",
+      "answer": "A HUGE SNOWSTORM"
+    },
+    {
+      "category": "Event",
+      "answer": "THE STOCK MARKET CRASH"
+    },
+    {
+      "category": "Event",
+      "answer": "A VOLCANIC ERUPTION"
+    },
+    {
+      "category": "Event",
+      "answer": "A TOTAL SOLAR ECLIPSE"
+    },
+    {
+      "category": "Event",
+      "answer": "THE LAUNCH OF A NEW PRODUCT"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "CASABLANCA"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE SHAWSHANK REDEMPTION"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE GODFATHER"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "SCHINDLER'S LIST"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "RAGING BULL"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "CITIZEN KANE"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "GONE WITH THE WIND"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "LAWRENCE OF ARABIA"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "TWELVE ANGRY MEN"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "STAR WARS A NEW HOPE"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "PSYCHO"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "TWENTY THOUSAND LEAGUES UNDER THE SEA"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "SUNSET BOULEVARD"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "DOCTOR STRANGELOVE"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE BRIDGE ON THE RIVER KWAI"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE BEST YEARS OF OUR LIVES"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "DOUBLE INDEMNITY"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "CHINATOWN"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "SOME LIKE IT HOT"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE GRAPES OF WRATH"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "TWENTY TWELVE"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE WIZARD OF OZ"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "E T THE EXTRA TERRESTRIAL"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "FORREST GUMP"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "PULP FICTION"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE DARK KNIGHT"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE LORD OF THE RINGS THE RETURN OF THE KING"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "INCEPTION"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE MATRIX"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "TITANIC"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "JURASSIC PARK"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "HARRY POTTER AND THE SORCERER'S STONE"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "HOME ALONE"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "SPIRITED AWAY"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "PARASITE"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "CRAZY RICH ASIANS"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "AVATAR"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "FIGHT CLUB"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE SIXTH SENSE"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE SILENCE OF THE LAMBS"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "BLADE RUNNER"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "THE TERMINATOR"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "ALIENS"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "BACK TO THE FUTURE"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "RAIDERS OF THE LOST ARK"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "BRAVEHEART"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "GLADIATOR"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "DEAD POETS SOCIETY"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "WHEN HARRY MET SALLY"
+    },
+    {
+      "category": "Movie Title",
+      "answer": "FERRIS BUELLER'S DAY OFF"
+    },
+    {
+      "category": "Book Title",
+      "answer": "PRIDE AND PREJUDICE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "TO KILL A MOCKINGBIRD"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE GREAT GATSBY"
+    },
+    {
+      "category": "Book Title",
+      "answer": "ONE HUNDRED YEARS OF SOLITUDE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "MOBY DICK"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE CATCHER IN THE RYE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE LORD OF THE RINGS"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE HOBBIT"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE ODYSSEY"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE BIBLE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "ANNA KARENINA"
+    },
+    {
+      "category": "Book Title",
+      "answer": "WAR AND PEACE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE DIVINE COMEDY"
+    },
+    {
+      "category": "Book Title",
+      "answer": "LES MISERABLES"
+    },
+    {
+      "category": "Book Title",
+      "answer": "TWENTY THOUSAND LEAGUES UNDER THE SEA"
+    },
+    {
+      "category": "Book Title",
+      "answer": "A TALE OF TWO CITIES"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE ADVENTURES OF HUCKLEBERRY FINN"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE PICTURE OF DORIAN GRAY"
+    },
+    {
+      "category": "Book Title",
+      "answer": "JANE EYRE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "WUTHERING HEIGHTS"
+    },
+    {
+      "category": "Book Title",
+      "answer": "LITTLE WOMEN"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE COLOR PURPLE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "BELOVED"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE HANDMAID'S TALE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "NINETEEN EIGHTY FOUR"
+    },
+    {
+      "category": "Book Title",
+      "answer": "ANIMAL FARM"
+    },
+    {
+      "category": "Book Title",
+      "answer": "FAHRENHEIT FOUR FIFTY ONE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE CHRONICLES OF NARNIA"
+    },
+    {
+      "category": "Book Title",
+      "answer": "WHERE THE WILD THINGS ARE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "GOODNIGHT MOON"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE VERY HUNGRY CATERPILLAR"
+    },
+    {
+      "category": "Book Title",
+      "answer": "GREEN EGGS AND HAM"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE SHINING"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE STAND"
+    },
+    {
+      "category": "Book Title",
+      "answer": "A SONG OF ICE AND FIRE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE DA VINCI CODE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "GONE GIRL"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE ALCHEMIST"
+    },
+    {
+      "category": "Book Title",
+      "answer": "LIFE OF PI"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE KITE RUNNER"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE GIVER"
+    },
+    {
+      "category": "Book Title",
+      "answer": "DRACULA"
+    },
+    {
+      "category": "Book Title",
+      "answer": "FRANKENSTEIN"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE SECRET GARDEN"
+    },
+    {
+      "category": "Book Title",
+      "answer": "CHARLOTTE'S WEB"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE LITTLE PRINCE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE COUNT OF MONTE CRISTO"
+    },
+    {
+      "category": "Book Title",
+      "answer": "TREASURE ISLAND"
+    },
+    {
+      "category": "Book Title",
+      "answer": "DON QUIXOTE"
+    },
+    {
+      "category": "Book Title",
+      "answer": "THE WONDERFUL WIZARD OF OZ"
+    },
+    {
+      "category": "Before & After",
+      "answer": "PENCIL SKIRT STEAK"
+    },
+    {
+      "category": "Before & After",
+      "answer": "PILLOW TALK SHOW"
+    },
+    {
+      "category": "Before & After",
+      "answer": "APPLE PIE IN THE SKY"
+    },
+    {
+      "category": "Before & After",
+      "answer": "DOG HOUSE OF CARDS"
+    },
+    {
+      "category": "Before & After",
+      "answer": "FISHING ROD STEWART"
+    },
+    {
+      "category": "Before & After",
+      "answer": "HOT DOG DAY AFTERNOON"
+    },
+    {
+      "category": "Before & After",
+      "answer": "JEWELRY BOX OFFICE"
+    },
+    {
+      "category": "Before & After",
+      "answer": "LADY GAGA BALL"
+    },
+    {
+      "category": "Before & After",
+      "answer": "MARY POPPINS POCKET"
+    },
+    {
+      "category": "Before & After",
+      "answer": "MAYO CLINIC APPOINTMENT"
+    },
+    {
+      "category": "Before & After",
+      "answer": "OIL SLICK TRICK"
+    },
+    {
+      "category": "Before & After",
+      "answer": "POOL TABLE MANNERS"
+    },
+    {
+      "category": "Before & After",
+      "answer": "SLEEPING BEAUTY PAGEANT"
+    },
+    {
+      "category": "Before & After",
+      "answer": "SPRAY PAINT JOB"
+    },
+    {
+      "category": "Before & After",
+      "answer": "STRAWBERRY SHORTCAKE WALK"
+    },
+    {
+      "category": "Before & After",
+      "answer": "TAXI DRIVER'S LICENSE"
+    },
+    {
+      "category": "Before & After",
+      "answer": "TELEVISION STATION BREAK"
+    },
+    {
+      "category": "Before & After",
+      "answer": "VACUUM CLEANER SHRIMP"
+    },
+    {
+      "category": "Before & After",
+      "answer": "WIND CHIME IN"
+    },
+    {
+      "category": "Before & After",
+      "answer": "ZOO KEEPER OF THE FLAME"
+    },
+    {
+      "category": "Before & After",
+      "answer": "BANANA SPLIT PEA SOUP"
+    },
+    {
+      "category": "Before & After",
+      "answer": "BUTTERFLY EFFECTIVE"
+    },
+    {
+      "category": "Before & After",
+      "answer": "CABINET MEETING PLACE"
+    },
+    {
+      "category": "Before & After",
+      "answer": "CAR WASH TUB"
+    },
+    {
+      "category": "Before & After",
+      "answer": "CELL PHONE BOOTH"
+    },
+    {
+      "category": "Before & After",
+      "answer": "CHERRY PIE THROWER"
+    },
+    {
+      "category": "Before & After",
+      "answer": "CHRISTMAS CARD GAME"
+    },
+    {
+      "category": "Before & After",
+      "answer": "COFFEE MUG SHOT"
+    },
+    {
+      "category": "Before & After",
+      "answer": "DOLLAR STORE FRONT"
+    },
+    {
+      "category": "Before & After",
+      "answer": "FOOTBALL GAME SHOW"
+    },
+    {
+      "category": "Before & After",
+      "answer": "GOLF CART WHEEL"
+    },
+    {
+      "category": "Before & After",
+      "answer": "HAIR DRYER SHEETS"
+    },
+    {
+      "category": "Before & After",
+      "answer": "ICE CREAM TRUCK DRIVER"
+    },
+    {
+      "category": "Before & After",
+      "answer": "JUKEBOX HERO SANDWICH"
+    },
+    {
+      "category": "Before & After",
+      "answer": "KEYBOARD WIZARD OF OZ"
+    },
+    {
+      "category": "Before & After",
+      "answer": "LIBRARY CARD CATALOG"
+    },
+    {
+      "category": "Before & After",
+      "answer": "LUNCH BOX SPRING"
+    },
+    {
+      "category": "Before & After",
+      "answer": "MAGAZINE COVER STORY"
+    },
+    {
+      "category": "Before & After",
+      "answer": "NIGHT OWL COOKIE"
+    },
+    {
+      "category": "Before & After",
+      "answer": "PAPER CLIP BOARD"
+    },
+    {
+      "category": "Before & After",
+      "answer": "PEANUT BUTTER FINGERS"
+    },
+    {
+      "category": "Before & After",
+      "answer": "REMOTE CONTROL FREAK"
+    },
+    {
+      "category": "Before & After",
+      "answer": "ROCK GARDEN GNOME"
+    },
+    {
+      "category": "Before & After",
+      "answer": "RUBBER CHICKEN SOUP"
+    },
+    {
+      "category": "Before & After",
+      "answer": "SATELLITE DISH WASHER"
+    },
+    {
+      "category": "Before & After",
+      "answer": "SCHOOL BUS STOP"
+    },
+    {
+      "category": "Before & After",
+      "answer": "SOAP OPERA SINGER"
+    },
+    {
+      "category": "Before & After",
+      "answer": "STAR WARS AND STRIPES"
+    },
+    {
+      "category": "Before & After",
+      "answer": "TEA PARTY GAME"
+    },
+    {
+      "category": "Before & After",
+      "answer": "WINE CELLAR DOOR"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "SHERLOCK HOLMES"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "HARRY POTTER"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "ATTICUS FINCH"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "JAY GATSBY"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "WONDER WOMAN"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "SPIDER MAN"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "MICKEY MOUSE"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "DONALD DUCK"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "POOH BEAR"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "FRODO BAGGINS"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "HAN SOLO"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "LUKE SKYWALKER"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "PRINCESS LEIA"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "VOLDEMORT"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "CAPTAIN AHAB"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "ELIZABETH BENNETT"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "SCARLETT O'HARA"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "PETER PAN"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "CAPTAIN HOOK"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "ALICE IN WONDERLAND"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "THE MAD HATTER"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "MARY POPPINS"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "JAMES BOND"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "CATNISS EVERDEEN"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "PEE WEE HERMAN"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "THE GRINCH"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "SCROOGE MCDUCK"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "TIN TIN"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "ASTRO BOY"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "POKEMON'S PIKACHU"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "THE LITTLE MERMAID"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "CINDERELLA"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "SNOW WHITE"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "PINOCCHIO"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "DUMBO THE ELEPHANT"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "THE JOKER"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "BATMAN"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "SUPERMAN"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "HE MAN"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "ROAD RUNNER"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "WILEY COYOTE"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "DAPHNE BLAKE"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "SCOOBY DOO"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "THE HULK"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "IRON MAN"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "CAPTAIN AMERICA"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "THOR"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "THE FLASH"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "GANDALF THE GREY"
+    },
+    {
+      "category": "Fictional Character",
+      "answer": "ALBUS DUMBLEDORE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "CHOCOLATE CHIP COOKIE DOUGH"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "SPICY CHICKEN WINGS"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "PEPPERONI PIZZA"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "FRENCH FRIES"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "STRAWBERRY MILKSHAKE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "GRILLED CHEESE SANDWICH"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "TOMATO SOUP"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "CHICKEN NOODLE SOUP"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "ROAST TURKEY"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "MASHED POTATOES"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "GREEN BEAN CASSEROLE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "CHOCOLATE CAKE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "VANILLA ICE CREAM"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "APPLE CIDER"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "HOT CHOCOLATE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "LEMONADE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "ICED COFFEE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "MOCHA LATTE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "BAGEL WITH CREAM CHEESE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "BACON AND EGGS"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "OATMEAL RAISIN COOKIE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "RED VELVET CUPCAKE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "CRAB LEGS WITH MELTED BUTTER"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "SUSHI ROLL"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "FAJITAS"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "TACOS"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "BURRITO BOWL"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "VEGETABLE CURRY"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "PAD THAI NOODLES"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "CHICKEN TIKKA MASALA"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "PUMPKIN SPICE LATTE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "MINT CHOCOLATE CHIP ICE CREAM"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "BEEF STEW"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "POT ROAST"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "CORNED BEEF AND CABBAGE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "PEACH COBBLER"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "BLUEBERRY MUFFIN"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "CINNAMON ROLL"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "BANANA BREAD"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "PINEAPPLE UPSIDE DOWN CAKE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "SOURDOUGH BREAD"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "PRETZEL WITH CHEESE DIP"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "SWEET POTATO FRIES"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "FISH AND CHIPS"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "CLAM CHOWDER"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "LOBSTER BISQUE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "WATERMELON SLICE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "FRUIT SMOOTHIE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "PINEAPPLE JUICE"
+    },
+    {
+      "category": "Food & Drink",
+      "answer": "SPARKLING WATER"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE OFFICE"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "FRIENDS"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "SEINFELD"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "GAME OF THRONES"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE SIMPSONS"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "BREAKING BAD"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE CROWN"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "STRANGER THINGS"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE MANDALORIAN"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "MODERN FAMILY"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "CHEERS"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "M A S H"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE SOPRANOS"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE WIRE"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "SATURDAY NIGHT LIVE"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "GREY'S ANATOMY"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "LAW AND ORDER SPECIAL VICTIMS UNIT"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "NCIS"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "BLUE BLOODS"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "YELLOWSTONE"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE BIG BANG THEORY"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "HOW I MET YOUR MOTHER"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "PARKS AND RECREATION"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "CURB YOUR ENTHUSIASM"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "BLACK MIRROR"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE QUEEN'S GAMBIT"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "FLEABAG"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE MARVELOUS MRS MAISEL"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "SCHITT'S CREEK"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "DOWNTOWN ABBEY"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE HANDMAID'S TALE"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "WESTWORLD"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "BETTER CALL SAUL"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "HOUSE OF CARDS"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "ORANGE IS THE NEW BLACK"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE GOOD PLACE"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THIS IS US"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "LOST"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "TWIN PEAKS"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "DOCTOR WHO"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "SHERLOCK"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE X FILES"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "STAR TREK THE ORIGINAL SERIES"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "GILLIGAN'S ISLAND"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE BRADY BUNCH"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "SESAME STREET"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "MISTER ROGERS NEIGHBORHOOD"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "JEOPARDY"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "WHEEL OF FORTUNE"
+    },
+    {
+      "category": "TV Show Title",
+      "answer": "THE VOICE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "BOHEMIAN RHAPSODY"
+    },
+    {
+      "category": "Song Title",
+      "answer": "STAIRWAY TO HEAVEN"
+    },
+    {
+      "category": "Song Title",
+      "answer": "IMAGINE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "HEY JUDE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "LIKE A ROLLING STONE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "SMELLS LIKE TEEN SPIRIT"
+    },
+    {
+      "category": "Song Title",
+      "answer": "HOTEL CALIFORNIA"
+    },
+    {
+      "category": "Song Title",
+      "answer": "WHAT A WONDERFUL WORLD"
+    },
+    {
+      "category": "Song Title",
+      "answer": "SWEET CAROLINE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "DON'T STOP BELIEVIN"
+    },
+    {
+      "category": "Song Title",
+      "answer": "BILLIE JEAN"
+    },
+    {
+      "category": "Song Title",
+      "answer": "I WILL ALWAYS LOVE YOU"
+    },
+    {
+      "category": "Song Title",
+      "answer": "RESPECT"
+    },
+    {
+      "category": "Song Title",
+      "answer": "YESTERDAY"
+    },
+    {
+      "category": "Song Title",
+      "answer": "WONDERWALL"
+    },
+    {
+      "category": "Song Title",
+      "answer": "SHAPE OF YOU"
+    },
+    {
+      "category": "Song Title",
+      "answer": "HAPPY"
+    },
+    {
+      "category": "Song Title",
+      "answer": "UPTOWN FUNK"
+    },
+    {
+      "category": "Song Title",
+      "answer": "ROAR"
+    },
+    {
+      "category": "Song Title",
+      "answer": "SOMEBODY THAT I USED TO KNOW"
+    },
+    {
+      "category": "Song Title",
+      "answer": "CALL ME MAYBE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "SINGLE LADIES PUT A RING ON IT"
+    },
+    {
+      "category": "Song Title",
+      "answer": "FIREWORK"
+    },
+    {
+      "category": "Song Title",
+      "answer": "PARTY IN THE USA"
+    },
+    {
+      "category": "Song Title",
+      "answer": "TEARS IN HEAVEN"
+    },
+    {
+      "category": "Song Title",
+      "answer": "NOVEMBER RAIN"
+    },
+    {
+      "category": "Song Title",
+      "answer": "LAYLA"
+    },
+    {
+      "category": "Song Title",
+      "answer": "LET IT BE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "HIT ME BABY ONE MORE TIME"
+    },
+    {
+      "category": "Song Title",
+      "answer": "LIKE A PRAYER"
+    },
+    {
+      "category": "Song Title",
+      "answer": "THRILLER"
+    },
+    {
+      "category": "Song Title",
+      "answer": "PURPLE RAIN"
+    },
+    {
+      "category": "Song Title",
+      "answer": "LIVIN ON A PRAYER"
+    },
+    {
+      "category": "Song Title",
+      "answer": "SWEET CHILD O MINE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "TAKE ON ME"
+    },
+    {
+      "category": "Song Title",
+      "answer": "IS THIS LOVE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "EVERY BREATH YOU TAKE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "GIRLS JUST WANT TO HAVE FUN"
+    },
+    {
+      "category": "Song Title",
+      "answer": "WITH OR WITHOUT YOU"
+    },
+    {
+      "category": "Song Title",
+      "answer": "CRAZY LITTLE THING CALLED LOVE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "WE ARE THE CHAMPIONS"
+    },
+    {
+      "category": "Song Title",
+      "answer": "DON'T STOP ME NOW"
+    },
+    {
+      "category": "Song Title",
+      "answer": "BRIDGE OVER TROUBLED WATER"
+    },
+    {
+      "category": "Song Title",
+      "answer": "THE SOUND OF SILENCE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "HERE COMES THE SUN"
+    },
+    {
+      "category": "Song Title",
+      "answer": "A CHANGE IS GONNA COME"
+    },
+    {
+      "category": "Song Title",
+      "answer": "JOHNNY B GOODE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "GREAT BALLS OF FIRE"
+    },
+    {
+      "category": "Song Title",
+      "answer": "SUMMER NIGHTS"
+    },
+    {
+      "category": "Song Title",
+      "answer": "JAILHOUSE ROCK"
+    },
+    {
+      "category": "People",
+      "answer": "COLLEGE ROOMMATES"
+    },
+    {
+      "category": "People",
+      "answer": "BEST FRIENDS FOREVER"
+    },
+    {
+      "category": "People",
+      "answer": "GRANDPARENTS"
+    },
+    {
+      "category": "People",
+      "answer": "THE WHOLE FAMILY"
+    },
+    {
+      "category": "People",
+      "answer": "TWIN SISTERS"
+    },
+    {
+      "category": "People",
+      "answer": "A BASKETBALL TEAM"
+    },
+    {
+      "category": "People",
+      "answer": "OFFICE COWORKERS"
+    },
+    {
+      "category": "People",
+      "answer": "HIGH SCHOOL SWEETHEARTS"
+    },
+    {
+      "category": "People",
+      "answer": "NEIGHBORHOOD KIDS"
+    },
+    {
+      "category": "People",
+      "answer": "THE JURY"
+    },
+    {
+      "category": "People",
+      "answer": "THE WEDDING PARTY"
+    },
+    {
+      "category": "People",
+      "answer": "A CHOIR GROUP"
+    },
+    {
+      "category": "People",
+      "answer": "THE CROWD AT A CONCERT"
+    },
+    {
+      "category": "People",
+      "answer": "FRATERNITY BROTHERS"
+    },
+    {
+      "category": "People",
+      "answer": "SORORITY SISTERS"
+    },
+    {
+      "category": "People",
+      "answer": "NEWLYWEDS"
+    },
+    {
+      "category": "People",
+      "answer": "WORLD LEADERS"
+    },
+    {
+      "category": "People",
+      "answer": "ARMY SOLDIERS"
+    },
+    {
+      "category": "People",
+      "answer": "BALLET DANCERS"
+    },
+    {
+      "category": "People",
+      "answer": "A CIRCUS TROUPE"
+    },
+    {
+      "category": "People",
+      "answer": "MOVIE STARS"
+    },
+    {
+      "category": "People",
+      "answer": "ROCK BAND MEMBERS"
+    },
+    {
+      "category": "People",
+      "answer": "RETIRED TEACHERS"
+    },
+    {
+      "category": "People",
+      "answer": "TRAVELING SALESMEN"
+    },
+    {
+      "category": "People",
+      "answer": "A FISHING CREW"
+    },
+    {
+      "category": "People",
+      "answer": "CONSTRUCTION WORKERS"
+    },
+    {
+      "category": "People",
+      "answer": "STREET MUSICIANS"
+    },
+    {
+      "category": "People",
+      "answer": "STAND UP COMEDIANS"
+    },
+    {
+      "category": "People",
+      "answer": "VETERANS OF WAR"
+    },
+    {
+      "category": "People",
+      "answer": "THE ENTIRE CAST"
+    },
+    {
+      "category": "People",
+      "answer": "THE CAMERA CREW"
+    },
+    {
+      "category": "People",
+      "answer": "THE HOME TEAM"
+    },
+    {
+      "category": "People",
+      "answer": "THE VISITORS"
+    },
+    {
+      "category": "People",
+      "answer": "MEDICAL STAFF"
+    },
+    {
+      "category": "People",
+      "answer": "DELIVERY DRIVERS"
+    },
+    {
+      "category": "People",
+      "answer": "BUS PASSENGERS"
+    },
+    {
+      "category": "People",
+      "answer": "AIRPORT SECURITY"
+    },
+    {
+      "category": "People",
+      "answer": "MUSEUM VISITORS"
+    },
+    {
+      "category": "People",
+      "answer": "BOOK CLUB MEMBERS"
+    },
+    {
+      "category": "People",
+      "answer": "SKI RESORT EMPLOYEES"
+    },
+    {
+      "category": "People",
+      "answer": "ZOO KEEPERS"
+    },
+    {
+      "category": "People",
+      "answer": "DETECTIVE SQUAD"
+    },
+    {
+      "category": "People",
+      "answer": "EMERGENCY RESPONDERS"
+    },
+    {
+      "category": "People",
+      "answer": "HIGH SOCIETY ELITE"
+    },
+    {
+      "category": "People",
+      "answer": "STREET PERFORMERS"
+    },
+    {
+      "category": "People",
+      "answer": "APARTMENT TENANTS"
+    },
+    {
+      "category": "People",
+      "answer": "A GROUP OF TOURISTS"
+    },
+    {
+      "category": "People",
+      "answer": "SHEEP HERDERS"
+    },
+    {
+      "category": "People",
+      "answer": "THE NOBEL LAUREATES"
+    },
+    {
+      "category": "People",
+      "answer": "INTERNATIONAL DIGNITARIES"
+    },
+    {
+      "category": "Location",
+      "answer": "THE MUSEUM GIFT SHOP"
+    },
+    {
+      "category": "Location",
+      "answer": "THE BUS STOP"
+    },
+    {
+      "category": "Location",
+      "answer": "THE GROCERY STORE"
+    },
+    {
+      "category": "Location",
+      "answer": "THE LOCAL LIBRARY"
+    },
+    {
+      "category": "Location",
+      "answer": "THE POST OFFICE"
+    },
+    {
+      "category": "Location",
+      "answer": "THE TOWN SQUARE"
+    },
+    {
+      "category": "Location",
+      "answer": "THE COFFEE SHOP"
+    },
+    {
+      "category": "Location",
+      "answer": "THE MOVIE THEATER LOBBY"
+    },
+    {
+      "category": "Location",
+      "answer": "THE SCHOOL CAFETERIA"
+    },
+    {
+      "category": "Location",
+      "answer": "THE DOCTOR'S OFFICE WAITING ROOM"
+    },
+    {
+      "category": "Location",
+      "answer": "THE CITY PARK"
+    },
+    {
+      "category": "Location",
+      "answer": "THE CORNER BAKERY"
+    },
+    {
+      "category": "Location",
+      "answer": "THE AIRPORT TERMINAL"
+    },
+    {
+      "category": "Location",
+      "answer": "THE TRAIN STATION PLATFORM"
+    },
+    {
+      "category": "Location",
+      "answer": "THE HOSPITAL EMERGENCY ROOM"
+    },
+    {
+      "category": "Location",
+      "answer": "THE POLICE STATION"
+    },
+    {
+      "category": "Location",
+      "answer": "THE FIRE DEPARTMENT"
+    },
+    {
+      "category": "Location",
+      "answer": "THE BASEBALL STADIUM"
+    },
+    {
+      "category": "Location",
+      "answer": "THE HOCKEY RINK"
+    },
+    {
+      "category": "Location",
+      "answer": "THE CONCERT HALL"
+    },
+    {
+      "category": "Location",
+      "answer": "THE BOAT DOCK"
+    },
+    {
+      "category": "Location",
+      "answer": "THE SKI SLOPES"
+    },
+    {
+      "category": "Location",
+      "answer": "THE SWIMMING POOL DECK"
+    },
+    {
+      "category": "Location",
+      "answer": "THE PUBLIC LIBRARY READING ROOM"
+    },
+    {
+      "category": "Location",
+      "answer": "THE BOTANICAL GARDEN"
+    },
+    {
+      "category": "Location",
+      "answer": "THE ZOOLOGICAL PARK"
+    },
+    {
+      "category": "Location",
+      "answer": "THE SCIENCE LAB"
+    },
+    {
+      "category": "Location",
+      "answer": "THE CHEMISTRY CLASSROOM"
+    },
+    {
+      "category": "Location",
+      "answer": "THE SCHOOL PLAYGROUND"
+    },
+    {
+      "category": "Location",
+      "answer": "THE CHURCH SANCTUARY"
+    },
+    {
+      "category": "Location",
+      "answer": "THE JEWELRY STORE"
+    },
+    {
+      "category": "Location",
+      "answer": "THE TACO TRUCK"
+    },
+    {
+      "category": "Location",
+      "answer": "THE BARBER SHOP"
+    },
+    {
+      "category": "Location",
+      "answer": "THE DRY CLEANERS"
+    },
+    {
+      "category": "Location",
+      "answer": "THE PET GROOMING SALON"
+    },
+    {
+      "category": "Location",
+      "answer": "THE CAR WASH"
+    },
+    {
+      "category": "Location",
+      "answer": "THE BANK VAULT"
+    },
+    {
+      "category": "Location",
+      "answer": "THE COURTROOM"
+    },
+    {
+      "category": "Location",
+      "answer": "THE PRISON CELL"
+    },
+    {
+      "category": "Location",
+      "answer": "THE ART STUDIO"
+    },
+    {
+      "category": "Location",
+      "answer": "THE DANCE HALL"
+    },
+    {
+      "category": "Location",
+      "answer": "THE WAREHOUSE DISTRICT"
+    },
+    {
+      "category": "Location",
+      "answer": "THE CONSTRUCTION SITE"
+    },
+    {
+      "category": "Location",
+      "answer": "THE GARAGE SALE"
+    },
+    {
+      "category": "Location",
+      "answer": "THE SECOND HAND STORE"
+    },
+    {
+      "category": "Location",
+      "answer": "THE TRAFFIC INTERSECTION"
+    },
+    {
+      "category": "Location",
+      "answer": "THE ROOFTOP GARDEN"
+    },
+    {
+      "category": "Location",
+      "answer": "THE SUBWAY CAR"
+    },
+    {
+      "category": "Location",
+      "answer": "A DESERT OASIS"
+    },
+    {
+      "category": "Location",
+      "answer": "AN UNDERGROUND BUNKER"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "HOGWARTS CASTLE"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "MIDDLE EARTH"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "NARNIA"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "NEVERLAND"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE LAND OF OZ"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "WONDERLAND"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "GOTHAM CITY"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "METROPOLIS"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "ATLANTIS"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "SHANGRI LA"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "ELDORADO"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "ASGARD"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "MOUNT OLYMPUS"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "CANDYLAND"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE BATCAVE"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE DAILY PLANET"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "STARFLEET ACADEMY"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "WINTERFELL"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE KING'S LANDING"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "PEMBERLEY"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE SHIRE"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "RIVENDEL"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE DEATH STAR"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "JABBA'S PALACE"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "TATOOINE"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE ENTERPRISE BRIDGE"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE MILLENNIUM FALCON"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE YELLOW BRICK ROAD"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE EMERALD CITY"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE ISLE OF SORNA"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "GENOSHA"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "VAKANDA"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE QUANTUM REALM"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "XAVIER'S SCHOOL FOR GIFTED YOUNGSTERS"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE TRUMAN SHOW DOME"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE ISLAND OF LOST TOYS"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "ISLA NUBLAR"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE FORBIDDEN FOREST"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "CLOUD CITY"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE CITY OF THIEVES"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "DIAGON ALLEY"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE THREE BROOMSTICKS"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "MOS EISLEY CANTINA"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE ICE CAVE"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE SECRET GARDEN"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE HAUNTED MANSION"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "A PRISON PLANET"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE GARDEN OF EDEN"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "A FLOATING CITY"
+    },
+    {
+      "category": "Fictional Place",
+      "answer": "THE END OF THE UNIVERSE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "KILL TWO BIRDS WITH ONE STONE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "BREAK THE ICE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "ON THE SAME PAGE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "BARKING UP THE WRONG TREE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "LET SLEEPING DOGS LIE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "MISS THE BOAT"
+    },
+    {
+      "category": "Idiom",
+      "answer": "BURN THE MIDNIGHT OIL"
+    },
+    {
+      "category": "Idiom",
+      "answer": "HIT THE SACK"
+    },
+    {
+      "category": "Idiom",
+      "answer": "JUMP THE GUN"
+    },
+    {
+      "category": "Idiom",
+      "answer": "CUT TO THE CHASE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "ADD INSULT TO INJURY"
+    },
+    {
+      "category": "Idiom",
+      "answer": "BEAT AROUND THE BUSH"
+    },
+    {
+      "category": "Idiom",
+      "answer": "THE BEST OF BOTH WORLDS"
+    },
+    {
+      "category": "Idiom",
+      "answer": "BLOW OFF STEAM"
+    },
+    {
+      "category": "Idiom",
+      "answer": "CHIP ON YOUR SHOULDER"
+    },
+    {
+      "category": "Idiom",
+      "answer": "COME RAIN OR SHINE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "CRY OVER SPILLED MILK"
+    },
+    {
+      "category": "Idiom",
+      "answer": "GET YOUR HEAD IN THE GAME"
+    },
+    {
+      "category": "Idiom",
+      "answer": "GIVE THE BENEFIT OF THE DOUBT"
+    },
+    {
+      "category": "Idiom",
+      "answer": "GO ON A WILD GOOSE CHASE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "HANG IN THERE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "IN A NUTSHELL"
+    },
+    {
+      "category": "Idiom",
+      "answer": "IT'S NOT ROCKET SCIENCE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "LET SOMEONE OFF THE HOOK"
+    },
+    {
+      "category": "Idiom",
+      "answer": "LOSE YOUR MARBLES"
+    },
+    {
+      "category": "Idiom",
+      "answer": "MAKE MATTERS WORSE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "NO BRAINER"
+    },
+    {
+      "category": "Idiom",
+      "answer": "OUT OF THE BLUE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "PASS THE BUCK"
+    },
+    {
+      "category": "Idiom",
+      "answer": "PULL SOMEONE'S LEG"
+    },
+    {
+      "category": "Idiom",
+      "answer": "PUT YOUR FOOT IN YOUR MOUTH"
+    },
+    {
+      "category": "Idiom",
+      "answer": "THE WHOLE NINE YARDS"
+    },
+    {
+      "category": "Idiom",
+      "answer": "UP TO PAR"
+    },
+    {
+      "category": "Idiom",
+      "answer": "WALK A MILE IN MY SHOES"
+    },
+    {
+      "category": "Idiom",
+      "answer": "ACTIONS SPEAK LOUDER THAN WORDS"
+    },
+    {
+      "category": "Idiom",
+      "answer": "BITE THE BULLET"
+    },
+    {
+      "category": "Idiom",
+      "answer": "DON'T JUDGE A BOOK BY ITS COVER"
+    },
+    {
+      "category": "Idiom",
+      "answer": "EVERY CLOUD HAS A SILVER LINING"
+    },
+    {
+      "category": "Idiom",
+      "answer": "GET OFF YOUR HIGH HORSE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "HIT THE NAIL ON THE HEAD"
+    },
+    {
+      "category": "Idiom",
+      "answer": "JUMP ON THE BANDWAGON"
+    },
+    {
+      "category": "Idiom",
+      "answer": "MAKE A LONG STORY SHORT"
+    },
+    {
+      "category": "Idiom",
+      "answer": "ONCE IN A BLUE MOON"
+    },
+    {
+      "category": "Idiom",
+      "answer": "PUTTING ALL YOUR EGGS IN ONE BASKET"
+    },
+    {
+      "category": "Idiom",
+      "answer": "SEE EYE TO EYE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "SPEAK OF THE DEVIL"
+    },
+    {
+      "category": "Idiom",
+      "answer": "TAKE IT WITH A GRAIN OF SALT"
+    },
+    {
+      "category": "Idiom",
+      "answer": "TASTE OF YOUR OWN MEDICINE"
+    },
+    {
+      "category": "Idiom",
+      "answer": "WALKING ON THIN ICE"
+    }
+  ]
+}
