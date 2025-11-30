@@ -201,11 +201,36 @@
             font-weight: bold;
         }
 
+        /* --- Mobile Adjustments --- */
         @media (max-width: 600px) {
-            #ui-layer { flex-wrap: wrap; height: auto; padding: 5px; }
-            .stat-box { font-size: 10px; margin-right: 10px; }
-            #controls { width: 100%; justify-content: center; margin-top: 5px; }
-            button { padding: 8px 12px; }
+            /* Increase tile size on small screens */
+            :root {
+                --tile-w: 60px; /* Increased width */
+                --tile-h: 80px; /* Increased height */
+                /* Adjust tile padding/font size if necessary */
+            }
+
+            .tile {
+                font-size: 40px; /* Larger emoji */
+            }
+
+            #ui-layer { 
+                flex-wrap: wrap; 
+                height: auto; 
+                padding: 5px; 
+            }
+            .stat-box { 
+                font-size: 10px; 
+                margin-right: 10px; 
+            }
+            #controls { 
+                width: 100%; 
+                justify-content: center; 
+                margin-top: 5px; 
+            }
+            button { 
+                padding: 8px 12px; 
+            }
         }
     </style>
 </head>
@@ -583,13 +608,6 @@ class MahjongGame {
     isTileFree(tile) {
         if (!tile.active) return false;
         let blockedLeft = false, blockedRight = false, blockedTop = false;
-        
-        // Define the center points of the tile's edges in the grid coordinates
-        // The tile occupies a space from X to X+1, and Y to Y+1 (approximately)
-        const leftEdgeCenter = tile.x - 0.5;
-        const rightEdgeCenter = tile.x + 0.5;
-        const topEdgeCenter = tile.y + 0.5;
-        const bottomEdgeCenter = tile.y - 0.5;
 
         for (let other of this.tiles) {
             if (!other.active || other.id === tile.id) continue;
@@ -925,7 +943,9 @@ class MahjongGame {
         
         const scaleX = availableW / 1000;
         const scaleY = availableH / 700;
-        const scale = Math.min(scaleX, scaleY, 1.2); 
+        
+        // Max scale increased from 1.2 to 2.0 to allow for larger tiles on mobile when appropriate
+        const scale = Math.min(scaleX, scaleY, 2.0); 
 
         board.style.transform = `scale(${scale})`;
     }
