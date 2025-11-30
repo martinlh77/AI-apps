@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Emoji Mahjong Solitaire</title>
+    <style>
+        :root {
+            --tile-w: 44px;
+            --tile-h: 58px;
+            --tile-depth: 6px;
+            --bg-color: #2e7d32;
+            --tile-face: #fffbf0;
+            --tile-side: #dcd6c5;
+            --tile-border: #999;
+            --ui-bg: rgba(0, 0, 0, 0.8);
+            --accent: #ffeb3b;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* --- UI Overlay & Menus --- */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            z-index: 1000;
+            color: white;
+        }
+
+        .stat-box {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .stat-value { color: var(--accent); }
+
+        #controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: #4caf50;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: translateY(2px); }
+        button.danger { background: #f44336; }
+        button.warning { background: #ff9800; color: #000; }
+        button.info { background: #2196f3; }
+        button:disabled { background: #777; cursor: not-allowed; opacity: 0.7; }
+
+        /* --- Menus --- */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+        }
+
+        .modal.hidden { display: none; }
+
+        .modal h1 { margin-bottom: 20px; font-size: 2rem; }
+        
+        .menu-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: center;
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 300px;
+        }
+
+        label { display: block; margin-bottom: 5px; color: #aaa; }
+        select { padding: 5px; width: 100%; margin-bottom: 10px; }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: white;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        .checkbox-container input { width: 18px; height: 18px; }
+
+        /* --- Game Board --- */
+        #game-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #board {
+            position: relative;
+            transform-origin: center center;
+            width: 1000px; 
+            height: 700px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 20px;
+        }
+
+        /* --- Tiles --- */
+        .tile {
+            position: absolute;
+            width: var(--tile-w);
+            height: var(--tile-h);
+            background: var(--tile-face);
+            border-radius: 4px;
+            box-shadow: 
+                2px 2px 0px var(--tile-side), 
+                3px 3px 4px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s, filter 0.2s;
+            user-select: none;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+        }
+
+        .tile.selected {
+            background-color: #e3f2fd;
+            transform: translate(-2px, -2px);
+            box-shadow: 
+                4px 4px 0px var(--tile-side), 
+                5px 5px 6px rgba(0,0,0,0.5);
+            border: 2px solid #2196f3;
+        }
+
+        .tile.hint-glow {
+            animation: pulse 1s infinite;
+            border: 2px solid #ffeb3b;
+        }
+
+        .tile.blocked {
+            filter: brightness(0.85);
+            cursor: default;
+        }
+
+        .paused .tile {
+            background: #8d6e63 !important;
+            color: transparent !important;
+            border: 1px solid #5d4037 !important;
+            box-shadow: none !important;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 5px yellow; }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px yellow; }
+            100% { transform: scale(1); box-shadow: 0 0 5px yellow; }
+        }
+
+        /* Toast for Auto Solve */
+        #toast {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 1500;
+            display: none;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            #ui-layer { flex-wrap: wrap; height: auto; padding: 5px; }
+            .stat-box { font-size: 10px; margin-right: 10px; }
+            #controls { width: 100%; justify-content: center; margin-top: 5px; }
+            button { padding: 8px 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div style="display:flex; flex-wrap:wrap;">
+            <div class="stat-box">Score: <span id="score" class="stat-value">0</span></div>
+            <div class="stat-box" style="margin-left: 15px;">Time: <span id="timer" class="stat-value">00:00</span></div>
+            <div class="stat-box" style="margin-left: 15px;">Matches: <span id="pairs-left" class="stat-value">0</span></div>
+        </div>
+        <div id="controls">
+            <button class="info" onclick="game.hint()">Hint (-50)</button>
+            <button class="warning" id="pause-btn" onclick="game.togglePause()">Pause</button>
+            <button class="info" onclick="game.manualReshuffle()">Reshuffle</button>
+            <button style="background:purple" onclick="game.startAutoSolve()">Auto-Solve</button>
+            <button class="danger" onclick="game.quit()">Quit</button>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <div id="board"></div>
+        <div id="toast"></div>
+    </div>
+
+    <div id="main-menu" class="modal">
+        <h1>Emoji Mahjong</h1>
+        <div class="menu-group">
+            <div>
+                <label>Difficulty</label>
+                <select id="difficulty">
+                    <option value="easy">Easy (36 Tiles)</option>
+                    <option value="medium" selected>Medium (72 Tiles)</option>
+                    <option value="hard">Hard (108 Tiles)</option>
+                    <option value="expert">Expert (144 Tiles)</option>
+                </select>
+            </div>
+            <div>
+                <label>Layout</label>
+                <select id="layout-select">
+                    <option value="turtle">The Turtle (Classic)</option>
+                    <option value="pyramid">The Pyramid</option>
+                    <option value="walls">City Walls</option>
+                    <option value="arena">The Arena</option>
+                    <option value="cross">The Cross</option>
+                    <option value="butterfly">Butterfly</option>
+                </select>
+            </div>
+            
+            <div class="checkbox-container" title="If checked, the board is guaranteed to be solvable without shuffling.">
+                <input type="checkbox" id="guaranteed-check">
+                <span>Guaranteed Solvable</span>
+            </div>
+
+            <button class="info" style="font-size: 1.2rem; padding: 10px;" onclick="game.start()">Start Game</button>
+        </div>
+    </div>
+
+    <div id="overlay-modal" class="modal hidden">
+        <h1 id="overlay-title">Paused</h1>
+        <div class="menu-group">
+            <p id="overlay-msg"></p>
+            <button class="info" id="overlay-action">Resume</button>
+            <button class="danger" onclick="game.quit()">Quit to Menu</button>
+        </div>
+    </div>
+
+<script>
+/**
+ * Configuration and Data
+ */
+const EMOJIS = [
+    "🎋", "🌸", "🏮", "🏯", "🍙", "🍣", "🍵", "🐲", "🎍", "🎌", 
+    "👺", "🦊", "🐼", "🐯", "🦁", "🐮", "🐷", "🐸", "🐙", "🦋", 
+    "🐞", "🌵", "🌴", "🍄", "🍇", "🍉", "🍊", "🍋", "🍌", "🍍", 
+    "🍎", "🍑", "🍒", "🍓", "🥝", "🍅", "🥑", "🍆", "🥔", "🥕",
+    "🌽", "🌶️", "🥐", "🥖", "🧀", "🥩", "🍤", "🍦", "🍩", "🍪"
+];
+
+const TILE_W = 44;
+const TILE_H = 58;
+
+// Layout Generators (Returns array of {x, y, z})
+const LAYOUTS = {
+    turtle: () => {
+        let tiles = [];
+        for(let x=2; x<=12; x++) for(let y=1; y<=8; y++) tiles.push({x,y,z:0});
+        for(let x=4; x<=10; x++) for(let y=2; y<=7; y++) tiles.push({x,y,z:1});
+        for(let x=5; x<=9; x++) for(let y=3; y<=6; y++) tiles.push({x,y,z:2});
+        for(let x=6; x<=8; x++) for(let y=4; y<=5; y++) tiles.push({x,y,z:3});
+        tiles.push({x:7, y:4.5, z:4});
+        tiles.push({x:0, y:4.5, z:0}, {x:14, y:4.5, z:0}, {x:14, y:1.5, z:0}, {x:14, y:7.5, z:0}, {x:0, y:1.5, z:0}, {x:0, y:7.5, z:0});
+        return tiles;
+    },
+    pyramid: () => {
+        let tiles = [];
+        for(let z=0; z<6; z++) for(let x=z+2; x<=12-z; x++) for(let y=z+1; y<=9-z; y++) tiles.push({x,y,z});
+        return tiles;
+    },
+    walls: () => {
+        let tiles = [];
+        for(let z=0; z<4; z++) {
+            for(let x=1; x<=4; x++) for(let y=1; y<=3; y++) tiles.push({x,y,z}); 
+            for(let x=10; x<=13; x++) for(let y=1; y<=3; y++) tiles.push({x,y,z}); 
+            for(let x=1; x<=4; x++) for(let y=6; y<=8; y++) tiles.push({x,y,z}); 
+            for(let x=10; x<=13; x++) for(let y=6; y<=8; y++) tiles.push({x,y,z}); 
+        }
+        for(let x=5; x<=9; x++) tiles.push({x,y:4.5,z:0});
+        return tiles;
+    },
+    arena: () => {
+        let tiles = [];
+        for(let x=1; x<=13; x++) { tiles.push({x,y:1,z:0}); tiles.push({x,y:8,z:0}); }
+        for(let y=2; y<=7; y++) { tiles.push({x:1,y,z:0}); tiles.push({x:13,y,z:0}); }
+        for(let z=0; z<3; z++) for(let x=4; x<=10; x++) for(let y=3; y<=6; y++) tiles.push({x,y,z});
+        return tiles;
+    },
+    cross: () => {
+        let tiles = [];
+        for(let z=0; z<3; z++) for(let x=1; x<=13; x++) for(let y=4; y<=5; y++) tiles.push({x,y,z});
+        for(let z=0; z<3; z++) for(let x=6; x<=8; x++) for(let y=1; y<=8; y++) tiles.push({x,y,z});
+        tiles.push({x:7, y:4.5, z:3});
+        return tiles;
+    },
+    butterfly: () => {
+        let tiles = [];
+        for(let z=0; z<3; z++) {
+            for(let x=1; x<=5; x++) for(let y=1; y<=8; y++) { if(y!=4&&y!=5) tiles.push({x,y,z}); }
+            for(let x=9; x<=13; x++) for(let y=1; y<=8; y++) { if(y!=4&&y!=5) tiles.push({x,y,z}); }
+        }
+        for(let y=1; y<=8; y++) tiles.push({x:7,y,z:0});
+        for(let y=2; y<=7; y++) tiles.push({x:7,y,z:1});
+        return tiles;
+    }
+};
+
+class MahjongGame {
+    constructor() {
+        this.board = document.getElementById('board');
+        this.tiles = []; 
+        this.selectedTile = null;
+        this.score = 0;
+        this.timer = 0;
+        this.timerInterval = null;
+        this.isPaused = false;
+        this.isAutoSolving = false;
+        
+        // Settings State
+        this.settings = {
+            difficulty: 'medium',
+            layout: 'turtle',
+            guaranteed: false
+        };
+    }
+
+    start() {
+        // 1. Read Settings from Menu DOM
+        this.settings = {
+            difficulty: document.getElementById('difficulty').value,
+            layout: document.getElementById('layout-select').value,
+            guaranteed: document.getElementById('guaranteed-check').checked
+        };
+        
+        // 2. Hide Menu
+        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('overlay-modal').classList.add('hidden');
+
+        // 3. Load Level
+        this.loadLevel();
+    }
+    
+    restart() {
+        // Restarts the game using the current this.settings
+        document.getElementById('overlay-modal').classList.add('hidden');
+        this.loadLevel();
+    }
+
+    loadLevel() {
+        // Tiles count config
+        let maxTiles = 144;
+        if(this.settings.difficulty === 'easy') maxTiles = 36;
+        if(this.settings.difficulty === 'medium') maxTiles = 72;
+        if(this.settings.difficulty === 'hard') maxTiles = 108;
+        
+        // Generate Layout Geometry
+        let rawLayout = LAYOUTS[this.settings.layout]();
+        
+        // Trim layout to difficulty
+        if (rawLayout.length > maxTiles) {
+            rawLayout.sort((a,b) => {
+                if(a.z !== b.z) return b.z - a.z;
+                const distA = Math.abs(a.x - 7) + Math.abs(a.y - 4.5);
+                const distB = Math.abs(b.x - 7) + Math.abs(b.y - 4.5);
+                return distA - distB;
+            });
+            rawLayout = rawLayout.slice(0, maxTiles);
+        }
+        if(rawLayout.length % 2 !== 0) rawLayout.pop();
+
+        // Initialize Values
+        this.initBoard(rawLayout, this.settings.guaranteed);
+        this.resetStats();
+        this.startTimer();
+        this.adjustZoom();
+        
+        window.addEventListener('resize', () => this.adjustZoom());
+    }
+
+    initBoard(layout, guaranteed) {
+        this.board.innerHTML = '';
+        this.tiles = [];
+        this.selectedTile = null;
+        this.isAutoSolving = false;
+        this.isPaused = false;
+
+        const totalTiles = layout.length;
+        const pairsNeeded = totalTiles / 2;
+        
+        // 1. Prepare Value Pairs
+        let valuesBase = [];
+        for (let i = 0; i < pairsNeeded; i++) {
+            let emoji = EMOJIS[i % EMOJIS.length]; 
+            if (pairsNeeded > EMOJIS.length) emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+            valuesBase.push(emoji, emoji);
+        }
+
+        // 2. Assign Values (With Solvability Check if requested)
+        let finalValues = [];
+        
+        if (guaranteed) {
+            let attempts = 0;
+            let success = false;
+            while(!success && attempts < 500) {
+                // Shuffle copy
+                let testValues = [...valuesBase].sort(() => Math.random() - 0.5);
+                if (this.simulateSolvability(layout, testValues)) {
+                    finalValues = testValues;
+                    success = true;
+                }
+                attempts++;
+            }
+            if(!success) console.warn("Could not generate purely solvable board in time. Using random.");
+            if(finalValues.length === 0) finalValues = [...valuesBase].sort(() => Math.random() - 0.5);
+        } else {
+            finalValues = [...valuesBase].sort(() => Math.random() - 0.5);
+        }
+
+        // 3. Render
+        layout.forEach((pos, index) => {
+            const el = document.createElement('div');
+            el.className = 'tile';
+            el.dataset.id = index;
+            el.textContent = finalValues[index];
+            
+            // Position
+            const left = pos.x * (TILE_W) + (pos.z * 5); 
+            const top = pos.y * (TILE_H) + (pos.z * -5);
+            
+            el.style.left = `${left}px`;
+            el.style.top = `${top}px`;
+            el.style.zIndex = pos.z * 10 + Math.floor(pos.x); 
+
+            el.onclick = (e) => this.handleTileClick(e, index);
+
+            this.board.appendChild(el);
+
+            this.tiles.push({
+                id: index,
+                el: el,
+                x: pos.x,
+                y: pos.y,
+                z: pos.z,
+                val: finalValues[index],
+                active: true
+            });
+        });
+
+        this.checkAvailableMoves(); 
+    }
+
+    /**
+     * Logic to check if a tile configuration is solvable
+     * Used for the "Guaranteed" feature
+     */
+    simulateSolvability(layout, values) {
+        // Create a lightweight virtual board
+        let virtualTiles = layout.map((pos, i) => ({
+            id: i, x: pos.x, y: pos.y, z: pos.z, val: values[i], active: true
+        }));
+
+        let activeCount = virtualTiles.length;
+
+        // Helper to check blocked status in virtual board (using the robust logic)
+        const isFree = (t, allTiles) => {
+            if (!t.active) return false;
+            let blockedLeft = false, blockedRight = false, blockedTop = false;
+
+            for (let other of allTiles) {
+                if (!other.active || other.id === t.id) continue;
+                
+                // 1. Check for tiles on top (z+1)
+                const isOverlapping = Math.abs(t.x - other.x) < 0.9 && Math.abs(t.y - other.y) < 0.9;
+                if (other.z === t.z + 1 && isOverlapping) {
+                    blockedTop = true;
+                }
+
+                // 2. Check for lateral blocking (same z)
+                if (other.z === t.z) {
+                    const yOverlap = Math.abs(t.y - other.y) < 1.0;
+
+                    if (yOverlap) {
+                        // Tile is to the left of 'other' (i.e., 'other' is blocking the right side of 't')
+                        if (other.x - t.x > 0.5 && Math.abs(t.x - other.x) < 1.5) {
+                            blockedRight = true;
+                        }
+                        // Tile is to the right of 'other' (i.e., 'other' is blocking the left side of 't')
+                        if (t.x - other.x > 0.5 && Math.abs(t.x - other.x) < 1.5) {
+                            blockedLeft = true;
+                        }
+                    }
+                }
+            }
+            return !blockedTop && !(blockedLeft && blockedRight);
+        };
+
+        // Greedy Solver Loop
+        while (activeCount > 0) {
+            let freeTiles = virtualTiles.filter(t => isFree(t, virtualTiles));
+            let matchFound = false;
+
+            // Find first pair
+            for (let i = 0; i < freeTiles.length; i++) {
+                for (let j = i + 1; j < freeTiles.length; j++) {
+                    if (freeTiles[i].val === freeTiles[j].val) {
+                        // Remove them
+                        freeTiles[i].active = false;
+                        freeTiles[j].active = false;
+                        activeCount -= 2;
+                        matchFound = true;
+                        break;
+                    }
+                }
+                if(matchFound) break;
+            }
+
+            if (!matchFound) return false; // Stuck
+        }
+        return true; // Solved
+    }
+
+    resetStats() {
+        this.score = 0;
+        this.timer = 0;
+        document.getElementById('score').innerText = '0';
+        document.getElementById('timer').innerText = '00:00';
+    }
+
+    startTimer() {
+        clearInterval(this.timerInterval);
+        this.timerInterval = setInterval(() => {
+            if(!this.isPaused) {
+                this.timer++;
+                const m = Math.floor(this.timer / 60).toString().padStart(2, '0');
+                const s = (this.timer % 60).toString().padStart(2, '0');
+                document.getElementById('timer').innerText = `${m}:${s}`;
+            }
+        }, 1000);
+    }
+
+    /* --- Core Game Logic --- */
+
+    /**
+     * UPDATED: Critical refinement to lateral blocking logic.
+     */
+    isTileFree(tile) {
+        if (!tile.active) return false;
+        let blockedLeft = false, blockedRight = false, blockedTop = false;
+        
+        // Define the center points of the tile's edges in the grid coordinates
+        // The tile occupies a space from X to X+1, and Y to Y+1 (approximately)
+        const leftEdgeCenter = tile.x - 0.5;
+        const rightEdgeCenter = tile.x + 0.5;
+        const topEdgeCenter = tile.y + 0.5;
+        const bottomEdgeCenter = tile.y - 0.5;
+
+        for (let other of this.tiles) {
+            if (!other.active || other.id === tile.id) continue;
+            
+            // Overlap check threshold (1.0 is full overlap, 0.9 is safer)
+            const xOverlap = Math.abs(tile.x - other.x) < 0.9;
+            const yOverlap = Math.abs(tile.y - other.y) < 0.9;
+
+            // 1. Vertical Blocking (Tile on top)
+            if (other.z === tile.z + 1 && xOverlap && yOverlap) { 
+                blockedTop = true;
+            }
+
+            // 2. Lateral Blocking (Tile on same Z level)
+            if (other.z === tile.z) {
+                // Check if the other tile overlaps significantly in the Y direction
+                const yProximate = Math.abs(tile.y - other.y) < 1.0; 
+
+                if (yProximate) {
+                    // Blocking Left: The other tile's center (other.x) is slightly less than tile's center (tile.x)
+                    // The other tile must cover the left half of 'tile'
+                    if (tile.x - other.x > 0.5 && Math.abs(tile.x - other.x) < 1.5) {
+                         blockedLeft = true;
+                    }
+
+                    // Blocking Right: The other tile's center (other.x) is slightly greater than tile's center (tile.x)
+                    // The other tile must cover the right half of 'tile'
+                    if (other.x - tile.x > 0.5 && Math.abs(tile.x - other.x) < 1.5) {
+                        blockedRight = true;
+                    }
+                }
+            }
+        }
+        
+        // A tile is free if NOT blocked on top AND NOT blocked on BOTH sides (left AND right).
+        return !blockedTop && !(blockedLeft && blockedRight);
+    }
+
+    checkAvailableMoves() {
+        let activeCount = 0;
+        let matches = 0;
+        let freeTiles = [];
+
+        this.tiles.forEach(t => {
+            if(t.active) {
+                activeCount++;
+                const isFree = this.isTileFree(t);
+                if(isFree) {
+                    t.el.classList.remove('blocked');
+                    freeTiles.push(t);
+                } else {
+                    t.el.classList.add('blocked');
+                    t.el.classList.remove('selected');
+                }
+            }
+        });
+
+        // Count possible matches
+        for(let i=0; i<freeTiles.length; i++) {
+            for(let j=i+1; j<freeTiles.length; j++) {
+                if(freeTiles[i].val === freeTiles[j].val) matches++;
+            }
+        }
+        
+        document.getElementById('pairs-left').innerText = matches;
+
+        if (activeCount === 0) {
+            this.gameOver(true);
+        } else if (matches === 0 && activeCount > 0) {
+            if (!this.isAutoSolving) {
+                this.showNoMovesModal();
+            }
+            // If AutoSolving, logic is handled in step loop
+        }
+        
+        return freeTiles;
+    }
+
+    handleTileClick(e, index) {
+        if(this.isPaused || this.isAutoSolving) return;
+        const tile = this.tiles[index];
+        if (!tile.active || tile.el.classList.contains('blocked')) return;
+
+        if (this.selectedTile && this.selectedTile.id === tile.id) {
+            tile.el.classList.remove('selected');
+            this.selectedTile = null;
+            return;
+        }
+
+        if (!this.selectedTile) {
+            this.selectedTile = tile;
+            tile.el.classList.add('selected');
+            return;
+        }
+
+        if (this.selectedTile.val === tile.val) {
+            this.matchTiles(this.selectedTile, tile);
+        } else {
+            this.selectedTile.el.classList.remove('selected');
+            this.selectedTile = tile;
+            tile.el.classList.add('selected');
+        }
+    }
+
+    matchTiles(tile1, tile2) {
+        tile1.el.classList.remove('selected');
+        tile1.el.style.transform = "scale(0)";
+        tile1.el.style.opacity = "0";
+        tile2.el.classList.remove('selected');
+        tile2.el.style.transform = "scale(0)";
+        tile2.el.style.opacity = "0";
+
+        setTimeout(() => {
+            tile1.el.style.display = 'none';
+            tile2.el.style.display = 'none';
+        }, 200);
+
+        tile1.active = false;
+        tile2.active = false;
+        this.selectedTile = null;
+        
+        // --- Scoring Adjustment ---
+        if (!this.isAutoSolving) {
+            this.score += 100 * (1 + (this.settings.difficulty === 'hard' ? 0.5 : 0));
+            document.getElementById('score').innerText = this.score;
+        }
+        // --------------------------
+
+        this.checkAvailableMoves();
+    }
+
+    /* --- Features --- */
+
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        const modal = document.getElementById('overlay-modal');
+        const board = document.getElementById('board');
+        
+        if(this.isPaused) {
+            modal.classList.remove('hidden');
+            board.classList.add('paused'); 
+            document.getElementById('overlay-title').innerText = "Game Paused";
+            document.getElementById('overlay-msg').innerText = "Tiles are hidden.";
+            
+            const actionBtn = document.getElementById('overlay-action');
+            actionBtn.innerText = "Resume";
+            actionBtn.onclick = () => this.togglePause();
+
+            document.getElementById('pause-btn').innerText = "Resume";
+        } else {
+            modal.classList.add('hidden');
+            board.classList.remove('paused');
+            document.getElementById('pause-btn').innerText = "Pause";
+        }
+    }
+
+    showNoMovesModal() {
+        this.isPaused = true; // Pause timer automatically
+        const modal = document.getElementById('overlay-modal');
+        modal.classList.remove('hidden');
+        document.getElementById('overlay-title').innerText = "No Matches!";
+        document.getElementById('overlay-msg').innerText = "There are no matching pairs available.";
+        
+        const actionBtn = document.getElementById('overlay-action');
+        actionBtn.innerText = "Shuffle Board";
+        actionBtn.onclick = () => {
+            this.manualReshuffle();
+            this.togglePause(); // Unpause after shuffle
+        };
+    }
+
+    hint() {
+        if(this.isPaused || this.isAutoSolving) return;
+        const freeTiles = this.checkAvailableMoves();
+        
+        let pair = null;
+        for(let i=0; i<freeTiles.length; i++) {
+            for(let j=i+1; j<freeTiles.length; j++) {
+                if(freeTiles[i].val === freeTiles[j].val) {
+                    pair = [freeTiles[i], freeTiles[j]];
+                    break;
+                }
+            }
+            if(pair) break;
+        }
+
+        if(pair) {
+            this.score -= 50; 
+            document.getElementById('score').innerText = this.score;
+            pair[0].el.classList.add('hint-glow');
+            pair[1].el.classList.add('hint-glow');
+            setTimeout(() => {
+                pair[0].el.classList.remove('hint-glow');
+                pair[1].el.classList.remove('hint-glow');
+            }, 2000);
+        } else {
+            this.showNoMovesModal();
+        }
+    }
+
+    // Wrapper for manual button click
+    manualReshuffle() {
+        this.performShuffle();
+    }
+
+    /**
+     * Ensure values are randomly reassigned only to active tiles.
+     */
+    performShuffle() {
+        const activeTiles = this.tiles.filter(t => t.active);
+        const values = activeTiles.map(t => t.val);
+        
+        if(values.length % 2 !== 0) return; 
+
+        // Shuffle logic
+        values.sort(() => Math.random() - 0.5);
+
+        activeTiles.forEach((t, i) => {
+            t.val = values[i];
+            t.el.textContent = values[i];
+            t.el.style.transition = 'none';
+            t.el.style.filter = 'sepia(1)';
+            setTimeout(() => {
+                t.el.style.transition = '';
+                t.el.style.filter = '';
+            }, 300);
+        });
+
+        if(this.selectedTile) {
+            this.selectedTile.el.classList.remove('selected');
+            this.selectedTile = null;
+        }
+        this.checkAvailableMoves();
+    }
+
+    startAutoSolve() {
+        if(this.isAutoSolving) return;
+        if(this.isPaused) this.togglePause();
+        if(!confirm("Start Auto-Solve? This will solve the rest of the board without earning score.")) return;
+
+        this.isAutoSolving = true;
+        this.autoSolveStep();
+    }
+
+    showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 1500);
+    }
+
+    autoSolveStep() {
+        if(!this.isAutoSolving) return;
+
+        const freeTiles = this.checkAvailableMoves();
+        
+        // Find match
+        let pair = null;
+        for(let i=0; i<freeTiles.length; i++) {
+            for(let j=i+1; j<freeTiles.length; j++) {
+                if(freeTiles[i].val === freeTiles[j].val) {
+                    pair = [freeTiles[i], freeTiles[j]];
+                    break;
+                }
+            }
+            if(pair) break;
+        }
+
+        if(pair) {
+            // Highlight
+            pair[0].el.classList.add('selected');
+            pair[1].el.classList.add('selected');
+
+            // Wait then remove
+            setTimeout(() => {
+                this.matchTiles(pair[0], pair[1]);
+                setTimeout(() => this.autoSolveStep(), 600); // Loop
+            }, 600);
+        } else {
+            // No matches found
+            const remaining = this.tiles.filter(t => t.active).length;
+            if(remaining > 0) {
+                // STUCK - Auto Reshuffle
+                this.showToast("No matches. Shuffling...");
+                
+                // Pause timer logic simulation
+                const wasPaused = this.isPaused;
+                this.isPaused = true; // Stop timer during shuffle calc
+                
+                this.performShuffle();
+                
+                setTimeout(() => {
+                    this.isPaused = wasPaused; // Restore timer
+                    this.autoSolveStep();
+                }, 1000);
+            } else {
+                this.gameOver(true);
+            }
+        }
+    }
+
+    quit() {
+        this.isAutoSolving = false;
+        this.isPaused = false;
+        clearInterval(this.timerInterval);
+        document.getElementById('overlay-modal').classList.add('hidden');
+        document.getElementById('main-menu').classList.remove('hidden');
+    }
+
+    gameOver(win) {
+        clearInterval(this.timerInterval);
+        this.isAutoSolving = false;
+        const modal = document.getElementById('overlay-modal');
+        modal.classList.remove('hidden');
+        document.getElementById('overlay-title').innerText = win ? "You Win!" : "Game Over";
+        document.getElementById('overlay-msg').innerText = `Final Score: ${this.score}\nTime: ${document.getElementById('timer').innerText}`;
+        
+        // "Play Again" calls restart() instead of quit()
+        const actionBtn = document.getElementById('overlay-action');
+        actionBtn.innerText = "Play Again";
+        actionBtn.onclick = () => this.restart();
+        
+        document.getElementById('pause-btn').innerText = "Pause";
+    }
+
+    adjustZoom() {
+        const container = document.getElementById('game-container');
+        const board = document.getElementById('board');
+        const padding = 20;
+        
+        const availableW = container.clientWidth - padding;
+        const availableH = container.clientHeight - padding;
+        
+        const scaleX = availableW / 1000;
+        const scaleY = availableH / 700;
+        const scale = Math.min(scaleX, scaleY, 1.2); 
+
+        board.style.transform = `scale(${scale})`;
+    }
+}
+
+const game = new MahjongGame();
+
+</script>
+</body>
+</html>
