@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algebra Architect: Tower Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-primary: #4f46e5; /* Indigo */
+            --color-secondary: #fcd34d; /* Amber */
+            --color-success: #10b981; /* Emerald */
+            --color-error: #ef4444; /* Red */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1f2937; /* Dark Gray Background */
+        }
+        .term-input {
+            width: 80px;
+            text-align: center;
+            border: 2px solid #374151;
+            background-color: #111827;
+            color: #f3f4f6;
+            padding: 8px 4px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .term-input:focus {
+            border-color: var(--color-secondary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(252, 211, 77, 0.5);
+        }
+        .game-btn {
+            padding: 10px 20px;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .primary-btn {
+            background-color: var(--color-success);
+            color: #1f2937;
+        }
+        .primary-btn:hover {
+            background-color: #059669;
+            box-shadow: 0 6px 8px -2px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+        /* Custom styles for the expression terms */
+        .term-x { color: #3b82f6; } /* Blue */
+        .term-y { color: #f43f5e; } /* Rose */
+        .term-z { color: #14b8a6; } /* Teal */
+        .term-c { color: #a78bfa; } /* Violet */
+
+        /* Tower visualization */
+        .tower-segment {
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+            font-weight: 800;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 40px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 flex flex-col items-center justify-center">
+
+    <div class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-white mb-2">🏗️ Algebra Architect</h1>
+            <h2 class="text-2xl font-bold text-yellow-400">Tower Challenge</h2>
+            <p class="text-gray-400 text-sm">7.EE.A.1: Combine like terms with rational coefficients.</p>
+        </header>
+
+        <!-- Scoreboard & Level -->
+        <div class="flex justify-between items-center mb-6 text-white text-lg font-bold">
+            <p>Level: <span id="level-display" class="text-secondary">1</span></p>
+            <p>Score: <span id="score-display" class="text-success">0</span></p>
+        </div>
+
+        <!-- Problem Display Area -->
+        <div id="problem-container" class="bg-gray-900 p-6 rounded-lg mb-8 text-white text-3xl font-mono text-center overflow-x-auto shadow-inner">
+            <p id="expression-display">Click 'Start Game' to begin!</p>
+        </div>
+
+        <!-- Tower and Input Area -->
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- 1. Simplification Input -->
+            <div class="lg:w-2/3 bg-gray-700 p-6 rounded-lg shadow-lg">
+                <h3 class="text-xl font-semibold text-white mb-4">Simplify the Expression:</h3>
+                <div id="input-fields" class="flex flex-wrap justify-center gap-4">
+                    <!-- Inputs are injected here -->
+                </div>
+                <div class="mt-6 flex justify-center space-x-4">
+                    <button id="check-btn" class="game-btn primary-btn" disabled>Check Answer</button>
+                    <button id="start-btn" class="game-btn bg-indigo-500 text-white hover:bg-indigo-600">Start Game</button>
+                </div>
+                <p id="feedback-message" class="mt-4 text-center font-bold h-6"></p>
+            </div>
+
+            <!-- 2. Tower Visualization -->
+            <div class="lg:w-1/3 bg-gray-900 p-4 rounded-lg flex flex-col items-center overflow-hidden">
+                <h3 class="text-xl font-semibold text-white mb-4">Your Math Tower</h3>
+                <div id="tower-visualization" class="w-full max-w-xs h-64 flex flex-col-reverse justify-end items-center">
+                    <!-- Tower segments are built here -->
+                </div>
+                <div class="mt-4 text-center">
+                    <p class="text-gray-400 text-sm">Correct answers add a segment!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructional / Helper Link -->
+        <footer class="mt-8 text-center">
+            <button id="instruction-btn" class="text-indigo-400 hover:text-indigo-300 transition duration-150 text-sm">
+                Need a review? Go to Blueprint Builder (Instructional Mode)
+            </button>
+        </footer>
+
+        <!-- Modal for Instructional Mode -->
+        <div id="instruction-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div class="bg-gray-800 p-8 rounded-xl w-full max-w-lg shadow-2xl">
+                <h3 class="text-2xl font-bold text-yellow-400 mb-4">Blueprint Builder: Combining Like Terms</h3>
+                <p class="text-gray-300 mb-4">
+                    In Algebra Architect, an expression is a blueprint. To simplify, you must group the same materials (like terms) together and combine their amounts (the coefficients).
+                </p>
+                <!-- UPDATED: Use plain text variables -->
+                <ul class="text-gray-300 space-y-2 mb-6">
+                    <li><span class="font-bold term-x">X-Terms (Bricks)</span>: Only combine terms with x.</li>
+                    <li><span class="font-bold term-y">Y-Terms (Windows)</span>: Only combine terms with y.</li>
+                    <li><span class="font-bold term-z">Z-Terms (Beams)</span>: Only combine terms with z.</li>
+                    <li><span class="font-bold term-c">Constants (Grout)</span>: Only combine plain numbers.</li>
+                </ul>
+                <!-- UPDATED: Clearer Subtraction Tip -->
+                <p class="text-gray-300 mb-6">
+                    <span class="font-bold text-red-400">Subtraction Tip (Distributing the Negative):</span> When you subtract an expression, the negative sign must be distributed to change the sign of EVERY term inside the parentheses.
+                    <br/>Example: -(2x - 3y + 5) becomes -2x + 3y - 5.
+                </p>
+                <button id="close-modal-btn" class="game-btn bg-indigo-500 text-white w-full">Got It! Back to the Tower</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Global Game State
+        const game = {
+            level: 1,
+            score: 0,
+            inGame: false,
+            currentProblem: null,
+            variables: ['x', 'y', 'z', 'c'] // 'c' for constant
+        };
+
+        // DOM Elements
+        const DOMElements = {
+            levelDisplay: document.getElementById('level-display'),
+            scoreDisplay: document.getElementById('score-display'),
+            expressionDisplay: document.getElementById('expression-display'),
+            inputFields: document.getElementById('input-fields'),
+            checkBtn: document.getElementById('check-btn'),
+            startBtn: document.getElementById('start-btn'),
+            feedbackMessage: document.getElementById('feedback-message'),
+            towerVisualization: document.getElementById('tower-visualization'),
+            instructionBtn: document.getElementById('instruction-btn'),
+            instructionModal: document.getElementById('instruction-modal'),
+            closeModalBtn: document.getElementById('close-modal-btn'),
+        };
+
+        // --- Utility Functions ---
+
+        // Generates a random rational coefficient (integer or decimal, positive or negative)
+        function generateCoefficient(level) {
+            let magnitude;
+            const sign = Math.random() < 0.5 ? -1 : 1;
+
+            if (level === 1) {
+                // Level 1: Small positive/negative integers
+                magnitude = Math.floor(Math.random() * 5) + 1; // 1 to 5
+            } else if (level === 2) {
+                // Level 2: Larger positive/negative integers
+                magnitude = Math.floor(Math.random() * 10) + 1; // 1 to 10
+            } else {
+                // Level 3+: Decimals and varied magnitudes (Rational coefficients)
+                magnitude = Math.random() * 10;
+                if (Math.random() < 0.3) {
+                    magnitude = Math.floor(magnitude); // Integer
+                } else if (Math.random() < 0.7) {
+                    magnitude = Math.round(magnitude * 10) / 10; // One decimal place
+                } else {
+                    magnitude = Math.round(magnitude * 100) / 100; // Two decimal places
+                }
+            }
+            return sign * magnitude;
+        }
+
+        // Formats a coefficient and variable into a string for the PROBLEM DISPLAY (e.g., -2.5x, + 4y)
+        function formatTerm(coeff, variable, isFirstTerm = false) {
+            if (coeff === 0) return '';
+            let sign = coeff > 0 ? (isFirstTerm ? '' : ' + ') : ' - ';
+            const absCoeff = Math.abs(coeff);
+            let coeffStr = absCoeff === 1 && variable !== 'c' ? '' : absCoeff.toFixed(game.level > 2 ? 2 : 0).replace(/\.00$/, '');
+
+            if (variable === 'c') {
+                variable = '';
+            }
+
+            // Handle first term sign logic
+            if (isFirstTerm) {
+                if (coeff < 0) sign = '-';
+                else sign = '';
+            }
+
+            // Clean up: if it's not the first term and we have an empty coefficient string (1), remove the leading space
+            if (!isFirstTerm && coeffStr === '') {
+                sign = sign.trim() + ' ';
+            }
+
+            return `${sign}${coeffStr}${variable}`;
+        }
+
+        // UPDATED: Formats a coefficient and variable for the TOWER SEGMENT (e.g., 2x, (-9y), 5)
+        function formatSegmentTerm(coeff, variable) {
+            // Check if coefficient is effectively zero (especially important for float comparisons)
+            const precision = game.level > 2 ? 2 : 0;
+            const checkCoeff = Math.abs(coeff.toFixed(precision));
+            if (checkCoeff == 0) return '';
+
+            const absCoeff = Math.abs(coeff);
+            
+            let coeffStr = absCoeff.toFixed(precision).replace(/\.00$/, '');
+            
+            // 1. Handle coefficient display (suppress '1' for variables)
+            if (absCoeff.toFixed(precision) === (1).toFixed(precision) && variable !== 'c') {
+                coeffStr = '';
+            }
+
+            const termString = `${coeffStr}${variable === 'c' ? '' : variable}`;
+
+            // 2. Handle sign and parentheses
+            if (coeff < 0) {
+                // Negative term: enclose in parentheses and show the minus sign
+                return `(-${termString})`;
+            } else {
+                // Positive term: return without sign (will be joined by '+')
+                return termString;
+            }
+        }
+
+        // Generates a new random expression problem
+        function generateProblem() {
+            const problem = {
+                A: {}, // Coefficients for the first expression
+                B: {}, // Coefficients for the second expression
+                operation: Math.random() < 0.5 ? '+' : '-', // Operation: + or -
+                correct: {} // Correct simplified coefficients
+            };
+
+            DOMElements.checkBtn.disabled = false;
+
+            game.variables.forEach(v => {
+                problem.A[v] = generateCoefficient(game.level);
+                problem.B[v] = generateCoefficient(game.level);
+
+                let combinedCoeff;
+                if (problem.operation === '+') {
+                    combinedCoeff = problem.A[v] + problem.B[v];
+                } else {
+                    // Subtraction: A - B
+                    combinedCoeff = problem.A[v] - problem.B[v];
+                }
+
+                // Correct answer must be rounded to match the display precision
+                if (game.level > 2) {
+                    problem.correct[v] = Math.round(combinedCoeff * 100) / 100;
+                } else {
+                    problem.correct[v] = Math.round(combinedCoeff);
+                }
+            });
+
+            game.currentProblem = problem;
+            renderProblem(problem);
+            renderInputs();
+        }
+
+        // Renders the expression to the screen
+        function renderProblem(problem) {
+            const termsA = game.variables.map((v, i) => formatTerm(problem.A[v], v, i === 0)).join('');
+            const termsB = game.variables.map((v, i) => formatTerm(problem.B[v], v, i === 0)).join('');
+
+            const expressionHTML = `
+                <span class="text-white">(${termsA})</span>
+                <span class="text-yellow-400 font-bold mx-2">${problem.operation}</span>
+                <span class="text-white">(${termsB})</span>
+            `;
+            DOMElements.expressionDisplay.innerHTML = expressionHTML;
+        }
+
+        // Renders the user input fields
+        function renderInputs() {
+            DOMElements.inputFields.innerHTML = '';
+            game.variables.forEach(v => {
+                const label = v === 'c' ? 'Constant' : `${v.toUpperCase()}-Term`;
+                const termClass = `term-${v}`;
+                const inputHTML = `
+                    <div class="flex flex-col items-center">
+                        <label for="input-${v}" class="text-gray-400 text-sm font-semibold mb-1">${label}</label>
+                        <div class="flex items-center">
+                            <input type="number" step="${game.level > 2 ? '0.01' : '1'}" id="input-${v}" placeholder="0" class="term-input ${termClass}" />
+                            <span class="ml-2 text-2xl ${termClass}">${v === 'c' ? '' : v}</span>
+                        </div>
+                    </div>
+                `;
+                DOMElements.inputFields.insertAdjacentHTML('beforeend', inputHTML);
+            });
+            // Focus on the first input field
+            document.getElementById('input-x')?.focus();
+        }
+
+        // Checks the user's input against the correct answer
+        function checkAnswer() {
+            if (!game.currentProblem) return;
+
+            let allCorrect = true;
+            let correctCount = 0;
+
+            game.variables.forEach(v => {
+                const inputElement = document.getElementById(`input-${v}`);
+                const correctCoeff = game.currentProblem.correct[v];
+                
+                // UPDATED: Treat empty input as 0
+                const userInputValue = inputElement.value.trim();
+                const userCoeff = userInputValue === '' ? 0 : parseFloat(userInputValue);
+                
+                if (isNaN(userCoeff)) {
+                    // If the user entered something that isn't a valid number
+                    inputElement.style.borderColor = varCss('color-error');
+                    allCorrect = false;
+                    return;
+                }
+
+                // Use a small epsilon for floating point comparison in higher levels
+                const isCorrect = game.level > 2
+                    ? Math.abs(userCoeff - correctCoeff) < 0.001
+                    : userCoeff === correctCoeff;
+
+                if (isCorrect) {
+                    inputElement.style.borderColor = varCss('color-success');
+                    inputElement.disabled = true;
+                    correctCount++;
+                } else {
+                    inputElement.style.borderColor = varCss('color-error');
+                    allCorrect = false;
+                }
+            });
+
+            if (allCorrect) {
+                DOMElements.feedbackMessage.className = 'mt-4 text-center font-bold text-green-400';
+                DOMElements.feedbackMessage.textContent = "✅ Tower Block Placed! Well Done!";
+                game.score += 100 * game.level;
+                DOMElements.scoreDisplay.textContent = game.score;
+
+                // Add tower segment
+                addTowerSegment(game.currentProblem.correct);
+
+                // Progress the game
+                setTimeout(() => {
+                    if (game.score >= game.level * 1000) { // Level up every 1000 points
+                        game.level++;
+                        DOMElements.levelDisplay.textContent = game.level;
+                    }
+                    generateProblem();
+                    DOMElements.feedbackMessage.textContent = "";
+                }, 1500);
+
+            } else {
+                DOMElements.feedbackMessage.className = 'mt-4 text-center font-bold text-red-400';
+                DOMElements.feedbackMessage.textContent = "❌ Incorrect terms. Try again!";
+                game.score = Math.max(0, game.score - 50); // Penalty
+                DOMElements.scoreDisplay.textContent = game.score;
+            }
+        }
+
+        // Helper to get CSS variable values
+        function varCss(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
+        }
+
+        // UPDATED: Adds a visual segment to the tower with new formatting
+        function addTowerSegment(result) {
+            // Use the new formatter and join with '+'
+            const segments = game.variables
+                .map(v => formatSegmentTerm(result[v], v))
+                .filter(term => term !== ''); 
+
+            const finalExpression = segments.join(' + ');
+
+            const segment = document.createElement('div');
+            segment.className = 'tower-segment w-full bg-indigo-500 text-white p-2 flex justify-center items-center opacity-0';
+            segment.style.transform = 'translateY(50px)';
+            // Show the simplified expression, using '0' if the expression simplified to zero
+            segment.innerHTML = `<p class="text-sm">${finalExpression || '0'}</p>`; 
+
+            DOMElements.towerVisualization.appendChild(segment);
+
+            // Animate the block rising into place
+            setTimeout(() => {
+                segment.style.opacity = '1';
+                segment.style.transform = 'translateY(0)';
+            }, 10);
+        }
+
+        // --- Game Flow ---
+
+        function startGame() {
+            game.inGame = true;
+            game.level = 1;
+            game.score = 0;
+            DOMElements.levelDisplay.textContent = game.level;
+            DOMElements.scoreDisplay.textContent = game.score;
+            DOMElements.startBtn.textContent = 'Restart Game';
+            DOMElements.checkBtn.disabled = false;
+            DOMElements.feedbackMessage.textContent = '';
+            DOMElements.towerVisualization.innerHTML = '';
+            generateProblem();
+        }
+
+        // --- Event Listeners ---
+
+        DOMElements.startBtn.addEventListener('click', startGame);
+        DOMElements.checkBtn.addEventListener('click', checkAnswer);
+
+        // Allow 'Enter' key to check answer
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && game.inGame && !DOMElements.checkBtn.disabled) {
+                checkAnswer();
+            }
+        });
+
+        // Instructional Modal Handlers
+        DOMElements.instructionBtn.addEventListener('click', () => {
+            DOMElements.instructionModal.classList.remove('hidden');
+        });
+        DOMElements.closeModalBtn.addEventListener('click', () => {
+            DOMElements.instructionModal.classList.add('hidden');
+        });
+
+        // Initialize display
+        renderInputs(); // Render inputs once on load to show the structure
+    </script>
+</body>
+</html>
