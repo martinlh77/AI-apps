@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ice Cream Climb - Ultimate Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Press+Start+2P&display=swap');
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #2d3748;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 800px;
+            max-height: 600px;
+            margin: 0 auto;
+            background: #000;
+            border: 4px solid #4fd1c5;
+            box-shadow: 0 0 20px rgba(79, 209, 197, 0.5);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        /* UI Overlay Styles */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 20;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+
+        .btn {
+            background: #ed64a6;
+            border: 4px solid #97266d;
+            color: white;
+            padding: 10px 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            margin: 5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 4px 0 #97266d;
+            transition: transform 0.1s;
+            border-radius: 8px;
+        }
+        .btn:active { transform: translateY(4px); box-shadow: 0 0 0 #97266d; }
+        .btn-green { background: #48bb78; border-color: #276749; box-shadow: 0 4px 0 #276749; }
+        .btn-blue { background: #4299e1; border-color: #2b6cb0; box-shadow: 0 4px 0 #2b6cb0; }
+        .btn-sm { padding: 5px 10px; font-size: 10px; }
+
+        /* Music Controls */
+        .music-panel {
+            background: #2d3748;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #4fd1c5;
+            margin-bottom: 15px;
+            width: 90%;
+            max-width: 400px;
+        }
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #4a5568;
+            outline: none;
+            border-radius: 5px;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #4fd1c5;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        /* Math Question Styles */
+        .math-box {
+            background: #fff;
+            color: #2d3748;
+            padding: 20px;
+            border-radius: 15px;
+            border: 4px solid #ed64a6;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .math-question {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-family: 'Fredoka', sans-serif;
+        }
+        .math-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .math-option {
+            background: #edf2f7;
+            border: 2px solid #cbd5e0;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            position: relative;
+        }
+        .math-option:hover:not(.disabled) { background: #bee3f8; border-color: #4299e1; }
+        .math-option.disabled { cursor: default; opacity: 0.6; }
+
+        /* Mobile Controls */
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+        .control-btn {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            pointer-events: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            user-select: none;
+            backdrop-filter: blur(4px);
+        }
+        .control-btn:active { background: rgba(255, 255, 255, 0.5); }
+        #btn-left { left: 20px; bottom: 10px; }
+        #btn-right { left: 90px; bottom: 10px; }
+        #btn-jump { right: 20px; bottom: 20px; width: 70px; height: 70px; background: rgba(237, 100, 166, 0.4); border-color: #ed64a6; }
+        #btn-up { right: 100px; bottom: 10px; } 
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            text-shadow: 2px 2px 0 #000;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        #hint-box {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #d53f8c;
+            background: #fff5f7;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        #screenshot-result img {
+            max-width: 100%;
+            border: 4px solid white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="hud">
+            <div>SCORE: <span id="score-display">0</span></div>
+            <div>LEVEL: <span id="level-display">1</span></div>
+            <div>LIVES: <span id="lives-display">3</span></div>
+        </div>
+
+        <button id="pause-btn" class="absolute top-2 right-2 z-30 text-white bg-gray-700 bg-opacity-50 p-2 rounded hover:bg-gray-600 pointer-events:auto">
+            <i class="fas fa-pause"></i>
+        </button>
+
+        <div id="mobile-controls">
+            <div id="btn-left" class="control-btn"><i class="fas fa-arrow-left"></i></div>
+            <div id="btn-right" class="control-btn"><i class="fas fa-arrow-right"></i></div>
+            <div id="btn-up" class="control-btn"><i class="fas fa-arrow-up"></i></div>
+            <div id="btn-jump" class="control-btn"><i class="fas fa-shoe-prints"></i></div>
+        </div>
+
+        <div id="start-screen" class="overlay">
+            <h1 class="text-3xl md:text-5xl text-pink-400 mb-4" style="font-family: 'Press Start 2P'; text-shadow: 4px 4px #000;">ICE CREAM<br>CLIMB</h1>
+            
+            <div class="music-panel">
+                <h3 class="text-sm font-bold text-pink-200 mb-2">AUDIO SETTINGS</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-xs mr-2">Music:</label>
+                    <select id="music-selector" class="text-black text-xs p-1 rounded w-32">
+                        <option value="cycle">Cycle All</option>
+                        <option value="0">Ice Cream Chaos</option>
+                        <option value="1">Ice Cream Circus</option>
+                        <option value="2">Ice Cream Madness</option>
+                        <option value="3">Ice Cream Mayhem</option>
+                        <option value="4">Disturbed Dairy</option>
+                        <option value="5">Frozen Frenzy</option>
+                    </select>
+                    <button id="preview-btn" class="btn btn-sm btn-blue"><i class="fas fa-play"></i></button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-volume-down text-xs"></i>
+                    <input type="range" id="volume-slider" min="0" max="100" value="30" class="slider">
+                    <i class="fas fa-volume-up text-xs"></i>
+                </div>
+            </div>
+
+            <p class="mb-4 text-xs md:text-sm max-w-md text-gray-300">Controls: Arrows to Move/Climb, Space to Jump</p>
+            <button id="start-btn" class="btn btn-green text-xl">START GAME</button>
+        </div>
+
+        <div id="math-overlay" class="overlay hidden">
+            <h2 id="math-title" class="text-2xl font-bold mb-4 text-pink-300">Energy Check!</h2>
+            <div class="math-box">
+                <div id="math-question-text" class="math-question">Question goes here...</div>
+                <div id="math-options-container" class="math-options">
+                    </div>
+                <div id="hint-box"></div>
+            </div>
+            <div class="mt-4 text-sm text-gray-300">Solve to continue!</div>
+        </div>
+
+        <div id="menu-overlay" class="overlay hidden">
+            <h2 id="menu-title" class="text-3xl mb-4 text-white font-bold">PAUSED</h2>
+            <div class="flex flex-col gap-2">
+                <button id="resume-btn" class="btn btn-blue hidden">RESUME</button>
+                <button id="screenshot-btn" class="btn">FINISH & GET REPORT</button>
+                <button id="restart-btn" class="btn btn-blue">RESTART GAME</button>
+            </div>
+        </div>
+
+        <div id="screenshot-overlay" class="overlay hidden" style="background: #2d3748;">
+            <h2 class="text-2xl text-pink-400 mb-2 font-bold">Review Complete!</h2>
+            <p class="mb-4 text-sm">Right-click (or long press) image to save.</p>
+            <div id="screenshot-result" class="mb-4"></div>
+            <button id="close-screenshot-btn" class="btn btn-blue">Back to Menu</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- AUDIO ENGINE ---
+        
+        // 1. Music Manager
+        const MusicManager = {
+            tracks: [
+                "https://files.catbox.moe/yewq84.mp3", // Chaos
+                "https://files.catbox.moe/nv4wn4.mp3", // Circus
+                "https://files.catbox.moe/olt3nv.mp3", // Madness
+                "https://files.catbox.moe/f6b7fr.mp3", // Mayhem
+                "https://files.catbox.moe/wi4w2d.mp3", // Disturbed Dairy (New)
+                "https://files.catbox.moe/l973ii.mp3"  // Frozen Frenzy (New)
+            ],
+            audio: new Audio(),
+            currentIndex: 0,
+            isCycling: true,
+            isPlaying: false,
+
+            init: function() {
+                this.audio.loop = true;
+                const vol = document.getElementById('volume-slider').value;
+                this.audio.volume = vol / 100;
+                
+                document.getElementById('volume-slider').addEventListener('input', (e) => {
+                    this.audio.volume = e.target.value / 100;
+                });
+            },
+
+            playTrack: function(index) {
+                if (index === 'cycle') {
+                    this.isCycling = true;
+                    this.currentIndex = Math.floor(Math.random() * this.tracks.length);
+                } else {
+                    this.isCycling = false;
+                    this.currentIndex = parseInt(index);
+                }
+                this.loadAndPlay();
+            },
+
+            nextTrack: function() {
+                if (this.isCycling) {
+                    this.currentIndex = (this.currentIndex + 1) % this.tracks.length;
+                    this.loadAndPlay();
+                }
+            },
+
+            loadAndPlay: function() {
+                this.audio.src = this.tracks[this.currentIndex];
+                this.audio.play().catch(e => console.log("Audio play prevented until interaction"));
+                this.isPlaying = true;
+            },
+
+            stop: function() {
+                this.audio.pause();
+                this.isPlaying = false;
+            },
+            
+            togglePreview: function() {
+                if (this.isPlaying) {
+                    this.stop();
+                    return false;
+                } else {
+                    const selector = document.getElementById('music-selector').value;
+                    const idx = selector === 'cycle' ? Math.floor(Math.random() * this.tracks.length) : parseInt(selector);
+                    this.audio.src = this.tracks[idx];
+                    this.audio.play();
+                    this.isPlaying = true;
+                    return true;
+                }
+            }
+        };
+
+        // 2. Sound Effects Synthesizer (Web Audio API)
+        const SFX = {
+            ctx: null,
+            init: function() {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            },
+            playTone: function(freq, type, duration, vol=0.1) {
+                if (!this.ctx) this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+            jump: function() { this.playTone(400, 'sine', 0.1); },
+            climb: function() { this.playTone(150, 'triangle', 0.05, 0.05); },
+            step: function() { this.playTone(100, 'square', 0.03, 0.02); },
+            spawn: function() { this.playTone(800, 'square', 0.1); },
+            correct: function() { 
+                if(!this.ctx) this.init();
+                this.playTone(600, 'sine', 0.1);
+                setTimeout(() => this.playTone(1200, 'sine', 0.3), 100);
+            },
+            wrong: function() { 
+                if(!this.ctx) this.init();
+                this.playTone(150, 'sawtooth', 0.3);
+                setTimeout(() => this.playTone(100, 'sawtooth', 0.3), 150);
+            },
+            hit: function() {
+                if(!this.ctx) this.init();
+                this.playTone(200, 'sawtooth', 0.5);
+                setTimeout(() => this.playTone(100, 'sawtooth', 0.5), 100);
+            },
+            win: function() {
+                if(!this.ctx) this.init();
+                let now = this.ctx.currentTime;
+                [523, 659, 783, 1046].forEach((f, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.value = f;
+                    gain.gain.value = 0.1;
+                    gain.gain.linearRampToValueAtTime(0, now + i*0.1 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i*0.1);
+                    osc.stop(now + i*0.1 + 0.3);
+                });
+            }
+        };
+
+        // --- ASSET MANAGER ---
+        const Assets = {
+            player: new Image(),
+            enemy: new Image(),
+            platform: new Image(),
+            background: new Image(),
+            goal: new Image(),
+            ladder: new Image(),
+            loaded: 0,
+            total: 6
+        };
+
+        function loadAssets() {
+            Assets.player.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTIyIDEwQzIyIDUuNiAyNi42IDIgMzIgMnMxMCAzLjYgMTAgOGMwIDIuNC0uOSA0LjYtMi40IDYuMkw0NCAyMmg1djZINTV2MzBIMTVWMjhIMTV2LTZoNWMtMS41LTEuNi0yLjQtMy44LTIuNC02LjJ6Ii8+PHJlY3QgeD0iMjAiIHk9IjMwIiB3aWR0aD0iMjQiIGhlaWdodD0iMjAiIGZpbGw9IiNlZDY0YTYiLz48Y2lyY2xlIGN4PSIyOCIgY3k9IjM1IiByPSIyIiBmaWxsPSIjMDAwIi8+PGNpcmNsZSBjeD0iMzYiIGN5PSIzNSIgcj0iMiIgZmlsbD0iIzAwMCIvPjwvc3ZnPg==";
+            Assets.enemy.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCI+PGNpcmNsZSBjeD0iMzIiIGN5PSIyOCIgcj0iMjUiIGZpbGw9IiNmNjg3YjMiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTMyIDYwVjcxTTE5IDY4VjcyTTQ1IDY4VjcyIiBzdHJva2U9IiNmNjg3YjMiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTIyIDIwQzI2IDIwIDMwIDIyIDMyIDI1TDM0IDI4QzM2IDMwIDM4IDMwIDQyIDI4IiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PHBhdGggZD0iTTIwIDIyVjIyLjFNNTAgMjJWMjIuMSIgZmlsbD0iIzAwMCIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjwvc3ZnPg==";
+            Assets.platform.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4Ij48cmVjdCB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgZmlsbD0iI2Q2OWUyZSIvPjxwYXRoIGQ9Ik0wIDAgTDEyOCAxMjggTTEyOCAwIEwwIDEyOCIgc3Ryb2tlPSIjYjQ2OTBlIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiLz48cmVjdCB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNzQ0MjEwIiBzdHJva2Utd2lkdGg9IjQiLz48L3N2Zz4=";
+            Assets.background.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDI0IiBoZWlnaHQ9Ijc2OCI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzJkMzc0OCIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzE3MTkxZCIvPjwvbGluZWFyR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDI0IiBoZWlnaHQ9Ijc2OCIgZmlsbD0idXJsKCNnKSIvPjwvc3ZnPg==";
+            Assets.goal.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4Ij48Y2lyY2xlIGN4PSI2NCIgY3k9IjkwIiByPSIzMCIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjY0IiBjeT0iNjAiIHI9IjI1IiBmaWxsPSIjZmZmIi8+PGNpcmNsZSBjeD0iNjQiIGN5PSI0MCIgcj0iMTUiIGZpbGw9IiNmNTY1NjUiLz48cGF0aCBkPSJNNjQgNDAgTzY0IDIwIiBzdHJva2U9IiM5YjJjMmMiIHN0cm9rZS13aWR0aD0iMyIvPjwvc3ZnPg==";
+            Assets.ladder.src = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NCIgaGVpZ2h0PSIxMjgiPjxyZWN0IHg9IjEwIiB5PSIwIiB3aWR0aD0iNSIgaGVpZ2h0PSIxMjgiIGZpbGw9IiM0Mjk5ZTEiLz48cmVjdCB4PSI0OSIgeT0iMCIgd2lkdGg9IjUiIGhlaWdodD0iMTI4IiBmaWxsPSIjNDI5OWUxIi8+PHJlY3QgeD0iMTAiIHk9IjIwIiB3aWR0aD0iNDQiIGhlaWdodD0iNSIgZmlsbD0iIzQyOTllMSIvPjxyZWN0IHg9IjEwIiB5PSI2MCIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjUiIGZpbGw9IiM0Mjk5ZTEiLz48cmVjdCB4PSIxMCIgeT0iMTAwIiB3aWR0aD0iNDQiIGhlaWdodD0iNSIgZmlsbD0iIzQyOTllMSIvPjwvc3ZnPg==";
+
+            const checkLoad = () => {
+                Assets.loaded++;
+                if (Assets.loaded === Assets.total) console.log("Assets Loaded");
+            };
+            Object.values(Assets).forEach(img => {
+                if (img.complete) checkLoad();
+                else img.onload = checkLoad;
+            });
+        }
+        loadAssets();
+
+        // --- MATH ENGINE (Formatted) ---
+        const MathEngine = {
+            fmt: (n) => n < 0 ? `(${n})` : n,
+            fmtTerm: (n, v) => n < 0 ? `(${n}${v})` : `${n}${v}`,
+
+            generateProblem: function() {
+                const types = ['combine', 'distrib', 'factor', 'eval'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                let q = { text: "", correct: "", options: [], hint: "" };
+                const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+                const variable = () => ['x', 'y', 'a', 'n'][Math.floor(Math.random() * 4)];
+
+                switch (type) {
+                    case 'combine':
+                        const v = variable();
+                        const c1 = rand(-9, 9), c2 = rand(-9, 9);
+                        const n1 = rand(-9, 9), n2 = rand(-9, 9);
+                        if (c1+c2 === 0) c2++;
+                        q.text = `Simplify:<br> ${c1}${v} + ${this.fmt(n1)} + ${this.fmtTerm(c2,v)} + ${this.fmt(n2)}`;
+                        const cRes = c1+c2;
+                        const nRes = n1+n2;
+                        q.correct = `${cRes}${v} + ${this.fmt(nRes)}`;
+                        q.options = [q.correct, `${c1-c2}${v} + ${this.fmt(n1-n2)}`, `${cRes}${v} + ${this.fmt(n1-n2)}`, `${cRes+nRes}${v}`];
+                        q.hint = "Combine variable terms together, and number terms together. Watch the signs!";
+                        break;
+
+                    case 'distrib':
+                        const d1 = rand(-5, 5) || 2;
+                        const d2 = rand(2, 9);
+                        const d3 = rand(-9, 9);
+                        const dv = variable();
+                        q.text = `Distribute:<br> ${d1}(${d2}${dv} + ${this.fmt(d3)})`;
+                        q.correct = `${d1*d2}${dv} + ${this.fmt(d1*d3)}`;
+                        q.options = [q.correct, `${d1*d2}${dv} + ${this.fmt(d3)}`, `${d1+d2}${dv} + ${this.fmt(d1+d3)}`, `${d2}${dv} + ${this.fmt(d1*d3)}`];
+                        q.hint = `Multiply ${d1} by BOTH terms inside the parentheses.`;
+                        break;
+
+                    case 'factor':
+                        const f1 = rand(2, 6);
+                        const f2 = rand(1, 5);
+                        const fv = variable();
+                        const term1 = f1 * f2;
+                        const term2 = f1 * rand(2, 5);
+                        q.text = `Factor completely:<br> ${term1}${fv} + ${term2}`;
+                        q.correct = `${f1}(${term1/f1}${fv} + ${term2/f1})`;
+                        q.options = [q.correct, `${term1/f1}(${f1}${fv} + ${term2})`, `${Math.floor(f1/2)}(${term1/Math.floor(f1/2)}${fv} + ${term2/Math.floor(f1/2)})`, `${term1}${fv} + ${term2}`];
+                        q.hint = `Find the GCF of ${term1} and ${term2} and pull it outside.`;
+                        break;
+
+                    case 'eval':
+                        const e1 = rand(2, 8);
+                        const e2 = rand(-10, 10);
+                        const ev = variable();
+                        const val = rand(-5, 5);
+                        q.text = `Evaluate <b>${e1}${ev} + ${this.fmt(e2)}</b> when <b>${ev} = ${val}</b>`;
+                        const ans = (e1 * val) + e2;
+                        q.correct = ans.toString();
+                        q.options = [ans.toString(), (ans + rand(1,5)).toString(), (ans - rand(1,5)).toString(), (e1 + val + e2).toString()];
+                        q.hint = `Replace ${ev} with (${val}), multiply first, then add.`;
+                        break;
+                }
+                q.options = q.options.sort(() => Math.random() - 0.5);
+                return q;
+            }
+        };
+
+        // --- GAME ENGINE ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let WIDTH = 800;
+        let HEIGHT = 600;
+
+        function resize() {
+            const container = document.getElementById('game-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            WIDTH = canvas.width;
+            HEIGHT = canvas.height;
+            ctx.imageSmoothingEnabled = false;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const Game = {
+            state: 'START', 
+            score: 0,
+            level: 1,
+            lives: 3,
+            questionReason: 'start',
+            currentProblemAttempts: 0, 
+            gravity: 0.6,
+            friction: 0.8,
+            enemySpawnTimer: 0,
+            currentLayout: 0
+        };
+
+        const Player = {
+            x: 50, y: HEIGHT - 100, w: 40, h: 40,
+            vx: 0, vy: 0,
+            speed: 5, jump: -10, // REDUCED JUMP POWER (from -12 to -10)
+            grounded: false,
+            climbing: false,
+            dead: false,
+            facingRight: true,
+            angle: 0
+        };
+
+        let platforms = [];
+        let ladders = [];
+        let enemies = [];
+        let goal = { x: 0, y: 0, w: 50, h: 50 };
+
+        const keys = {};
+        window.addEventListener('keydown', e => keys[e.code] = true);
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        const touchState = { left: false, right: false, up: false, jump: false };
+        const setupTouch = (id, key) => {
+            const el = document.getElementById(id);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); touchState[key] = true; });
+            el.addEventListener('touchend', (e) => { e.preventDefault(); touchState[key] = false; });
+        };
+        setupTouch('btn-left', 'left');
+        setupTouch('btn-right', 'right');
+        setupTouch('btn-up', 'up');
+        setupTouch('btn-jump', 'jump');
+
+        if ('ontouchstart' in window || navigator.maxTouchPoints) {
+            document.getElementById('mobile-controls').style.display = 'block';
+        }
+
+        // --- LEVEL LAYOUT DEFINITIONS ---
+        // Each layout function returns a structure containing platforms, ladders, and goal position.
+        const LevelLayouts = [
+            // Layout 1: Simple Zig-Zag (Similar to old default, good baseline)
+            (w, h, floorH) => {
+                const floors = 4;
+                let plats = [];
+                let ldds = [];
+                let currentY = h - 40;
+                
+                // Base Platform
+                plats.push({ x: 0, y: currentY, w: w, h: 40 });
+                currentY -= floorH;
+
+                for (let i = 1; i <= floors; i++) {
+                    let platW = w * 0.7;
+                    let platX = (i % 2 === 0) ? w * 0.1 : w - platW - w * 0.1; 
+                    
+                    plats.push({ x: platX, y: currentY, w: platW, h: 20 });
+                    
+                    let ladderX = (i % 2 === 0) ? platX + 20 : platX + platW - 60;
+                    ldds.push({ x: ladderX, y: currentY, w: 40, h: floorH + 20 });
+
+                    currentY -= floorH;
+                }
+                
+                const goalY = currentY + floorH + 50; 
+                const goalX = (floors % 2 !== 0) ? w * 0.1 + 50 : w - (w * 0.1) - 100;
+
+                // Final Goal Platform
+                plats.push({ x: goalX - 50, y: goalY + 50, w: 150, h: 20 });
+                
+                return { platforms: plats, ladders: ldds, goalX: goalX, goalY: goalY };
+            },
+            
+            // Layout 2: Center Climb with Split Floors
+            (w, h, floorH) => {
+                const floors = 5;
+                let plats = [];
+                let ldds = [];
+                let currentY = h - 40;
+
+                // Base Platform
+                plats.push({ x: 0, y: currentY, w: w, h: 40 });
+                currentY -= floorH;
+
+                for (let i = 1; i <= floors; i++) {
+                    if (i % 2 !== 0) { // Split platform
+                        let platW = w * 0.35;
+                        plats.push({ x: w * 0.05, y: currentY, w: platW, h: 20 });
+                        plats.push({ x: w * 0.6, y: currentY, w: platW, h: 20 });
+                        // Central ladder
+                        ldds.push({ x: w * 0.48, y: currentY, w: 40, h: floorH + 20 });
+                    } else { // Full center platform
+                        let platW = w * 0.6;
+                        let platX = w * 0.2;
+                        plats.push({ x: platX, y: currentY, w: platW, h: 20 });
+                        // Side ladders
+                        ldds.push({ x: w * 0.05, y: currentY, w: 40, h: floorH + 20 });
+                        ldds.push({ x: w - 80, y: currentY, w: 40, h: floorH + 20 });
+                    }
+                    currentY -= floorH;
+                }
+                
+                const goalY = currentY + floorH + 50; 
+                const goalX = w / 2 - 25; // Center goal
+
+                // Final Goal Platform
+                plats.push({ x: w / 2 - 75, y: goalY + 50, w: 150, h: 20 });
+                
+                return { platforms: plats, ladders: ldds, goalX: goalX, goalY: goalY };
+            },
+
+            // Layout 3: Staggered Steps (More jumping required)
+            (w, h, floorH) => {
+                const floors = 4;
+                let plats = [];
+                let ldds = [];
+                let currentY = h - 40;
+
+                // Base Platform
+                plats.push({ x: 0, y: currentY, w: w, h: 40 });
+                currentY -= floorH;
+
+                for (let i = 1; i <= floors; i++) {
+                    let platW = w * 0.3;
+                    let platX1 = w * 0.1;
+                    let platX2 = w * 0.6;
+                    
+                    plats.push({ x: platX1, y: currentY, w: platW, h: 20 });
+                    plats.push({ x: platX2, y: currentY - floorH * 0.3, w: platW * 0.7, h: 20 });
+                    
+                    ldds.push({ x: platX1 + platW + 20, y: currentY, w: 40, h: floorH + 20 }); // Ladder on the gap
+                    
+                    currentY -= floorH;
+                }
+                
+                const goalY = currentY + floorH + 50; 
+                const goalX = w - 100;
+
+                // Final Goal Platform
+                plats.push({ x: w - 175, y: goalY + 50, w: 150, h: 20 });
+
+                return { platforms: plats, ladders: ldds, goalX: goalX, goalY: goalY };
+            },
+
+            // Layout 4: Narrow Corridor
+            (w, h, floorH) => {
+                const floors = 5;
+                let plats = [];
+                let ldds = [];
+                let currentY = h - 40;
+
+                // Base Platform
+                plats.push({ x: 0, y: currentY, w: w, h: 40 });
+                currentY -= floorH;
+                
+                const gap = w * 0.05; // Small gap on one side
+                const platW = w * 0.85;
+
+                for (let i = 1; i <= floors; i++) {
+                    let platX = (i % 2 !== 0) ? gap : w - platW - gap;
+                    
+                    plats.push({ x: platX, y: currentY, w: platW, h: 20 });
+                    
+                    // Ladder on the open side
+                    let ladderX = (i % 2 !== 0) ? w - 80 : 20; 
+                    ldds.push({ x: ladderX, y: currentY, w: 40, h: floorH + 20 });
+
+                    currentY -= floorH;
+                }
+                
+                const goalY = currentY + floorH + 50; 
+                const goalX = w * 0.1 + 50;
+
+                // Final Goal Platform
+                plats.push({ x: w * 0.1, y: goalY + 50, w: 150, h: 20 });
+                
+                return { platforms: plats, ladders: ldds, goalX: goalX, goalY: goalY };
+            },
+
+            // Layout 5: High Platforms and Jumps
+            (w, h, floorH) => {
+                const floors = 4;
+                let plats = [];
+                let ldds = [];
+                let currentY = h - 40;
+
+                // Base Platform
+                plats.push({ x: 0, y: currentY, w: w, h: 40 });
+                currentY -= floorH;
+
+                for (let i = 1; i <= floors; i++) {
+                    let platW = w * 0.4;
+                    let platX1 = w * 0.1;
+                    let platX2 = w * 0.55;
+
+                    if (i % 2 !== 0) {
+                        // Wide jump required
+                        plats.push({ x: platX1, y: currentY, w: platW, h: 20 });
+                        plats.push({ x: platX2 + platW * 0.2, y: currentY, w: platW * 0.8, h: 20 });
+                        ldds.push({ x: platX1 + platW / 2 - 20, y: currentY, w: 40, h: floorH + 20 });
+                    } else {
+                        // Vertical climb
+                        plats.push({ x: platX2, y: currentY, w: platW, h: 20 });
+                        ldds.push({ x: platX2 + platW / 2 - 20, y: currentY, w: 40, h: floorH + 20 });
+                        // Extra small platform for tricky jump
+                        plats.push({ x: platX1, y: currentY - floorH * 0.3, w: w * 0.15, h: 20 });
+                    }
+                    currentY -= floorH;
+                }
+                
+                const goalY = currentY + floorH + 50; 
+                const goalX = w * 0.6;
+
+                // Final Goal Platform
+                plats.push({ x: w * 0.6 - 50, y: goalY + 50, w: 150, h: 20 });
+                
+                return { platforms: plats, ladders: ldds, goalX: goalX, goalY: goalY };
+            }
+        ];
+
+        function generateLevel(levelNum) {
+            
+            // 1. Determine level structure
+            const floors = 4 + Math.floor(levelNum / 3); // Floors increase every 3 levels
+            const floorHeight = (HEIGHT - 100) / floors;
+            
+            // Randomly select a layout (or cycle/deterministically select based on Game.level if needed)
+            const layoutIndex = (levelNum - 1) % LevelLayouts.length; 
+            Game.currentLayout = layoutIndex; // Store for debug/info
+            const layoutFunc = LevelLayouts[layoutIndex];
+            
+            const layoutData = layoutFunc(WIDTH, HEIGHT, floorHeight);
+
+            platforms = layoutData.platforms;
+            ladders = layoutData.ladders;
+            goal.x = layoutData.goalX;
+            goal.y = layoutData.goalY;
+            
+            // 2. Reset enemies and timers
+            enemies = [];
+            Game.enemySpawnTimer = 3 * 60; // 3 seconds grace period
+            
+            // 3. Reset Player position
+            Player.x = 50; // Start always on the bottom left
+            Player.y = HEIGHT - 100;
+            Player.vx = 0;
+            Player.vy = 0;
+            Player.dead = false;
+            Player.angle = 0;
+            
+            // 4. Update Music
+            if (MusicManager.isCycling && Game.state !== 'START') {
+                MusicManager.nextTrack();
+            }
+        }
+
+        function spawnEnemy() {
+            // Find a valid platform to spawn on (not the starting one or the goal one)
+            const validPlats = platforms.filter(p => p.y < HEIGHT - 100 && p.y > goal.y + 50);
+            
+            if (validPlats.length === 0) return;
+            
+            const spawnPlat = validPlats[Math.floor(Math.random() * validPlats.length)];
+            
+            SFX.spawn(); 
+            enemies.push({
+                // Spawn near the edge of the platform
+                x: spawnPlat.x + (Math.random() < 0.5 ? 20 : spawnPlat.w - 50),
+                y: spawnPlat.y - 40,
+                w: 30, h: 30,
+                vx: (Math.random() > 0.5 ? 2 : -2) + (Game.level * 0.3), // Enemy speed scaled by level
+                vy: 0,
+                rolling: true
+            });
+        }
+
+        function update() {
+            if (Game.state !== 'PLAYING') return;
+            
+            if (Game.enemySpawnTimer > 0) {
+                Game.enemySpawnTimer--;
+                Player.vx = 0; 
+            } else {
+                if (keys['ArrowLeft'] || touchState.left) { Player.vx = -Player.speed; Player.facingRight = false; }
+                else if (keys['ArrowRight'] || touchState.right) { Player.vx = Player.speed; Player.facingRight = true; }
+                else { Player.vx *= Game.friction; }
+                
+                // MODIFICATION START
+                // Allow the player to jump if they are grounded OR if they are climbing a ladder.
+                if ((keys['Space'] || touchState.jump) && (Player.grounded || Player.climbing)) {
+                    Player.vy = Player.jump;
+                    Player.grounded = false;
+                    Player.climbing = false;
+                    SFX.jump(); 
+                }
+                // MODIFICATION END
+
+                let onLadder = false;
+                let center = Player.x + Player.w/2;
+                for (let l of ladders) {
+                    if (center > l.x && center < l.x + l.w && 
+                        Player.y + Player.h > l.y && Player.y < l.y + l.h) {
+                        onLadder = true;
+                        if (keys['ArrowUp'] || touchState.up) { 
+                            Player.y -= 3; Player.climbing = true; Player.vy = 0; 
+                            if(Math.random() > 0.8) SFX.climb(); 
+                        }
+                        else if (keys['ArrowDown']) { 
+                            Player.y += 3; Player.climbing = true; Player.vy = 0; 
+                            if(Math.random() > 0.8) SFX.climb();
+                        }
+                        else if (Player.climbing) { Player.vy = 0; }
+                    }
+                }
+                if (!onLadder && Player.climbing) Player.climbing = false;
+            }
+
+            if (Player.dead) {
+                Player.y += Player.vy;
+                Player.vy += Game.gravity * 0.5;
+                Player.angle += 0.2;
+                return;
+            }
+
+            if (!Player.climbing) {
+                Player.vy += Game.gravity;
+                if(Player.vy > 15) Player.vy = 15;
+            }
+            Player.x += Player.vx;
+            Player.y += Player.vy;
+
+            if (Player.x < 0) Player.x = 0;
+            if (Player.x + Player.w > WIDTH) Player.x = WIDTH - Player.w;
+            if (Player.y < 0) { Player.y = 0; Player.vy = 0; }
+
+            Player.grounded = false;
+            for (let p of platforms) {
+                if (Player.y + Player.h > p.y && 
+                    Player.y + Player.h < p.y + Player.vy + 20 &&
+                    Player.x + Player.w > p.x && 
+                    Player.x < p.x + p.w &&
+                    Player.vy >= 0) {
+                        Player.y = p.y - Player.h;
+                        Player.vy = 0;
+                        Player.grounded = true;
+                }
+            }
+
+            if (Game.enemySpawnTimer === 0 && Math.random() < 0.01 + (Game.level * 0.002)) {
+                 spawnEnemy();
+            }
+
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                let e = enemies[i];
+                e.vy += Game.gravity;
+                e.x += e.vx;
+                e.y += e.vy;
+
+                let enemyGrounded = false;
+                for (let p of platforms) {
+                    if (e.y + e.h > p.y && e.y + e.h < p.y + 15 && e.x + e.w > p.x && e.x < p.x + p.w) {
+                        e.y = p.y - e.h;
+                        e.vy = 0;
+                        enemyGrounded = true;
+                    }
+                }
+
+                if (enemyGrounded) {
+                    // This logic assumes `spawnPlat` is accessible which it is not, but enemies are still kept from walking off screen
+                    if (e.x <= 0 || e.x + e.w >= WIDTH) e.vx *= -1; // Keep enemies on their platform
+                } else {
+                    if (e.x <= 0 || e.x + e.w >= WIDTH) {
+                        e.vx *= -1;
+                        e.x += e.vx;
+                    }
+                }
+                
+                if (!Player.dead && rectIntersect(Player, e)) {
+                    SFX.hit(); 
+                    die();
+                    break;
+                }
+                if (e.y > HEIGHT) enemies.splice(i, 1);
+            }
+
+            if (rectIntersect(Player, goal)) {
+                SFX.win(); 
+                levelUp();
+            }
+        }
+
+        function rectIntersect(r1, r2) {
+            return !(r2.x > r1.x + r1.w || 
+                     r2.x + r2.w < r1.x || 
+                     r2.y > r1.y + r1.h || 
+                     r2.y + r2.h < r1.y);
+        }
+
+        function die() {
+            if (Game.lives > 1) {
+                Game.lives--;
+                updateHUD();
+                Player.dead = true;
+                Player.vy = -10;
+                
+                setTimeout(() => {
+                    Player.dead = false;
+                    generateLevel(Game.level);
+                }, 1000);
+            } else {
+                Game.lives = 0; 
+                updateHUD();
+                Player.dead = false;
+                Game.state = 'MATH';
+                Game.questionReason = 'revive';
+                showMathProblem();
+            }
+        }
+
+        function levelUp() {
+            Game.score += 500;
+            Game.level++;
+            updateHUD();
+            Game.state = 'MATH';
+            Game.questionReason = 'bonus';
+            showMathProblem();
+        }
+
+        function draw() {
+            if (Assets.background.complete) {
+                ctx.drawImage(Assets.background, 0, 0, WIDTH, HEIGHT);
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(0,0,WIDTH,HEIGHT);
+            } else {
+                ctx.fillStyle = '#222';
+                ctx.fillRect(0, 0, WIDTH, HEIGHT);
+            }
+
+            ctx.fillStyle = '#f6e05e';
+            for (let p of platforms) {
+                if (Assets.platform.complete) {
+                    let pat = ctx.createPattern(Assets.platform, 'repeat');
+                    ctx.fillStyle = pat;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.fillRect(0, 0, p.w, p.h);
+                    ctx.restore();
+                    ctx.strokeStyle = '#d69e2e';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(p.x, p.y, p.w, p.h);
+                } else {
+                    ctx.fillRect(p.x, p.y, p.w, p.h);
+                }
+            }
+
+            for (let l of ladders) {
+                if (Assets.ladder.complete) ctx.drawImage(Assets.ladder, l.x, l.y, l.w, l.h);
+                else ctx.fillRect(l.x, l.y, l.w, l.h);
+            }
+
+            if (Assets.goal.complete) ctx.drawImage(Assets.goal, goal.x, goal.y, 50, 50);
+            else ctx.fillRect(goal.x, goal.y, 50, 50);
+
+            for (let e of enemies) {
+                ctx.save();
+                ctx.translate(e.x + e.w/2, e.y + e.h/2);
+                ctx.rotate(e.x * 0.1); 
+                if (Assets.enemy.complete) ctx.drawImage(Assets.enemy, -e.w/2, -e.h/2, e.w, e.h);
+                else { ctx.fillStyle = 'pink'; ctx.beginPath(); ctx.arc(0,0,e.w/2,0,Math.PI*2); ctx.fill(); }
+                ctx.restore();
+            }
+
+            ctx.save();
+            ctx.translate(Player.x + Player.w/2, Player.y + Player.h/2);
+            if (Player.dead) {
+                ctx.rotate(Player.angle); 
+                ctx.filter = 'hue-rotate(300deg) saturate(200%)'; 
+            } else {
+                if (!Player.facingRight) ctx.scale(-1, 1);
+            }
+            if (Assets.player.complete) ctx.drawImage(Assets.player, -Player.w/2, -Player.h/2, Player.w, Player.h);
+            else ctx.fillRect(-Player.w/2, -Player.h/2, Player.w, Player.h);
+            ctx.restore();
+            
+            if (Game.enemySpawnTimer > 0) {
+                 ctx.fillStyle = `rgba(255, 255, 255, ${Math.abs(Math.sin(Date.now() / 200))})`;
+                 ctx.font = '24px "Press Start 2P"';
+                 ctx.textAlign = 'center';
+                 ctx.fillText("GET READY: " + Math.ceil(Game.enemySpawnTimer / 60), WIDTH / 2, HEIGHT / 2);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+        }
+
+        const hudScore = document.getElementById('score-display');
+        const hudLevel = document.getElementById('level-display');
+        const hudLives = document.getElementById('lives-display');
+
+        function updateHUD() {
+            hudScore.textContent = Game.score;
+            hudLevel.textContent = Game.level;
+            hudLives.textContent = Game.lives;
+        }
+
+        document.getElementById('preview-btn').onclick = (e) => {
+            const btn = e.currentTarget;
+            const isPlaying = MusicManager.togglePreview();
+            btn.innerHTML = isPlaying ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-play"></i>';
+        };
+
+        document.getElementById('start-btn').onclick = () => {
+            MusicManager.init();
+            SFX.init();
+            
+            const selector = document.getElementById('music-selector').value;
+            MusicManager.playTrack(selector);
+
+            document.getElementById('start-screen').classList.add('hidden');
+            Game.state = 'MATH';
+            Game.questionReason = 'start';
+            showMathProblem();
+            gameLoop();
+        };
+
+        function showMathProblem() {
+            Game.state = 'MATH';
+            Game.currentProblemAttempts = 0; // Reset attempts for new problem
+            const problem = MathEngine.generateProblem();
+            
+            document.getElementById('math-overlay').classList.remove('hidden');
+            document.getElementById('math-title').innerText = 
+                Game.questionReason === 'start' ? "Entrance Exam: Solve to Enter!" :
+                Game.questionReason === 'revive' ? "Extra Credit: Solve to Revive!" :
+                "Bonus Round: Solve for Points!";
+
+            document.getElementById('math-question-text').innerHTML = problem.text;
+            document.getElementById('hint-box').style.display = 'none';
+            document.getElementById('hint-box').innerText = problem.hint;
+            
+            const optsContainer = document.getElementById('math-options-container');
+            optsContainer.innerHTML = '';
+
+            problem.options.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'math-option';
+                btn.innerHTML = opt; 
+                btn.onclick = () => checkAnswer(opt, problem, btn);
+                optsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, problem, btnElement) {
+            // If already processed/disabled, do nothing
+            if (btnElement.classList.contains('disabled')) return;
+
+            if (selected === problem.correct) {
+                // --- CORRECT ---
+                SFX.correct();
+                btnElement.style.background = '#48bb78'; 
+                
+                // Tiered Scoring based on Attempts
+                let pointsToAdd = 0;
+                if (Game.currentProblemAttempts === 0) pointsToAdd = 100;      // 1st Try
+                else if (Game.currentProblemAttempts === 1) pointsToAdd = 75;  // 2nd Try
+                else if (Game.currentProblemAttempts === 2) pointsToAdd = 50;  // 3rd Try
+                else pointsToAdd = 0;                                          // 4th Try (Only one left)
+
+                Game.score += pointsToAdd;
+                updateHUD();
+                
+                // Disable all buttons immediately
+                document.querySelectorAll('.math-option').forEach(btn => btn.onclick = null); 
+
+                setTimeout(() => {
+                    document.getElementById('math-overlay').classList.add('hidden');
+                    if (Game.questionReason === 'revive') Game.lives = 3; 
+                    
+                    // Generate a new level based on the current Game.level
+                    generateLevel(Game.level); 
+                    
+                    Game.state = 'PLAYING';
+                }, 800);
+
+            } else {
+                // --- WRONG ---
+                SFX.wrong();
+                btnElement.style.background = '#f56565'; 
+                btnElement.classList.add('disabled'); // Visually disable and prevent click
+                
+                // Immediate Penalty for every wrong click
+                Game.score -= 50;
+                if(Game.score < 0) Game.score = 0;
+                
+                // Increase Attempt Counter
+                Game.currentProblemAttempts++;
+                
+                updateHUD();
+                document.getElementById('hint-box').style.display = 'block';
+            }
+        }
+
+        const menuOverlay = document.getElementById('menu-overlay');
+        
+        function togglePause() {
+            if (Game.state === 'PLAYING') {
+                Game.state = 'PAUSED';
+                menuOverlay.classList.remove('hidden');
+                document.getElementById('menu-title').innerText = "PAUSED";
+                document.getElementById('resume-btn').classList.remove('hidden');
+            } else if (Game.state === 'PAUSED') {
+                Game.state = 'PLAYING';
+                menuOverlay.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('pause-btn').onclick = togglePause;
+        document.getElementById('resume-btn').onclick = togglePause;
+        document.getElementById('restart-btn').onclick = () => location.reload();
+
+        document.getElementById('screenshot-btn').onclick = () => {
+            menuOverlay.classList.add('hidden');
+            Game.state = 'PAUSED';
+            
+            const reportCanvas = document.createElement('canvas');
+            reportCanvas.width = 600;
+            reportCanvas.height = 400;
+            const rCtx = reportCanvas.getContext('2d');
+
+            rCtx.fillStyle = '#2d3748';
+            rCtx.fillRect(0,0,600,400);
+            rCtx.lineWidth = 10;
+            rCtx.strokeStyle = '#ed64a6';
+            rCtx.strokeRect(0,0,600,400);
+
+            rCtx.fillStyle = 'white';
+            rCtx.font = '30px Arial';
+            rCtx.textAlign = 'center';
+            rCtx.fillText("UNIT 4 REVIEW: COMPLETED", 300, 50);
+            
+            rCtx.font = '20px Arial';
+            rCtx.fillText("Date: " + new Date().toLocaleDateString(), 300, 90);
+            
+            rCtx.fillStyle = '#f6e05e';
+            rCtx.font = '40px Courier New';
+            rCtx.fillText(`SCORE: ${Game.score}`, 300, 180);
+            rCtx.fillText(`LEVEL REACHED: ${Game.level}`, 300, 240);
+
+            rCtx.fillStyle = '#48bb78';
+            rCtx.font = '20px Arial';
+            rCtx.fillText("Great Job! Save this image.", 300, 350);
+
+            const imgData = reportCanvas.toDataURL("image/png");
+            
+            const resContainer = document.getElementById('screenshot-result');
+            resContainer.innerHTML = '';
+            const img = document.createElement('img');
+            img.src = imgData;
+            resContainer.appendChild(img);
+            
+            document.getElementById('screenshot-overlay').classList.remove('hidden');
+        };
+
+        document.getElementById('close-screenshot-btn').onclick = () => {
+            document.getElementById('screenshot-overlay').classList.add('hidden');
+            menuOverlay.classList.remove('hidden');
+        };
+
+    </script>
+</body>
+</html>
