@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MP4 to GIF Converter & Frame Extractor</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+    .container { background: #f5f5f5; padding: 20px; border-radius: 8px; }
+    input, select, button { width: 100%; margin: 10px 0; padding: 10px; box-sizing: border-box; }
+    button { background: #007cba; color: white; border: none; cursor: pointer; border-radius: 4px; font-size: 16px; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #status { margin-top: 15px; padding: 10px; background: #e8f4f8; border-radius: 4px; display: none; }
+    .mode-selector { display: flex; gap: 10px; margin: 15px 0; }
+    .mode-selector label { flex: 1; text-align: center; padding: 10px; background: white; border: 2px solid #ddd; cursor: pointer; border-radius: 4px; font-size: 14px; }
+    .mode-selector input[type="radio"]:checked + label { border-color: #007cba; background: #e8f4f8; }
+    .mode-selector input[type="radio"] { display: none; }
+    #settings { background: white; padding: 10px; border-radius: 4px; margin: 10px 0; font-size: 14px; }
+    .info { font-size: 0.85em; color: #666; display: block; margin-top: 3px; }
+    
+    /* Input Type Selector */
+    .input-type-selector { display: flex; gap: 10px; margin: 15px 0; }
+    .input-type-selector button { flex: 1; background: white; color: #333; border: 2px solid #ddd; }
+    .input-type-selector button.active { background: #007cba; color: white; border-color: #007cba; }
+    
+    .input-section { display: none; }
+    .input-section.active { display: block; }
+    
+    /* Video Preview */
+    #videoPreview { 
+      width: 100%; 
+      max-height: 300px; 
+      margin: 15px 0; 
+      border-radius: 4px; 
+      display: none;
+      background: #000;
+    }
+    
+    /* Spinner */
+    .spinner {
+      display: none;
+      margin: 20px auto;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007cba;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .spinner.active { display: block; }
+    
+    #downloadSection img {
+      width: 100%;
+      border-radius: 4px;
+      margin-top: 10px;
+      border: 2px solid #ddd;
+    }
+
+    .warning {
+      background: #fff3cd;
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      font-size: 0.9em;
+      border-left: 4px solid #ffc107;
+    }
+
+    #urlInput {
+      border: 2px solid #ddd;
+      border-radius: 4px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 10px 0;
+      display: none;
+    }
+
+    .progress-bar.active { display: block; }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #007cba, #00a8e8);
+      width: 0%;
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    canvas { display: none; }
+
+    /* Frame Extractor Section */
+    #frameExtractorSection {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      display: none;
+    }
+
+    #frameExtractorSection.active { display: block; }
+
+    .frame-preview-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    .frame-preview {
+      text-align: center;
+    }
+
+    .frame-preview img {
+      width: 100%;
+      border-radius: 4px;
+      border: 2px solid #ddd;
+      background: #000;
+    }
+
+    .frame-preview h4 {
+      margin: 10px 0 5px 0;
+      color: #333;
+    }
+
+    .format-selector {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+      justify-content: center;
+    }
+
+    .format-selector button {
+      flex: 0 0 auto;
+      width: auto;
+      padding: 8px 20px;
+      font-size: 14px;
+      background: #28a745;
+    }
+
+    .format-selector button:hover:not(:disabled) {
+      background: #218838;
+    }
+
+    .frame-title {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .extract-button-group {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    .extract-button-group button {
+      background: #6f42c1;
+    }
+
+    .extract-button-group button:hover:not(:disabled) {
+      background: #5a32a3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🎬 MP4 to GIF Converter & Frame Extractor</h2>
+    
+    <div class="warning">
+      ⚠️ <strong>Browser-based converter</strong> - Your video never leaves your device!
+    </div>
+    
+    <!-- Input Type Selector -->
+    <div class="input-type-selector">
+      <button type="button" id="fileInputBtn" class="active" onclick="switchInputType('file')">📁 Upload File</button>
+      <button type="button" id="urlInputBtn" onclick="switchInputType('url')">🔗 Use URL</button>
+    </div>
+    
+    <!-- File Upload Section -->
+    <div id="fileSection" class="input-section active">
+      <input type="file" id="videoFile" accept="video/mp4,video/webm,video/*">
+    </div>
+    
+    <!-- URL Input Section -->
+    <div id="urlSection" class="input-section">
+      <input type="url" id="urlInput" placeholder="https://example.com/video.mp4">
+      <button type="button" onclick="loadVideoFromUrl()">Load Video</button>
+    </div>
+    
+    <!-- Video Preview -->
+    <video id="videoPreview" controls muted></video>
+    
+    <!-- Frame Extractor Section -->
+    <div id="frameExtractorSection">
+      <h3 style="margin-top: 0;">📸 Frame Extractor</h3>
+      
+      <div class="extract-button-group">
+        <button type="button" onclick="extractFrames()" id="extractFramesBtn" disabled>
+          Extract First & Last Frame
+        </button>
+      </div>
+      
+      <div class="frame-preview-container" id="framePreviewContainer" style="display: none;">
+        <div class="frame-preview">
+          <h4>First Frame</h4>
+          <img id="firstFramePreview" alt="First frame">
+          <div class="frame-title" id="firstFrameTime">0.00s</div>
+          <div class="format-selector">
+            <button type="button" onclick="downloadFrame('first', 'jpg')">⬇️ JPG</button>
+            <button type="button" onclick="downloadFrame('first', 'webp')">⬇️ WebP</button>
+          </div>
+        </div>
+        
+        <div class="frame-preview">
+          <h4>Last Frame</h4>
+          <img id="lastFramePreview" alt="Last frame">
+          <div class="frame-title" id="lastFrameTime">0.00s</div>
+          <div class="format-selector">
+            <button type="button" onclick="downloadFrame('last', 'jpg')">⬇️ JPG</button>
+            <button type="button" onclick="downloadFrame('last', 'webp')">⬇️ WebP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mode-selector">
+      <input type="radio" id="mode-auto" name="mode" value="auto" checked>
+      <label for="mode-auto">
+        🤖 Auto<span class="info">Automatic</span>
+      </label>
+      
+      <input type="radio" id="mode-high" name="mode" value="high">
+      <label for="mode-high">
+        ⭐ High Quality<span class="info">480p, 15fps</span>
+      </label>
+      
+      <input type="radio" id="mode-medium" name="mode" value="medium">
+      <label for="mode-medium">
+        📊 Medium<span class="info">360p, 12fps</span>
+      </label>
+      
+      <input type="radio" id="mode-low" name="mode" value="low">
+      <label for="mode-low">
+        💾 Small Size<span class="info">240p, 10fps</span>
+      </label>
+    </div>
+
+    <div id="settings">
+      <strong>Settings:</strong> <span id="settingsText">Select a video to begin...</span>
+    </div>
+
+    <button id="convertBtn" onclick="convert()" disabled>🎨 Convert to GIF</button>
+    
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-fill" id="progressFill">0%</div>
+    </div>
+    
+    <div class="spinner" id="spinner"></div>
+    
+    <div id="status"></div>
+
+    <div id="downloadSection" style="display: none; margin-top: 15px;">
+      <img id="gifPreview" alt="Generated GIF">
+      <a id="downloadLink" download="converted.gif">
+        <button style="background: #28a745;">⬇️ Download GIF</button>
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Simple GIF encoder (no external dependencies)
+    class GIFEncoder {
+      constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this.frames = [];
+        this.delays = [];
+      }
+
+      addFrame(imageData, delay = 100) {
+        this.frames.push(imageData);
+        this.delays.push(delay);
+      }
+
+      render() {
+        return new Promise((resolve) => {
+          // Use gifshot library for encoding
+          gifshot.createGIF({
+            images: this.frames,
+            gifWidth: this.width,
+            gifHeight: this.height,
+            interval: this.delays[0] / 1000,
+            numFrames: this.frames.length,
+            frameDuration: 1,
+            sampleInterval: 10,
+            numWorkers: 2
+          }, (obj) => {
+            if (!obj.error) {
+              // Convert base64 to blob
+              fetch(obj.image)
+                .then(res => res.blob())
+                .then(blob => resolve(blob));
+            }
+          });
+        });
+      }
+    }
+
+    let fileInfo = { size: 0, duration: 0, width: 0, height: 0 };
+    let currentVideoBlob = null;
+    let isProcessing = false;
+    let extractedFrames = { first: null, last: null };
+
+    // Update settings when mode changes
+    document.querySelectorAll('input[name="mode"]').forEach(radio => {
+      radio.addEventListener('change', updateSettingsDisplay);
+    });
+
+    // Get file info when selected
+    document.getElementById('videoFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      await processVideoFile(file);
+    });
+
+    function switchInputType(type) {
+      document.getElementById('fileInputBtn').classList.toggle('active', type === 'file');
+      document.getElementById('urlInputBtn').classList.toggle('active', type === 'url');
+      document.getElementById('fileSection').classList.toggle('active', type === 'file');
+      document.getElementById('urlSection').classList.toggle('active', type === 'url');
+      
+      // Reset
+      document.getElementById('videoPreview').style.display = 'none';
+      document.getElementById('downloadSection').style.display = 'none';
+      document.getElementById('frameExtractorSection').classList.remove('active');
+      document.getElementById('framePreviewContainer').style.display = 'none';
+      currentVideoBlob = null;
+      document.getElementById('convertBtn').disabled = true;
+      document.getElementById('extractFramesBtn').disabled = true;
+    }
+
+    async function loadVideoFromUrl() {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) {
+        showStatus('❌ Please enter a valid URL!', 'error');
+        return;
+      }
+
+      try {
+        showStatus('⏳ Loading video from URL...', 'info');
+        showSpinner(true);
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        
+        const blob = await response.blob();
+        
+        if (!blob.type.startsWith('video/')) {
+          throw new Error('URL does not point to a video file');
+        }
+        
+        await processVideoFile(blob);
+        showStatus('✅ Video loaded successfully!', 'success');
+        showSpinner(false);
+      } catch (err) {
+        showStatus(`❌ Error: ${err.message}. Make sure the URL is direct and CORS-enabled.`, 'error');
+        showSpinner(false);
+      }
+    }
+
+    async function processVideoFile(file) {
+      currentVideoBlob = file;
+      fileInfo.size = file.size;
+      
+      // Show preview
+      const videoPreview = document.getElementById('videoPreview');
+      const objectUrl = URL.createObjectURL(file);
+      videoPreview.src = objectUrl;
+      videoPreview.style.display = 'block';
+      
+      // Show frame extractor section
+      document.getElementById('frameExtractorSection').classList.add('active');
+      document.getElementById('framePreviewContainer').style.display = 'none';
+      
+      // Get video metadata
+      videoPreview.onloadedmetadata = () => {
+        fileInfo.duration = videoPreview.duration;
+        fileInfo.width = videoPreview.videoWidth;
+        fileInfo.height = videoPreview.videoHeight;
+        updateSettingsDisplay();
+        document.getElementById('convertBtn').disabled = false;
+        document.getElementById('extractFramesBtn').disabled = false;
+      };
+
+      updateSettingsDisplay();
+    }
+
+    function updateSettingsDisplay() {
+      const mode = getMode();
+      const settings = getSettings(mode);
+      
+      let durationText = fileInfo.duration > 0 ? `${fileInfo.duration.toFixed(1)}s` : 'N/A';
+      let sizeText = fileInfo.size > 0 ? formatFileSize(fileInfo.size) : 'N/A';
+      let resText = fileInfo.width > 0 ? `${fileInfo.width}x${fileInfo.height}` : 'N/A';
+      
+      document.getElementById('settingsText').innerHTML = 
+        `<strong>${mode.toUpperCase()}</strong> mode | ` +
+        `Video: ${durationText} (${sizeText}, ${resText}) | ` +
+        `Output: ${settings.width}x${settings.height}, ${settings.fps}fps`;
+    }
+
+    function getMode() {
+      const manualMode = document.querySelector('input[name="mode"]:checked').value;
+      if (manualMode !== 'auto') return manualMode;
+      
+      // Auto-detect: high for short videos, medium for longer
+      if (fileInfo.duration > 0 && fileInfo.duration <= 5) return 'high';
+      if (fileInfo.duration > 5 && fileInfo.duration <= 15) return 'medium';
+      return 'low';
+    }
+
+    function getSettings(mode) {
+      const aspect = fileInfo.width && fileInfo.height ? fileInfo.width / fileInfo.height : 16/9;
+      
+      const modes = {
+        high: { width: 480, fps: 15, quality: 10, maxDuration: 10 },
+        medium: { width: 360, fps: 12, quality: 15, maxDuration: 15 },
+        low: { width: 240, fps: 10, quality: 20, maxDuration: 30 }
+      };
+      
+      const settings = modes[mode];
+      settings.height = Math.round(settings.width / aspect);
+      return settings;
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function showStatus(message, type = 'info') {
+      const status = document.getElementById('status');
+      status.style.display = 'block';
+      status.style.background = type === 'error' ? '#f8d7da' : type === 'success' ? '#d4edda' : '#e8f4f8';
+      status.style.borderLeft = '4px solid ' + (type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#007cba');
+      status.innerHTML = message;
+    }
+
+    function showSpinner(show) {
+      document.getElementById('spinner').classList.toggle('active', show);
+    }
+
+    function updateProgress(percent, text = '') {
+      const progressBar = document.getElementById('progressBar');
+      const progressFill = document.getElementById('progressFill');
+      progressBar.classList.add('active');
+      progressFill.style.width = percent + '%';
+      progressFill.textContent = text || `${Math.round(percent)}%`;
+    }
+
+    function hideProgress() {
+      document.getElementById('progressBar').classList.remove('active');
+    }
+
+    // Frame Extractor Functions
+    async function extractFrames() {
+      if (!currentVideoBlob) {
+        showStatus('❌ Please select or load a video!', 'error');
+        return;
+      }
+
+      try {
+        document.getElementById('extractFramesBtn').disabled = true;
+        showSpinner(true);
+        showStatus('📸 Extracting frames...', 'info');
+
+        const video = document.getElementById('videoPreview');
+        
+        // Create canvas for frame extraction
+        const canvas = document.createElement('canvas');
+        canvas.width = fileInfo.width;
+        canvas.height = fileInfo.height;
+        const ctx = canvas.getContext('2d');
+
+        // Extract first frame (at 0 seconds)
+        await seekVideo(video, 0);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const firstFrameDataUrl = canvas.toDataURL('image/png');
+        extractedFrames.first = firstFrameDataUrl;
+
+        // Extract last frame (at duration - 0.1 seconds to ensure we get a valid frame)
+        const lastFrameTime = Math.max(0, fileInfo.duration - 0.1);
+        await seekVideo(video, lastFrameTime);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const lastFrameDataUrl = canvas.toDataURL('image/png');
+        extractedFrames.last = lastFrameDataUrl;
+
+        // Display the frames
+        document.getElementById('firstFramePreview').src = firstFrameDataUrl;
+        document.getElementById('lastFramePreview').src = lastFrameDataUrl;
+        document.getElementById('firstFrameTime').textContent = '0.00s';
+        document.getElementById('lastFrameTime').textContent = `${fileInfo.duration.toFixed(2)}s`;
+        
+        document.getElementById('framePreviewContainer').style.display = 'grid';
+
+        showStatus('✅ Frames extracted successfully!', 'success');
+        showSpinner(false);
+        document.getElementById('extractFramesBtn').disabled = false;
+
+      } catch (err) {
+        showStatus(`❌ Error extracting frames: ${err.message}`, 'error');
+        showSpinner(false);
+        document.getElementById('extractFramesBtn').disabled = false;
+        console.error('Frame extraction error:', err);
+      }
+    }
+
+    async function downloadFrame(frameType, format) {
+      const frameDataUrl = frameType === 'first' ? extractedFrames.first : extractedFrames.last;
+      
+      if (!frameDataUrl) {
+        showStatus('❌ Please extract frames first!', 'error');
+        return;
+      }
+
+      try {
+        showSpinner(true);
+        
+        // Create canvas to convert format
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Load the image
+        const img = new Image();
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = frameDataUrl;
+        });
+        
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        
+        // Convert to desired format
+        const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/webp';
+        const quality = format === 'jpg' ? 0.95 : 0.90;
+        
+        canvas.toBlob(async (blob) => {
+          if (!blob) {
+            throw new Error('Failed to create image blob');
+          }
+          
+          // Create download link
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const frameName = frameType === 'first' ? 'first-frame' : 'last-frame';
+          const extension = format === 'jpg' ? 'jpg' : 'webp';
+          a.href = url;
+          a.download = `${frameName}.${extension}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          // Clean up
+          setTimeout(() => URL.revokeObjectURL(url), 100);
+          
+          showStatus(`✅ ${frameType.charAt(0).toUpperCase() + frameType.slice(1)} frame downloaded as ${format.toUpperCase()}!`, 'success');
+          showSpinner(false);
+        }, mimeType, quality);
+        
+      } catch (err) {
+        showStatus(`❌ Error downloading frame: ${err.message}`, 'error');
+        showSpinner(false);
+        console.error('Download error:', err);
+      }
+    }
+
+    async function convert() {
+      if (!currentVideoBlob) {
+        showStatus('❌ Please select or load a video!', 'error');
+        return;
+      }
+
+      if (isProcessing) {
+        showStatus('⚠️ Already processing...', 'error');
+        return;
+      }
+
+      const mode = getMode();
+      const settings = getSettings(mode);
+
+      // Validate duration
+      if (fileInfo.duration > settings.maxDuration) {
+        if (!confirm(`⚠️ Video is ${fileInfo.duration.toFixed(1)}s. Only first ${settings.maxDuration}s will be used.\n\nContinue?`)) {
+          return;
+        }
+      }
+
+      try {
+        isProcessing = true;
+        document.getElementById('convertBtn').disabled = true;
+        document.getElementById('downloadSection').style.display = 'none';
+        showSpinner(true);
+        showStatus('🎬 Preparing conversion...', 'info');
+
+        const video = document.getElementById('videoPreview');
+        video.currentTime = 0;
+        
+        // Create canvas for frame extraction
+        const canvas = document.createElement('canvas');
+        canvas.width = settings.width;
+        canvas.height = settings.height;
+        const ctx = canvas.getContext('2d');
+
+        // Calculate frame extraction
+        const actualDuration = Math.min(fileInfo.duration, settings.maxDuration);
+        const frameInterval = 1 / settings.fps;
+        const totalFrames = Math.floor(actualDuration * settings.fps);
+        const frames = [];
+
+        showStatus(`🎨 Extracting ${totalFrames} frames...`, 'info');
+
+        // Extract frames
+        for (let i = 0; i < totalFrames; i++) {
+          const timePosition = i * frameInterval;
+          
+          // Seek to frame position
+          await seekVideo(video, timePosition);
+          
+          // Draw frame to canvas
+          ctx.drawImage(video, 0, 0, settings.width, settings.height);
+          
+          // Convert canvas to data URL
+          const dataUrl = canvas.toDataURL('image/png');
+          frames.push(dataUrl);
+          
+          const progress = ((i + 1) / totalFrames) * 100;
+          updateProgress(progress, `Extracting: ${i + 1}/${totalFrames}`);
+        }
+
+        showStatus('🔄 Encoding GIF... This may take a minute', 'info');
+        updateProgress(100, 'Encoding...');
+
+        // Create GIF using gifshot
+        gifshot.createGIF({
+          images: frames,
+          gifWidth: settings.width,
+          gifHeight: settings.height,
+          interval: frameInterval,
+          numFrames: totalFrames,
+          frameDuration: 1,
+          sampleInterval: 10,
+          numWorkers: 2,
+          progressCallback: (captureProgress) => {
+            // captureProgress is 0-1
+            updateProgress(100, `Encoding: ${Math.round(captureProgress * 100)}%`);
+          }
+        }, async (obj) => {
+          if (!obj.error) {
+            // Convert base64 to blob
+            const response = await fetch(obj.image);
+            const blob = await response.blob();
+            
+            // Show result
+            const url = URL.createObjectURL(blob);
+            document.getElementById('gifPreview').src = url;
+            document.getElementById('downloadLink').href = url;
+            document.getElementById('downloadSection').style.display = 'block';
+            
+            showStatus(`✅ Success! GIF created: ${formatFileSize(blob.size)} (${actualDuration.toFixed(1)}s, ${totalFrames} frames)`, 'success');
+            
+            setTimeout(() => {
+              hideProgress();
+              showSpinner(false);
+            }, 1000);
+            
+            isProcessing = false;
+            document.getElementById('convertBtn').disabled = false;
+          } else {
+            throw new Error(obj.error);
+          }
+        });
+
+      } catch (err) {
+        showStatus(`❌ Error: ${err.message}`, 'error');
+        showSpinner(false);
+        hideProgress();
+        isProcessing = false;
+        document.getElementById('convertBtn').disabled = false;
+        console.error('Conversion error:', err);
+      }
+    }
+
+    function seekVideo(video, time) {
+      return new Promise((resolve, reject) => {
+        const seekHandler = () => {
+          video.removeEventListener('seeked', seekHandler);
+          // Small delay to ensure frame is rendered
+          setTimeout(resolve, 50);
+        };
+        
+        video.addEventListener('seeked', seekHandler);
+        
+        // Timeout in case seeked never fires
+        setTimeout(() => {
+          video.removeEventListener('seeked', seekHandler);
+          reject(new Error('Seek timeout'));
+        }, 5000);
+        
+        try {
+          video.currentTime = time;
+        } catch (e) {
+          video.removeEventListener('seeked', seekHandler);
+          reject(e);
+        }
+      });
+    }
+
+    // Initial setup
+    showStatus('✅ Ready! Upload a video or paste a URL to begin.', 'success');
+  </script>
+
+  <!-- gifshot library for GIF encoding -->
+  <script src="https://cdn.jsdelivr.net/npm/gifshot@0.4.5/dist/gifshot.min.js"></script>
+</body>
+</html>
