@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V7</title>
+    <title>Pollinations RPG Ultimate V8</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -26,13 +26,20 @@
             font-family: var(--font-main);
             background-color: var(--bg-dark);
             color: var(--text-main);
-            height: 100vh;
+            height: 100vh; /* Base height */
             display: flex;
             overflow: hidden;
+            /* FIX: Ensure full viewport height on mobile */
+            min-height: -webkit-fill-available;
         }
 
         /* --- Layout --- */
-        #app-container { display: flex; width: 100%; height: 100%; position: relative; }
+        #app-container { 
+            display: flex; 
+            width: 100%; 
+            height: 100%; /* Use 100% of body/vh */
+            position: relative; 
+        }
 
         /* Sidebar */
         #sidebar {
@@ -46,6 +53,7 @@
             z-index: 50;
             flex-shrink: 0;
             box-shadow: var(--shadow);
+            padding-bottom: 0; /* Remove bottom padding as music player is now part of the flow */
         }
 
         /* Main Chat Area */
@@ -189,13 +197,16 @@
         }
         #input-loader.active { display: flex; }
 
-        /* --- Music Player --- */
+        /* --- Music Player (Now integrated into Sidebar) --- */
         #music-player {
-            position: fixed; bottom: 0; left: 0; width: 350px;
-            background: #111; border-top: 1px solid var(--border);
-            padding: 12px; z-index: 55; font-size: 0.85em;
+            background: var(--bg-dark); /* Use a consistent dark color */
+            border-top: 1px solid var(--border);
+            padding: 12px; 
+            font-size: 0.85em;
+            margin-top: auto; /* Pushes it to the bottom of the content in the flex column */
+            flex-shrink: 0;
+            z-index: 55; /* Keep it above other sidebar elements if needed */
         }
-        @media (max-width: 850px) { #music-player { width: 100%; display: none; } #music-player.active { display: block; } }
 
         /* --- Modals & Popups --- */
         .modal {
@@ -319,7 +330,7 @@
                     <input type="range" id="bg-opacity-slider" min="0" max="100" step="5" value="80" oninput="setBgOpacity(this.value)">
                 </div>
                 <div class="form-group">
-                    <label>Background Music</label>
+                    <label>Background Music (Select in Player below)</label>
                     <select id="music-select" onchange="playMusic()">
                         <option value="">-- Select Track --</option>
                         <option value="https://files.catbox.moe/1418xa.mp3">Into the Dark</option>
@@ -446,7 +457,19 @@
             </div>
             <button class="danger small" style="width:100%; margin-top:8px;" onclick="clearChat()">Clear Chat Log</button>
         </div>
-        <div style="height:120px"></div>
+        
+        <div id="music-player">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong id="track-name" style="color:var(--accent)">No Music Playing</strong>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <label>Vol:</label>
+                    <input type="range" id="vol-slider" min="0" max="1" step="0.1" value="0.4" onchange="setVolume()">
+                    <button class="small secondary" id="play-btn" onclick="toggleMusic()">▶</button>
+                </div>
+            </div>
+            <audio id="audio-elem" loop></audio>
+        </div>
+
     </div>
 
     <div id="main-chat">
@@ -469,18 +492,6 @@ Configure your settings in the menu and press 'Send' to begin.</div>
             <button id="stop-btn" class="danger hidden" onclick="stopGeneration()">Stop</button>
         </div>
     </div>
-</div>
-
-<div id="music-player">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <strong id="track-name" style="color:var(--accent)">No Music Playing</strong>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <label>Vol:</label>
-            <input type="range" id="vol-slider" min="0" max="1" step="0.1" value="0.4" onchange="setVolume()">
-            <button class="small secondary" id="play-btn" onclick="toggleMusic()">▶</button>
-        </div>
-    </div>
-    <audio id="audio-elem" loop></audio>
 </div>
 
 <div id="edit-modal" class="modal">
@@ -1016,10 +1027,12 @@ Configure your settings in the menu and press 'Send' to begin.</div>
             audioPlayer.src = url;
             audioPlayer.play();
             $('track-name').innerText = sel.options[sel.selectedIndex].text;
-            $('music-player').classList.add('active');
+            // Removed: $('music-player').classList.add('active'); - Not needed as it's always visible in sidebar
         } else {
             audioPlayer.pause();
+            $('track-name').innerText = "No Music Playing";
         }
+        updatePlayButton();
     }
     function playCustomMusic(url) {
         if(url) {
@@ -1027,15 +1040,18 @@ Configure your settings in the menu and press 'Send' to begin.</div>
             audioPlayer.play();
             $('track-name').innerText = "Custom Track";
         }
+        updatePlayButton();
+    }
+    function updatePlayButton() {
+        $('play-btn').innerText = audioPlayer.paused ? "▶" : "⏸";
     }
     function toggleMusic() {
         if (audioPlayer.paused && audioPlayer.src) {
             audioPlayer.play();
-            $('play-btn').innerText = "⏸";
         } else {
             audioPlayer.pause();
-            $('play-btn').innerText = "▶";
         }
+        updatePlayButton();
     }
     function setVolume() { audioPlayer.volume = $('vol-slider').value; }
 
