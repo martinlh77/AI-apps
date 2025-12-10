@@ -375,6 +375,13 @@
             <input type="password" id="api-token" placeholder="Enter Bearer Token">
         </div>
 
+<!-- System Message -->
+    <div class="settings-group">
+        <label>System Message</label>
+        <textarea id="system-message" placeholder="You are a helpful AI assistant" rows="3" style="resize: vertical; min-height: 60px;"></textarea>
+        <small style="color:var(--text-color); opacity:0.7;">Defines the AI's role and behavior.</small>
+   </div>
+
         <div class="settings-group">
             <label>Theme</label>
             <button id="theme-toggle" type="button" style="width:100%; padding:8px; cursor:pointer;">Switch to Dark Mode</button>
@@ -427,7 +434,7 @@
         </div>
 
         <div class="settings-group">
-            <label>Voice Emotion/Style</label>
+            <label>Voice and Response Emotion/Style</label>
             <input type="text" id="voice-style" placeholder="e.g. Excited, Calm, Sarcastic">
             <small style="color:var(--text-color); opacity:0.7;">Added to system prompt.</small>
         </div>
@@ -840,12 +847,13 @@
             messagesPayload = [...conversationHistory];
         }
 
-        const emotion = document.getElementById('voice-style').value;
-        const systemMsg = {
-            role: 'system',
-            content: `You are a helpful AI assistant. ${emotion ? 'Voice Style/Emotion: ' + emotion : ''}`,
-            cache_control: { type: 'ephemeral' }
-        };
+const emotion = document.getElementById('voice-style').value;
+const customSystemMessage = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
+const systemMsg = {
+    role: 'system',
+    content: `${customSystemMessage} ${emotion ? 'Voice and Response Style/Emotion: ' + emotion : ''}`,
+    cache_control: { type: 'ephemeral' }
+};
 
         const finalMessages = [systemMsg, ...messagesPayload];
 
