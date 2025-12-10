@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V8.1</title>
+    <title>Pollinations RPG Ultimate V8.2</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -29,7 +29,7 @@
             
             /* CRITICAL MOBILE FIX V1: Use dynamic viewport height (dvh) */
             height: 100dvh; 
-            /* Fallbacks for maximum compatibility */
+            /* Fallbacks for maximum compatibility (these are now less likely to cause issues) */
             height: -webkit-fill-available;
             min-height: 100vh; 
             
@@ -55,15 +55,22 @@
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
+            /* FIX V8.2: Remove scroll from sidebar itself, content wrapper handles it */
+            overflow-y: hidden; 
             transition: transform 0.3s ease;
             z-index: 50;
             flex-shrink: 0;
             box-shadow: var(--shadow);
-            
-            /* FIX V8.1: Add padding for music player scroll clearance */
+        }
+        
+        /* NEW FIX V8.2: Scrollable content wrapper for settings sections */
+        #sidebar-content-wrapper {
+            flex-grow: 1; /* Take up all available space */
+            overflow-y: auto; /* Make this section scrollable */
+            /* Add clearance padding here, which was previously on #sidebar */
             padding-bottom: 20px; 
         }
+
 
         /* Main Chat Area */
         #main-chat {
@@ -151,9 +158,11 @@
             margin-bottom: 10px;
         }
 
-        /* --- Chat History --- */
+        /* --- Chat History (Mobile Scroll Fix relies on this structure) --- */
         #chat-history {
-            flex: 1; overflow-y: auto; padding: 60px 20px 20px 20px;
+            flex: 1; /* Takes up all remaining height of #main-chat */ 
+            overflow-y: auto; /* Enables scrolling for the messages */
+            padding: 60px 20px 20px 20px;
             z-index: 1; scroll-behavior: smooth;
         }
 
@@ -195,6 +204,7 @@
             padding: 15px; background: var(--bg-panel); z-index: 10;
             border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end;
             position: relative; /* For loader */
+            flex-shrink: 0; /* Important: Prevents input area from shrinking when history overflows */
         }
         #user-input { flex: 1; min-height: 50px; max-height: 120px; }
         
@@ -212,9 +222,7 @@
             border-top: 1px solid var(--border);
             padding: 12px; 
             font-size: 0.85em;
-            /* FIX V8.1: Remove auto margin and rely on flex flow to avoid scroll fighting */
-            margin-top: 0; 
-            flex-shrink: 0;
+            flex-shrink: 0; /* Important: Prevents music player from shrinking or being pushed into scroll */
             z-index: 55;
         }
 
@@ -248,226 +256,230 @@
     <button id="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
 
     <div id="sidebar">
-        <div class="panel-section">
-            <h2 style="margin:0; font-size:1.2em; color:var(--text-main);">RPG Engine</h2>
-            <div style="font-size:0.75em; color:var(--text-dim);">Powered by gen.pollinations.ai</div>
-        </div>
         
-        <div class="panel-section">
-            <button class="danger" style="width:100%;" onclick="startNewAdventure()">Start New Adventure (Clear All)</button>
-        </div>
-
-        <div class="panel-section">
-            <div class="panel-header" onclick="toggleSection('sec-setup')">Game Setup <span>▼</span></div>
-            <div id="sec-setup" class="collapsible active">
-                <div class="form-group">
-                    <label>Theme</label>
-                    <input type="text" id="theme" list="themes" placeholder="Select or type theme...">
-                    <datalist id="themes">
-                        <option value="High Fantasy"><option value="Cyberpunk"><option value="Sci-Fi Space Opera">
-                        <option value="Victorian Mystery"><option value="Eldritch Horror"><option value="Post-Apocalyptic">
-                    </datalist>
-                </div>
-                <div class="form-group">
-                    <label>Mode</label>
-                    <select id="game-mode">
-                        <option value="rpg">RPG Adventure (AI Narrator)</option>
-                        <option value="roleplay">Roleplay (User vs Character)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Lore / Backstory</label>
-                    <textarea id="lore" placeholder="Paste world context here..."></textarea>
-                </div>
-                <div class="form-group">
-                    <div class="row" style="align-items:center;">
-                        <label><input type="checkbox" id="track-stats" checked> Track Inventory/HP</label>
-                        <label><input type="checkbox" id="ignore-censorship"> Ignore Censorship</label>
-                    </div>
-                </div>
+        <div id="sidebar-content-wrapper">
+            
+            <div class="panel-section">
+                <h2 style="margin:0; font-size:1.2em; color:var(--text-main);">RPG Engine</h2>
+                <div style="font-size:0.75em; color:var(--text-dim);">Powered by gen.pollinations.ai</div>
             </div>
-        </div>
-
-        <div class="panel-section">
-            <div class="panel-header" onclick="toggleSection('sec-chars')">Characters <span>▼</span></div>
-            <div id="sec-chars" class="collapsible">
-                <div class="form-group">
-                    <label>User Character</label>
-                    <div class="char-setup-container">
-                         <img id="user-img-preview" src="" class="char-img-preview hidden">
-                        <textarea id="user-desc" placeholder="Name, appearance, skills..."></textarea>
-                        <div class="row" style="margin-top:8px;">
-                            <button class="secondary small" onclick="generateCharImage('user')">Generate Img</button>
-                            <button class="secondary small" onclick="$('user-upload').click()">Upload</button>
-                            <button class="danger small" onclick="removeCharImage('user')">Reset</button>
-                            <input type="file" id="user-upload" class="hidden" onchange="handleCharUpload(this, 'user')">
-                        </div>
-                        <input type="text" id="user-img-url" placeholder="Or Image URL" style="margin-top:5px" onchange="updateCharPreview(this.value, 'user')">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>AI Character / NPC</label>
-                    <div class="char-setup-container">
-                        <img id="ai-img-preview" src="" class="char-img-preview hidden">
-                        <textarea id="ai-desc" placeholder="Name, personality..."></textarea>
-                        <div class="row" style="margin-top:8px;">
-                            <button class="secondary small" onclick="generateCharImage('ai')">Generate Img</button>
-                            <button class="secondary small" onclick="$('ai-upload').click()">Upload</button>
-                            <button class="danger small" onclick="removeCharImage('ai')">Reset</button>
-                            <input type="file" id="ai-upload" class="hidden" onchange="handleCharUpload(this, 'ai')">
-                        </div>
-                        <input type="text" id="ai-img-url" placeholder="Or Image URL" style="margin-top:5px" onchange="updateCharPreview(this.value, 'ai')">
-                    </div>
-                </div>
+            
+            <div class="panel-section">
+                <button class="danger" style="width:100%;" onclick="startNewAdventure()">Start New Adventure (Clear All)</button>
             </div>
-        </div>
 
-        <div class="panel-section">
-            <div class="panel-header" onclick="toggleSection('sec-media')">Visuals & Audio <span>▼</span></div>
-            <div id="sec-media" class="collapsible">
-                <div class="form-group">
-                    <label>Background Image</label>
-                    <div class="row">
-                        <button class="small" onclick="generateScene()">Gen from Scene</button>
-                        <button class="small secondary" onclick="$('bg-upload').click()">Upload</button>
-                        <button class="small danger" onclick="removeBackground()">Reset</button>
+            <div class="panel-section">
+                <div class="panel-header" onclick="toggleSection('sec-setup')">Game Setup <span>▼</span></div>
+                <div id="sec-setup" class="collapsible active">
+                    <div class="form-group">
+                        <label>Theme</label>
+                        <input type="text" id="theme" list="themes" placeholder="Select or type theme...">
+                        <datalist id="themes">
+                            <option value="High Fantasy"><option value="Cyberpunk"><option value="Sci-Fi Space Opera">
+                            <option value="Victorian Mystery"><option value="Eldritch Horror"><option value="Post-Apocalyptic">
+                        </datalist>
                     </div>
-                    <input type="file" id="bg-upload" class="hidden" onchange="handleBgUpload(this)">
-                    <input type="text" id="bg-url" placeholder="Or Direct URL" style="margin-top:5px" onchange="setBackground(this.value)">
-                </div>
-                <div class="form-group">
-                    <label>Background Dimness (Overlay Opacity: <span id="bg-opacity-value">80%</span>)</label>
-                    <input type="range" id="bg-opacity-slider" min="0" max="100" step="5" value="80" oninput="setBgOpacity(this.value)">
-                </div>
-                <div class="form-group">
-                    <label>Background Music (Select in Player below)</label>
-                    <select id="music-select" onchange="playMusic()">
-                        <option value="">-- Select Track --</option>
-                        <option value="https://files.catbox.moe/1418xa.mp3">Into the Dark</option>
-                        <option value="https://files.catbox.moe/oh47qj.mp3">Into the Dark (v2)</option>
-                        <option value="https://files.catbox.moe/ktcalv.mp3">Into the Depth</option>
-                        <option value="https://files.catbox.moe/bbkjx9.mp3">Cavern Below</option>
-                        <option value="https://files.catbox.moe/eektv2.mp3">Unknown Depth</option>
-                        <option value="https://files.catbox.moe/yewq84.mp3">Ice Cream Chaos</option>
-                        <option value="https://files.catbox.moe/nv4wn4.mp3">Ice Cream Circus</option>
-                        <option value="https://files.catbox.moe/olt3nv.mp3">Ice Cream Madness</option>
-                        <option value="https://files.catbox.moe/f6b7fr.mp3">Ice Cream Mayhem</option>
-                        <option value="https://files.catbox.moe/kq3yso.mp3">Meltdown (v1)</option>
-                        <option value="https://files.catbox.moe/uv90bq.mp3">Meltdown (v2)</option>
-                        <option value="https://files.catbox.moe/7cx2t0.mp3">Catching Stars (v1)</option>
-                        <option value="https://files.catbox.moe/ze4tnu.mp3">Catching Stars (v2)</option>
-                        <option value="https://files.catbox.moe/1o7xo4.mp3">Catching Stars (v3)</option>
-                        <option value="https://files.catbox.moe/uvau4r.mp3">Catching Stars (v4)</option>
-                    </select>
-                    <input type="text" id="custom-music" placeholder="Or custom MP3 URL" style="margin-top:5px" onchange="playCustomMusic(this.value)">
-                </div>
-            </div>
-        </div>
-
-        <div class="panel-section">
-            <div class="panel-header" onclick="toggleSection('sec-settings')">Models & Settings <span>▼</span></div>
-            <div id="sec-settings" class="collapsible">
-                <div class="form-group">
-                    <label>Text Model</label>
-                    <select id="text-model">
-                        <option value="mistral" selected>Mistral (Default)</option>
-                        <option value="nova-micro">Nova Micro</option>
-                        <option value="gemini">Gemini</option>
-                        <option value="gemini-search">Gemini Search</option>
-                        <option value="openai">OpenAI</option>
-                        <option value="openai-fast">OpenAI Fast</option>
-                        <option value="openai-large">OpenAI Large</option>
-                        <option value="openai-reasoning">OpenAI Reasoning</option>
-                        <option value="grok">Grok</option>
-                        <option value="perplexity-fast">Perplexity Fast</option>
-                        <option value="perplexity-reasoning">Perplexity Reasoning</option>
-                        <option value="chickytutor">ChickyTutor</option>
-                        <option value="claude">Claude</option>
-                        <option value="claude-fast">Claude Fast</option>
-                        <option value="claude-large">Claude Large</option>
-                        <option value="deepseek">DeepSeek</option>
-                        <option value="kimi-k2-thinking">Kimi K2</option>
-                        <option value="gemini-large">Gemini Large</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Image Model</label>
-                    <select id="image-model">
-                        <option value="zimage" selected>ZImage</option>
-                        <option value="flux">Flux</option>
-                        <option value="turbo">Turbo</option>
-                        <option value="kontext">Kontext</option>
-                        <option value="seedream">SeeDream</option>
-                        <option value="seedream-pro">SeeDream Pro</option>
-                        <option value="nanobanana">NanoBanana</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Video Model</label>
-                    <select id="video-model">
-                        <option value="seedance">Seedance</option>
-                        <option value="seedance-pro">Seedance Pro</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <div class="row">
-                        <div style="flex:1"><label>Image Width</label><input type="number" id="img-w" value="1024"></div>
-                        <div style="flex:1"><label>Image Height</label><input type="number" id="img-h" value="1024"></div>
+                    <div class="form-group">
+                        <label>Mode</label>
+                        <select id="game-mode">
+                            <option value="rpg">RPG Adventure (AI Narrator)</option>
+                            <option value="roleplay">Roleplay (User vs Character)</option>
+                        </select>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>Video Settings (Seedance)</label>
-                    <div class="row">
-                        <div style="flex:1"><label>Duration (2-10s)</label><input type="number" id="vid-duration" value="4" min="2" max="10"></div>
-                        <div style="flex:1"><label>Aspect Ratio</label>
-                            <select id="vid-aspect">
-                                <option value="1:1">Square (1:1)</option>
-                                <option value="16:9" selected>Horizontal (16:9)</option>
-                                <option value="9:16">Vertical (9:16)</option>
-                            </select>
+                    <div class="form-group">
+                        <label>Lore / Backstory</label>
+                        <textarea id="lore" placeholder="Paste world context here..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <div class="row" style="align-items:center;">
+                            <label><input type="checkbox" id="track-stats" checked> Track Inventory/HP</label>
+                            <label><input type="checkbox" id="ignore-censorship"> Ignore Censorship</label>
                         </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Audio/Voice Settings</label>
-                    <select id="voice-model">
-                        <option value="alloy">Alloy (Neutral)</option>
-                        <option value="echo">Echo (Deep)</option>
-                        <option value="fable">Fable (British-ish)</option>
-                        <option value="onyx">Onyx (Deep/Gravel)</option>
-                        <option value="nova">Nova (Fem/Energetic)</option>
-                        <option value="shimmer">Shimmer (Fem/Clear)</option>
-                    </select>
-                    <input type="text" id="voice-tone" placeholder="Tone (e.g., Whispering, Angry)" style="margin-top:5px;">
-                </div>
-                <div class="form-group">
-                    <label>Verbosity</label>
-                    <select id="verbosity">
-                        <option value="normal">Normal</option>
-                        <option value="verbose">Verbose/Descriptive</option>
-                        <option value="concise">Concise</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>API Key (Override)</label>
-                    <input type="password" id="api-key" placeholder="Enter custom key...">
-                </div>
             </div>
-        </div>
 
-        <div class="panel-section">
-            <div class="row">
-                <button class="secondary small" onclick="saveGame()">Save JS</button>
-                <button class="secondary small" onclick="$('load-input').click()">Load JS</button>
-                <input type="file" id="load-input" class="hidden" onchange="loadGame(this)">
+            <div class="panel-section">
+                <div class="panel-header" onclick="toggleSection('sec-chars')">Characters <span>▼</span></div>
+                <div id="sec-chars" class="collapsible">
+                    <div class="form-group">
+                        <label>User Character</label>
+                        <div class="char-setup-container">
+                            <img id="user-img-preview" src="" class="char-img-preview hidden">
+                            <textarea id="user-desc" placeholder="Name, appearance, skills..."></textarea>
+                            <div class="row" style="margin-top:8px;">
+                                <button class="secondary small" onclick="generateCharImage('user')">Generate Img</button>
+                                <button class="secondary small" onclick="$('user-upload').click()">Upload</button>
+                                <button class="danger small" onclick="removeCharImage('user')">Reset</button>
+                                <input type="file" id="user-upload" class="hidden" onchange="handleCharUpload(this, 'user')">
+                            </div>
+                            <input type="text" id="user-img-url" placeholder="Or Image URL" style="margin-top:5px" onchange="updateCharPreview(this.value, 'user')">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>AI Character / NPC</label>
+                        <div class="char-setup-container">
+                            <img id="ai-img-preview" src="" class="char-img-preview hidden">
+                            <textarea id="ai-desc" placeholder="Name, personality..."></textarea>
+                            <div class="row" style="margin-top:8px;">
+                                <button class="secondary small" onclick="generateCharImage('ai')">Generate Img</button>
+                                <button class="secondary small" onclick="$('ai-upload').click()">Upload</button>
+                                <button class="danger small" onclick="removeCharImage('ai')">Reset</button>
+                                <input type="file" id="ai-upload" class="hidden" onchange="handleCharUpload(this, 'ai')">
+                            </div>
+                            <input type="text" id="ai-img-url" placeholder="Or Image URL" style="margin-top:5px" onchange="updateCharPreview(this.value, 'ai')">
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="row" style="margin-top:8px;">
-                 <button class="secondary small" onclick="copyLog(true)">Copy Full</button>
-                 <button class="secondary small" onclick="copyLog(false)">Copy Clean</button>
+
+            <div class="panel-section">
+                <div class="panel-header" onclick="toggleSection('sec-media')">Visuals & Audio <span>▼</span></div>
+                <div id="sec-media" class="collapsible">
+                    <div class="form-group">
+                        <label>Background Image</label>
+                        <div class="row">
+                            <button class="small" onclick="generateScene()">Gen from Scene</button>
+                            <button class="small secondary" onclick="$('bg-upload').click()">Upload</button>
+                            <button class="small danger" onclick="removeBackground()">Reset</button>
+                        </div>
+                        <input type="file" id="bg-upload" class="hidden" onchange="handleBgUpload(this)">
+                        <input type="text" id="bg-url" placeholder="Or Direct URL" style="margin-top:5px" onchange="setBackground(this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Background Dimness (Overlay Opacity: <span id="bg-opacity-value">80%</span>)</label>
+                        <input type="range" id="bg-opacity-slider" min="0" max="100" step="5" value="80" oninput="setBgOpacity(this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Background Music (Select in Player below)</label>
+                        <select id="music-select" onchange="playMusic()">
+                            <option value="">-- Select Track --</option>
+                            <option value="https://files.catbox.moe/1418xa.mp3">Into the Dark</option>
+                            <option value="https://files.catbox.moe/oh47qj.mp3">Into the Dark (v2)</option>
+                            <option value="https://files.catbox.moe/ktcalv.mp3">Into the Depth</option>
+                            <option value="https://files.catbox.moe/bbkjx9.mp3">Cavern Below</option>
+                            <option value="https://files.catbox.moe/eektv2.mp3">Unknown Depth</option>
+                            <option value="https://files.catbox.moe/yewq84.mp3">Ice Cream Chaos</option>
+                            <option value="https://files.catbox.moe/nv4wn4.mp3">Ice Cream Circus</option>
+                            <option value="https://files.catbox.moe/olt3nv.mp3">Ice Cream Madness</option>
+                            <option value="https://files.catbox.moe/f6b7fr.mp3">Ice Cream Mayhem</option>
+                            <option value="https://files.catbox.moe/kq3yso.mp3">Meltdown (v1)</option>
+                            <option value="https://files.catbox.moe/uv90bq.mp3">Meltdown (v2)</option>
+                            <option value="https://files.catbox.moe/7cx2t0.mp3">Catching Stars (v1)</option>
+                            <option value="https://files.catbox.moe/ze4tnu.mp3">Catching Stars (v2)</option>
+                            <option value="https://files.catbox.moe/1o7xo4.mp3">Catching Stars (v3)</option>
+                            <option value="https://files.catbox.moe/uvau4r.mp3">Catching Stars (v4)</option>
+                        </select>
+                        <input type="text" id="custom-music" placeholder="Or custom MP3 URL" style="margin-top:5px" onchange="playCustomMusic(this.value)">
+                    </div>
+                </div>
             </div>
-            <button class="danger small" style="width:100%; margin-top:8px;" onclick="clearChat()">Clear Chat Log</button>
+
+            <div class="panel-section">
+                <div class="panel-header" onclick="toggleSection('sec-settings')">Models & Settings <span>▼</span></div>
+                <div id="sec-settings" class="collapsible">
+                    <div class="form-group">
+                        <label>Text Model</label>
+                        <select id="text-model">
+                            <option value="mistral" selected>Mistral (Default)</option>
+                            <option value="nova-micro">Nova Micro</option>
+                            <option value="gemini">Gemini</option>
+                            <option value="gemini-search">Gemini Search</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="openai-fast">OpenAI Fast</option>
+                            <option value="openai-large">OpenAI Large</option>
+                            <option value="openai-reasoning">OpenAI Reasoning</option>
+                            <option value="grok">Grok</option>
+                            <option value="perplexity-fast">Perplexity Fast</option>
+                            <option value="perplexity-reasoning">Perplexity Reasoning</option>
+                            <option value="chickytutor">ChickyTutor</option>
+                            <option value="claude">Claude</option>
+                            <option value="claude-fast">Claude Fast</option>
+                            <option value="claude-large">Claude Large</option>
+                            <option value="deepseek">DeepSeek</option>
+                            <option value="kimi-k2-thinking">Kimi K2</option>
+                            <option value="gemini-large">Gemini Large</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Image Model</label>
+                        <select id="image-model">
+                            <option value="zimage" selected>ZImage</option>
+                            <option value="flux">Flux</option>
+                            <option value="turbo">Turbo</option>
+                            <option value="kontext">Kontext</option>
+                            <option value="seedream">SeeDream</option>
+                            <option value="seedream-pro">SeeDream Pro</option>
+                            <option value="nanobanana">NanoBanana</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Video Model</label>
+                        <select id="video-model">
+                            <option value="seedance">Seedance</option>
+                            <option value="seedance-pro">Seedance Pro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div style="flex:1"><label>Image Width</label><input type="number" id="img-w" value="1024"></div>
+                            <div style="flex:1"><label>Image Height</label><input type="number" id="img-h" value="1024"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Video Settings (Seedance)</label>
+                        <div class="row">
+                            <div style="flex:1"><label>Duration (2-10s)</label><input type="number" id="vid-duration" value="4" min="2" max="10"></div>
+                            <div style="flex:1"><label>Aspect Ratio</label>
+                                <select id="vid-aspect">
+                                    <option value="1:1">Square (1:1)</option>
+                                    <option value="16:9" selected>Horizontal (16:9)</option>
+                                    <option value="9:16">Vertical (9:16)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Audio/Voice Settings</label>
+                        <select id="voice-model">
+                            <option value="alloy">Alloy (Neutral)</option>
+                            <option value="echo">Echo (Deep)</option>
+                            <option value="fable">Fable (British-ish)</option>
+                            <option value="onyx">Onyx (Deep/Gravel)</option>
+                            <option value="nova">Nova (Fem/Energetic)</option>
+                            <option value="shimmer">Shimmer (Fem/Clear)</option>
+                        </select>
+                        <input type="text" id="voice-tone" placeholder="Tone (e.g., Whispering, Angry)" style="margin-top:5px;">
+                    </div>
+                    <div class="form-group">
+                        <label>Verbosity</label>
+                        <select id="verbosity">
+                            <option value="normal">Normal</option>
+                            <option value="verbose">Verbose/Descriptive</option>
+                            <option value="concise">Concise</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>API Key (Override)</label>
+                        <input type="password" id="api-key" placeholder="Enter custom key...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <div class="row">
+                    <button class="secondary small" onclick="saveGame()">Save JS</button>
+                    <button class="secondary small" onclick="$('load-input').click()">Load JS</button>
+                    <input type="file" id="load-input" class="hidden" onchange="loadGame(this)">
+                </div>
+                <div class="row" style="margin-top:8px;">
+                    <button class="secondary small" onclick="copyLog(true)">Copy Full</button>
+                    <button class="secondary small" onclick="copyLog(false)">Copy Clean</button>
+                </div>
+                <button class="danger small" style="width:100%; margin-top:8px;" onclick="clearChat()">Clear Chat Log</button>
+            </div>
+            
         </div>
-        
         <div id="music-player">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <strong id="track-name" style="color:var(--accent)">No Music Playing</strong>
@@ -1240,6 +1252,15 @@ Configure your settings in the menu and press 'Send' to begin.</div>
             } catch(err) { showError("Load failed: Invalid file."); }
         };
         reader.readAsText(input.files[0]);
+    }
+    
+    function copyLog(full) {
+        let content = state.messages.map(m => `[${m.role.toUpperCase()}]\n${m.content}`).join('\n\n');
+        if (full && state.summary) {
+             content = `[STORY SUMMARY]\n${state.summary}\n\n` + content;
+        }
+        navigator.clipboard.writeText(content);
+        showError(full ? "Full Log Copied!" : "Clean Log Copied!");
     }
 
 </script>
