@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V8</title>
+    <title>Pollinations RPG Ultimate V8.1</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -26,11 +26,18 @@
             font-family: var(--font-main);
             background-color: var(--bg-dark);
             color: var(--text-main);
-            height: 100vh; /* Base height */
+            
+            /* CRITICAL MOBILE FIX V1: Use dynamic viewport height (dvh) */
+            height: 100dvh; 
+            /* Fallbacks for maximum compatibility */
+            height: -webkit-fill-available;
+            min-height: 100vh; 
+            
             display: flex;
             overflow: hidden;
-            /* FIX: Ensure full viewport height on mobile */
-            min-height: -webkit-fill-available;
+            
+            /* CRITICAL MOBILE FIX V2: Ensure content is not clipped by safe areas (e.g., notches/bars) */
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         /* --- Layout --- */
@@ -53,7 +60,9 @@
             z-index: 50;
             flex-shrink: 0;
             box-shadow: var(--shadow);
-            padding-bottom: 0; /* Remove bottom padding as music player is now part of the flow */
+            
+            /* FIX V8.1: Add padding for music player scroll clearance */
+            padding-bottom: 20px; 
         }
 
         /* Main Chat Area */
@@ -203,9 +212,10 @@
             border-top: 1px solid var(--border);
             padding: 12px; 
             font-size: 0.85em;
-            margin-top: auto; /* Pushes it to the bottom of the content in the flex column */
+            /* FIX V8.1: Remove auto margin and rely on flex flow to avoid scroll fighting */
+            margin-top: 0; 
             flex-shrink: 0;
-            z-index: 55; /* Keep it above other sidebar elements if needed */
+            z-index: 55;
         }
 
         /* --- Modals & Popups --- */
