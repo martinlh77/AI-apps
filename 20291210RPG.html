@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V11.3</title>
+    <title>Pollinations RPG Ultimate V11.2</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -811,12 +811,22 @@ function escapeHtml(unsafe) {
 
         try {
             // Step 1: Generate theme and lore separately for better results
-            const themePrompt = `Generate a single unique RPG theme/genre in 2-4 words. Examples: "Dark Fantasy", "Cyberpunk Noir", "Steampunk Adventure", "Cosmic Horror", "Post-Apocalyptic Western". Output ONLY the theme, nothing else.`;
-            
-            const themeSeed = generateSeed();
-            const themeUrl = `${API_BASE}/text/${encodeURIComponent(themePrompt)}?model=mistral&seed=${themeSeed}&key=${getKey()}`;
-            const themeRes = await fetch(themeUrl);
-            const theme = (await themeRes.text()).trim().replace(/"/g, '');
+// Step 1: Generate theme with more variety
+const themePrompt = `You are a creative game designer. Generate ONE completely unique and creative RPG theme/setting in 2-4 words. Be imaginative and avoid common tropes. Do not explain, just output the theme name.
+
+Examples of what to create (but make something NEW):
+- Bioluminescent Deep Sea
+- Clockwork Desert Nomads  
+- Crystal Moon Colonies
+- Volcanic Sky Pirates
+- Fungal Underground Kingdom
+
+Your unique theme:`;
+
+const themeSeed = generateSeed();
+const themeUrl = `${API_BASE}/text/${encodeURIComponent(themePrompt)}?model=mistral&seed=${themeSeed}&temperature=1.2&key=${getKey()}`;
+const themeRes = await fetch(themeUrl);
+const theme = (await themeRes.text()).trim().replace(/"/g, '').replace(/^(Your unique theme:|Theme:)/i, '').trim();
             
             $('theme').value = theme;
 
