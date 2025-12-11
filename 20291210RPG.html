@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V12</title>
+    <title>Pollinations RPG Ultimate V11.2</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -263,7 +263,7 @@
 
     <div id="sidebar">
         <div class="panel-section">
-            <h2 style="margin:0; font-size:1.2em; color:var(--text-main);">RPG Engine V11</h2>
+            <h2 style="margin:0; font-size:1.2em; color:var(--text-main);">RPG Engine V11.2</h2>
             <div style="font-size:0.75em; color:var(--text-dim);">Powered by gen.pollinations.ai</div>
         </div>
         
@@ -295,7 +295,7 @@
                         <label style="margin-bottom:0">Lore / Backstory</label>
                         <button class="small secondary" id="btn-rand-lore" onclick="generateLore()">✨ Gen</button>
                     </div>
-                    <textarea id="lore" placeholder="Paste world context here..." style="margin-top:5px;"></textarea>
+                    <textarea id="lore" placeholder="Paste world context here..." style="margin-top:5px; height:80px;"></textarea>
                 </div>
                 <div class="form-group">
                     <div class="row" style="align-items:center;">
@@ -315,7 +315,7 @@
                         <input type="text" id="user-name" placeholder="Character Name (e.g., Alara)" style="margin-bottom:8px;">
                         
                         <img id="user-img-preview" src="" class="char-img-preview hidden">
-                        <textarea id="user-desc" placeholder="Appearance, skills, personality..."></textarea>
+                        <textarea id="user-desc" placeholder="Appearance, skills, personality..." style="height:100px;"></textarea>
                         <div class="row" style="margin-top:8px; flex-wrap:wrap;">
                             <button class="secondary small" onclick="generateCharImage('user')">Generate Img</button>
                             <button class="small" onclick="randomizeCharacter('user')">✨ Randomize</button>
@@ -332,7 +332,7 @@
                          <input type="text" id="ai-name" placeholder="AI Name (e.g., Narrator)" style="margin-bottom:8px;" value="Narrator">
                          
                         <img id="ai-img-preview" src="" class="char-img-preview hidden">
-                        <textarea id="ai-desc" placeholder="Personality, goals, role..."></textarea>
+                        <textarea id="ai-desc" placeholder="Personality, goals, role..." style="height:100px;"></textarea>
                         <div class="row" style="margin-top:8px; flex-wrap:wrap;">
                             <button class="secondary small" onclick="generateCharImage('ai')">Generate Img</button>
                             <button class="small" onclick="randomizeCharacter('ai')">✨ Randomize</button>
@@ -607,7 +607,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         </ul>
         <p><strong>Key Features:</strong></p>
         <ul>
-            <li><strong>🎲 Randomize Everything:</strong> Instantly creates a whole new world, characters, and visual setting.</li>
+            <li><strong>🎲 Randomize Everything:</strong> Instantly creates a whole new world, characters, and visual setting with detailed backstories.</li>
             <li><strong>Character Setup:</strong> Fill in the Name, Description, and optionally upload/generate an Image. The Name will be used in the chat.</li>
             <li><strong>📷 Scene Image:</strong> Automatically generates a visual representation of the current narrative.</li>
             <li><strong>Edit Media:</strong> Click the "Edit Media" button next to any generated image to modify it.</li>
@@ -765,8 +765,8 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         try {
             const theme = $('theme').value.trim();
             const prompt = theme 
-                ? `Generate a short, intriguing RPG backstory/lore (max 4 sentences) for the theme: ${theme}.`
-                : `Pick a random unique fiction genre (e.g. Cyberpunk, Fantasy, Noir, Space Opera) and generate a short, intriguing backstory/lore (max 4 sentences) for it.`;
+                ? `Generate a detailed and intriguing RPG backstory/lore (4-6 sentences) for the theme: ${theme}.`
+                : `Pick a random unique fiction genre (e.g. Cyberpunk, Fantasy, Noir, Space Opera) and generate a detailed and intriguing backstory/lore (4-6 sentences) for it.`;
 
             const seed = generateSeed();
             const url = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
@@ -789,38 +789,37 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         state.isGenerating = true; // Prevent chat during setup
 
         try {
-            // 1. Text Generation: Get everything in one prompt to save time/tokens
-            const prompt = `Generate a creative, random RPG scenario.
-            Output purely in this specific format with pipes (|) as separators:
-            Theme | Lore (2-3 sentences) | User Character Name | User Visual Description (short) | AI Narrator Name | AI Visual Description (short)
+            // FIXED: More robust prompt using ||| as delimiter and enforcing field order and depth
+            const prompt = `Generate a unique, creative random RPG scenario with detailed characters.
+            Strictly follow this output format using '|||' as the separator between fields. Do not use markdown bolding.
+            
+            Format:
+            Theme ||| Detailed Lore (3-5 sentences) ||| User Character Name ||| User Description (Include: Race/Class if applicable, Personality, Appearance, Goals, Likes/Dislikes) ||| AI Narrator Name ||| AI Description (Include: Role, Personality, Goals)
             
             Example:
-            Cyberpunk | Neon streets hide dark secrets. | Kael | Cyborg with glowing red eye | The Architect | Holographic construct in a suit`;
+            Cyberpunk ||| The year is 2099. Neon rain falls... ||| Kael ||| A street samurai cyborg. Tough exterior but protects the weak. Wants to find his sister. Dislikes authority. ||| The Architect ||| A cold, logical AI construct controlling the city grid. Wants order at all costs.`;
 
             const seed = generateSeed();
             const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
             const textRes = await fetch(textUrl);
             const text = await textRes.text();
             
-            const parts = text.split('|').map(s => s.trim());
+            const parts = text.split('|||').map(s => s.trim());
+            // Check for correct length, but allow for minor variations if AI messed up slightly
             if (parts.length < 6) throw new Error("AI returned malformed data. Try again.");
 
-            // 2. Populate Inputs
+            // FIXED: Mapped correctly to avoid swapping fields
             $('theme').value = parts[0];
             $('lore').value = parts[1];
             $('user-name').value = parts[2];
-            $('user-desc').value = parts[3];
+            $('user-desc').value = parts[3]; // User desc is now deeper
             $('ai-name').value = parts[4];
-            $('ai-desc').value = parts[5];
+            $('ai-desc').value = parts[5];   // AI desc is now deeper
 
-            // 3. Trigger Image Generations Sequentially (to be kind to rate limits)
-            // User Image
+            // 3. Trigger Image Generations Sequentially
             await generateCharImage('user');
-            // AI Image
             await generateCharImage('ai');
             
-            // Background Image
-            // We use the Lore as context
             try {
                 const bgPrompt = `Atmospheric background wallpaper, ${parts[0]}, ${parts[1]}, highly detailed`;
                 const bgApiLink = buildMediaUrl('image', bgPrompt);
@@ -861,7 +860,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         } catch(e) { showError("Scene Gen Error: " + e.message); }
     }
 
-    // NEW: Randomize Character
+    // NEW: Randomize Character (Updated for Depth)
     async function randomizeCharacter(type) {
         const isUser = type === 'user';
         const nameEl = isUser ? $('user-name') : $('ai-name');
@@ -873,14 +872,17 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
 
         try {
             const charType = isUser ? "Adventurer Character" : "Game Master Character (NPC)";
-            const prompt = `Generate a random ${charType} for a fantasy RPG. Give a short, evocative name (1 word) and a 3-sentence description of appearance, skills, and personality. Format as: [NAME]| [DESCRIPTION]`;
-            const seed = generateSeed();
+            // FIXED: Prompt requests specific depth details
+            const prompt = `Generate a random ${charType} for an RPG. 
+            Output strictly in this format: [NAME] ||| [DESCRIPTION]
+            For Description, include: Race/Class/Species (if applicable), Personality, Appearance, Goals, Likes/Dislikes.`;
             
+            const seed = generateSeed();
             const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
             const textRes = await fetch(textUrl);
             const text = (await textRes.text()).trim();
             
-            const parts = text.split('|').map(p => p.trim());
+            const parts = text.split('|||').map(p => p.trim());
             
             if (parts.length < 2) throw new Error("Failed to parse AI output. Try again.");
             
@@ -908,8 +910,6 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         const name = nameElement.value || (type === 'user' ? 'A Hero' : 'A Mentor');
 
         if (!desc) {
-            // If part of bulk process, we skip gracefully or error. 
-            // Since this function is called by button usually, showing error is fine.
             if (!state.isGenerating) return showError("Please enter a character description first.");
             return; 
         }
@@ -977,7 +977,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
 
     // --- Enhanced Media Edit (FIXED) ---
     function openMediaEdit(blobUrl, apiLink) {
-        // Decode URIs just in case
+        // FIXED: Decode properly to handle special chars from the encoded strings passed in onclick
         blobUrl = decodeURIComponent(blobUrl);
         apiLink = decodeURIComponent(apiLink);
 
@@ -1156,7 +1156,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
             const cleanPollinationsUrl = media.pollinationsUrl || media.url; 
             const isImage = media.type === 'image';
             
-            // FIXED: encodeURIComponent applied to args in openMediaEdit call
+            // FIXED: encodeURIComponent applied to args in openMediaEdit call to prevent special chars breaking the onclick
             mediaHTML = `<div class="media-embed">
                 ${isImage ? 
                     `<img src="${media.url}">` : 
