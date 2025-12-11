@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V11</title>
+    <title>Pollinations RPG Ultimate V12</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -149,7 +149,6 @@
             animation: fadeUp 0.3s ease;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            /* FIX: Adjust padding for character image */
             padding-left: 20px; 
         }
         
@@ -172,7 +171,6 @@
             border-bottom: 1px solid var(--border); padding-bottom: 5px;
         }
         
-        /* FIX: Adjusting char-icon for better flow */
         .char-icon {
             width: 60px; height: 60px; object-fit: cover; border-radius: 8px;
             border: 2px solid var(--border); float: left; margin-right: 15px; margin-bottom: 5px; cursor: pointer;
@@ -276,6 +274,8 @@
         <div class="panel-section">
             <div class="panel-header" onclick="toggleSection('sec-setup')">Game Setup <span>▼</span></div>
             <div id="sec-setup" class="collapsible active">
+                <button class="small" id="btn-rand-all" style="width:100%; margin-bottom:10px; background: linear-gradient(45deg, #a78bfa, #3b82f6); color:white; border:none;" onclick="randomizeGameSetup()">🎲 Randomize Everything</button>
+                
                 <div class="form-group">
                     <label>Theme</label>
                     <input type="text" id="theme" list="themes" placeholder="Select or type theme...">
@@ -291,8 +291,11 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Lore / Backstory</label>
-                    <textarea id="lore" placeholder="Paste world context here..."></textarea>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label style="margin-bottom:0">Lore / Backstory</label>
+                        <button class="small secondary" id="btn-rand-lore" onclick="generateLore()">✨ Gen</button>
+                    </div>
+                    <textarea id="lore" placeholder="Paste world context here..." style="margin-top:5px;"></textarea>
                 </div>
                 <div class="form-group">
                     <div class="row" style="align-items:center;">
@@ -315,7 +318,7 @@
                         <textarea id="user-desc" placeholder="Appearance, skills, personality..."></textarea>
                         <div class="row" style="margin-top:8px; flex-wrap:wrap;">
                             <button class="secondary small" onclick="generateCharImage('user')">Generate Img</button>
-                            <button class="small" onclick="randomizeCharacter('user')">✨ Randomize All</button>
+                            <button class="small" onclick="randomizeCharacter('user')">✨ Randomize</button>
                             <button class="secondary small" onclick="$('user-upload').click()">Upload</button>
                             <button class="danger small" onclick="removeCharImage('user')">Reset</button>
                             <input type="file" id="user-upload" class="hidden" onchange="handleCharUpload(this, 'user')">
@@ -332,7 +335,7 @@
                         <textarea id="ai-desc" placeholder="Personality, goals, role..."></textarea>
                         <div class="row" style="margin-top:8px; flex-wrap:wrap;">
                             <button class="secondary small" onclick="generateCharImage('ai')">Generate Img</button>
-                            <button class="small" onclick="randomizeCharacter('ai')">✨ Randomize All</button>
+                            <button class="small" onclick="randomizeCharacter('ai')">✨ Randomize</button>
                             <button class="secondary small" onclick="$('ai-upload').click()">Upload</button>
                             <button class="danger small" onclick="removeCharImage('ai')">Reset</button>
                             <input type="file" id="ai-upload" class="hidden" onchange="handleCharUpload(this, 'ai')">
@@ -604,10 +607,10 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         </ul>
         <p><strong>Key Features:</strong></p>
         <ul>
+            <li><strong>🎲 Randomize Everything:</strong> Instantly creates a whole new world, characters, and visual setting.</li>
             <li><strong>Character Setup:</strong> Fill in the Name, Description, and optionally upload/generate an Image. The Name will be used in the chat.</li>
-            <li><strong>✨ Randomize All:</strong> Instantly generates a random name, description, and image for your characters using AI.</li>
             <li><strong>📷 Scene Image:</strong> Automatically generates a visual representation of the current narrative.</li>
-            <li><strong>Edit Media:</strong> Click/tap the **"Edit Media"** button next to any generated image/video to open the editor. This uses the dimensions of the original image and the selected **Image Editor Model**.</li>
+            <li><strong>Edit Media:</strong> Click the "Edit Media" button next to any generated image to modify it.</li>
             <li><strong>🔊 Speak:</strong> Generates an audio file of the AI's response using the selected Voice Model.</li>
         </ul>
         <p style="margin-top:15px; font-size:0.8em; color:var(--text-dim);">**Tip:** Double-click the main chat area to quickly hide/show the sidebar.</p>
@@ -667,7 +670,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
     
     function getKey() { return $('api-key').value.trim() || PUBLIC_KEY; }
     function generateID() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
-    function generateSeed() { return Math.floor(Math.random() * 999999); } // FIX: New function to generate random seed
+    function generateSeed() { return Math.floor(Math.random() * 999999); } 
 
     // --- Core Logic: Chat ---
     async function sendMessage() {
@@ -720,7 +723,6 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
             }));
             apiMsgs = apiMsgs.concat(history);
 
-            // FIX: Add random seed to text model API call
             const seed = generateSeed();
 
             const res = await fetch(`${API_BASE}/v1/chat/completions`, {
@@ -753,6 +755,88 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         return URL.createObjectURL(blob);
     }
 
+    // --- Logic: Randomizers & Lore ---
+
+    async function generateLore() {
+        const btn = $('btn-rand-lore');
+        const originalText = btn.innerText;
+        btn.innerText = "⏳";
+        
+        try {
+            const theme = $('theme').value.trim();
+            const prompt = theme 
+                ? `Generate a short, intriguing RPG backstory/lore (max 4 sentences) for the theme: ${theme}.`
+                : `Pick a random unique fiction genre (e.g. Cyberpunk, Fantasy, Noir, Space Opera) and generate a short, intriguing backstory/lore (max 4 sentences) for it.`;
+
+            const seed = generateSeed();
+            const url = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
+            const res = await fetch(url);
+            if(!res.ok) throw new Error("Lore gen failed");
+            const text = await res.text();
+            
+            $('lore').value = text.trim();
+        } catch(e) {
+            showError(e.message);
+        } finally {
+            btn.innerText = originalText;
+        }
+    }
+
+    async function randomizeGameSetup() {
+        const btn = $('btn-rand-all');
+        const originalText = btn.innerText;
+        btn.innerHTML = '<span class="spinner"></span> Working...';
+        state.isGenerating = true; // Prevent chat during setup
+
+        try {
+            // 1. Text Generation: Get everything in one prompt to save time/tokens
+            const prompt = `Generate a creative, random RPG scenario.
+            Output purely in this specific format with pipes (|) as separators:
+            Theme | Lore (2-3 sentences) | User Character Name | User Visual Description (short) | AI Narrator Name | AI Visual Description (short)
+            
+            Example:
+            Cyberpunk | Neon streets hide dark secrets. | Kael | Cyborg with glowing red eye | The Architect | Holographic construct in a suit`;
+
+            const seed = generateSeed();
+            const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
+            const textRes = await fetch(textUrl);
+            const text = await textRes.text();
+            
+            const parts = text.split('|').map(s => s.trim());
+            if (parts.length < 6) throw new Error("AI returned malformed data. Try again.");
+
+            // 2. Populate Inputs
+            $('theme').value = parts[0];
+            $('lore').value = parts[1];
+            $('user-name').value = parts[2];
+            $('user-desc').value = parts[3];
+            $('ai-name').value = parts[4];
+            $('ai-desc').value = parts[5];
+
+            // 3. Trigger Image Generations Sequentially (to be kind to rate limits)
+            // User Image
+            await generateCharImage('user');
+            // AI Image
+            await generateCharImage('ai');
+            
+            // Background Image
+            // We use the Lore as context
+            try {
+                const bgPrompt = `Atmospheric background wallpaper, ${parts[0]}, ${parts[1]}, highly detailed`;
+                const bgApiLink = buildMediaUrl('image', bgPrompt);
+                const bgBlob = await fetchBlobUrl(bgApiLink);
+                setBackground(bgBlob);
+                $('bg-url').value = bgApiLink.replace(`&key=${getKey()}`, '');
+            } catch(e) { console.error("BG Gen failed", e); }
+
+        } catch(e) {
+            showError("Randomize All Error: " + e.message);
+        } finally {
+            btn.innerText = originalText;
+            state.isGenerating = false;
+        }
+    }
+
     // --- Core Logic: Media Generation ---
     async function generateScene() {
         const lastMsg = state.messages.filter(m => m.role === 'assistant').pop();
@@ -762,8 +846,6 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
 
         try {
             const context = lastMsg.content.slice(0, 500);
-            
-            // FIX: Add random seed to the prompt generation call
             const promptSeed = generateSeed();
             const promptUrl = `${API_BASE}/text/${encodeURIComponent("Describe the current visual scene of this story for an image generator prompt (detailed, visual adjectives only, high quality, cinematic lighting): " + context)}?model=mistral&seed=${promptSeed}&key=${getKey()}`;
             const promptRes = await fetch(promptUrl);
@@ -825,12 +907,17 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         const desc = descElement.value;
         const name = nameElement.value || (type === 'user' ? 'A Hero' : 'A Mentor');
 
-        if (!desc) return showError("Please enter a character description first.");
+        if (!desc) {
+            // If part of bulk process, we skip gracefully or error. 
+            // Since this function is called by button usually, showing error is fine.
+            if (!state.isGenerating) return showError("Please enter a character description first.");
+            return; 
+        }
         
         const setupContainer = descElement.parentElement;
         const genBtn = setupContainer.querySelector('.row button:nth-child(1)');
         const originalText = genBtn.innerText;
-        genBtn.innerHTML = '<span class="spinner"></span> Generating...';
+        genBtn.innerHTML = '<span class="spinner"></span>';
 
         try {
             const prompt = `Fantasy character portrait, ${name}: ${desc}, high quality, detailed face, cinematic lighting`;
@@ -862,7 +949,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         const btn = $(`btn-audio-${msgId}`);
         const originalText = btn.innerHTML;
         btn.innerHTML = '<span class="spinner"></span>';
-        const newSeed = generateSeed(); // FIX: Use new random seed function
+        const newSeed = generateSeed();
 
         try {
             const text = msg.content.slice(0, 500); 
@@ -870,10 +957,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
             const tone = $('voice-tone').value ? `(in a ${$('voice-tone').value} tone) ` : "";
             const tts_prompt = `Please read the following dialogue verbatim: ${tone}${text}`;
             
-            // FIX: This link is the one that is used for the direct URL
             const apiLink = `${API_BASE}/text/${encodeURIComponent(tts_prompt)}?model=openai-audio&voice=${voice}&seed=${newSeed}`;
-            
-            // Use the API key for the fetch, but keep it out of the public link
             const fetchLinkWithKey = `${apiLink}&key=${getKey()}`;
             const blobUrl = await fetchBlobUrl(fetchLinkWithKey);
             const container = $(`media-${msgId}`);
@@ -891,9 +975,12 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         finally { btn.innerHTML = originalText; }
     }
 
-    // --- Enhanced Media Edit ---
-    // Change: Now takes a dedicated button click, but original image click remains for desktop ease.
+    // --- Enhanced Media Edit (FIXED) ---
     function openMediaEdit(blobUrl, apiLink) {
+        // Decode URIs just in case
+        blobUrl = decodeURIComponent(blobUrl);
+        apiLink = decodeURIComponent(apiLink);
+
         state.currentEdit.url = blobUrl;
         state.currentEdit.api = apiLink;
         
@@ -907,7 +994,6 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         }
 
         if ($('edit-preview').tagName.toLowerCase() !== 'img') {
-             // Handle case where it might be a video tag from a previous edit
              $('edit-preview').outerHTML = '<img id="edit-preview" src="" style="max-width:100%; max-height:300px; border-radius:8px;">';
         }
         $('edit-preview').src = blobUrl; 
@@ -945,10 +1031,9 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         } catch(e) { showError(`${targetType} failed: ` + e.message); }
     }
 
-    // Updated buildMediaUrl signature to accept overrides
     function buildMediaUrl(type, prompt, originalImg = null, overrides = {}) {
         const key = getKey();
-        const seed = generateSeed(); // FIX: Use new random seed function
+        const seed = generateSeed(); 
         const encPrompt = encodeURIComponent(prompt);
         const safe = !$('ignore-censorship').checked;
         
@@ -983,7 +1068,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         
         try {
             const textModel = $('text-model').value;
-            const seed = generateSeed(); // FIX: Add random seed
+            const seed = generateSeed(); 
             const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=${textModel}&seed=${seed}&key=${getKey()}`;
             const textRes = await fetch(textUrl);
             const text = await textRes.text();
@@ -999,7 +1084,6 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
                 const div = document.createElement('div');
                 div.className = 'action-option';
                 div.innerText = action;
-                // Click handler to load text into input
                 div.onclick = () => {
                     const cleanAction = action.replace(/^\d+\.\s*/, ''); // Remove numbering
                     $('user-input').value = cleanAction;
@@ -1046,7 +1130,6 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         let avatar = "";
         let name = role; 
         
-        // NEW: Get Character Names
         const userIconSrc = $('user-img-preview').src; 
         const aiIconSrc = $('ai-img-preview').src;
         const userImgUrl = $('user-img-url').value; 
@@ -1055,14 +1138,16 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         if (role === 'user') {
             name = $('user-name').value.trim() || 'User';
             if (userIconSrc && !$('user-img-preview').classList.contains('hidden')) {
-                avatar = `<img src="${userIconSrc}" class="char-icon" onclick="openMediaEdit('${userIconSrc}', '${userImgUrl}')">`;
+                // FIXED: encodeURIComponent applied to args
+                avatar = `<img src="${userIconSrc}" class="char-icon" onclick="openMediaEdit('${encodeURIComponent(userIconSrc)}', '${encodeURIComponent(userImgUrl)}')">`;
             }
         }
         
         if (role === 'assistant') {
             name = $('ai-name').value.trim() || 'Narrator';
             if (aiIconSrc && !$('ai-img-preview').classList.contains('hidden')) { 
-                avatar = `<img src="${aiIconSrc}" class="char-icon" onclick="openMediaEdit('${aiIconSrc}', '${aiImgUrl}')">`;
+                // FIXED: encodeURIComponent applied to args
+                avatar = `<img src="${aiIconSrc}" class="char-icon" onclick="openMediaEdit('${encodeURIComponent(aiIconSrc)}', '${encodeURIComponent(aiImgUrl)}')">`;
             }
         }
         
@@ -1071,6 +1156,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
             const cleanPollinationsUrl = media.pollinationsUrl || media.url; 
             const isImage = media.type === 'image';
             
+            // FIXED: encodeURIComponent applied to args in openMediaEdit call
             mediaHTML = `<div class="media-embed">
                 ${isImage ? 
                     `<img src="${media.url}">` : 
@@ -1078,14 +1164,13 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
                 }
                 <div style="font-size:0.8em; margin-top:5px; display:flex; gap:10px; align-items:center;">
                     <a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a>
-                    <button class="small secondary" onclick="openMediaEdit('${media.url}', '${cleanPollinationsUrl}')">✏️ Edit Media</button>
+                    <button class="small secondary" onclick="openMediaEdit('${encodeURIComponent(media.url)}', '${encodeURIComponent(cleanPollinationsUrl)}')">✏️ Edit Media</button>
                 </div>
             </div>`;
         }
         
         let actionButtons = `<button class="small secondary" id="btn-audio-${id}" onclick="generateAudio('${id}')">🔊 Speak</button>`;
         
-        // NEW: Add Suggest Actions button only for AI responses in RPG mode
         if (role === 'assistant' && $('game-mode').value === 'rpg') {
              actionButtons += `<button class="small" onclick="suggestActions('${id}')">🎲 Suggest Actions</button>`;
         }
@@ -1124,7 +1209,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
     function setBgOpacity(value) { state.bgOpacity = value / 100; document.documentElement.style.setProperty('--bg-overlay-opacity', state.bgOpacity); $('bg-opacity-value').innerText = `${value}%`; }
     function handleBgUpload(input) { const file = input.files[0]; const reader = new FileReader(); reader.onload = (e) => setBackground(e.target.result); reader.readAsDataURL(file); input.value = ''; }
 
-    // --- Enhanced Music Player Logic (No changes needed) ---
+    // --- Enhanced Music Player Logic ---
     const audioPlayer = $('audio-elem');
     
     function initPlaylist() {
