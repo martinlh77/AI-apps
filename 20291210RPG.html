@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V11.3</title>
+    <title>Pollinations RPG Ultimate V11.1</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -263,7 +263,7 @@
 
     <div id="sidebar">
         <div class="panel-section">
-            <h2 style="margin:0; font-size:1.2em; color:var(--text-main);">RPG Engine V11.3</h2>
+            <h2 style="margin:0; font-size:1.2em; color:var(--text-main);">RPG Engine V11</h2>
             <div style="font-size:0.75em; color:var(--text-dim);">Powered by gen.pollinations.ai</div>
         </div>
         
@@ -295,7 +295,7 @@
                         <label style="margin-bottom:0">Lore / Backstory</label>
                         <button class="small secondary" id="btn-rand-lore" onclick="generateLore()">✨ Gen</button>
                     </div>
-                    <textarea id="lore" placeholder="Paste world context here..." style="margin-top:5px; height:120px;"></textarea>
+                    <textarea id="lore" placeholder="Paste world context here..." style="margin-top:5px;"></textarea>
                 </div>
                 <div class="form-group">
                     <div class="row" style="align-items:center;">
@@ -315,7 +315,7 @@
                         <input type="text" id="user-name" placeholder="Character Name (e.g., Alara)" style="margin-bottom:8px;">
                         
                         <img id="user-img-preview" src="" class="char-img-preview hidden">
-                        <textarea id="user-desc" placeholder="Race/Class, Personality, Goals, Likes/Dislikes..." style="height:120px;"></textarea>
+                        <textarea id="user-desc" placeholder="Appearance, skills, personality..."></textarea>
                         <div class="row" style="margin-top:8px; flex-wrap:wrap;">
                             <button class="secondary small" onclick="generateCharImage('user')">Generate Img</button>
                             <button class="small" onclick="randomizeCharacter('user')">✨ Randomize</button>
@@ -332,7 +332,7 @@
                          <input type="text" id="ai-name" placeholder="AI Name (e.g., Narrator)" style="margin-bottom:8px;" value="Narrator">
                          
                         <img id="ai-img-preview" src="" class="char-img-preview hidden">
-                        <textarea id="ai-desc" placeholder="Role, Personality, Goals, Likes/Dislikes..." style="height:120px;"></textarea>
+                        <textarea id="ai-desc" placeholder="Personality, goals, role..."></textarea>
                         <div class="row" style="margin-top:8px; flex-wrap:wrap;">
                             <button class="secondary small" onclick="generateCharImage('ai')">Generate Img</button>
                             <button class="small" onclick="randomizeCharacter('ai')">✨ Randomize</button>
@@ -379,25 +379,25 @@
                     <label style="margin-top:5px;">Select Default Track</label>
                     <select id="music-select" onchange="playSelected()">
                         <option value="">-- Select Track --</option>
-                        <option value="[https://files.catbox.moe/1418xa.mp3](https://files.catbox.moe/1418xa.mp3)">Into the Dark</option>
-                        <option value="[https://files.catbox.moe/oh47qj.mp3](https://files.catbox.moe/oh47qj.mp3)">Into the Dark (v2)</option>
-                        <option value="[https://files.catbox.moe/ktcalv.mp3](https://files.catbox.moe/ktcalv.mp3)">Into the Depth</option>
-                        <option value="[https://files.catbox.moe/bbkjx9.mp3](https://files.catbox.moe/bbkjx9.mp3)">Cavern Below</option>
-                        <option value="[https://files.catbox.moe/eektv2.mp3](https://files.catbox.moe/eektv2.mp3)">Unknown Depth</option>
-                        <option value="[https://files.catbox.moe/yewq84.mp3](https://files.catbox.moe/yewq84.mp3)">Ice Cream Chaos</option>
-                        <option value="[https://files.catbox.moe/nv4wn4.mp3](https://files.catbox.moe/nv4wn4.mp3)">Ice Cream Circus</option>
-                        <option value="[https://files.catbox.moe/olt3nv.mp3](https://files.catbox.moe/olt3nv.mp3)">Ice Cream Madness</option>
-                        <option value="[https://files.catbox.moe/f6b7fr.mp3](https://files.catbox.moe/f6b7fr.mp3)">Ice Cream Mayhem</option>
-                        <option value="[https://files.catbox.moe/kq3yso.mp3](https://files.catbox.moe/kq3yso.mp3)">Meltdown (v1)</option>
-                        <option value="[https://files.catbox.moe/uv90bq.mp3](https://files.catbox.moe/uv90bq.mp3)">Meltdown (v2)</option>
-                        <option value="[https://files.catbox.moe/7cx2t0.mp3](https://files.catbox.moe/7cx2t0.mp3)">Catching Stars (v1)</option>
-                        <option value="[https://files.catbox.moe/ze4tnu.mp3](https://files.catbox.moe/ze4tnu.mp3)">Catching Stars (v2)</option>
-                        <option value="[https://files.catbox.moe/1o7xo4.mp3](https://files.catbox.moe/1o7xo4.mp3)">Catching Stars (v3)</option>
-                        <option value="[https://files.catbox.moe/uvau4r.mp3](https://files.catbox.moe/uvau4r.mp3)">Catching Stars (v4)</option>
+                        <option value="https://files.catbox.moe/1418xa.mp3">Into the Dark</option>
+                        <option value="https://files.catbox.moe/oh47qj.mp3">Into the Dark (v2)</option>
+                        <option value="https://files.catbox.moe/ktcalv.mp3">Into the Depth</option>
+                        <option value="https://files.catbox.moe/bbkjx9.mp3">Cavern Below</option>
+                        <option value="https://files.catbox.moe/eektv2.mp3">Unknown Depth</option>
+                        <option value="https://files.catbox.moe/yewq84.mp3">Ice Cream Chaos</option>
+                        <option value="https://files.catbox.moe/nv4wn4.mp3">Ice Cream Circus</option>
+                        <option value="https://files.catbox.moe/olt3nv.mp3">Ice Cream Madness</option>
+                        <option value="https://files.catbox.moe/f6b7fr.mp3">Ice Cream Mayhem</option>
+                        <option value="https://files.catbox.moe/kq3yso.mp3">Meltdown (v1)</option>
+                        <option value="https://files.catbox.moe/uv90bq.mp3">Meltdown (v2)</option>
+                        <option value="https://files.catbox.moe/7cx2t0.mp3">Catching Stars (v1)</option>
+                        <option value="https://files.catbox.moe/ze4tnu.mp3">Catching Stars (v2)</option>
+                        <option value="https://files.catbox.moe/1o7xo4.mp3">Catching Stars (v3)</option>
+                        <option value="https://files.catbox.moe/uvau4r.mp3">Catching Stars (v4)</option>
                     </select>
                     
                     <label style="margin-top:8px;">Custom Playlist (One URL per line)</label>
-                    <textarea id="custom-music-area" placeholder="[https://example.com/song1.mp3&#10;https://example.com/song2.mp3](https://example.com/song1.mp3&#10;https://example.com/song2.mp3)" onchange="updatePlaylist()"></textarea>
+                    <textarea id="custom-music-area" placeholder="https://example.com/song1.mp3&#10;https://example.com/song2.mp3" onchange="updatePlaylist()"></textarea>
                     <button class="secondary small" style="width:100%; margin-top:5px;" onclick="refreshAndPlay()">Refresh & Play</button>
                 </div>
             </div>
@@ -607,7 +607,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         </ul>
         <p><strong>Key Features:</strong></p>
         <ul>
-            <li><strong>🎲 Randomize Everything:</strong> Instantly creates a whole new world, characters, and visual setting with detailed backstories.</li>
+            <li><strong>🎲 Randomize Everything:</strong> Instantly creates a whole new world, characters, and visual setting.</li>
             <li><strong>Character Setup:</strong> Fill in the Name, Description, and optionally upload/generate an Image. The Name will be used in the chat.</li>
             <li><strong>📷 Scene Image:</strong> Automatically generates a visual representation of the current narrative.</li>
             <li><strong>Edit Media:</strong> Click the "Edit Media" button next to any generated image to modify it.</li>
@@ -626,7 +626,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
 <script>
     // --- Constants & State ---
     const PUBLIC_KEY = "plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL";
-    const API_BASE = "[https://gen.pollinations.ai](https://gen.pollinations.ai)";
+    const API_BASE = "https://gen.pollinations.ai";
     const $ = id => document.getElementById(id);
 
     let state = {
@@ -765,8 +765,8 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         try {
             const theme = $('theme').value.trim();
             const prompt = theme 
-                ? `Generate a detailed and intriguing RPG backstory/lore (4-6 sentences) for the theme: ${theme}.`
-                : `Pick a random unique fiction genre (e.g. Cyberpunk, Fantasy, Noir, Space Opera) and generate a detailed and intriguing backstory/lore (4-6 sentences) for it.`;
+                ? `Generate a short, intriguing RPG backstory/lore (max 4 sentences) for the theme: ${theme}.`
+                : `Pick a random unique fiction genre (e.g. Cyberpunk, Fantasy, Noir, Space Opera) and generate a short, intriguing backstory/lore (max 4 sentences) for it.`;
 
             const seed = generateSeed();
             const url = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
@@ -789,42 +789,40 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         state.isGenerating = true; // Prevent chat during setup
 
         try {
-            // FIXED: Use JSON strict format to avoid parsing errors
-            const prompt = `Generate a unique, creative random RPG scenario with detailed characters.
-            Return ONLY a valid JSON object. Do not include markdown formatting.
-            Structure:
-            {
-              "theme": "Theme name",
-              "lore": "Detailed lore (4-5 sentences)",
-              "userName": "Name",
-              "userDesc": "Race/Class/Species (if applicable), Personality, Appearance, Goals, Likes/Dislikes",
-              "aiName": "Name",
-              "aiDesc": "Role/Job, Personality, Goals, Likes/Dislikes"
-            }`;
+            // 1. Text Generation: Get everything in one prompt to save time/tokens
+            const prompt = `Generate a creative, random RPG scenario.
+            Output purely in this specific format with pipes (|) as separators:
+            Theme | Lore (2-3 sentences) | User Character Name | User Visual Description (short) | AI Narrator Name | AI Visual Description (short)
+            
+            Example:
+            Cyberpunk | Neon streets hide dark secrets. | Kael | Cyborg with glowing red eye | The Architect | Holographic construct in a suit`;
 
             const seed = generateSeed();
-            const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&json=true&key=${getKey()}`;
+            const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
             const textRes = await fetch(textUrl);
-            let text = await textRes.text();
+            const text = await textRes.text();
             
-            // Clean markdown if present
-            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            
-            const data = JSON.parse(text);
+            const parts = text.split('|').map(s => s.trim());
+            if (parts.length < 6) throw new Error("AI returned malformed data. Try again.");
 
-            $('theme').value = data.theme;
-            $('lore').value = data.lore;
-            $('user-name').value = data.userName;
-            $('user-desc').value = data.userDesc;
-            $('ai-name').value = data.aiName;
-            $('ai-desc').value = data.aiDesc;
+            // 2. Populate Inputs
+            $('theme').value = parts[0];
+            $('lore').value = parts[1];
+            $('user-name').value = parts[2];
+            $('user-desc').value = parts[3];
+            $('ai-name').value = parts[4];
+            $('ai-desc').value = parts[5];
 
-            // Trigger Image Generations Sequentially
+            // 3. Trigger Image Generations Sequentially (to be kind to rate limits)
+            // User Image
             await generateCharImage('user');
+            // AI Image
             await generateCharImage('ai');
             
+            // Background Image
+            // We use the Lore as context
             try {
-                const bgPrompt = `Atmospheric background wallpaper, ${data.theme}, ${data.lore.slice(0,100)}, highly detailed`;
+                const bgPrompt = `Atmospheric background wallpaper, ${parts[0]}, ${parts[1]}, highly detailed`;
                 const bgApiLink = buildMediaUrl('image', bgPrompt);
                 const bgBlob = await fetchBlobUrl(bgApiLink);
                 setBackground(bgBlob);
@@ -863,7 +861,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         } catch(e) { showError("Scene Gen Error: " + e.message); }
     }
 
-    // NEW: Randomize Character (Updated for Depth)
+    // NEW: Randomize Character
     async function randomizeCharacter(type) {
         const isUser = type === 'user';
         const nameEl = isUser ? $('user-name') : $('ai-name');
@@ -875,20 +873,19 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
 
         try {
             const charType = isUser ? "Adventurer Character" : "Game Master Character (NPC)";
-            
-            const prompt = `Generate a random ${charType} for an RPG. 
-            Return strictly a JSON object: {"name": "...", "description": "..."}
-            For description include: Race/Class/Species (if applicable), Personality, Appearance, Goals, Likes/Dislikes.`;
-            
+            const prompt = `Generate a random ${charType} for a fantasy RPG. Give a short, evocative name (1 word) and a 3-sentence description of appearance, skills, and personality. Format as: [NAME]| [DESCRIPTION]`;
             const seed = generateSeed();
-            const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&json=true&key=${getKey()}`;
-            const textRes = await fetch(textUrl);
-            let text = await textRes.text();
-            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const data = JSON.parse(text);
             
-            const newName = data.name;
-            const newDesc = data.description;
+            const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
+            const textRes = await fetch(textUrl);
+            const text = (await textRes.text()).trim();
+            
+            const parts = text.split('|').map(p => p.trim());
+            
+            if (parts.length < 2) throw new Error("Failed to parse AI output. Try again.");
+            
+            const newName = parts[0].replace(/\[|\]/g, '').trim();
+            const newDesc = parts[1].replace(/\[|\]/g, '').trim();
             
             const imagePrompt = `Fantasy portrait of ${newName}, ${newDesc}. Highly detailed, cinematic, studio lighting.`;
             const apiLink = buildMediaUrl('image', imagePrompt);
@@ -911,6 +908,8 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         const name = nameElement.value || (type === 'user' ? 'A Hero' : 'A Mentor');
 
         if (!desc) {
+            // If part of bulk process, we skip gracefully or error. 
+            // Since this function is called by button usually, showing error is fine.
             if (!state.isGenerating) return showError("Please enter a character description first.");
             return; 
         }
@@ -976,11 +975,11 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         finally { btn.innerHTML = originalText; }
     }
 
-    // --- FIXED: Media Edit (Robust Method) ---
-    // Uses data attributes instead of strict string passing to avoid quote syntax errors
-    function openMediaEdit(element) {
-        const blobUrl = element.dataset.url;
-        const apiLink = element.dataset.pollinationsUrl;
+    // --- Enhanced Media Edit (FIXED) ---
+    function openMediaEdit(blobUrl, apiLink) {
+        // Decode URIs just in case
+        blobUrl = decodeURIComponent(blobUrl);
+        apiLink = decodeURIComponent(apiLink);
 
         state.currentEdit.url = blobUrl;
         state.currentEdit.api = apiLink;
@@ -1136,18 +1135,19 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         const userImgUrl = $('user-img-url').value; 
         const aiImgUrl = $('ai-img-url').value;
 
-        // FIXED: Use data attributes for passing URLs, preventing quote syntax errors
         if (role === 'user') {
             name = $('user-name').value.trim() || 'User';
             if (userIconSrc && !$('user-img-preview').classList.contains('hidden')) {
-                avatar = `<img src="${userIconSrc}" class="char-icon" onclick="openMediaEdit(this)" data-url="${userIconSrc}" data-pollinations-url="${userImgUrl}">`;
+                // FIXED: encodeURIComponent applied to args
+                avatar = `<img src="${userIconSrc}" class="char-icon" onclick="openMediaEdit('${encodeURIComponent(userIconSrc)}', '${encodeURIComponent(userImgUrl)}')">`;
             }
         }
         
         if (role === 'assistant') {
             name = $('ai-name').value.trim() || 'Narrator';
             if (aiIconSrc && !$('ai-img-preview').classList.contains('hidden')) { 
-                avatar = `<img src="${aiIconSrc}" class="char-icon" onclick="openMediaEdit(this)" data-url="${aiIconSrc}" data-pollinations-url="${aiImgUrl}">`;
+                // FIXED: encodeURIComponent applied to args
+                avatar = `<img src="${aiIconSrc}" class="char-icon" onclick="openMediaEdit('${encodeURIComponent(aiIconSrc)}', '${encodeURIComponent(aiImgUrl)}')">`;
             }
         }
         
@@ -1156,6 +1156,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
             const cleanPollinationsUrl = media.pollinationsUrl || media.url; 
             const isImage = media.type === 'image';
             
+            // FIXED: encodeURIComponent applied to args in openMediaEdit call
             mediaHTML = `<div class="media-embed">
                 ${isImage ? 
                     `<img src="${media.url}">` : 
@@ -1163,7 +1164,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
                 }
                 <div style="font-size:0.8em; margin-top:5px; display:flex; gap:10px; align-items:center;">
                     <a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a>
-                    <button class="small secondary" onclick="openMediaEdit(this)" data-url="${media.url}" data-pollinations-url="${cleanPollinationsUrl}">✏️ Edit Media</button>
+                    <button class="small secondary" onclick="openMediaEdit('${encodeURIComponent(media.url)}', '${encodeURIComponent(cleanPollinationsUrl)}')">✏️ Edit Media</button>
                 </div>
             </div>`;
         }
