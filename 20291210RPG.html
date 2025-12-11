@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V10</title>
+    <title>Pollinations RPG Ultimate V11</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -149,13 +149,16 @@
             animation: fadeUp 0.3s ease;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            /* FIX: Adjust padding for character image */
+            padding-left: 20px; 
         }
         
         @media (max-width: 600px) {
             .message {
-                padding-right: 20px; 
+                padding-right: 10px; 
                 margin-right: 5px;
                 margin-left: 5px;
+                max-width: 100%;
             }
         }
 
@@ -169,14 +172,16 @@
             border-bottom: 1px solid var(--border); padding-bottom: 5px;
         }
         
+        /* FIX: Adjusting char-icon for better flow */
         .char-icon {
             width: 60px; height: 60px; object-fit: cover; border-radius: 8px;
             border: 2px solid var(--border); float: left; margin-right: 15px; margin-bottom: 5px; cursor: pointer;
+            flex-shrink: 0; 
         }
 
         .msg-content { line-height: 1.6; white-space: pre-wrap; font-size: 0.95em; }
         
-        .media-embed { margin-top: 12px; position: relative; cursor: pointer; }
+        .media-embed { margin-top: 12px; position: relative; }
         .media-embed img, .media-embed video { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
         
         .click-overlay {
@@ -231,6 +236,13 @@
             width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto;
             border: 1px solid var(--border); position: relative;
         }
+
+        .action-option {
+            background: var(--bg-input); padding: 10px; border-radius: 6px; 
+            margin-bottom: 8px; cursor: pointer; border: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+        .action-option:hover { background: #374151; }
         
         /* --- Utils --- */
         .spinner {
@@ -253,7 +265,7 @@
 
     <div id="sidebar">
         <div class="panel-section">
-            <h2 style="margin:0; font-size:1.2em; color:var(--text-main);">RPG Engine</h2>
+            <h2 style="margin:0; font-size:1.2em; color:var(--text-main);">RPG Engine V11</h2>
             <div style="font-size:0.75em; color:var(--text-dim);">Powered by gen.pollinations.ai</div>
         </div>
         
@@ -275,8 +287,7 @@
                 <div class="form-group">
                     <label>Mode</label>
                     <select id="game-mode">
-                        <option value="rpg">RPG Adventure (AI Narrator)</option>
-                        <option value="roleplay">Roleplay (User vs Character)</option>
+                        <option value="roleplay" selected>Roleplay (User vs Character)</option> <option value="rpg">RPG Adventure (AI Narrator)</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -298,10 +309,13 @@
                 <div class="form-group">
                     <label>User Character</label>
                     <div class="char-setup-container">
-                         <img id="user-img-preview" src="" class="char-img-preview hidden">
-                        <textarea id="user-desc" placeholder="Name, appearance, skills..."></textarea>
-                        <div class="row" style="margin-top:8px;">
+                        <input type="text" id="user-name" placeholder="Character Name (e.g., Alara)" style="margin-bottom:8px;">
+                        
+                        <img id="user-img-preview" src="" class="char-img-preview hidden">
+                        <textarea id="user-desc" placeholder="Appearance, skills, personality..."></textarea>
+                        <div class="row" style="margin-top:8px; flex-wrap:wrap;">
                             <button class="secondary small" onclick="generateCharImage('user')">Generate Img</button>
+                            <button class="small" onclick="randomizeCharacter('user')">✨ Randomize All</button>
                             <button class="secondary small" onclick="$('user-upload').click()">Upload</button>
                             <button class="danger small" onclick="removeCharImage('user')">Reset</button>
                             <input type="file" id="user-upload" class="hidden" onchange="handleCharUpload(this, 'user')">
@@ -310,12 +324,15 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>AI Character / NPC</label>
+                    <label>AI Character / Narrator</label>
                     <div class="char-setup-container">
+                         <input type="text" id="ai-name" placeholder="AI Name (e.g., Narrator)" style="margin-bottom:8px;" value="Narrator">
+                         
                         <img id="ai-img-preview" src="" class="char-img-preview hidden">
-                        <textarea id="ai-desc" placeholder="Name, personality..."></textarea>
-                        <div class="row" style="margin-top:8px;">
+                        <textarea id="ai-desc" placeholder="Personality, goals, role..."></textarea>
+                        <div class="row" style="margin-top:8px; flex-wrap:wrap;">
                             <button class="secondary small" onclick="generateCharImage('ai')">Generate Img</button>
+                            <button class="small" onclick="randomizeCharacter('ai')">✨ Randomize All</button>
                             <button class="secondary small" onclick="$('ai-upload').click()">Upload</button>
                             <button class="danger small" onclick="removeCharImage('ai')">Reset</button>
                             <input type="file" id="ai-upload" class="hidden" onchange="handleCharUpload(this, 'ai')">
@@ -503,7 +520,8 @@
             <div class="message system">
                 <div class="msg-content">Welcome to the Pollinations RPG. 
 Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
-Configure your settings in the menu and press 'Send' to begin.</div>
+<button class="small secondary" onclick="showInstructions()" style="margin-top:10px;">❓ Show Instructions</button>
+</div>
             </div>
         </div>
         
@@ -554,10 +572,48 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         <div class="row">
             <button onclick="processMediaEdit('image')">Edit (Image)</button>
             <button onclick="processMediaEdit('video')">Animate (Video)</button>
-            <a id="download-link" href="#" target="_blank"><button class="secondary">Pollinations Direct Link</button></a>
+        </div>
+        <div style="margin-top:10px; font-size:0.8em;">
+             <a id="download-link" href="#" target="_blank"><button class="secondary small">Pollinations Direct Link</button></a>
         </div>
     </div>
 </div>
+
+<div id="actions-modal" class="modal">
+    <div class="modal-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3 style="margin:0">Suggested Actions</h3>
+            <button class="small secondary" onclick="$('actions-modal').style.display='none'">X</button>
+        </div>
+        <p style="font-size:0.9em; color:var(--text-dim);">Select an action to load it into the prompt box, where you can edit it before sending.</p>
+        <div id="action-list">
+            </div>
+    </div>
+</div>
+
+<div id="instructions-modal" class="modal">
+    <div class="modal-box" style="max-width: 600px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <h3 style="margin:0">RPG Engine Instructions</h3>
+            <button class="small secondary" onclick="$('instructions-modal').style.display='none'">X</button>
+        </div>
+        <p><strong>Game Modes:</strong></p>
+        <ul>
+            <li><strong>Roleplay:</strong> You converse directly with the AI, who plays the role of the character you define.</li>
+            <li><strong>RPG Adventure:</strong> The AI acts as the narrator/Game Master, describing the scene and challenges. Use the <strong>"Suggest Actions"</strong> button after its response for guided choices.</li>
+        </ul>
+        <p><strong>Key Features:</strong></p>
+        <ul>
+            <li><strong>Character Setup:</strong> Fill in the Name, Description, and optionally upload/generate an Image. The Name will be used in the chat.</li>
+            <li><strong>✨ Randomize All:</strong> Instantly generates a random name, description, and image for your characters using AI.</li>
+            <li><strong>📷 Scene Image:</strong> Automatically generates a visual representation of the current narrative.</li>
+            <li><strong>Edit Media:</strong> Click/tap the **"Edit Media"** button next to any generated image/video to open the editor. This uses the dimensions of the original image and the selected **Image Editor Model**.</li>
+            <li><strong>🔊 Speak:</strong> Generates an audio file of the AI's response using the selected Voice Model.</li>
+        </ul>
+        <p style="margin-top:15px; font-size:0.8em; color:var(--text-dim);">**Tip:** Double-click the main chat area to quickly hide/show the sidebar.</p>
+    </div>
+</div>
+
 
 <div id="error-box" style="position:fixed; bottom:20px; right:20px; background:#ef4444; color:white; padding:15px; border-radius:8px; display:none; z-index:200; box-shadow:0 4px 10px rgba(0,0,0,0.5);">
     <div id="error-msg" style="margin-bottom:10px;">Error</div>
@@ -577,7 +633,7 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         bgOpacity: 0.8,
         isGenerating: false,
         controller: null,
-        // NEW: Stores dimensions for editing
+        // Stores dimensions for editing
         currentEdit: { url: '', api: '', type: '', width: null, height: null }
     };
 
@@ -611,6 +667,7 @@ Configure your settings in the menu and press 'Send' to begin.</div>
     
     function getKey() { return $('api-key').value.trim() || PUBLIC_KEY; }
     function generateID() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+    function generateSeed() { return Math.floor(Math.random() * 999999); } // FIX: New function to generate random seed
 
     // --- Core Logic: Chat ---
     async function sendMessage() {
@@ -631,14 +688,18 @@ Configure your settings in the menu and press 'Send' to begin.</div>
             const model = $('text-model').value;
             const key = getKey();
             
+            // Use names or default roles
+            const userName = $('user-name').value.trim() || 'User';
+            const aiName = $('ai-name').value.trim() || 'Narrator';
+
             let sys = `You are an AI in a ${$('game-mode').value} session. Theme: ${$('theme').value}. `;
             if ($('lore').value) sys += `Lore: ${$('lore').value}. `;
             
             if ($('game-mode').value === 'rpg') {
-                sys += "You are the Game Master/Narrator. Describe the environment, NPCs, and outcomes vividly. ";
+                sys += `You are the Game Master/Narrator named "${aiName}". Your player is named "${userName}". Describe the environment, NPCs, and outcomes vividly. `;
                 if ($('track-stats').checked) sys += "Track the player's Inventory, Health, and Level in your internal logic and mention updates when relevant. ";
             } else {
-                sys += `Roleplay as the character: ${$('ai-desc').value}. Stay in character. `;
+                sys += `Roleplay as the character: ${$('ai-desc').value}. You are named "${aiName}". The user is named "${userName}". Stay in character. `;
             }
 
             if ($('user-desc').value) sys += `User Character info: ${$('user-desc').value}. `;
@@ -659,10 +720,13 @@ Configure your settings in the menu and press 'Send' to begin.</div>
             }));
             apiMsgs = apiMsgs.concat(history);
 
+            // FIX: Add random seed to text model API call
+            const seed = generateSeed();
+
             const res = await fetch(`${API_BASE}/v1/chat/completions`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: model, messages: apiMsgs }),
+                body: JSON.stringify({ model: model, messages: apiMsgs, seed: seed }),
                 signal: state.controller.signal
             });
 
@@ -698,7 +762,10 @@ Configure your settings in the menu and press 'Send' to begin.</div>
 
         try {
             const context = lastMsg.content.slice(0, 500);
-            const promptUrl = `${API_BASE}/text/${encodeURIComponent("Describe the current visual scene of this story for an image generator prompt (detailed, visual adjectives only, high quality, cinematic lighting): " + context)}?model=mistral&key=${getKey()}`;
+            
+            // FIX: Add random seed to the prompt generation call
+            const promptSeed = generateSeed();
+            const promptUrl = `${API_BASE}/text/${encodeURIComponent("Describe the current visual scene of this story for an image generator prompt (detailed, visual adjectives only, high quality, cinematic lighting): " + context)}?model=mistral&seed=${promptSeed}&key=${getKey()}`;
             const promptRes = await fetch(promptUrl);
             const visualPrompt = await promptRes.text();
             
@@ -712,10 +779,51 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         } catch(e) { showError("Scene Gen Error: " + e.message); }
     }
 
+    // NEW: Randomize Character
+    async function randomizeCharacter(type) {
+        const isUser = type === 'user';
+        const nameEl = isUser ? $('user-name') : $('ai-name');
+        const descEl = isUser ? $('user-desc') : $('ai-desc');
+        const imgUrlEl = isUser ? $('user-img-url') : $('ai-img-url');
+        const randomizeBtn = nameEl.parentElement.querySelector('.row button:nth-child(2)');
+        const originalText = randomizeBtn.innerHTML;
+        randomizeBtn.innerHTML = '<span class="spinner"></span> Working...';
+
+        try {
+            const charType = isUser ? "Adventurer Character" : "Game Master Character (NPC)";
+            const prompt = `Generate a random ${charType} for a fantasy RPG. Give a short, evocative name (1 word) and a 3-sentence description of appearance, skills, and personality. Format as: [NAME]| [DESCRIPTION]`;
+            const seed = generateSeed();
+            
+            const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
+            const textRes = await fetch(textUrl);
+            const text = (await textRes.text()).trim();
+            
+            const parts = text.split('|').map(p => p.trim());
+            
+            if (parts.length < 2) throw new Error("Failed to parse AI output. Try again.");
+            
+            const newName = parts[0].replace(/\[|\]/g, '').trim();
+            const newDesc = parts[1].replace(/\[|\]/g, '').trim();
+            
+            const imagePrompt = `Fantasy portrait of ${newName}, ${newDesc}. Highly detailed, cinematic, studio lighting.`;
+            const apiLink = buildMediaUrl('image', imagePrompt);
+            const blobUrl = await fetchBlobUrl(apiLink);
+
+            nameEl.value = newName;
+            descEl.value = newDesc;
+            imgUrlEl.value = apiLink.replace(`&key=${getKey()}`, '');
+            updateCharPreview(blobUrl, type);
+
+        } catch(e) { showError("Randomization Error: " + e.message); }
+        finally { randomizeBtn.innerHTML = originalText; }
+    }
+
     async function generateCharImage(type) {
         const descElement = type === 'user' ? $('user-desc') : $('ai-desc');
         const urlElement = type === 'user' ? $('user-img-url') : $('ai-img-url');
+        const nameElement = type === 'user' ? $('user-name') : $('ai-name');
         const desc = descElement.value;
+        const name = nameElement.value || (type === 'user' ? 'A Hero' : 'A Mentor');
 
         if (!desc) return showError("Please enter a character description first.");
         
@@ -725,7 +833,7 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         genBtn.innerHTML = '<span class="spinner"></span> Generating...';
 
         try {
-            const prompt = `Fantasy character portrait, ${desc}, high quality, detailed face, cinematic lighting`;
+            const prompt = `Fantasy character portrait, ${name}: ${desc}, high quality, detailed face, cinematic lighting`;
             const apiLink = buildMediaUrl('image', prompt);
             const blobUrl = await fetchBlobUrl(apiLink);
             
@@ -754,25 +862,29 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         const btn = $(`btn-audio-${msgId}`);
         const originalText = btn.innerHTML;
         btn.innerHTML = '<span class="spinner"></span>';
-        const newSeed = Math.floor(Math.random() * 999999);
+        const newSeed = generateSeed(); // FIX: Use new random seed function
 
         try {
             const text = msg.content.slice(0, 500); 
             const voice = $('voice-model').value;
             const tone = $('voice-tone').value ? `(in a ${$('voice-tone').value} tone) ` : "";
             const tts_prompt = `Please read the following dialogue verbatim: ${tone}${text}`;
-            const apiLink = `${API_BASE}/text/${encodeURIComponent(tts_prompt)}?model=openai-audio&voice=${voice}&seed=${newSeed}&key=${getKey()}`;
-            const blobUrl = await fetchBlobUrl(apiLink);
+            
+            // FIX: This link is the one that is used for the direct URL
+            const apiLink = `${API_BASE}/text/${encodeURIComponent(tts_prompt)}?model=openai-audio&voice=${voice}&seed=${newSeed}`;
+            
+            // Use the API key for the fetch, but keep it out of the public link
+            const fetchLinkWithKey = `${apiLink}&key=${getKey()}`;
+            const blobUrl = await fetchBlobUrl(fetchLinkWithKey);
             const container = $(`media-${msgId}`);
             const previousAudio = container.querySelector('audio');
             if(previousAudio) previousAudio.parentElement.remove();
-            const cleanApiLink = apiLink.replace(`&key=${getKey()}`, '');
 
             container.innerHTML += `
                 <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
                     <audio controls autoplay src="${blobUrl}"></audio>
                     <button class="small secondary" onclick="generateAudio('${msgId}')">Re-run</button>
-                    <a href="${cleanApiLink}" target="_blank" style="color:var(--accent); font-size:0.8em;">Direct Link</a>
+                    <a href="${apiLink}" target="_blank" style="color:var(--accent); font-size:0.8em;">Direct Link</a>
                 </div>
             `;
         } catch (e) { showError("Audio failed"); }
@@ -780,11 +892,11 @@ Configure your settings in the menu and press 'Send' to begin.</div>
     }
 
     // --- Enhanced Media Edit ---
+    // Change: Now takes a dedicated button click, but original image click remains for desktop ease.
     function openMediaEdit(blobUrl, apiLink) {
         state.currentEdit.url = blobUrl;
         state.currentEdit.api = apiLink;
         
-        // NEW: Try to parse width/height from the API link
         try {
             const urlObj = new URL(apiLink);
             state.currentEdit.width = urlObj.searchParams.get('width');
@@ -795,6 +907,7 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         }
 
         if ($('edit-preview').tagName.toLowerCase() !== 'img') {
+             // Handle case where it might be a video tag from a previous edit
              $('edit-preview').outerHTML = '<img id="edit-preview" src="" style="max-width:100%; max-height:300px; border-radius:8px;">';
         }
         $('edit-preview').src = blobUrl; 
@@ -814,12 +927,9 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         const sysMsgId = addMessage('system', `<span class="spinner"></span> Generating ${targetType === 'video' ? 'animation' : 'edit'}...`).id;
 
         try {
-            // NEW: Define overrides for buildMediaUrl
             let overrides = {};
             if (targetType === 'image') {
-                // Use the specific Image Editor model
                 overrides.model = $('image-editor-model').value;
-                // Use original dimensions if found
                 if (state.currentEdit.width) overrides.width = state.currentEdit.width;
                 if (state.currentEdit.height) overrides.height = state.currentEdit.height;
             }
@@ -835,10 +945,10 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         } catch(e) { showError(`${targetType} failed: ` + e.message); }
     }
 
-    // NEW: Updated buildMediaUrl signature to accept overrides
+    // Updated buildMediaUrl signature to accept overrides
     function buildMediaUrl(type, prompt, originalImg = null, overrides = {}) {
         const key = getKey();
-        const seed = Math.floor(Math.random() * 999999);
+        const seed = generateSeed(); // FIX: Use new random seed function
         const encPrompt = encodeURIComponent(prompt);
         const safe = !$('ignore-censorship').checked;
         
@@ -846,19 +956,65 @@ Configure your settings in the menu and press 'Send' to begin.</div>
             const model = overrides.model || $('image-model').value;
             const w = overrides.width || $('img-w').value;
             const h = overrides.height || $('img-h').value;
-            let u = `${API_BASE}/image/${encPrompt}?model=${model}&width=${w}&height=${h}&seed=${seed}&nologo=true&private=true&safe=${safe}&key=${key}`;
+            let u = `${API_BASE}/image/${encPrompt}?model=${model}&width=${w}&height=${h}&seed=${seed}&nologo=true&private=true&safe=${safe}`;
             if (originalImg) u += `&image=${encodeURIComponent(originalImg)}`;
-            return u;
+            return u + `&key=${key}`;
         } else if (type === 'video') {
-            // Video model uses standard video dropdown, unless we decide to override later
             const model = $('video-model').value;
             const duration = $('vid-duration').value; 
             const aspect = $('vid-aspect').value; 
-            let u = `${API_BASE}/image/${encPrompt}?model=${model}&seed=${seed}&key=${key}&duration=${duration}&aspectRatio=${aspect}`; 
+            let u = `${API_BASE}/image/${encPrompt}?model=${model}&seed=${seed}&duration=${duration}&aspectRatio=${aspect}`; 
             if (originalImg) u += `&image=${encodeURIComponent(originalImg)}`;
-            return u;
+            return u + `&key=${key}`;
         }
         return "";
+    }
+
+    // NEW: Action Suggestion Logic
+    async function suggestActions(msgId) {
+        if (state.isGenerating) return showError("Wait for current generation to finish.");
+        const msg = state.messages.find(m => m.id === msgId);
+        
+        const lastMessages = state.messages.filter(m => m.role !== 'system').slice(-4).map(m => `${m.role}: ${m.content}`).join("\n");
+        
+        const prompt = `Based on the following recent story segment, suggest 3 distinct and plausible actions the player can take next. List them one per line, starting with a number and a period. Do not add any introductory or concluding text.\n\n${lastMessages}`;
+        
+        const sysMsgId = addMessage('system', '<span class="spinner"></span> Generating action suggestions...').id;
+        
+        try {
+            const textModel = $('text-model').value;
+            const seed = generateSeed(); // FIX: Add random seed
+            const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=${textModel}&seed=${seed}&key=${getKey()}`;
+            const textRes = await fetch(textUrl);
+            const text = await textRes.text();
+            
+            const actions = text.split('\n').map(a => a.trim()).filter(a => a.length > 5);
+            
+            if (actions.length === 0) throw new Error("Could not generate actions.");
+            
+            const listEl = $('action-list');
+            listEl.innerHTML = '';
+            
+            actions.forEach(action => {
+                const div = document.createElement('div');
+                div.className = 'action-option';
+                div.innerText = action;
+                // Click handler to load text into input
+                div.onclick = () => {
+                    const cleanAction = action.replace(/^\d+\.\s*/, ''); // Remove numbering
+                    $('user-input').value = cleanAction;
+                    $('actions-modal').style.display = 'none';
+                    updateMessageContent(sysMsgId, "Action suggestions generated and offered to user.");
+                };
+                listEl.appendChild(div);
+            });
+
+            $('actions-modal').style.display = 'flex';
+            updateMessageContent(sysMsgId, "Action suggestions generated and offered to user.");
+
+        } catch(e) { 
+            updateMessageContent(sysMsgId, "Failed to generate actions: " + e.message);
+        }
     }
 
     // --- Message Rendering ---
@@ -888,41 +1044,63 @@ Configure your settings in the menu and press 'Send' to begin.</div>
     function renderMsgHTML(msg) {
         const { id, role, content, media } = msg;
         let avatar = "";
-        const userImgUrl = $('user-img-url').value; 
-        const aiImgUrl = $('ai-img-url').value;
+        let name = role; 
+        
+        // NEW: Get Character Names
         const userIconSrc = $('user-img-preview').src; 
         const aiIconSrc = $('ai-img-preview').src;
+        const userImgUrl = $('user-img-url').value; 
+        const aiImgUrl = $('ai-img-url').value;
 
-        if (role === 'user' && userIconSrc && !$('user-img-preview').classList.contains('hidden')) {
-            avatar = `<img src="${userIconSrc}" class="char-icon" onclick="openMediaEdit('${userIconSrc}', '${userImgUrl}')">`;
+        if (role === 'user') {
+            name = $('user-name').value.trim() || 'User';
+            if (userIconSrc && !$('user-img-preview').classList.contains('hidden')) {
+                avatar = `<img src="${userIconSrc}" class="char-icon" onclick="openMediaEdit('${userIconSrc}', '${userImgUrl}')">`;
+            }
         }
-        if (role === 'assistant' && aiIconSrc && !$('ai-img-preview').classList.contains('hidden')) { 
-            avatar = `<img src="${aiIconSrc}" class="char-icon" onclick="openMediaEdit('${aiIconSrc}', '${aiImgUrl}')">`;
+        
+        if (role === 'assistant') {
+            name = $('ai-name').value.trim() || 'Narrator';
+            if (aiIconSrc && !$('ai-img-preview').classList.contains('hidden')) { 
+                avatar = `<img src="${aiIconSrc}" class="char-icon" onclick="openMediaEdit('${aiIconSrc}', '${aiImgUrl}')">`;
+            }
         }
-
+        
         let mediaHTML = "";
         if (media) {
             const cleanPollinationsUrl = media.pollinationsUrl || media.url; 
-            if (media.type === 'image') {
-                mediaHTML = `<div class="media-embed">
-                    <img src="${media.url}" onclick="openMediaEdit('${media.url}', '${cleanPollinationsUrl}')" style="cursor:pointer;">
-                    <div style="font-size:0.8em; margin-top:5px;">
-                        <a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a>
-                    </div>
-                </div>`;
-            } else if (media.type === 'video') {
-                mediaHTML = `<div class="media-embed" style="position:relative;">
-                    <div class="click-overlay" onclick="openMediaEdit('${media.url}', '${cleanPollinationsUrl}')"></div>
-                    <video controls autoplay loop src="${media.url}" style="pointer-events:none;"></video>
-                    <div style="font-size:0.8em; margin-top:5px;">
-                        <a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a>
-                    </div>
-                </div>`;
-            }
+            const isImage = media.type === 'image';
+            
+            mediaHTML = `<div class="media-embed">
+                ${isImage ? 
+                    `<img src="${media.url}">` : 
+                    `<video controls autoplay loop src="${media.url}"></video>`
+                }
+                <div style="font-size:0.8em; margin-top:5px; display:flex; gap:10px; align-items:center;">
+                    <a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a>
+                    <button class="small secondary" onclick="openMediaEdit('${media.url}', '${cleanPollinationsUrl}')">✏️ Edit Media</button>
+                </div>
+            </div>`;
+        }
+        
+        let actionButtons = `<button class="small secondary" id="btn-audio-${id}" onclick="generateAudio('${id}')">🔊 Speak</button>`;
+        
+        // NEW: Add Suggest Actions button only for AI responses in RPG mode
+        if (role === 'assistant' && $('game-mode').value === 'rpg') {
+             actionButtons += `<button class="small" onclick="suggestActions('${id}')">🎲 Suggest Actions</button>`;
         }
 
-        return `<div class="msg-header"><span>${role}</span><span onclick="copyTxt('${id}')" style="cursor:pointer">COPY</span></div>${avatar}<div class="msg-content">${content}</div>${mediaHTML}<div id="media-${id}"></div><div class="msg-actions"><button class="small secondary" id="btn-audio-${id}" onclick="generateAudio('${id}')">🔊 Speak</button><button class="small secondary" onclick="regenerate('${id}')">🔄 Re-run</button><button class="small secondary" onclick="editMsg('${id}')">✏️ Edit</button><button class="small secondary" onclick="deleteMsg('${id}')">🗑️</button></div><div style="clear:both"></div>`;
+        actionButtons += `<button class="small secondary" onclick="regenerate('${id}')">🔄 Re-run</button><button class="small secondary" onclick="editMsg('${id}')">✏️ Edit</button><button class="small secondary" onclick="deleteMsg('${id}')">🗑️</button>`;
+
+
+        return `<div class="msg-header"><span>${name}</span><span onclick="copyTxt('${id}')" style="cursor:pointer">COPY</span></div>${avatar}<div class="msg-content">${content}</div>${mediaHTML}<div id="media-${id}"></div><div class="msg-actions">${actionButtons}</div><div style="clear:both"></div>`;
     }
+
+    // NEW: Show Instructions
+    function showInstructions() {
+        $('instructions-modal').style.display = 'flex';
+    }
+
 
     function regenerate(id) {
         const idx = state.messages.findIndex(m => m.id === id);
@@ -946,7 +1124,7 @@ Configure your settings in the menu and press 'Send' to begin.</div>
     function setBgOpacity(value) { state.bgOpacity = value / 100; document.documentElement.style.setProperty('--bg-overlay-opacity', state.bgOpacity); $('bg-opacity-value').innerText = `${value}%`; }
     function handleBgUpload(input) { const file = input.files[0]; const reader = new FileReader(); reader.onload = (e) => setBackground(e.target.result); reader.readAsDataURL(file); input.value = ''; }
 
-    // --- Enhanced Music Player Logic ---
+    // --- Enhanced Music Player Logic (No changes needed) ---
     const audioPlayer = $('audio-elem');
     
     function initPlaylist() {
@@ -1080,10 +1258,12 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         const previewEl = $(`${type}-img-preview`);
         if (url) {
             if (url.includes(API_BASE) && !url.includes('data:')) {
+                // If it's a Pollinations URL without key, fetch it using the key to generate the blob
                 fetchBlobUrl(url).then(blobUrl => {
                     previewEl.src = blobUrl; previewEl.classList.remove('hidden'); $(`${type}-img-url`).dataset.blobUrl = blobUrl;
                 }).catch(() => { previewEl.src = ''; previewEl.classList.add('hidden'); });
             } else {
+                // Direct URL or Data URL
                 previewEl.src = url; previewEl.classList.remove('hidden'); $(`${type}-img-url`).dataset.blobUrl = url;
             }
         } else { previewEl.src = ''; previewEl.classList.add('hidden'); }
@@ -1099,7 +1279,8 @@ Configure your settings in the menu and press 'Send' to begin.</div>
     function deleteMsg(id) { state.messages = state.messages.filter(m => m.id !== id); $(`msg-${id}`).remove(); }
     function updateSummary() {
         const fullTxt = state.messages.map(m => `${m.role}: ${m.content}`).join("\n");
-        const url = `${API_BASE}/text/${encodeURIComponent("Summarize story in 3 paragraphs:\n" + fullTxt)}?model=mistral&key=${getKey()}`;
+        const seed = generateSeed();
+        const url = `${API_BASE}/text/${encodeURIComponent("Summarize story in 3 paragraphs:\n" + fullTxt)}?model=mistral&seed=${seed}&key=${getKey()}`;
         fetch(url).then(res => res.ok ? res.text() : '').then(text => state.summary = text);
     }
     function clearChat() { if (confirm("Clear all history?")) { state.messages = []; state.summary = ""; $('chat-history').innerHTML = ""; addMessage('system', 'Chat cleared.'); } }
@@ -1111,11 +1292,12 @@ Configure your settings in the menu and press 'Send' to begin.</div>
             messages: state.messages, summary: state.summary, bg: $('bg-url').value, bgOpacity: state.bgOpacity,
             settings: {
                 theme: $('theme').value, gameMode: $('game-mode').value,
+                // NEW: Save names
+                userName: $('user-name').value, aiName: $('ai-name').value,
                 userCharDesc: $('user-desc').value, aiCharDesc: $('ai-desc').value,
                 userCharImg: $('user-img-url').value, aiCharImg: $('ai-img-url').value,
                 textModel: $('text-model').value, 
                 imageModel: $('image-model').value, 
-                // NEW: Save editor model
                 imageEditorModel: $('image-editor-model').value,
                 videoModel: $('video-model').value,
                 vidDuration: $('vid-duration').value, vidAspect: $('vid-aspect').value, voiceModel: $('voice-model').value,
@@ -1133,11 +1315,12 @@ Configure your settings in the menu and press 'Send' to begin.</div>
                 const data = JSON.parse(e.target.result);
                 state.messages = []; $('chat-history').innerHTML = "";
                 if (data.settings) {
-                    $('theme').value = data.settings.theme || ""; $('game-mode').value = data.settings.gameMode || "rpg";
+                    $('theme').value = data.settings.theme || ""; $('game-mode').value = data.settings.gameMode || "roleplay";
+                    // NEW: Load names
+                    $('user-name').value = data.settings.userName || ""; $('ai-name').value = data.settings.aiName || "Narrator";
                     $('user-desc').value = data.settings.userCharDesc || ""; $('ai-desc').value = data.settings.aiCharDesc || "";
                     $('text-model').value = data.settings.textModel || "mistral"; 
                     $('image-model').value = data.settings.imageModel || "zimage";
-                    // NEW: Load editor model
                     $('image-editor-model').value = data.settings.imageEditorModel || "kontext";
                     $('video-model').value = data.settings.videoModel || "seedance"; $('vid-duration').value = data.settings.vidDuration || "4"; 
                     $('vid-aspect').value = data.settings.vidAspect || "16:9"; $('voice-model').value = data.settings.voiceModel || "alloy";
