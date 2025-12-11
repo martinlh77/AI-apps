@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V11.1</title>
+    <title>Pollinations RPG Ultimate V11.2</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -229,6 +229,9 @@
             position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100;
             display: none; justify-content: center; align-items: center;
         }
+        .modal.active {
+            display: flex;
+        }
         .modal-box {
             background: var(--bg-panel); padding: 20px; border-radius: 12px;
             width: 95%; max-width: 500px; max-height: 90vh; overflow-y: auto;
@@ -263,7 +266,7 @@
 
     <div id="sidebar">
         <div class="panel-section">
-            <h2 style="margin:0; font-size:1.2em; color:var(--text-main);">RPG Engine V11</h2>
+            <h2 style="margin:0; font-size:1.2em; color:var(--text-main);">RPG Engine V11.2</h2>
             <div style="font-size:0.75em; color:var(--text-dim);">Powered by gen.pollinations.ai</div>
         </div>
         
@@ -563,7 +566,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
     <div class="modal-box">
         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
             <h3 style="margin:0">Edit Media</h3>
-            <button class="small secondary" onclick="$('edit-modal').style.display='none'">X</button>
+            <button class="small secondary" onclick="closeModal('edit-modal')">X</button>
         </div>
         <div style="text-align:center; margin-bottom:15px;">
             <img id="edit-preview" src="" style="max-width:100%; max-height:300px; border-radius:8px;">
@@ -586,7 +589,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
     <div class="modal-box">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
             <h3 style="margin:0">Suggested Actions</h3>
-            <button class="small secondary" onclick="$('actions-modal').style.display='none'">X</button>
+            <button class="small secondary" onclick="closeModal('actions-modal')">X</button>
         </div>
         <p style="font-size:0.9em; color:var(--text-dim);">Select an action to load it into the prompt box, where you can edit it before sending.</p>
         <div id="action-list">
@@ -598,7 +601,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
     <div class="modal-box" style="max-width: 600px;">
         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
             <h3 style="margin:0">RPG Engine Instructions</h3>
-            <button class="small secondary" onclick="$('instructions-modal').style.display='none'">X</button>
+            <button class="small secondary" onclick="closeModal('instructions-modal')">X</button>
         </div>
         <p><strong>Game Modes:</strong></p>
         <ul>
@@ -636,7 +639,6 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         bgOpacity: 0.8,
         isGenerating: false,
         controller: null,
-        // Stores dimensions for editing
         currentEdit: { url: '', api: '', type: '', width: null, height: null }
     };
 
@@ -660,6 +662,15 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
     // --- UI Interactions ---
     function toggleSidebar() { $('sidebar').classList.toggle('open'); }
     function toggleSection(id) { $(id).classList.toggle('active'); }
+    
+    // Fixed modal functions
+    function openModal(id) {
+        $(id).classList.add('active');
+    }
+    
+    function closeModal(id) {
+        $(id).classList.remove('active');
+    }
     
     $('user-input').addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -691,7 +702,6 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
             const model = $('text-model').value;
             const key = getKey();
             
-            // Use names or default roles
             const userName = $('user-name').value.trim() || 'User';
             const aiName = $('ai-name').value.trim() || 'Narrator';
 
@@ -765,8 +775,8 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         try {
             const theme = $('theme').value.trim();
             const prompt = theme 
-                ? `Generate a short, intriguing RPG backstory/lore (max 4 sentences) for the theme: ${theme}.`
-                : `Pick a random unique fiction genre (e.g. Cyberpunk, Fantasy, Noir, Space Opera) and generate a short, intriguing backstory/lore (max 4 sentences) for it.`;
+                ? `Generate a detailed, intriguing RPG backstory/lore (5-7 sentences) for the theme: ${theme}. Include world history, current conflicts, and key factions or locations.`
+                : `Pick a random unique fiction genre (e.g. Cyberpunk, Fantasy, Noir, Space Opera) and generate a detailed, intriguing backstory/lore (5-7 sentences) for it. Include world history, current conflicts, and key factions or locations.`;
 
             const seed = generateSeed();
             const url = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
@@ -786,48 +796,109 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         const btn = $('btn-rand-all');
         const originalText = btn.innerText;
         btn.innerHTML = '<span class="spinner"></span> Working...';
-        state.isGenerating = true; // Prevent chat during setup
+        state.isGenerating = true;
 
         try {
-            // 1. Text Generation: Get everything in one prompt to save time/tokens
-            const prompt = `Generate a creative, random RPG scenario.
-            Output purely in this specific format with pipes (|) as separators:
-            Theme | Lore (2-3 sentences) | User Character Name | User Visual Description (short) | AI Narrator Name | AI Visual Description (short)
+            // Step 1: Generate theme and lore separately for better results
+            const themePrompt = `Generate a single unique RPG theme/genre in 2-4 words. Examples: "Dark Fantasy", "Cyberpunk Noir", "Steampunk Adventure", "Cosmic Horror", "Post-Apocalyptic Western". Output ONLY the theme, nothing else.`;
             
-            Example:
-            Cyberpunk | Neon streets hide dark secrets. | Kael | Cyborg with glowing red eye | The Architect | Holographic construct in a suit`;
-
-            const seed = generateSeed();
-            const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
-            const textRes = await fetch(textUrl);
-            const text = await textRes.text();
+            const themeSeed = generateSeed();
+            const themeUrl = `${API_BASE}/text/${encodeURIComponent(themePrompt)}?model=mistral&seed=${themeSeed}&key=${getKey()}`;
+            const themeRes = await fetch(themeUrl);
+            const theme = (await themeRes.text()).trim().replace(/"/g, '');
             
-            const parts = text.split('|').map(s => s.trim());
-            if (parts.length < 6) throw new Error("AI returned malformed data. Try again.");
+            $('theme').value = theme;
 
-            // 2. Populate Inputs
-            $('theme').value = parts[0];
-            $('lore').value = parts[1];
-            $('user-name').value = parts[2];
-            $('user-desc').value = parts[3];
-            $('ai-name').value = parts[4];
-            $('ai-desc').value = parts[5];
+            // Step 2: Generate detailed lore based on theme
+            const lorePrompt = `Create a rich RPG world lore for the theme "${theme}". Write 5-7 sentences covering: the world's history, current major conflict, important factions or powers, and what makes this world unique. Be creative and evocative.`;
+            
+            const loreSeed = generateSeed();
+            const loreUrl = `${API_BASE}/text/${encodeURIComponent(lorePrompt)}?model=mistral&seed=${loreSeed}&key=${getKey()}`;
+            const loreRes = await fetch(loreUrl);
+            const lore = (await loreRes.text()).trim();
+            
+            $('lore').value = lore;
 
-            // 3. Trigger Image Generations Sequentially (to be kind to rate limits)
-            // User Image
+            // Step 3: Generate User Character with detailed description
+            const userCharPrompt = `Create a player character for a "${theme}" RPG. Output in this EXACT format with triple pipes as separators:
+NAME|||DESCRIPTION
+
+The NAME should be a single evocative name fitting the theme (1-2 words max).
+The DESCRIPTION should be 5-7 sentences covering: physical appearance, personality traits, race/class/species (if applicable to the theme), notable skills or abilities, a personal goal or desire, and 2-3 likes and dislikes.
+
+Example format:
+Kira Shadowmend|||A lithe half-elf with silver hair and piercing violet eyes, bearing a crescent moon tattoo on her left cheek. She is cunning and resourceful, preferring to solve problems through wit rather than brute force. As a Nightblade rogue, she excels in stealth, lockpicking, and dagger combat. Her deepest desire is to uncover the truth about her mother's disappearance from the Thieves' Guild. She enjoys moonlit walks, fine wine, and the thrill of a successful heist. She despises slavers, loud people, and anything that reminds her of her time in the orphanage.`;
+
+            const userSeed = generateSeed();
+            const userUrl = `${API_BASE}/text/${encodeURIComponent(userCharPrompt)}?model=mistral&seed=${userSeed}&key=${getKey()}`;
+            const userRes = await fetch(userUrl);
+            const userText = (await userRes.text()).trim();
+            
+            // Parse user character
+            let userParts = userText.split('|||').map(s => s.trim());
+            if (userParts.length < 2) {
+                // Fallback parsing if AI didn't follow format
+                userParts = userText.split('\n').filter(s => s.trim().length > 0);
+                if (userParts.length >= 2) {
+                    userParts = [userParts[0], userParts.slice(1).join(' ')];
+                } else {
+                    userParts = ['Adventurer', userText];
+                }
+            }
+            
+            const userName = userParts[0].replace(/^(NAME:|Name:|\*\*Name\*\*:?)/i, '').trim();
+            const userDesc = userParts[1].replace(/^(DESCRIPTION:|Description:|\*\*Description\*\*:?)/i, '').trim();
+            
+            $('user-name').value = userName;
+            $('user-desc').value = userDesc;
+
+            // Step 4: Generate AI Character with detailed description
+            const aiCharPrompt = `Create an AI narrator/game master character OR an interesting NPC for a "${theme}" RPG. Output in this EXACT format with triple pipes as separators:
+NAME|||DESCRIPTION
+
+The NAME should be a single evocative name fitting the theme (1-2 words max).
+The DESCRIPTION should be 5-7 sentences covering: physical appearance (or form if non-physical entity), personality traits, their role in the world, notable abilities or knowledge, their goals or motivations, and 2-3 likes and dislikes.
+
+Example format:
+The Chronicler|||An ancient being manifesting as a hooded figure wreathed in softly glowing script that constantly shifts and rewrites itself. They speak in measured, poetic tones and possess vast knowledge of past, present, and possible futures. As the Keeper of Stories, they guide heroes through their destinies while maintaining cosmic balance. They can manipulate narrative threads but are bound by rules that prevent direct intervention. They find joy in unexpected plot twists and heroic sacrifices. They despise those who try to cheat fate, boring protagonists, and stories left unfinished.`;
+
+            const aiSeed = generateSeed();
+            const aiUrl = `${API_BASE}/text/${encodeURIComponent(aiCharPrompt)}?model=mistral&seed=${aiSeed}&key=${getKey()}`;
+            const aiRes = await fetch(aiUrl);
+            const aiText = (await aiRes.text()).trim();
+            
+            // Parse AI character
+            let aiParts = aiText.split('|||').map(s => s.trim());
+            if (aiParts.length < 2) {
+                // Fallback parsing
+                aiParts = aiText.split('\n').filter(s => s.trim().length > 0);
+                if (aiParts.length >= 2) {
+                    aiParts = [aiParts[0], aiParts.slice(1).join(' ')];
+                } else {
+                    aiParts = ['The Narrator', aiText];
+                }
+            }
+            
+            const aiName = aiParts[0].replace(/^(NAME:|Name:|\*\*Name\*\*:?)/i, '').trim();
+            const aiDesc = aiParts[1].replace(/^(DESCRIPTION:|Description:|\*\*Description\*\*:?)/i, '').trim();
+            
+            $('ai-name').value = aiName;
+            $('ai-desc').value = aiDesc;
+
+            // Step 5: Generate character images
             await generateCharImage('user');
-            // AI Image
             await generateCharImage('ai');
             
-            // Background Image
-            // We use the Lore as context
+            // Step 6: Generate background image based on theme and lore
             try {
-                const bgPrompt = `Atmospheric background wallpaper, ${parts[0]}, ${parts[1]}, highly detailed`;
+                const bgPrompt = `Atmospheric background wallpaper for ${theme} RPG setting. ${lore.substring(0, 150)}. Highly detailed, cinematic, epic scale, no characters, environment only.`;
                 const bgApiLink = buildMediaUrl('image', bgPrompt);
                 const bgBlob = await fetchBlobUrl(bgApiLink);
                 setBackground(bgBlob);
                 $('bg-url').value = bgApiLink.replace(`&key=${getKey()}`, '');
             } catch(e) { console.error("BG Gen failed", e); }
+
+            addMessage('system', `🎲 New adventure generated!\n\nTheme: ${theme}\nYour Character: ${userName}\nNarrator: ${aiName}\n\nType your first action to begin!`);
 
         } catch(e) {
             showError("Randomize All Error: " + e.message);
@@ -861,7 +932,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         } catch(e) { showError("Scene Gen Error: " + e.message); }
     }
 
-    // NEW: Randomize Character
+    // Enhanced Randomize Character with detailed descriptions
     async function randomizeCharacter(type) {
         const isUser = type === 'user';
         const nameEl = isUser ? $('user-name') : $('ai-name');
@@ -869,25 +940,39 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         const imgUrlEl = isUser ? $('user-img-url') : $('ai-img-url');
         const randomizeBtn = nameEl.parentElement.querySelector('.row button:nth-child(2)');
         const originalText = randomizeBtn.innerHTML;
-        randomizeBtn.innerHTML = '<span class="spinner"></span> Working...';
+        randomizeBtn.innerHTML = '<span class="spinner"></span>';
 
         try {
-            const charType = isUser ? "Adventurer Character" : "Game Master Character (NPC)";
-            const prompt = `Generate a random ${charType} for a fantasy RPG. Give a short, evocative name (1 word) and a 3-sentence description of appearance, skills, and personality. Format as: [NAME]| [DESCRIPTION]`;
-            const seed = generateSeed();
+            const theme = $('theme').value || 'fantasy';
+            const charType = isUser ? "player character/hero" : "narrator/game master NPC";
             
+            const prompt = `Create a ${charType} for a "${theme}" RPG. Output in this EXACT format with triple pipes as separators:
+NAME|||DESCRIPTION
+
+NAME: A single evocative name (1-2 words max).
+DESCRIPTION: 5-7 sentences covering physical appearance, personality, race/class/species (if relevant - skip if the character is something like an inanimate object or abstract entity), skills/abilities, a personal goal, and 2-3 likes/dislikes.`;
+            
+            const seed = generateSeed();
             const textUrl = `${API_BASE}/text/${encodeURIComponent(prompt)}?model=mistral&seed=${seed}&key=${getKey()}`;
             const textRes = await fetch(textUrl);
             const text = (await textRes.text()).trim();
             
-            const parts = text.split('|').map(p => p.trim());
+            let parts = text.split('|||').map(p => p.trim());
             
-            if (parts.length < 2) throw new Error("Failed to parse AI output. Try again.");
+            if (parts.length < 2) {
+                // Fallback parsing
+                parts = text.split('\n').filter(s => s.trim().length > 0);
+                if (parts.length >= 2) {
+                    parts = [parts[0], parts.slice(1).join(' ')];
+                } else {
+                    throw new Error("Failed to parse AI output. Try again.");
+                }
+            }
             
-            const newName = parts[0].replace(/\[|\]/g, '').trim();
-            const newDesc = parts[1].replace(/\[|\]/g, '').trim();
+            const newName = parts[0].replace(/^(NAME:|Name:|\*\*Name\*\*:?)/i, '').replace(/\[|\]/g, '').trim();
+            const newDesc = parts[1].replace(/^(DESCRIPTION:|Description:|\*\*Description\*\*:?)/i, '').replace(/\[|\]/g, '').trim();
             
-            const imagePrompt = `Fantasy portrait of ${newName}, ${newDesc}. Highly detailed, cinematic, studio lighting.`;
+            const imagePrompt = `${theme} character portrait of ${newName}. ${newDesc.substring(0, 200)}. Highly detailed, cinematic, studio lighting, fantasy art style.`;
             const apiLink = buildMediaUrl('image', imagePrompt);
             const blobUrl = await fetchBlobUrl(apiLink);
 
@@ -906,10 +991,9 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         const nameElement = type === 'user' ? $('user-name') : $('ai-name');
         const desc = descElement.value;
         const name = nameElement.value || (type === 'user' ? 'A Hero' : 'A Mentor');
+        const theme = $('theme').value || 'fantasy';
 
         if (!desc) {
-            // If part of bulk process, we skip gracefully or error. 
-            // Since this function is called by button usually, showing error is fine.
             if (!state.isGenerating) return showError("Please enter a character description first.");
             return; 
         }
@@ -920,7 +1004,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         genBtn.innerHTML = '<span class="spinner"></span>';
 
         try {
-            const prompt = `Fantasy character portrait, ${name}: ${desc}, high quality, detailed face, cinematic lighting`;
+            const prompt = `${theme} character portrait of ${name}. ${desc.substring(0, 300)}. High quality, detailed face, cinematic lighting, fantasy art style.`;
             const apiLink = buildMediaUrl('image', prompt);
             const blobUrl = await fetchBlobUrl(apiLink);
             
@@ -975,11 +1059,14 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         finally { btn.innerHTML = originalText; }
     }
 
-    // --- Enhanced Media Edit (FIXED) ---
+    // --- Fixed Media Edit Functions ---
     function openMediaEdit(blobUrl, apiLink) {
-        // Decode URIs just in case
-        blobUrl = decodeURIComponent(blobUrl);
-        apiLink = decodeURIComponent(apiLink);
+        try {
+            blobUrl = decodeURIComponent(blobUrl);
+            apiLink = decodeURIComponent(apiLink);
+        } catch(e) {
+            // Already decoded or plain string
+        }
 
         state.currentEdit.url = blobUrl;
         state.currentEdit.api = apiLink;
@@ -993,12 +1080,11 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
             state.currentEdit.height = null;
         }
 
-        if ($('edit-preview').tagName.toLowerCase() !== 'img') {
-             $('edit-preview').outerHTML = '<img id="edit-preview" src="" style="max-width:100%; max-height:300px; border-radius:8px;">';
-        }
-        $('edit-preview').src = blobUrl; 
+        const previewEl = $('edit-preview');
+        previewEl.src = blobUrl; 
         $('download-link').href = apiLink; 
-        $('edit-modal').style.display = 'flex';
+        $('edit-prompt').value = '';
+        openModal('edit-modal');
     }
 
     async function processMediaEdit(targetType) {
@@ -1009,7 +1095,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
              return showError(`Cannot generate ${targetType}: Source must be Pollinations generated.`);
         }
         
-        $('edit-modal').style.display = 'none';
+        closeModal('edit-modal');
         const sysMsgId = addMessage('system', `<span class="spinner"></span> Generating ${targetType === 'video' ? 'animation' : 'edit'}...`).id;
 
         try {
@@ -1055,7 +1141,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         return "";
     }
 
-    // NEW: Action Suggestion Logic
+    // Action Suggestion Logic
     async function suggestActions(msgId) {
         if (state.isGenerating) return showError("Wait for current generation to finish.");
         const msg = state.messages.find(m => m.id === msgId);
@@ -1085,15 +1171,15 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
                 div.className = 'action-option';
                 div.innerText = action;
                 div.onclick = () => {
-                    const cleanAction = action.replace(/^\d+\.\s*/, ''); // Remove numbering
+                    const cleanAction = action.replace(/^\d+\.\s*/, '');
                     $('user-input').value = cleanAction;
-                    $('actions-modal').style.display = 'none';
+                    closeModal('actions-modal');
                     updateMessageContent(sysMsgId, "Action suggestions generated and offered to user.");
                 };
                 listEl.appendChild(div);
             });
 
-            $('actions-modal').style.display = 'flex';
+            openModal('actions-modal');
             updateMessageContent(sysMsgId, "Action suggestions generated and offered to user.");
 
         } catch(e) { 
@@ -1138,16 +1224,18 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         if (role === 'user') {
             name = $('user-name').value.trim() || 'User';
             if (userIconSrc && !$('user-img-preview').classList.contains('hidden')) {
-                // FIXED: encodeURIComponent applied to args
-                avatar = `<img src="${userIconSrc}" class="char-icon" onclick="openMediaEdit('${encodeURIComponent(userIconSrc)}', '${encodeURIComponent(userImgUrl)}')">`;
+                const encodedSrc = encodeURIComponent(userIconSrc);
+                const encodedUrl = encodeURIComponent(userImgUrl);
+                avatar = `<img src="${userIconSrc}" class="char-icon" onclick="openMediaEdit('${encodedSrc}', '${encodedUrl}')">`;
             }
         }
         
         if (role === 'assistant') {
             name = $('ai-name').value.trim() || 'Narrator';
             if (aiIconSrc && !$('ai-img-preview').classList.contains('hidden')) { 
-                // FIXED: encodeURIComponent applied to args
-                avatar = `<img src="${aiIconSrc}" class="char-icon" onclick="openMediaEdit('${encodeURIComponent(aiIconSrc)}', '${encodeURIComponent(aiImgUrl)}')">`;
+                const encodedSrc = encodeURIComponent(aiIconSrc);
+                const encodedUrl = encodeURIComponent(aiImgUrl);
+                avatar = `<img src="${aiIconSrc}" class="char-icon" onclick="openMediaEdit('${encodedSrc}', '${encodedUrl}')">`;
             }
         }
         
@@ -1155,8 +1243,9 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         if (media) {
             const cleanPollinationsUrl = media.pollinationsUrl || media.url; 
             const isImage = media.type === 'image';
+            const encodedMediaUrl = encodeURIComponent(media.url);
+            const encodedPollinationsUrl = encodeURIComponent(cleanPollinationsUrl);
             
-            // FIXED: encodeURIComponent applied to args in openMediaEdit call
             mediaHTML = `<div class="media-embed">
                 ${isImage ? 
                     `<img src="${media.url}">` : 
@@ -1164,7 +1253,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
                 }
                 <div style="font-size:0.8em; margin-top:5px; display:flex; gap:10px; align-items:center;">
                     <a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a>
-                    <button class="small secondary" onclick="openMediaEdit('${encodeURIComponent(media.url)}', '${encodeURIComponent(cleanPollinationsUrl)}')">✏️ Edit Media</button>
+                    <button class="small secondary" onclick="openMediaEdit('${encodedMediaUrl}', '${encodedPollinationsUrl}')">✏️ Edit Media</button>
                 </div>
             </div>`;
         }
@@ -1181,11 +1270,10 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         return `<div class="msg-header"><span>${name}</span><span onclick="copyTxt('${id}')" style="cursor:pointer">COPY</span></div>${avatar}<div class="msg-content">${content}</div>${mediaHTML}<div id="media-${id}"></div><div class="msg-actions">${actionButtons}</div><div style="clear:both"></div>`;
     }
 
-    // NEW: Show Instructions
+    // Show Instructions
     function showInstructions() {
-        $('instructions-modal').style.display = 'flex';
+        openModal('instructions-modal');
     }
-
 
     function regenerate(id) {
         const idx = state.messages.findIndex(m => m.id === id);
@@ -1202,7 +1290,7 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
     }
     
     function copyTxt(id) { navigator.clipboard.writeText(state.messages.find(m => m.id === id).content); }
-    function startNewAdventure() { if (confirm("Clear all history?")) clearChat(); }
+    function startNewAdventure() { if (confirm("Clear all history and start fresh?")) { clearChat(); } }
     function stopGeneration() { if (state.controller) state.controller.abort(); state.isGenerating = false; $('stop-btn').classList.add('hidden'); $('input-loader').classList.remove('active'); }
     function setBackground(url) { state.bgImage = url; $('main-chat').style.backgroundImage = url ? `url('${url}')` : 'none'; $('bg-url').value = url; $('chat-overlay').style.display = url ? 'block' : 'none'; }
     function removeBackground() { setBackground(''); $('bg-url').value = ''; }
@@ -1343,54 +1431,137 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         const previewEl = $(`${type}-img-preview`);
         if (url) {
             if (url.includes(API_BASE) && !url.includes('data:')) {
-                // If it's a Pollinations URL without key, fetch it using the key to generate the blob
                 fetchBlobUrl(url).then(blobUrl => {
-                    previewEl.src = blobUrl; previewEl.classList.remove('hidden'); $(`${type}-img-url`).dataset.blobUrl = blobUrl;
-                }).catch(() => { previewEl.src = ''; previewEl.classList.add('hidden'); });
+                    previewEl.src = blobUrl; 
+                    previewEl.classList.remove('hidden'); 
+                    $(`${type}-img-url`).dataset.blobUrl = blobUrl;
+                }).catch(() => { 
+                    previewEl.src = ''; 
+                    previewEl.classList.add('hidden'); 
+                });
             } else {
-                // Direct URL or Data URL
-                previewEl.src = url; previewEl.classList.remove('hidden'); $(`${type}-img-url`).dataset.blobUrl = url;
+                previewEl.src = url; 
+                previewEl.classList.remove('hidden'); 
+                $(`${type}-img-url`).dataset.blobUrl = url;
             }
-        } else { previewEl.src = ''; previewEl.classList.add('hidden'); }
+        } else { 
+            previewEl.src = ''; 
+            previewEl.classList.add('hidden'); 
+        }
     }
     
     function handleCharUpload(input, type) {
-        const file = input.files[0]; const reader = new FileReader();
-        reader.onload = (e) => { $(`${type}-img-url`).value = e.target.result; updateCharPreview(e.target.result, type); };
-        reader.readAsDataURL(file); input.value = '';
+        const file = input.files[0]; 
+        const reader = new FileReader();
+        reader.onload = (e) => { 
+            $(`${type}-img-url`).value = e.target.result; 
+            updateCharPreview(e.target.result, type); 
+        };
+        reader.readAsDataURL(file); 
+        input.value = '';
     }
-    function removeCharImage(type) { $(`${type}-img-url`).value = ''; updateCharPreview('', type); }
-    function editMsg(id) { const msg = state.messages.find(m => m.id === id); const newTxt = prompt("Edit text:", msg.content); if (newTxt) updateMessageContent(id, newTxt, msg.media); }
-    function deleteMsg(id) { state.messages = state.messages.filter(m => m.id !== id); $(`msg-${id}`).remove(); }
+    
+    function removeCharImage(type) { 
+        $(`${type}-img-url`).value = ''; 
+        updateCharPreview('', type); 
+    }
+    
+    function editMsg(id) { 
+        const msg = state.messages.find(m => m.id === id); 
+        const newTxt = prompt("Edit text:", msg.content); 
+        if (newTxt) updateMessageContent(id, newTxt, msg.media); 
+    }
+    
+    function deleteMsg(id) { 
+        state.messages = state.messages.filter(m => m.id !== id); 
+        $(`msg-${id}`).remove(); 
+    }
+    
     function updateSummary() {
         const fullTxt = state.messages.map(m => `${m.role}: ${m.content}`).join("\n");
         const seed = generateSeed();
         const url = `${API_BASE}/text/${encodeURIComponent("Summarize story in 3 paragraphs:\n" + fullTxt)}?model=mistral&seed=${seed}&key=${getKey()}`;
         fetch(url).then(res => res.ok ? res.text() : '').then(text => state.summary = text);
     }
-    function clearChat() { if (confirm("Clear all history?")) { state.messages = []; state.summary = ""; $('chat-history').innerHTML = ""; addMessage('system', 'Chat cleared.'); } }
-    function showError(msg) { $('error-msg').innerText = msg; $('error-box').style.display = 'block'; }
-    $('main-chat').addEventListener('dblclick', (e) => { if(e.target === $('main-chat') || e.target === $('chat-overlay')) toggleSidebar(); });
+    
+    function clearChat() { 
+        state.messages = []; 
+        state.summary = ""; 
+        $('chat-history').innerHTML = ""; 
+        addMessage('system', 'Chat cleared. Ready for a new adventure!'); 
+    }
+    
+    function showError(msg) { 
+        $('error-msg').innerText = msg; 
+        $('error-box').style.display = 'block'; 
+    }
+    
+    $('main-chat').addEventListener('dblclick', (e) => { 
+        if(e.target === $('main-chat') || e.target === $('chat-overlay')) toggleSidebar(); 
+    });
+
+    function copyLog(full) {
+        let text = "";
+        state.messages.forEach(m => {
+            if (full) {
+                text += `[${m.role.toUpperCase()}] ${m.content}\n`;
+                if (m.media) text += `[MEDIA: ${m.media.pollinationsUrl || m.media.url}]\n`;
+                text += "\n";
+            } else {
+                if (m.role !== 'system') {
+                    const name = m.role === 'user' ? ($('user-name').value || 'User') : ($('ai-name').value || 'Narrator');
+                    text += `${name}: ${m.content}\n\n`;
+                }
+            }
+        });
+        navigator.clipboard.writeText(text.trim());
+        alert("Chat log copied to clipboard!");
+    }
 
     function saveGame() {
         const data = {
-            messages: state.messages, summary: state.summary, bg: $('bg-url').value, bgOpacity: state.bgOpacity,
+            messages: state.messages, 
+            summary: state.summary, 
+            bg: $('bg-url').value, 
+            bgOpacity: state.bgOpacity,
             settings: {
-                theme: $('theme').value, gameMode: $('game-mode').value,
-                // NEW: Save names
-                userName: $('user-name').value, aiName: $('ai-name').value,
-                userCharDesc: $('user-desc').value, aiCharDesc: $('ai-desc').value,
-                userCharImg: $('user-img-url').value, aiCharImg: $('ai-img-url').value,
+                theme: $('theme').value, 
+                gameMode: $('game-mode').value,
+                lore: $('lore').value,
+                userName: $('user-name').value, 
+                aiName: $('ai-name').value,
+                userCharDesc: $('user-desc').value, 
+                aiCharDesc: $('ai-desc').value,
+                userCharImg: $('user-img-url').value, 
+                aiCharImg: $('ai-img-url').value,
                 textModel: $('text-model').value, 
                 imageModel: $('image-model').value, 
                 imageEditorModel: $('image-editor-model').value,
                 videoModel: $('video-model').value,
-                vidDuration: $('vid-duration').value, vidAspect: $('vid-aspect').value, voiceModel: $('voice-model').value,
-                voiceTone: $('voice-tone').value, verbosity: $('verbosity').value, apiKey: $('api-key').value,
+                imgW: $('img-w').value,
+                imgH: $('img-h').value,
+                vidDuration: $('vid-duration').value, 
+                vidAspect: $('vid-aspect').value, 
+                voiceModel: $('voice-model').value,
+                voiceTone: $('voice-tone').value, 
+                verbosity: $('verbosity').value, 
+                apiKey: $('api-key').value,
+                trackStats: $('track-stats').checked,
+                ignoreCensorship: $('ignore-censorship').checked,
+            },
+            musicSettings: {
+                autoplay: $('music-autoplay').checked,
+                shuffle: $('music-shuffle').checked,
+                loopOne: $('music-loop-one').checked,
+                customOnly: $('music-custom-only').checked,
+                customPlaylist: $('custom-music-area').value,
             }
         };
-        const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `rpg_save_${Date.now()}.json`; a.click();
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+        const a = document.createElement('a'); 
+        a.href = URL.createObjectURL(blob); 
+        a.download = `rpg_save_${Date.now()}.json`; 
+        a.click();
     }
 
     function loadGame(input) {
@@ -1398,34 +1569,73 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
-                state.messages = []; $('chat-history').innerHTML = "";
+                state.messages = []; 
+                $('chat-history').innerHTML = "";
+                
                 if (data.settings) {
-                    $('theme').value = data.settings.theme || ""; $('game-mode').value = data.settings.gameMode || "roleplay";
-                    // NEW: Load names
-                    $('user-name').value = data.settings.userName || ""; $('ai-name').value = data.settings.aiName || "Narrator";
-                    $('user-desc').value = data.settings.userCharDesc || ""; $('ai-desc').value = data.settings.aiCharDesc || "";
+                    $('theme').value = data.settings.theme || ""; 
+                    $('game-mode').value = data.settings.gameMode || "roleplay";
+                    $('lore').value = data.settings.lore || "";
+                    $('user-name').value = data.settings.userName || ""; 
+                    $('ai-name').value = data.settings.aiName || "Narrator";
+                    $('user-desc').value = data.settings.userCharDesc || ""; 
+                    $('ai-desc').value = data.settings.aiCharDesc || "";
                     $('text-model').value = data.settings.textModel || "mistral"; 
                     $('image-model').value = data.settings.imageModel || "zimage";
                     $('image-editor-model').value = data.settings.imageEditorModel || "kontext";
-                    $('video-model').value = data.settings.videoModel || "seedance"; $('vid-duration').value = data.settings.vidDuration || "4"; 
-                    $('vid-aspect').value = data.settings.vidAspect || "16:9"; $('voice-model').value = data.settings.voiceModel || "alloy";
-                    $('voice-tone').value = data.settings.voiceTone || ""; $('verbosity').value = data.settings.verbosity || "normal";
+                    $('video-model').value = data.settings.videoModel || "seedance"; 
+                    $('img-w').value = data.settings.imgW || "1024";
+                    $('img-h').value = data.settings.imgH || "1024";
+                    $('vid-duration').value = data.settings.vidDuration || "4"; 
+                    $('vid-aspect').value = data.settings.vidAspect || "16:9"; 
+                    $('voice-model').value = data.settings.voiceModel || "alloy";
+                    $('voice-tone').value = data.settings.voiceTone || ""; 
+                    $('verbosity').value = data.settings.verbosity || "normal";
                     $('api-key').value = data.settings.apiKey || "";
-                    $('user-img-url').value = data.settings.userCharImg || ""; $('ai-img-url').value = data.settings.aiCharImg || "";
-                    updateCharPreview($('user-img-url').value, 'user'); updateCharPreview($('ai-img-url').value, 'ai');
+                    $('track-stats').checked = data.settings.trackStats !== false;
+                    $('ignore-censorship').checked = data.settings.ignoreCensorship || false;
+                    $('user-img-url').value = data.settings.userCharImg || ""; 
+                    $('ai-img-url').value = data.settings.aiCharImg || "";
+                    updateCharPreview($('user-img-url').value, 'user'); 
+                    updateCharPreview($('ai-img-url').value, 'ai');
                 }
+                
+                if (data.musicSettings) {
+                    $('music-autoplay').checked = data.musicSettings.autoplay || false;
+                    $('music-shuffle').checked = data.musicSettings.shuffle || false;
+                    $('music-loop-one').checked = data.musicSettings.loopOne || false;
+                    $('music-custom-only').checked = data.musicSettings.customOnly || false;
+                    $('custom-music-area').value = data.musicSettings.customPlaylist || "";
+                    updateMusicState();
+                }
+                
                 if (data.bg) setBackground(data.bg);
-                if (data.bgOpacity !== undefined) setBgOpacity(data.bgOpacity * 100);
+                if (data.bgOpacity !== undefined) {
+                    setBgOpacity(data.bgOpacity * 100);
+                    $('bg-opacity-slider').value = data.bgOpacity * 100;
+                }
+                
                 state.summary = data.summary || "";
+                
                 if (data.messages) {
                     data.messages.forEach(m => {
-                        const div = document.createElement('div'); div.className = `message ${m.role}`; div.id = `msg-${m.id}`;
-                        div.innerHTML = renderMsgHTML(m); $('chat-history').appendChild(div); state.messages.push(m);
+                        const div = document.createElement('div'); 
+                        div.className = `message ${m.role}`; 
+                        div.id = `msg-${m.id}`;
+                        div.innerHTML = renderMsgHTML(m); 
+                        $('chat-history').appendChild(div); 
+                        state.messages.push(m);
                     });
                 }
-            } catch(err) { showError("Load failed: Invalid file."); }
+                
+                addMessage('system', '✅ Game loaded successfully!');
+                
+            } catch(err) { 
+                showError("Load failed: Invalid file format. " + err.message); 
+            }
         };
         reader.readAsText(input.files[0]);
+        input.value = '';
     }
 </script>
 </body>
