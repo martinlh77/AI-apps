@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V9</title>
+    <title>Pollinations RPG Ultimate V10</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -147,13 +147,10 @@
             background: rgba(30, 30, 35, 0.95); border: 1px solid var(--border);
             position: relative; max-width: 900px; margin-left: auto; margin-right: auto;
             animation: fadeUp 0.3s ease;
-            
-            /* FIX: Mobile Text Margin */
             word-wrap: break-word;
             overflow-wrap: break-word;
         }
         
-        /* FIX: Specific padding for mobile to prevent cutoff */
         @media (max-width: 600px) {
             .message {
                 padding-right: 20px; 
@@ -182,10 +179,9 @@
         .media-embed { margin-top: 12px; position: relative; cursor: pointer; }
         .media-embed img, .media-embed video { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
         
-        /* Overlay for video clicking */
         .click-overlay {
             position: absolute; inset: 0; z-index: 20; cursor: pointer;
-            background: rgba(0,0,0,0); /* Transparent */
+            background: rgba(0,0,0,0);
         }
 
         .msg-actions {
@@ -412,7 +408,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Image Model</label>
+                    <label>Image Model (Generation)</label>
                     <select id="image-model">
                         <option value="zimage" selected>ZImage</option>
                         <option value="flux">Flux</option>
@@ -421,6 +417,16 @@
                         <option value="seedream">SeeDream</option>
                         <option value="seedream-pro">SeeDream Pro</option>
                         <option value="nanobanana">NanoBanana</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Image Editor Model (Edit/Img2Img)</label>
+                    <select id="image-editor-model">
+                        <option value="kontext" selected>Kontext</option>
+                        <option value="seedream">SeeDream</option>
+                        <option value="seedream-pro">SeeDream Pro</option>
+                        <option value="nanobanana">NanoBanana</option>
+                        <option value="flux">Flux</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -571,7 +577,8 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         bgOpacity: 0.8,
         isGenerating: false,
         controller: null,
-        currentEdit: { url: '', api: '', type: '' }
+        // NEW: Stores dimensions for editing
+        currentEdit: { url: '', api: '', type: '', width: null, height: null }
     };
 
     let musicState = {
@@ -772,9 +779,21 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         finally { btn.innerHTML = originalText; }
     }
 
+    // --- Enhanced Media Edit ---
     function openMediaEdit(blobUrl, apiLink) {
         state.currentEdit.url = blobUrl;
         state.currentEdit.api = apiLink;
+        
+        // NEW: Try to parse width/height from the API link
+        try {
+            const urlObj = new URL(apiLink);
+            state.currentEdit.width = urlObj.searchParams.get('width');
+            state.currentEdit.height = urlObj.searchParams.get('height');
+        } catch(e) {
+            state.currentEdit.width = null;
+            state.currentEdit.height = null;
+        }
+
         if ($('edit-preview').tagName.toLowerCase() !== 'img') {
              $('edit-preview').outerHTML = '<img id="edit-preview" src="" style="max-width:100%; max-height:300px; border-radius:8px;">';
         }
@@ -795,7 +814,17 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         const sysMsgId = addMessage('system', `<span class="spinner"></span> Generating ${targetType === 'video' ? 'animation' : 'edit'}...`).id;
 
         try {
-            const apiLinkWithKey = buildMediaUrl(targetType, prompt, originalApiUrl); 
+            // NEW: Define overrides for buildMediaUrl
+            let overrides = {};
+            if (targetType === 'image') {
+                // Use the specific Image Editor model
+                overrides.model = $('image-editor-model').value;
+                // Use original dimensions if found
+                if (state.currentEdit.width) overrides.width = state.currentEdit.width;
+                if (state.currentEdit.height) overrides.height = state.currentEdit.height;
+            }
+
+            const apiLinkWithKey = buildMediaUrl(targetType, prompt, originalApiUrl, overrides); 
             const blobUrl = await fetchBlobUrl(apiLinkWithKey);
             const cleanApiLink = apiLinkWithKey.replace(`&key=${getKey()}`, '');
 
@@ -806,20 +835,22 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         } catch(e) { showError(`${targetType} failed: ` + e.message); }
     }
 
-    function buildMediaUrl(type, prompt, originalImg = null) {
+    // NEW: Updated buildMediaUrl signature to accept overrides
+    function buildMediaUrl(type, prompt, originalImg = null, overrides = {}) {
         const key = getKey();
         const seed = Math.floor(Math.random() * 999999);
         const encPrompt = encodeURIComponent(prompt);
         const safe = !$('ignore-censorship').checked;
         
         if (type === 'image') {
-            const model = $('image-model').value;
-            const w = $('img-w').value;
-            const h = $('img-h').value;
+            const model = overrides.model || $('image-model').value;
+            const w = overrides.width || $('img-w').value;
+            const h = overrides.height || $('img-h').value;
             let u = `${API_BASE}/image/${encPrompt}?model=${model}&width=${w}&height=${h}&seed=${seed}&nologo=true&private=true&safe=${safe}&key=${key}`;
             if (originalImg) u += `&image=${encodeURIComponent(originalImg)}`;
             return u;
         } else if (type === 'video') {
+            // Video model uses standard video dropdown, unless we decide to override later
             const model = $('video-model').value;
             const duration = $('vid-duration').value; 
             const aspect = $('vid-aspect').value; 
@@ -880,7 +911,6 @@ Configure your settings in the menu and press 'Send' to begin.</div>
                     </div>
                 </div>`;
             } else if (media.type === 'video') {
-                // FIX: Mobile Tap Issue. Overlay div handles the click.
                 mediaHTML = `<div class="media-embed" style="position:relative;">
                     <div class="click-overlay" onclick="openMediaEdit('${media.url}', '${cleanPollinationsUrl}')"></div>
                     <video controls autoplay loop src="${media.url}" style="pointer-events:none;"></video>
@@ -920,10 +950,8 @@ Configure your settings in the menu and press 'Send' to begin.</div>
     const audioPlayer = $('audio-elem');
     
     function initPlaylist() {
-        // Clear current
         musicState.playlist = [];
         
-        // 1. Get Custom tracks
         const customText = $('custom-music-area').value.trim();
         const customTracks = [];
         if (customText) {
@@ -933,7 +961,6 @@ Configure your settings in the menu and press 'Send' to begin.</div>
             });
         }
 
-        // 2. Get Default tracks (if custom override is OFF)
         if (!musicState.customOnly) {
             const select = $('music-select');
             for (let i = 0; i < select.options.length; i++) {
@@ -946,32 +973,23 @@ Configure your settings in the menu and press 'Send' to begin.</div>
             }
         }
         
-        // 3. Add Custom tracks (they now might be the ONLY tracks, or appended)
-        // If Custom Only is ON, playlist is cleared before this step, so it matches.
-        // If Custom Only is OFF, we append them to the defaults.
         musicState.playlist = musicState.playlist.concat(customTracks);
     }
 
-    // Called when checkboxes change
     function updateMusicState() {
         musicState.autoplay = $('music-autoplay').checked;
         musicState.shuffle = $('music-shuffle').checked;
         musicState.loopOne = $('music-loop-one').checked;
         musicState.customOnly = $('music-custom-only').checked;
-        
-        // Loop logic
         audioPlayer.loop = musicState.loopOne;
-        
-        // Refresh playlist to respect "Custom Only"
         initPlaylist();
-        
         updateStatusDisplay();
     }
     
     function updatePlaylist() { initPlaylist(); }
 
     function refreshAndPlay() {
-        updateMusicState(); // Rebuild playlist
+        updateMusicState();
         if (musicState.playlist.length > 0) {
             playTrack(0);
         } else {
@@ -992,21 +1010,14 @@ Configure your settings in the menu and press 'Send' to begin.</div>
 
     function playTrack(index) {
         if (index < 0 || index >= musicState.playlist.length) return;
-        
         musicState.currentIndex = index;
         const track = musicState.playlist[index];
-        
         audioPlayer.src = track.url;
-        audioPlayer.loop = musicState.loopOne; // Ensure loop state is applied
-        
+        audioPlayer.loop = musicState.loopOne;
         audioPlayer.play().catch(e => console.log("Auto-play prevented by browser"));
-        
         $('track-name').innerText = track.name;
-        
-        // Show player
         $('music-player').classList.add('active');
         document.body.classList.add('music-active');
-        
         updateStatusDisplay();
         $('play-btn').innerText = "⏸";
     }
@@ -1028,22 +1039,17 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         if (musicState.loopOne) mode = "Loop One";
         else if (musicState.shuffle) mode = "Shuffle";
         else if (musicState.autoplay) mode = "Autoplay All";
-        
         if (musicState.customOnly) mode += " (Custom Only)";
-        
         $('playlist-status').innerText = `${mode} (${musicState.currentIndex + 1}/${musicState.playlist.length})`;
     }
 
     function playNextTrack() {
         if (musicState.playlist.length === 0) return;
-        
-        // If Loop One is active, just replay current (handled by audio loop attr, but button should restart)
         if (musicState.loopOne) {
             audioPlayer.currentTime = 0;
             audioPlayer.play();
             return;
         }
-        
         let nextIndex;
         if (musicState.shuffle) {
             nextIndex = Math.floor(Math.random() * musicState.playlist.length);
@@ -1061,14 +1067,12 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         playTrack(prevIndex);
     }
 
-    // Event listener for auto-play
     audioPlayer.addEventListener('ended', () => {
         if (!musicState.loopOne && (musicState.autoplay || musicState.shuffle)) {
             playNextTrack();
         } else if (!musicState.loopOne) {
             $('play-btn').innerText = "▶"; 
         }
-        // If loopOne is true, audio tag handles it automatically
     });
 
     // --- Char & Utils ---
@@ -1109,7 +1113,11 @@ Configure your settings in the menu and press 'Send' to begin.</div>
                 theme: $('theme').value, gameMode: $('game-mode').value,
                 userCharDesc: $('user-desc').value, aiCharDesc: $('ai-desc').value,
                 userCharImg: $('user-img-url').value, aiCharImg: $('ai-img-url').value,
-                textModel: $('text-model').value, imageModel: $('image-model').value, videoModel: $('video-model').value,
+                textModel: $('text-model').value, 
+                imageModel: $('image-model').value, 
+                // NEW: Save editor model
+                imageEditorModel: $('image-editor-model').value,
+                videoModel: $('video-model').value,
                 vidDuration: $('vid-duration').value, vidAspect: $('vid-aspect').value, voiceModel: $('voice-model').value,
                 voiceTone: $('voice-tone').value, verbosity: $('verbosity').value, apiKey: $('api-key').value,
             }
@@ -1127,7 +1135,10 @@ Configure your settings in the menu and press 'Send' to begin.</div>
                 if (data.settings) {
                     $('theme').value = data.settings.theme || ""; $('game-mode').value = data.settings.gameMode || "rpg";
                     $('user-desc').value = data.settings.userCharDesc || ""; $('ai-desc').value = data.settings.aiCharDesc || "";
-                    $('text-model').value = data.settings.textModel || "mistral"; $('image-model').value = data.settings.imageModel || "zimage";
+                    $('text-model').value = data.settings.textModel || "mistral"; 
+                    $('image-model').value = data.settings.imageModel || "zimage";
+                    // NEW: Load editor model
+                    $('image-editor-model').value = data.settings.imageEditorModel || "kontext";
                     $('video-model').value = data.settings.videoModel || "seedance"; $('vid-duration').value = data.settings.vidDuration || "4"; 
                     $('vid-aspect').value = data.settings.vidAspect || "16:9"; $('voice-model').value = data.settings.voiceModel || "alloy";
                     $('voice-tone').value = data.settings.voiceTone || ""; $('verbosity').value = data.settings.verbosity || "normal";
