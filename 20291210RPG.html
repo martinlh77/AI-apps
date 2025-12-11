@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V8 (Mobile Fix)</title>
+    <title>Pollinations RPG Ultimate V9</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -17,8 +17,6 @@
             --shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             --font-main: system-ui, -apple-system, sans-serif;
             --bg-overlay-opacity: 0.8;
-            
-            /* Mobile safe area vars */
             --sab: env(safe-area-inset-bottom);
         }
 
@@ -29,7 +27,6 @@
             font-family: var(--font-main);
             background-color: var(--bg-dark);
             color: var(--text-main);
-            /* Use dynamic viewport height for mobile browser bars */
             height: 100vh; 
             height: 100dvh; 
             display: flex;
@@ -39,7 +36,6 @@
         /* --- Layout --- */
         #app-container { display: flex; width: 100%; height: 100%; position: relative; }
 
-        /* Sidebar */
         #sidebar {
             width: 350px;
             background-color: var(--bg-panel);
@@ -51,10 +47,9 @@
             z-index: 50;
             flex-shrink: 0;
             box-shadow: var(--shadow);
-            padding-bottom: 50px; /* Extra padding for mobile scroll */
+            padding-bottom: 50px;
         }
 
-        /* Main Chat Area */
         #main-chat {
             flex: 1;
             display: flex;
@@ -74,7 +69,6 @@
             z-index: 0;
         }
 
-        /* Mobile Toggle */
         #mobile-menu-btn {
             display: none;
             position: absolute; top: 10px; left: 10px;
@@ -90,9 +84,9 @@
         @media (max-width: 850px) {
             #sidebar {
                 position: absolute; 
-                height: 100dvh; /* Mobile height fix */
+                height: 100dvh; 
                 transform: translateX(-100%);
-                width: 85%; /* Slightly narrower than full screen */
+                width: 85%;
             }
             #sidebar.open { transform: translateX(0); }
             #mobile-menu-btn { display: block; }
@@ -130,7 +124,6 @@
         button.danger { background-color: #ef4444; color: white; }
         button.small { padding: 4px 8px; font-size: 0.75em; }
 
-        /* --- Character Preview --- */
         .char-setup-container { 
             border: 1px solid var(--border); border-radius: 8px; padding: 10px; 
             margin-top: 5px; background: rgba(0,0,0,0.2); 
@@ -146,7 +139,6 @@
         #chat-history {
             flex: 1; overflow-y: auto; padding: 60px 20px 20px 20px;
             z-index: 1; scroll-behavior: smooth;
-            /* Padding bottom ensures text isn't hidden behind input area */
             padding-bottom: 20px; 
         }
 
@@ -155,7 +147,21 @@
             background: rgba(30, 30, 35, 0.95); border: 1px solid var(--border);
             position: relative; max-width: 900px; margin-left: auto; margin-right: auto;
             animation: fadeUp 0.3s ease;
+            
+            /* FIX: Mobile Text Margin */
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
+        
+        /* FIX: Specific padding for mobile to prevent cutoff */
+        @media (max-width: 600px) {
+            .message {
+                padding-right: 20px; 
+                margin-right: 5px;
+                margin-left: 5px;
+            }
+        }
+
         .message.user { border-left: 4px solid var(--accent); }
         .message.assistant { border-left: 4px solid #34d399; }
         .message.system { border-left: 4px solid #fbbf24; background: rgba(50, 40, 20, 0.95); }
@@ -173,9 +179,15 @@
 
         .msg-content { line-height: 1.6; white-space: pre-wrap; font-size: 0.95em; }
         
-        .media-embed { margin-top: 12px; position: relative; }
-        .media-embed img, .media-embed video { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+        .media-embed { margin-top: 12px; position: relative; cursor: pointer; }
+        .media-embed img, .media-embed video { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
         
+        /* Overlay for video clicking */
+        .click-overlay {
+            position: absolute; inset: 0; z-index: 20; cursor: pointer;
+            background: rgba(0,0,0,0); /* Transparent */
+        }
+
         .msg-actions {
             margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap;
             opacity: 0.6; transition: opacity 0.2s;
@@ -187,7 +199,6 @@
             padding: 15px; background: var(--bg-panel); z-index: 10;
             border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-end;
             position: relative;
-            /* Ensure it sits above mobile bottom bars */
             padding-bottom: max(15px, var(--sab));
         }
         #user-input { flex: 1; min-height: 50px; max-height: 120px; }
@@ -202,25 +213,16 @@
         /* --- Music Player --- */
         #music-player {
             position: absolute; bottom: 0; left: 0; width: 350px;
-            background: rgba(17, 17, 17, 0.95); border-top: 1px solid var(--border);
+            background: rgba(17, 17, 17, 0.98); border-top: 1px solid var(--border);
             padding: 12px; z-index: 55; font-size: 0.85em;
             backdrop-filter: blur(5px);
-            display: none; /* Hidden by default until active */
+            display: none; 
         }
         #music-player.active { display: block; }
 
-        /* Mobile Adjustments for Music Player */
         @media (max-width: 850px) { 
-            #music-player { 
-                width: 100%; 
-                position: fixed; /* Fix to bottom on mobile */
-                bottom: 0;
-            } 
-            
-            /* Push input area up when music player is active on mobile */
-            body.music-active #input-area {
-                padding-bottom: 80px; /* Make space for the player */
-            }
+            #music-player { width: 100%; position: fixed; bottom: 0; } 
+            body.music-active #input-area { padding-bottom: 95px; }
         }
 
         /* --- Modals & Popups --- */
@@ -239,15 +241,12 @@
             border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid var(--accent);
             border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite;
         }
-        .media-loading-text { margin-left: 10px; font-style: italic; color: var(--text-dim); }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .hidden { display: none !important; }
         .collapsible { display: none; }
         .collapsible.active { display: block; animation: fadeUp 0.2s ease; }
-        
-        /* Checkbox styling fix */
-        .chk-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9em; user-select: none; }
+        .chk-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9em; user-select: none; margin-bottom: 5px; }
         .chk-label input { width: auto; margin: 0; }
     </style>
 </head>
@@ -352,12 +351,16 @@
                 <div class="form-group" style="border-top:1px solid var(--border); padding-top:10px; margin-top:10px;">
                     <label style="color:var(--accent);">Music Controls</label>
                     
-                    <div class="row" style="margin-bottom:10px;">
-                         <label class="chk-label"><input type="checkbox" id="music-autoplay" onchange="updateMusicState()"> 🔄 Autoplay</label>
+                    <div class="row" style="flex-wrap:wrap;">
+                         <label class="chk-label"><input type="checkbox" id="music-autoplay" onchange="updateMusicState()"> 🔄 Autoplay All</label>
                          <label class="chk-label"><input type="checkbox" id="music-shuffle" onchange="updateMusicState()"> 🔀 Shuffle</label>
                     </div>
+                    <div class="row" style="flex-wrap:wrap;">
+                        <label class="chk-label"><input type="checkbox" id="music-loop-one" onchange="updateMusicState()"> 🔂 Loop One</label>
+                        <label class="chk-label"><input type="checkbox" id="music-custom-only" onchange="updateMusicState()"> ⭐ Custom Only</label>
+                    </div>
 
-                    <label>Select Track</label>
+                    <label style="margin-top:5px;">Select Default Track</label>
                     <select id="music-select" onchange="playSelected()">
                         <option value="">-- Select Track --</option>
                         <option value="https://files.catbox.moe/1418xa.mp3">Into the Dark</option>
@@ -378,8 +381,8 @@
                     </select>
                     
                     <label style="margin-top:8px;">Custom Playlist (One URL per line)</label>
-                    <textarea id="custom-music-area" placeholder="https://example.com/song1.mp3&#10;https://example.com/song2.mp3"></textarea>
-                    <button class="secondary small" style="width:100%; margin-top:5px;" onclick="addCustomToPlaylist()">Add to Queue & Play</button>
+                    <textarea id="custom-music-area" placeholder="https://example.com/song1.mp3&#10;https://example.com/song2.mp3" onchange="updatePlaylist()"></textarea>
+                    <button class="secondary small" style="width:100%; margin-top:5px;" onclick="refreshAndPlay()">Refresh & Play</button>
                 </div>
             </div>
         </div>
@@ -393,7 +396,6 @@
                         <option value="mistral" selected>Mistral (Default)</option>
                         <option value="nova-micro">Nova Micro</option>
                         <option value="gemini">Gemini</option>
-                        <option value="gemini-search">Gemini Search</option>
                         <option value="openai">OpenAI</option>
                         <option value="openai-fast">OpenAI Fast</option>
                         <option value="openai-large">OpenAI Large</option>
@@ -407,7 +409,6 @@
                         <option value="claude-large">Claude Large</option>
                         <option value="deepseek">DeepSeek</option>
                         <option value="kimi-k2-thinking">Kimi K2</option>
-                        <option value="gemini-large">Gemini Large</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -573,12 +574,13 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         currentEdit: { url: '', api: '', type: '' }
     };
 
-    // --- Music State ---
     let musicState = {
         playlist: [],
         currentIndex: -1,
         autoplay: false,
-        shuffle: false
+        shuffle: false,
+        loopOne: false,
+        customOnly: false
     };
     
     // Initial setup
@@ -871,9 +873,21 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         if (media) {
             const cleanPollinationsUrl = media.pollinationsUrl || media.url; 
             if (media.type === 'image') {
-                mediaHTML = `<div class="media-embed"><img src="${media.url}" onclick="openMediaEdit('${media.url}', '${cleanPollinationsUrl}')" style="cursor:pointer;"><div style="font-size:0.8em; margin-top:5px;"><a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a></div></div>`;
+                mediaHTML = `<div class="media-embed">
+                    <img src="${media.url}" onclick="openMediaEdit('${media.url}', '${cleanPollinationsUrl}')" style="cursor:pointer;">
+                    <div style="font-size:0.8em; margin-top:5px;">
+                        <a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a>
+                    </div>
+                </div>`;
             } else if (media.type === 'video') {
-                mediaHTML = `<div class="media-embed" onclick="openMediaEdit('${media.url}', '${cleanPollinationsUrl}')" style="cursor:pointer; position:relative;"><video controls autoplay loop src="${media.url}"></video><div style="font-size:0.8em; margin-top:5px; cursor:default;"><a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a></div></div>`;
+                // FIX: Mobile Tap Issue. Overlay div handles the click.
+                mediaHTML = `<div class="media-embed" style="position:relative;">
+                    <div class="click-overlay" onclick="openMediaEdit('${media.url}', '${cleanPollinationsUrl}')"></div>
+                    <video controls autoplay loop src="${media.url}" style="pointer-events:none;"></video>
+                    <div style="font-size:0.8em; margin-top:5px;">
+                        <a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a>
+                    </div>
+                </div>`;
             }
         }
 
@@ -906,47 +920,72 @@ Configure your settings in the menu and press 'Send' to begin.</div>
     const audioPlayer = $('audio-elem');
     
     function initPlaylist() {
-        // Collect default options
-        const select = $('music-select');
+        // Clear current
         musicState.playlist = [];
-        for (let i = 0; i < select.options.length; i++) {
-            if (select.options[i].value) {
-                musicState.playlist.push({
-                    name: select.options[i].text,
-                    url: select.options[i].value
-                });
+        
+        // 1. Get Custom tracks
+        const customText = $('custom-music-area').value.trim();
+        const customTracks = [];
+        if (customText) {
+            customText.split('\n').forEach(line => {
+                const url = line.trim();
+                if (url) customTracks.push({ name: `Custom: ${url.substr(-15)}`, url: url });
+            });
+        }
+
+        // 2. Get Default tracks (if custom override is OFF)
+        if (!musicState.customOnly) {
+            const select = $('music-select');
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value) {
+                    musicState.playlist.push({
+                        name: select.options[i].text,
+                        url: select.options[i].value
+                    });
+                }
             }
         }
+        
+        // 3. Add Custom tracks (they now might be the ONLY tracks, or appended)
+        // If Custom Only is ON, playlist is cleared before this step, so it matches.
+        // If Custom Only is OFF, we append them to the defaults.
+        musicState.playlist = musicState.playlist.concat(customTracks);
     }
 
-    function addCustomToPlaylist() {
-        const text = $('custom-music-area').value.trim();
-        if (!text) return;
+    // Called when checkboxes change
+    function updateMusicState() {
+        musicState.autoplay = $('music-autoplay').checked;
+        musicState.shuffle = $('music-shuffle').checked;
+        musicState.loopOne = $('music-loop-one').checked;
+        musicState.customOnly = $('music-custom-only').checked;
         
-        const lines = text.split('\n');
-        let count = 0;
-        lines.forEach(line => {
-            const url = line.trim();
-            if (url) {
-                musicState.playlist.push({ name: `Custom: ${url.substr(-15)}`, url: url });
-                count++;
-            }
-        });
+        // Loop logic
+        audioPlayer.loop = musicState.loopOne;
         
-        alert(`Added ${count} song(s) to playlist.`);
-        $('custom-music-area').value = '';
+        // Refresh playlist to respect "Custom Only"
+        initPlaylist();
         
-        // If not playing, start with the first new song
-        if (audioPlayer.paused && count > 0) {
-            playTrack(musicState.playlist.length - count);
+        updateStatusDisplay();
+    }
+    
+    function updatePlaylist() { initPlaylist(); }
+
+    function refreshAndPlay() {
+        updateMusicState(); // Rebuild playlist
+        if (musicState.playlist.length > 0) {
+            playTrack(0);
+        } else {
+            alert("Playlist empty. Add custom links or uncheck 'Custom Only'.");
         }
     }
 
     function playSelected() {
         const val = $('music-select').value;
         if (!val) return;
-        
-        // Find index in playlist
+        if (musicState.customOnly) {
+             alert("Disable 'Custom Only' to play default tracks.");
+             return;
+        }
         const idx = musicState.playlist.findIndex(t => t.url === val);
         if (idx !== -1) playTrack(idx);
     }
@@ -958,13 +997,15 @@ Configure your settings in the menu and press 'Send' to begin.</div>
         const track = musicState.playlist[index];
         
         audioPlayer.src = track.url;
+        audioPlayer.loop = musicState.loopOne; // Ensure loop state is applied
+        
         audioPlayer.play().catch(e => console.log("Auto-play prevented by browser"));
         
         $('track-name').innerText = track.name;
         
         // Show player
         $('music-player').classList.add('active');
-        document.body.classList.add('music-active'); // For mobile padding
+        document.body.classList.add('music-active');
         
         updateStatusDisplay();
         $('play-btn').innerText = "⏸";
@@ -982,28 +1023,33 @@ Configure your settings in the menu and press 'Send' to begin.</div>
     
     function setVolume() { audioPlayer.volume = $('vol-slider').value; }
 
-    // Update state from checkboxes
-    function updateMusicState() {
-        musicState.autoplay = $('music-autoplay').checked;
-        musicState.shuffle = $('music-shuffle').checked;
-        updateStatusDisplay();
-    }
-
     function updateStatusDisplay() {
-        const mode = musicState.shuffle ? "Shuffle" : musicState.autoplay ? "Autoplay All" : "Single Track";
-        $('playlist-status').innerText = mode + ` (${musicState.currentIndex + 1}/${musicState.playlist.length})`;
+        let mode = "Single";
+        if (musicState.loopOne) mode = "Loop One";
+        else if (musicState.shuffle) mode = "Shuffle";
+        else if (musicState.autoplay) mode = "Autoplay All";
+        
+        if (musicState.customOnly) mode += " (Custom Only)";
+        
+        $('playlist-status').innerText = `${mode} (${musicState.currentIndex + 1}/${musicState.playlist.length})`;
     }
 
-    // Play next logic
     function playNextTrack() {
         if (musicState.playlist.length === 0) return;
+        
+        // If Loop One is active, just replay current (handled by audio loop attr, but button should restart)
+        if (musicState.loopOne) {
+            audioPlayer.currentTime = 0;
+            audioPlayer.play();
+            return;
+        }
         
         let nextIndex;
         if (musicState.shuffle) {
             nextIndex = Math.floor(Math.random() * musicState.playlist.length);
         } else {
             nextIndex = musicState.currentIndex + 1;
-            if (nextIndex >= musicState.playlist.length) nextIndex = 0; // Loop back to start
+            if (nextIndex >= musicState.playlist.length) nextIndex = 0; 
         }
         playTrack(nextIndex);
     }
@@ -1017,11 +1063,12 @@ Configure your settings in the menu and press 'Send' to begin.</div>
 
     // Event listener for auto-play
     audioPlayer.addEventListener('ended', () => {
-        if (musicState.autoplay || musicState.shuffle) {
+        if (!musicState.loopOne && (musicState.autoplay || musicState.shuffle)) {
             playNextTrack();
-        } else {
-            $('play-btn').innerText = "▶"; // Stop at end of single track
+        } else if (!musicState.loopOne) {
+            $('play-btn').innerText = "▶"; 
         }
+        // If loopOne is true, audio tag handles it automatically
     });
 
     // --- Char & Utils ---
