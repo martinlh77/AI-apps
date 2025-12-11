@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pollinations RPG Ultimate V11.2</title>
+    <title>Pollinations RPG Ultimate V11.3</title>
     <style>
         :root {
             --bg-dark: #0f0f13;
@@ -632,6 +632,17 @@ Public Key Active: Rate limits apply (3 requests/burst). Please be patient.
     const API_BASE = "https://gen.pollinations.ai";
     const $ = id => document.getElementById(id);
 
+//Helper Function
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
     let state = {
         messages: [],
         summary: "",
@@ -1060,32 +1071,25 @@ DESCRIPTION: 5-7 sentences covering physical appearance, personality, race/class
     }
 
     // --- Fixed Media Edit Functions ---
-    function openMediaEdit(blobUrl, apiLink) {
-        try {
-            blobUrl = decodeURIComponent(blobUrl);
-            apiLink = decodeURIComponent(apiLink);
-        } catch(e) {
-            // Already decoded or plain string
-        }
-
-        state.currentEdit.url = blobUrl;
-        state.currentEdit.api = apiLink;
-        
-        try {
-            const urlObj = new URL(apiLink);
-            state.currentEdit.width = urlObj.searchParams.get('width');
-            state.currentEdit.height = urlObj.searchParams.get('height');
-        } catch(e) {
-            state.currentEdit.width = null;
-            state.currentEdit.height = null;
-        }
-
-        const previewEl = $('edit-preview');
-        previewEl.src = blobUrl; 
-        $('download-link').href = apiLink; 
-        $('edit-prompt').value = '';
-        openModal('edit-modal');
+function openMediaEdit(blobUrl, apiLink) {
+    state.currentEdit.url = blobUrl;
+    state.currentEdit.api = apiLink;
+    
+    try {
+        const urlObj = new URL(apiLink);
+        state.currentEdit.width = urlObj.searchParams.get('width');
+        state.currentEdit.height = urlObj.searchParams.get('height');
+    } catch(e) {
+        state.currentEdit.width = null;
+        state.currentEdit.height = null;
     }
+
+    const previewEl = $('edit-preview');
+    previewEl.src = blobUrl; 
+    $('download-link').href = apiLink; 
+    $('edit-prompt').value = '';
+    openModal('edit-modal');
+}
 
     async function processMediaEdit(targetType) {
         const prompt = $('edit-prompt').value;
@@ -1221,42 +1225,38 @@ DESCRIPTION: 5-7 sentences covering physical appearance, personality, race/class
         const userImgUrl = $('user-img-url').value; 
         const aiImgUrl = $('ai-img-url').value;
 
-        if (role === 'user') {
-            name = $('user-name').value.trim() || 'User';
-            if (userIconSrc && !$('user-img-preview').classList.contains('hidden')) {
-                const encodedSrc = encodeURIComponent(userIconSrc);
-                const encodedUrl = encodeURIComponent(userImgUrl);
-                avatar = `<img src="${userIconSrc}" class="char-icon" onclick="openMediaEdit('${encodedSrc}', '${encodedUrl}')">`;
-            }
-        }
+if (role === 'user') {
+    name = $('user-name').value.trim() || 'User';
+    if (userIconSrc && !$('user-img-preview').classList.contains('hidden')) {
+        // Store as data attributes instead of onclick parameters
+        avatar = `<img src="${userIconSrc}" class="char-icon" data-blob-url="${escapeHtml(userIconSrc)}" data-api-url="${escapeHtml(userImgUrl)}" onclick="openMediaEdit(this.dataset.blobUrl, this.dataset.apiUrl)">`;
+    }
+}
+
+if (role === 'assistant') {
+    name = $('ai-name').value.trim() || 'Narrator';
+    if (aiIconSrc && !$('ai-img-preview').classList.contains('hidden')) { 
+        avatar = `<img src="${aiIconSrc}" class="char-icon" data-blob-url="${escapeHtml(aiIconSrc)}" data-api-url="${escapeHtml(aiImgUrl)}" onclick="openMediaEdit(this.dataset.blobUrl, this.dataset.apiUrl)">`;
+    }
+}
         
-        if (role === 'assistant') {
-            name = $('ai-name').value.trim() || 'Narrator';
-            if (aiIconSrc && !$('ai-img-preview').classList.contains('hidden')) { 
-                const encodedSrc = encodeURIComponent(aiIconSrc);
-                const encodedUrl = encodeURIComponent(aiImgUrl);
-                avatar = `<img src="${aiIconSrc}" class="char-icon" onclick="openMediaEdit('${encodedSrc}', '${encodedUrl}')">`;
-            }
-        }
         
-        let mediaHTML = "";
-        if (media) {
-            const cleanPollinationsUrl = media.pollinationsUrl || media.url; 
-            const isImage = media.type === 'image';
-            const encodedMediaUrl = encodeURIComponent(media.url);
-            const encodedPollinationsUrl = encodeURIComponent(cleanPollinationsUrl);
-            
-            mediaHTML = `<div class="media-embed">
-                ${isImage ? 
-                    `<img src="${media.url}">` : 
-                    `<video controls autoplay loop src="${media.url}"></video>`
-                }
-                <div style="font-size:0.8em; margin-top:5px; display:flex; gap:10px; align-items:center;">
-                    <a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a>
-                    <button class="small secondary" onclick="openMediaEdit('${encodedMediaUrl}', '${encodedPollinationsUrl}')">✏️ Edit Media</button>
-                </div>
-            </div>`;
+let mediaHTML = "";
+if (media) {
+    const cleanPollinationsUrl = media.pollinationsUrl || media.url; 
+    const isImage = media.type === 'image';
+    
+    mediaHTML = `<div class="media-embed">
+        ${isImage ? 
+            `<img src="${media.url}">` : 
+            `<video controls autoplay loop src="${media.url}"></video>`
         }
+        <div style="font-size:0.8em; margin-top:5px; display:flex; gap:10px; align-items:center;">
+            <a href="${cleanPollinationsUrl}" target="_blank" style="color:var(--accent)">Direct Pollinations Link</a>
+            <button class="small secondary" data-blob-url="${escapeHtml(media.url)}" data-api-url="${escapeHtml(cleanPollinationsUrl)}" onclick="openMediaEdit(this.dataset.blobUrl, this.dataset.apiUrl)">✏️ Edit Media</button>
+        </div>
+    </div>`;
+}
         
         let actionButtons = `<button class="small secondary" id="btn-audio-${id}" onclick="generateAudio('${id}')">🔊 Speak</button>`;
         
