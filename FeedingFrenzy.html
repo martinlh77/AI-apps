@@ -448,6 +448,9 @@
         let coinId = 0;
         let isPaused = false;
         let selectedFishEmoji = '🐠';
+        let gameTime = 0; // Track game time independently
+        let lastFrameTime = Date.now();
+        let bubbleIntervalId = null;
         
         const tank = document.getElementById('tank');
         const fishes = [];
@@ -499,6 +502,11 @@
         function togglePause() {
             isPaused = !isPaused;
             document.getElementById('pauseBtn').textContent = isPaused ? '▶️' : '⏸️';
+            
+            if (!isPaused) {
+                // Reset frame time to prevent time jump
+                lastFrameTime = Date.now();
+            }
         }
         
         // Background modal
@@ -551,7 +559,7 @@
         
         // Create decorative bubbles
         function createBubbles() {
-            setInterval(() => {
+            function spawnBubble() {
                 if (isPaused) return;
                 if (Math.random() > 0.7) {
                     const bubble = document.createElement('div');
@@ -570,8 +578,15 @@
                     ], { duration, easing: 'linear' });
                     
                     animation.onfinish = () => bubble.remove();
+                    
+                    // Pause animation when game is paused
+                    if (isPaused) {
+                        animation.pause();
+                    }
                 }
-            }, 500);
+            }
+            
+            bubbleIntervalId = setInterval(spawnBubble, 500);
         }
         
         // Drop food pellet
@@ -645,11 +660,11 @@
                 vx: (Math.random() - 0.5) * config.speed,
                 vy: (Math.random() - 0.5) * config.speed,
                 hunger: config.maxHunger,
-                lastFeedTime: Date.now(),
+                lastFeedTime: gameTime,
                 config: config,
                 element: document.createElement('div'),
-                lastCoinTime: Date.now(),
-                lastHuntTime: Date.now()
+                lastCoinTime: gameTime,
+                lastHuntTime: gameTime
             };
             
             fish.element.className = 'fish';
@@ -744,6 +759,12 @@
                 requestAnimationFrame(gameLoop);
                 return;
             }
+            
+            // Calculate delta time
+            const currentTime = Date.now();
+            const deltaTime = currentTime - lastFrameTime;
+            lastFrameTime = currentTime;
+            gameTime += deltaTime;
             
             const tankWidth = tank.offsetWidth;
             const tankHeight = tank.offsetHeight;
@@ -846,8 +867,8 @@
                 // Hunger decreases over time
                 fish.hunger -= fish.config.hungerRate;
                 
-                // Check starvation
-                const timeSinceLastFeed = Date.now() - fish.lastFeedTime;
+                // Check starvation using gameTime instead of Date.now()
+                const timeSinceLastFeed = gameTime - fish.lastFeedTime;
                 if (fish.hunger <= 0 || timeSinceLastFeed > fish.config.starvationTime) {
                     showMessage("💀 Starved!", fish.x, fish.y);
                     playSound('death');
@@ -858,7 +879,7 @@
                 }
                 
                 // Predator hunting behavior
-                if (fish.config.isPredator && Date.now() - fish.lastHuntTime > fish.config.huntCooldown) {
+                if (fish.config.isPredator && gameTime - fish.lastHuntTime > fish.config.huntCooldown) {
                     let closestPrey = null;
                     let closestDist = Infinity;
                     
@@ -890,8 +911,8 @@
                             closestPrey.element.remove();
                             fishes.splice(preyIndex, 1);
                             fish.hunger = Math.min(fish.config.maxHunger, fish.hunger + 30);
-                            fish.lastFeedTime = Date.now();
-                            fish.lastHuntTime = Date.now();
+                            fish.lastFeedTime = gameTime;
+                            fish.lastHuntTime = gameTime;
                             
                             // Predator drops diamond when it eats
                             dropCoin(fish, true);
@@ -927,7 +948,7 @@
                         // Eat pellet
                         if (closestDist < 20) {
                             fish.hunger = Math.min(fish.config.maxHunger, fish.hunger + 20);
-                            fish.lastFeedTime = Date.now();
+                            fish.lastFeedTime = gameTime;
                             targetPellet.element.remove();
                             const pelletIndex = pellets.indexOf(targetPellet);
                             pellets.splice(pelletIndex, 1);
@@ -969,12 +990,12 @@
                 fish.element.style.left = fish.x + 'px';
                 fish.element.style.top = fish.y + 'px';
                 
-                // Drop coins periodically (if not a predator and well-fed)
+                // Drop coins periodically (if not a predator and well-fed) - use gameTime
                 if (!fish.config.isPredator && 
                     fish.hunger > 50 && 
-                    Date.now() - fish.lastCoinTime > fish.config.coinInterval) {
+                    gameTime - fish.lastCoinTime > fish.config.coinInterval) {
                     dropCoin(fish, false);
-                    fish.lastCoinTime = Date.now();
+                    fish.lastCoinTime = gameTime;
                 }
                 
                 // Visual hunger indicator (opacity)
@@ -1016,6 +1037,9 @@
             console.log("• Change background 🖼️ with preset images or upload your own!");
             console.log("• Now stop reading and start clicking!");
         }, 1000);
+    </script>
+</body>
+</html>
     </script>
 </body>
 </html>
