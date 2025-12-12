@@ -438,108 +438,163 @@
                 }
             }
             
-            async concatenateWithCanvas() {
-                // Using MediaRecorder API for client-side video combination
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const videoElements = [];
-                
-                // Load all videos
-                for (let i = 0; i < this.files.length; i++) {
-                    const video = document.createElement('video');
-                    video.src = URL.createObjectURL(this.files[i]);
-                    video.muted = true;
-                    await new Promise((resolve, reject) => {
-                        video.onloadedmetadata = resolve;
-                        video.onerror = reject;
-                    });
-                    videoElements.push(video);
-                }
-                
-                // Set canvas size based on first video
-                const firstVideo = videoElements[0];
-                canvas.width = firstVideo.videoWidth;
-                canvas.height = firstVideo.videoHeight;
-                
-                // Create MediaRecorder
-                const stream = canvas.captureStream(30);
-                const audioDestination = new AudioContext().createMediaStreamDestination();
-                
-                // Combine audio from all videos
-                for (const video of videoElements) {
-                    const audioCtx = new AudioContext();
-                    const source = audioCtx.createMediaElementSource(video);
-                    source.connect(audioDestination);
-                }
-                
-                // Add audio track to stream
-                if (audioDestination.stream.getAudioTracks().length > 0) { stream.addTrack(audioDestination.stream.getAudioTracks()[0]); }
-                          const mediaRecorder = new MediaRecorder(stream, {
-                mimeType: 'video/webm;codecs=vp9,opus',
-                videoBitsPerSecond: 5000000
-            });
+async concatenateWithCanvas() {
+    // Using MediaRecorder API for client-side video combination
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const videoElements = [];
+    
+    // Create ONE AudioContext (because apparently I forgot how those work)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const audioDestination = audioCtx.createMediaStreamDestination();
+    
+    // Load all videos
+    for (let i = 0; i < this.files.length; i++) {
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(this.files[i]);
+        video.muted = false; // Changed from true to capture audio
+        video.crossOrigin = 'anonymous'; // Prevent CORS issues
+        
+        await new Promise((resolve, reject) => {
+            video.onloadedmetadata = resolve;
+            video.onerror = reject;
+        });
+        
+        videoElements.push(video);
+        
+        // Connect audio from each video to the SAME AudioContext
+        try {
+            const source = audioCtx.createMediaElementSource(video);
+            source.connect(audioDestination);
+            // Also connect to destination so we can hear it during processing
+            source.connect(audioCtx.destination);
+        } catch (e) {
+            // Video might not have audio track, that's fine
+            console.warn(`No audio track in video ${i + 1}:`, e.message);
+        }
+    }
+    
+    // Set canvas size based on first video
+    const firstVideo = videoElements[0];
+    canvas.width = firstVideo.videoWidth;
+    canvas.height = firstVideo.videoHeight;
+    
+    // Create MediaRecorder with both video and audio
+    const stream = canvas.captureStream(30);
+    
+    // Add audio track if we have one
+    const audioTracks = audioDestination.stream.getAudioTracks();
+    if (audioTracks.length > 0) {
+        stream.addTrack(audioTracks[0]);
+    }
+    
+    // Try different codecs because browsers are special snowflakes
+    let mimeType = 'video/webm;codecs=vp9,opus';
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm;codecs=vp8,opus';
+    }
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'video/webm'; // Fallback to whatever works
+    }
+    
+    const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: mimeType,
+        videoBitsPerSecond: 5000000,
+        audioBitsPerSecond: 128000
+    });
+    
+    const chunks = [];
+    mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+    };
+    
+    // Start recording
+    mediaRecorder.start(100); // Capture in 100ms chunks for smoother recording
+    
+    // Calculate total duration
+    let totalDuration = 0;
+    for (const video of videoElements) {
+        totalDuration += video.duration;
+    }
+    
+    let processedDuration = 0;
+    
+    // Play videos sequentially and draw to canvas
+    for (let i = 0; i < videoElements.length; i++) {
+        const video = videoElements[i];
+        video.currentTime = 0;
+        
+        await new Promise((resolve) => {
+            let animationId;
             
-            const chunks = [];
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) chunks.push(e.data);
+            const drawFrame = () => {
+                if (!video.paused && !video.ended) {
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Update progress
+                    const currentProgress = ((processedDuration + video.currentTime) / totalDuration) * 100;
+                    this.showProgress(Math.min(95, currentProgress));
+                    
+                    animationId = requestAnimationFrame(drawFrame);
+                }
             };
             
-            // Start recording
-            mediaRecorder.start();
+            video.onended = () => {
+                cancelAnimationFrame(animationId);
+                processedDuration += video.duration;
+                video.pause();
+                resolve();
+            };
             
-            // Play videos sequentially and draw to canvas
-            let totalDuration = 0;
-            for (const video of videoElements) {
-                totalDuration += video.duration;
-            }
+            video.onerror = (e) => {
+                cancelAnimationFrame(animationId);
+                console.error('Video playback error:', e);
+                resolve(); // Continue with next video even if one fails
+            };
             
-            let processedDuration = 0;
-            
-            for (let i = 0; i < videoElements.length; i++) {
-                const video = videoElements[i];
-                video.currentTime = 0;
-                
-                await new Promise((resolve) => {
-                    video.play();
-                    
-                    const drawFrame = () => {
-                        if (!video.paused && !video.ended) {
-                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                            
-                            // Update progress
-                            const currentProgress = ((processedDuration + video.currentTime) / totalDuration) * 100;
-                            this.showProgress(Math.min(95, currentProgress));
-                            
-                            requestAnimationFrame(drawFrame);
-                        }
-                    };
-                    
-                    video.onended = () => {
-                        processedDuration += video.duration;
-                        resolve();
-                    };
-                    
-                    drawFrame();
-                });
-            }
-            
-            // Stop recording
-            mediaRecorder.stop();
-            
-            // Wait for final data
-            const blob = await new Promise((resolve) => {
-                mediaRecorder.onstop = () => {
-                    resolve(new Blob(chunks, { type: 'video/webm' }));
-                };
+            video.play().then(() => {
+                drawFrame();
+            }).catch(err => {
+                console.error('Play error:', err);
+                resolve();
             });
-            
-            // Cleanup
-            videoElements.forEach(video => {
-                URL.revokeObjectURL(video.src);
-            });
-            
-            return blob;
-        }
+        });
+        
+        // Small delay between videos for stability
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    // Draw final frame
+    ctx.drawImage(videoElements[videoElements.length - 1], 0, 0, canvas.width, canvas.height);
+    
+    // Stop recording
+    mediaRecorder.stop();
+    
+    // Wait for final data
+    const blob = await new Promise((resolve) => {
+        mediaRecorder.onstop = () => {
+            resolve(new Blob(chunks, { type: mimeType }));
+        };
+        
+        // Fallback timeout in case onstop doesn't fire
+        setTimeout(() => {
+            if (chunks.length > 0) {
+                resolve(new Blob(chunks, { type: mimeType }));
+            }
+        }, 1000);
+    });
+    
+    // Cleanup
+    videoElements.forEach(video => {
+        URL.revokeObjectURL(video.src);
+        video.src = '';
+    });
+    
+    // Close audio context to free resources
+    audioCtx.close();
+    
+    return blob;
+}
         
         formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
