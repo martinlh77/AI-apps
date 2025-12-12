@@ -65,6 +65,41 @@
             display: none;
         }
         
+        .url-input-section {
+            margin: 20px 0;
+        }
+        
+        .url-input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        #videoUrlInput {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        #videoUrlInput:focus {
+            border-color: #764ba2;
+        }
+        
+        #addUrlBtn {
+            flex: none;
+            padding: 12px 24px;
+        }
+        
+        .url-tip {
+            color: #999;
+            font-size: 13px;
+            margin: 0;
+        }
+        
         .file-list {
             margin: 20px 0;
         }
@@ -77,6 +112,11 @@
             background: #f8f9fa;
             border-radius: 8px;
             margin-bottom: 8px;
+            transition: all 0.3s;
+        }
+        
+        .file-item:hover {
+            background: #e9ecef;
         }
         
         .file-info {
@@ -90,6 +130,7 @@
             cursor: grab;
             font-size: 20px;
             color: #999;
+            user-select: none;
         }
         
         .drag-handle:active {
@@ -98,6 +139,7 @@
         
         .file-item.dragging {
             opacity: 0.5;
+            transform: scale(0.98);
         }
         
         .remove-btn {
@@ -108,6 +150,7 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
+            transition: background 0.3s;
         }
         
         .remove-btn:hover {
@@ -221,6 +264,14 @@
             .upload-area {
                 padding: 30px 20px;
             }
+            
+            .url-input-container {
+                flex-direction: column;
+            }
+            
+            #addUrlBtn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -234,6 +285,22 @@
             <p style="font-size: 18px; margin-bottom: 5px;">Click or drag videos here</p>
             <p style="color: #999; font-size: 14px;">Supports MP4, WebM, and other video formats</p>
             <input type="file" id="fileInput" accept="video/*" multiple>
+        </div>
+        
+        <div class="url-input-section">
+            <div class="url-input-container">
+                <input 
+                    type="text" 
+                    id="videoUrlInput" 
+                    placeholder="Paste video URL here (direct link to MP4, WebM, etc.)"
+                >
+                <button class="btn-primary" id="addUrlBtn">
+                    Add URL
+                </button>
+            </div>
+            <p class="url-tip">
+                💡 Tip: The video must be publicly accessible and CORS-enabled. Right-click a video → "Copy video address"
+            </p>
         </div>
         
         <div class="file-list" id="fileList"></div>
@@ -263,6 +330,7 @@
         class VideoConcatenator {
             constructor() {
                 this.files = [];
+                this.urlVideos = [];
                 this.isProcessing = false;
                 this.init();
             }
@@ -272,6 +340,8 @@
                 const fileInput = document.getElementById('fileInput');
                 const combineBtn = document.getElementById('combineBtn');
                 const clearBtn = document.getElementById('clearBtn');
+                const addUrlBtn = document.getElementById('addUrlBtn');
+                const videoUrlInput = document.getElementById('videoUrlInput');
                 
                 // Click to upload
                 uploadArea.addEventListener('click', () => fileInput.click());
@@ -297,9 +367,89 @@
                     this.handleFiles(e.dataTransfer.files);
                 });
                 
+                // URL input
+                addUrlBtn.addEventListener('click', () => this.handleUrl());
+                videoUrlInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleUrl();
+                });
+                
                 // Buttons
                 combineBtn.addEventListener('click', () => this.combineVideos());
                 clearBtn.addEventListener('click', () => this.clearAll());
+            }
+            
+            async handleUrl() {
+                const input = document.getElementById('videoUrlInput');
+                const url = input.value.trim();
+                
+                if (!url) {
+                    this.showStatus('Please enter a URL, genius', 'error');
+                    return;
+                }
+                
+                // Basic URL validation
+                try {
+                    new URL(url);
+                } catch {
+                    this.showStatus('That\'s not a valid URL. Try again.', 'error');
+                    return;
+                }
+                
+                this.showStatus('Loading video from URL...', 'success');
+                
+                try {
+                    // Create a video element to test if it's accessible
+                    const testVideo = document.createElement('video');
+                    testVideo.crossOrigin = 'anonymous';
+                    testVideo.src = url;
+                    
+                    await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => {
+                            reject(new Error('Video loading timeout - URL might be invalid or not CORS-enabled'));
+                        }, 10000);
+                        
+                        testVideo.onloadedmetadata = () => {
+                            clearTimeout(timeout);
+                            resolve();
+                        };
+                        
+                        testVideo.onerror = () => {
+                            clearTimeout(timeout);
+                            reject(new Error('Failed to load video - check URL and CORS settings'));
+                        };
+                    });
+                    
+                    // If we got here, the video is valid
+                    const urlVideoData = {
+                        type: 'url',
+                        url: url,
+                        name: this.getFilenameFromUrl(url),
+                        size: 'Unknown',
+                        duration: testVideo.duration
+                    };
+                    
+                    this.urlVideos.push(urlVideoData);
+                    this.renderFileList();
+                    this.updateCombineButton();
+                    this.hideStatus();
+                    
+                    input.value = '';
+                    
+                } catch (error) {
+                    this.showStatus(`Error: ${error.message}`, 'error');
+                    console.error('URL video error:', error);
+                }
+            }
+            
+            getFilenameFromUrl(url) {
+                try {
+                    const urlObj = new URL(url);
+                    const pathname = urlObj.pathname;
+                    const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
+                    return filename || 'URL Video';
+                } catch {
+                    return 'URL Video';
+                }
             }
             
             handleFiles(fileList) {
@@ -318,332 +468,389 @@
                 this.hideStatus();
             }
             
+            getAllVideos() {
+                const allVideos = [];
+                const fileItems = document.querySelectorAll('.file-item');
+                
+                fileItems.forEach(item => {
+                    const index = parseInt(item.dataset.index);
+                    const type = item.dataset.type;
+                    
+                    if (type === 'file') {
+                        allVideos.push({ type: 'file', data: this.files[index] });
+                    } else {
+                        allVideos.push({ type: 'url', data: this.urlVideos[index] });
+                    }
+                });
+                
+                return allVideos;
+            }
+            
             renderFileList() {
                 const fileList = document.getElementById('fileList');
                 fileList.innerHTML = '';
                 
+                // Render local files
                 this.files.forEach((file, index) => {
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'file-item';
-                    fileItem.draggable = true;
-                    fileItem.dataset.index = index;
-                    
-                    fileItem.innerHTML = `
-                        <div class="file-info">
-                            <span class="drag-handle">⋮⋮</span>
-                            <span>${index + 1}. ${file.name}</span>
-                            <span style="color: #999; font-size: 14px;">(${this.formatFileSize(file.size)})</span>
-                        </div>
-                        <button class="remove-btn" onclick="videoConcatenator.removeFile(${index})">Remove</button>
-                    `;
-                    
-                    // Drag and drop reordering
-                    fileItem.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.effectAllowed = 'move';
-                        e.dataTransfer.setData('text/plain', index);
-                        fileItem.classList.add('dragging');
-                    });
-                    
-                    fileItem.addEventListener('dragend', () => {
-                        fileItem.classList.remove('dragging');
-                    });
-                    
-                    fileItem.addEventListener('dragover', (e) => {
-                        e.preventDefault();
-                        const draggingItem = document.querySelector('.dragging');
-                        if (draggingItem !== fileItem) {
-                            const rect = fileItem.getBoundingClientRect();
-                            const midpoint = rect.top + rect.height / 2;
-                            if (e.clientY < midpoint) {
-                                fileList.insertBefore(draggingItem, fileItem);
-                            } else {
-                                fileList.insertBefore(draggingItem, fileItem.nextSibling);
-                            }
-                        }
-                    });
-                    
-                    fileItem.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                        const toIndex = parseInt(fileItem.dataset.index);
-                        this.reorderFiles(fromIndex, toIndex);
-                    });
-                    
+                    const fileItem = this.createFileItem(file, index, 'file');
+                    fileList.appendChild(fileItem);
+                });
+                
+                // Render URL videos
+                this.urlVideos.forEach((urlVideo, index) => {
+                    const fileItem = this.createFileItem(urlVideo, index, 'url');
                     fileList.appendChild(fileItem);
                 });
             }
             
-            reorderFiles(fromIndex, toIndex) {
-                const [movedFile] = this.files.splice(fromIndex, 1);
-                this.files.splice(toIndex, 0, movedFile);
-                this.renderFileList();
-            }
+            createFileItem(data, index, type) {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.draggable = true;
+                fileItem.dataset.index = index;
+                fileItem.dataset.type = type;
+                
+                const displayIndex = document.querySelectorAll('.file-item').length + 1; const icon = type === 'url' ? '🔗' : '📁'; const name = type === 'url' ? data.name : data.name; const size = type === 'url' ? data.size : this.formatFileSize(data.size);
+                            fileItem.innerHTML = `
+                <div class="file-info">
+                    <span class="drag-handle">⋮⋮</span>
+                    <span>${icon} ${displayIndex}. ${name}</span>
+                    <span style="color: #999; font-size: 14px;">(${size})</span>
+                </div>
+                <button class="remove-btn" onclick="videoConcatenator.removeItem(${index}, '${type}')">Remove</button>
+            `;
             
-            removeFile(index) {
+            // Drag and drop reordering
+            fileItem.addEventListener('dragstart', (e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', JSON.stringify({ index, type }));
+                fileItem.classList.add('dragging');
+            });
+            
+            fileItem.addEventListener('dragend', () => {
+                fileItem.classList.remove('dragging');
+            });
+            
+            fileItem.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const draggingItem = document.querySelector('.dragging');
+                if (draggingItem !== fileItem) {
+                    const rect = fileItem.getBoundingClientRect();
+                    const midpoint = rect.top + rect.height / 2;
+                    if (e.clientY < midpoint) {
+                        fileList.insertBefore(draggingItem, fileItem);
+                    } else {
+                        fileList.insertBefore(draggingItem, fileItem.nextSibling);
+                    }
+                }
+            });
+            
+            return fileItem;
+        }
+        
+        removeItem(index, type) {
+            if (type === 'file') {
                 this.files.splice(index, 1);
-                this.renderFileList();
+            } else {
+                this.urlVideos.splice(index, 1);
+            }
+            this.renderFileList();
+            this.updateCombineButton();
+        }
+        
+        clearAll() {
+            this.files = [];
+            this.urlVideos = [];
+            this.renderFileList();
+            this.updateCombineButton();
+            this.hideStatus();
+            document.getElementById('previewVideo').style.display = 'none';
+            document.getElementById('videoUrlInput').value = '';
+        }
+        
+        updateCombineButton() {
+            const combineBtn = document.getElementById('combineBtn');
+            const totalVideos = this.files.length + this.urlVideos.length;
+            combineBtn.disabled = totalVideos < 2 || this.isProcessing;
+        }
+        
+        async combineVideos() {
+            const totalVideos = this.files.length + this.urlVideos.length;
+            
+            if (totalVideos < 2) {
+                this.showStatus('Add at least 2 videos, genius', 'error');
+                return;
+            }
+            
+            this.isProcessing = true;
+            this.updateCombineButton();
+            this.showProgress(0);
+            
+            try {
+                const combinedBlob = await this.concatenateWithCanvas();
+                
+                this.showProgress(100);
+                
+                // Create download link and preview
+                const url = URL.createObjectURL(combinedBlob);
+                const previewVideo = document.getElementById('previewVideo');
+                previewVideo.src = url;
+                previewVideo.style.display = 'block';
+                
+                // Auto-download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `combined_${Date.now()}.webm`;
+                a.click();
+                
+                this.showStatus('✅ Videos combined successfully! Check your downloads.', 'success');
+                
+            } catch (error) {
+                console.error('Concatenation error:', error);
+                this.showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                this.isProcessing = false;
                 this.updateCombineButton();
+                setTimeout(() => this.hideProgress(), 2000);
             }
+        }
+        
+        async concatenateWithCanvas() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const videoElements = [];
             
-            clearAll() {
-                this.files = [];
-                this.renderFileList();
-                this.updateCombineButton();
-                this.hideStatus();
-                document.getElementById('previewVideo').style.display = 'none';
-            }
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const audioDestination = audioCtx.createMediaStreamDestination();
             
-            updateCombineButton() {
-                const combineBtn = document.getElementById('combineBtn');
-                combineBtn.disabled = this.files.length < 2 || this.isProcessing;
-            }
+            // Get all videos in order from the DOM
+            const fileItems = document.querySelectorAll('.file-item');
+            const orderedVideos = [];
             
-            async combineVideos() {
-                if (this.files.length < 2) {
-                    this.showStatus('Add at least 2 videos, genius', 'error');
-                    return;
+            fileItems.forEach(item => {
+                const index = parseInt(item.dataset.index);
+                const type = item.dataset.type;
+                
+                if (type === 'file') {
+                    orderedVideos.push({ type: 'file', data: this.files[index] });
+                } else {
+                    orderedVideos.push({ type: 'url', data: this.urlVideos[index] });
+                }
+            });
+            
+            let maxWidth = 0;
+            let maxHeight = 0;
+            let totalAspectRatio = 0;
+            
+            // Load all videos
+            for (let i = 0; i < orderedVideos.length; i++) {
+                const videoData = orderedVideos[i];
+                const video = document.createElement('video');
+                video.crossOrigin = 'anonymous';
+                
+                if (videoData.type === 'file') {
+                    video.src = URL.createObjectURL(videoData.data);
+                } else {
+                    video.src = videoData.data.url;
                 }
                 
-                this.isProcessing = true;
-                this.updateCombineButton();
-                this.showProgress(0);
+                video.muted = false;
+                
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error(`Timeout loading video ${i + 1}`));
+                    }, 15000);
+                    
+                    video.onloadedmetadata = () => {
+                        clearTimeout(timeout);
+                        resolve();
+                    };
+                    video.onerror = () => {
+                        clearTimeout(timeout);
+                        reject(new Error(`Failed to load video ${i + 1}`));
+                    };
+                });
+                
+                videoElements.push(video);
+                
+                maxWidth = Math.max(maxWidth, video.videoWidth);
+                maxHeight = Math.max(maxHeight, video.videoHeight);
+                totalAspectRatio += video.videoWidth / video.videoHeight;
                 
                 try {
-                    // Use FFmpeg.wasm for proper video concatenation
-                    const combinedBlob = await this.concatenateWithCanvas();
-                    
-                    this.showProgress(100);
-                    
-                    // Create download link and preview
-                    const url = URL.createObjectURL(combinedBlob);
-                    const previewVideo = document.getElementById('previewVideo');
-                    previewVideo.src = url;
-                    previewVideo.style.display = 'block';
-                    
-                    // Auto-download
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `combined_${Date.now()}.webm`;
-                    a.click();
-                    
-                    this.showStatus('✅ Videos combined successfully! Check your downloads.', 'success');
-                    
-                } catch (error) {
-                    console.error('Concatenation error:', error);
-                    this.showStatus(`Error: ${error.message}`, 'error');
-                } finally {
-                    this.isProcessing = false;
-                    this.updateCombineButton();
-                    setTimeout(() => this.hideProgress(), 2000);
+                    const source = audioCtx.createMediaElementSource(video);
+                    source.connect(audioDestination);
+                    source.connect(audioCtx.destination);
+                } catch (e) {
+                    console.warn(`No audio track in video ${i + 1}:`, e.message);
                 }
             }
             
-async concatenateWithCanvas() {
-    // Using MediaRecorder API for client-side video combination
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const videoElements = [];
-    
-    // Create ONE AudioContext (because we learned our lesson)
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const audioDestination = audioCtx.createMediaStreamDestination();
-    
-    // Load all videos and find dimensions
-    let maxWidth = 0;
-    let maxHeight = 0;
-    let totalAspectRatio = 0;
-    
-    for (let i = 0; i < this.files.length; i++) {
-        const video = document.createElement('video');
-        video.src = URL.createObjectURL(this.files[i]);
-        video.muted = false;
-        video.crossOrigin = 'anonymous';
-        
-        await new Promise((resolve, reject) => {
-            video.onloadedmetadata = resolve;
-            video.onerror = reject;
-        });
-        
-        videoElements.push(video);
-        
-        // Track dimensions
-        maxWidth = Math.max(maxWidth, video.videoWidth);
-        maxHeight = Math.max(maxHeight, video.videoHeight);
-        totalAspectRatio += video.videoWidth / video.videoHeight;
-        
-        // Connect audio
-        try {
-            const source = audioCtx.createMediaElementSource(video);
-            source.connect(audioDestination);
-            source.connect(audioCtx.destination);
-        } catch (e) {
-            console.warn(`No audio track in video ${i + 1}:`, e.message);
-        }
-    }
-    
-    // Calculate average aspect ratio to determine canvas size
-    const avgAspectRatio = totalAspectRatio / videoElements.length;
-    
-    // Set canvas to accommodate all videos with a reasonable max size
-    // Use the most common dimension pattern
-    if (avgAspectRatio > 1) {
-        // Landscape oriented videos dominate
-        canvas.width = Math.min(maxWidth, 1920);
-        canvas.height = Math.round(canvas.width / avgAspectRatio);
-    } else {
-        // Portrait oriented videos dominate
-        canvas.height = Math.min(maxHeight, 1920);
-        canvas.width = Math.round(canvas.height * avgAspectRatio);
-    }
-    
-    // Ensure even dimensions (required by some codecs)
-    canvas.width = canvas.width % 2 === 0 ? canvas.width : canvas.width + 1;
-    canvas.height = canvas.height % 2 === 0 ? canvas.height : canvas.height + 1;
-    
-    console.log(`Canvas size: ${canvas.width}x${canvas.height}`);
-    
-    // Create MediaRecorder with both video and audio
-    const stream = canvas.captureStream(30);
-    
-    const audioTracks = audioDestination.stream.getAudioTracks();
-    if (audioTracks.length > 0) {
-        stream.addTrack(audioTracks[0]);
-    }
-    
-    // Codec fallbacks
-    let mimeType = 'video/webm;codecs=vp9,opus';
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm;codecs=vp8,opus';
-    }
-    if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm';
-    }
-    
-    const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: mimeType,
-        videoBitsPerSecond: 5000000,
-        audioBitsPerSecond: 128000
-    });
-    
-    const chunks = [];
-    mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-    };
-    
-    mediaRecorder.start(100);
-    
-    // Calculate total duration
-    let totalDuration = 0;
-    for (const video of videoElements) {
-        totalDuration += video.duration;
-    }
-    
-    let processedDuration = 0;
-    
-    // Helper function to draw video with proper scaling and letterboxing
-    const drawVideoToCanvas = (video) => {
-        const videoAspect = video.videoWidth / video.videoHeight;
-        const canvasAspect = canvas.width / canvas.height;
-        
-        let drawWidth, drawHeight, offsetX, offsetY;
-        
-        if (videoAspect > canvasAspect) {
-            // Video is wider - fit to width, letterbox top/bottom
-            drawWidth = canvas.width;
-            drawHeight = canvas.width / videoAspect;
-            offsetX = 0;
-            offsetY = (canvas.height - drawHeight) / 2;
-        } else {
-            // Video is taller - fit to height, letterbox left/right
-            drawHeight = canvas.height;
-            drawWidth = canvas.height * videoAspect;
-            offsetX = (canvas.width - drawWidth) / 2;
-            offsetY = 0;
-        }
-        
-        // Fill background with black (letterboxing)
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw video centered and scaled
-        ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
-    };
-    
-    // Play videos sequentially and draw to canvas
-    for (let i = 0; i < videoElements.length; i++) {
-        const video = videoElements[i];
-        video.currentTime = 0;
-        
-        console.log(`Processing video ${i + 1}: ${video.videoWidth}x${video.videoHeight}`);
-        
-        await new Promise((resolve) => {
-            let animationId;
+            // Calculate canvas dimensions based on average aspect ratio
+            const avgAspectRatio = totalAspectRatio / videoElements.length;
             
-            const drawFrame = () => {
-                if (!video.paused && !video.ended) {
-                    drawVideoToCanvas(video);
-                    
-                    // Update progress
-                    const currentProgress = ((processedDuration + video.currentTime) / totalDuration) * 100;
-                    this.showProgress(Math.min(95, currentProgress));
-                    
-                    animationId = requestAnimationFrame(drawFrame);
-                }
-            };
+            if (avgAspectRatio > 1) {
+                // Landscape oriented videos dominate
+                canvas.width = Math.min(maxWidth, 1920);
+                canvas.height = Math.round(canvas.width / avgAspectRatio);
+            } else {
+                // Portrait oriented videos dominate
+                canvas.height = Math.min(maxHeight, 1920);
+                canvas.width = Math.round(canvas.height * avgAspectRatio);
+            }
             
-            video.onended = () => {
-                cancelAnimationFrame(animationId);
-                processedDuration += video.duration;
-                video.pause();
-                resolve();
-            };
+            // Ensure even dimensions (required by some codecs)
+            canvas.width = canvas.width % 2 === 0 ? canvas.width : canvas.width + 1;
+            canvas.height = canvas.height % 2 === 0 ? canvas.height : canvas.height + 1;
             
-            video.onerror = (e) => {
-                cancelAnimationFrame(animationId);
-                console.error('Video playback error:', e);
-                resolve();
-            };
+            console.log(`Canvas size: ${canvas.width}x${canvas.height}`);
             
-            video.play().then(() => {
-                drawFrame();
-            }).catch(err => {
-                console.error('Play error:', err);
-                resolve();
+            // Create MediaRecorder with both video and audio
+            const stream = canvas.captureStream(30);
+            
+            const audioTracks = audioDestination.stream.getAudioTracks();
+            if (audioTracks.length > 0) {
+                stream.addTrack(audioTracks[0]);
+            }
+            
+            // Codec fallbacks for browser compatibility
+            let mimeType = 'video/webm;codecs=vp9,opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'video/webm;codecs=vp8,opus';
+            }
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'video/webm';
+            }
+            
+            const mediaRecorder = new MediaRecorder(stream, {
+                mimeType: mimeType,
+                videoBitsPerSecond: 5000000,
+                audioBitsPerSecond: 128000
             });
-        });
-        
-        await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    // Draw final frame
-    drawVideoToCanvas(videoElements[videoElements.length - 1]);
-    
-    // Stop recording
-    mediaRecorder.stop();
-    
-    // Wait for final data
-    const blob = await new Promise((resolve) => {
-        mediaRecorder.onstop = () => {
-            resolve(new Blob(chunks, { type: mimeType }));
-        };
-        
-        setTimeout(() => {
-            if (chunks.length > 0) {
-                resolve(new Blob(chunks, { type: mimeType }));
+            
+            const chunks = [];
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+            
+            mediaRecorder.start(100);
+            
+            // Calculate total duration
+            let totalDuration = 0;
+            for (const video of videoElements) {
+                totalDuration += video.duration;
             }
-        }, 1000);
-    });
-    
-    // Cleanup
-    videoElements.forEach(video => {
-        URL.revokeObjectURL(video.src);
-        video.src = '';
-    });
-    
-    audioCtx.close();
-    
-    return blob;
-}        
+            
+            let processedDuration = 0;
+            
+            // Helper function to draw video with proper scaling and letterboxing
+            const drawVideoToCanvas = (video) => {
+                const videoAspect = video.videoWidth / video.videoHeight;
+                const canvasAspect = canvas.width / canvas.height;
+                
+                let drawWidth, drawHeight, offsetX, offsetY;
+                
+                if (videoAspect > canvasAspect) {
+                    // Video is wider - fit to width, letterbox top/bottom
+                    drawWidth = canvas.width;
+                    drawHeight = canvas.width / videoAspect;
+                    offsetX = 0;
+                    offsetY = (canvas.height - drawHeight) / 2;
+                } else {
+                    // Video is taller - fit to height, letterbox left/right
+                    drawHeight = canvas.height;
+                    drawWidth = canvas.height * videoAspect;
+                    offsetX = (canvas.width - drawWidth) / 2;
+                    offsetY = 0;
+                }
+                
+                // Fill background with black (letterboxing)
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw video centered and scaled
+                ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+            };
+            
+            // Play videos sequentially and draw to canvas
+            for (let i = 0; i < videoElements.length; i++) {
+                const video = videoElements[i];
+                video.currentTime = 0;
+                
+                console.log(`Processing video ${i + 1}: ${video.videoWidth}x${video.videoHeight}`);
+                
+                await new Promise((resolve) => {
+                    let animationId;
+                    
+                    const drawFrame = () => {
+                        if (!video.paused && !video.ended) {
+                            drawVideoToCanvas(video);
+                            
+                            // Update progress
+                            const currentProgress = ((processedDuration + video.currentTime) / totalDuration) * 100;
+                            this.showProgress(Math.min(95, currentProgress));
+                            
+                            animationId = requestAnimationFrame(drawFrame);
+                        }
+                    };
+                    
+                    video.onended = () => {
+                        cancelAnimationFrame(animationId);
+                        processedDuration += video.duration;
+                        video.pause();
+                        resolve();
+                    };
+                    
+                    video.onerror = (e) => {
+                        cancelAnimationFrame(animationId);
+                        console.error('Video playback error:', e);
+                        resolve();
+                    };
+                    
+                    video.play().then(() => {
+                        drawFrame();
+                    }).catch(err => {
+                        console.error('Play error:', err);
+                        resolve();
+                    });
+                });
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // Draw final frame
+            drawVideoToCanvas(videoElements[videoElements.length - 1]);
+            
+            // Stop recording
+            mediaRecorder.stop();
+            
+            // Wait for final data
+            const blob = await new Promise((resolve) => {
+                mediaRecorder.onstop = () => {
+                    resolve(new Blob(chunks, { type: mimeType }));
+                };
+                
+                setTimeout(() => {
+                    if (chunks.length > 0) {
+                        resolve(new Blob(chunks, { type: mimeType }));
+                    }
+                }, 1000);
+            });
+            
+            // Cleanup - properly handle both file and URL videos
+            videoElements.forEach((video, index) => {
+                const videoData = orderedVideos[index];
+                if (videoData.type === 'file') {
+                    URL.revokeObjectURL(video.src);
+                }
+                video.src = '';
+            });
+            
+            audioCtx.close();
+            
+            return blob;
+        }
+        
         formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
