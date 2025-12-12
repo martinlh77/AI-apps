@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feeding Frenzy - Because Real Fish Are Too Much Work</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comic Sans MS', cursive;
+            background: linear-gradient(to bottom, #001a33, #003d5c);
+            color: white;
+            overflow: hidden;
+            user-select: none;
+        }
+        
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #tank {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1200px;
+            height: calc(100vh - 100px);
+            background: linear-gradient(to bottom, #1a4d6d, #0a2a3d);
+            border: 4px solid #2a5f7f;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+            cursor: crosshair;
+        }
+        
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 30px;
+            border-radius: 10px;
+            display: flex;
+            gap: 30px;
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .coin-icon {
+            color: gold;
+            font-size: 24px;
+        }
+        
+        #shop {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+        
+        .shop-btn {
+            padding: 10px 20px;
+            background: linear-gradient(to bottom, #4a90e2, #2a5f9e);
+            border: 2px solid #5aa3ff;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .shop-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            background: linear-gradient(to bottom, #5aa3ff, #3a7fbe);
+            box-shadow: 0 0 15px rgba(90, 163, 255, 0.5);
+        }
+        
+        .shop-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .fish {
+            position: absolute;
+            font-size: 30px;
+            transition: transform 0.3s;
+            z-index: 10;
+        }
+        
+        .pellet {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #ff9d4d, #ff6b35);
+            border-radius: 50%;
+            z-index: 5;
+            box-shadow: 0 0 5px rgba(255, 157, 77, 0.8);
+        }
+        
+        .coin {
+            position: absolute;
+            color: gold;
+            font-size: 20px;
+            z-index: 15;
+            animation: sparkle 1s infinite;
+        }
+        
+        @keyframes sparkle {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.5); }
+        }
+        
+        .bubble {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1;
+        }
+        
+        .death-msg {
+            position: absolute;
+            color: #ff4444;
+            font-size: 16px;
+            font-weight: bold;
+            z-index: 20;
+            animation: fadeUp 1s ease-out forwards;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
+        @keyframes fadeUp {
+            to {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="hud">
+            <div class="stat">
+                <span class="coin-icon">💰</span>
+                <span id="coins">50</span>
+            </div>
+            <div class="stat">
+                🐟 <span id="fishCount">0</span>
+            </div>
+            <div class="stat">
+                🍔 <span id="foodCount">10</span>
+            </div>
+        </div>
+        
+        <div id="tank"></div>
+        
+        <div id="shop">
+            <button class="shop-btn" onclick="buyFood()" id="buyFoodBtn">
+                Buy Food (10 coins)
+            </button>
+            <button class="shop-btn" onclick="buyFish('small')" id="buySmallFishBtn">
+                Buy Small Fish 🐠 (20 coins)
+            </button>
+            <button class="shop-btn" onclick="buyFish('predator')" id="buyPredatorBtn">
+                Buy PREDATOR 🦈 (100 coins)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game state - because your fish need someone to manage their pathetic lives
+        let coins = 50;
+        let food = 10;
+        let fishId = 0;
+        let pelletId = 0;
+        let coinId = 0;
+        
+        const tank = document.getElementById('tank');
+        const fishes = [];
+        const pellets = [];
+        const fallingCoins = [];
+        
+        // Fish configurations
+        const fishTypes = {
+            small: {
+                emoji: '🐠',
+                speed: 2,
+                size: 30,
+                hungerRate: 0.003,
+                coinValue: 5,
+                coinInterval: 8000,
+                isPredator: false
+            },
+            predator: {
+                emoji: '🦈',
+                speed: 1.5,
+                size: 50,
+                hungerRate: 0.001,
+                coinValue: 0,
+                coinInterval: 0,
+                isPredator: true,
+                huntCooldown: 5000
+            }
+        };
+        
+        // Create decorative bubbles because ambiance matters, I guess
+        function createBubbles() {
+            setInterval(() => {
+                if (Math.random() > 0.7) {
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    const size = Math.random() * 20 + 10;
+                    bubble.style.width = size + 'px';
+                    bubble.style.height = size + 'px';
+                    bubble.style.left = Math.random() * 100 + '%';
+                    bubble.style.bottom = '0px';
+                    tank.appendChild(bubble);
+                    
+                    const duration = Math.random() * 3000 + 4000;
+                    const animation = bubble.animate([
+                        { transform: 'translateY(0)', opacity: 0.7 },
+                        { transform: `translateY(-${tank.offsetHeight}px)`, opacity: 0 }
+                    ], { duration, easing: 'linear' });
+                    
+                    animation.onfinish = () => bubble.remove();
+                }
+            }, 500);
+        }
+        
+        // Drop food pellet
+        tank.addEventListener('click', (e) => {
+            if (food <= 0) {
+                showMessage("Out of food, cheapskate!", e.offsetX, e.offsetY);
+                return;
+            }
+            
+            food--;
+            updateHUD();
+            
+            const pellet = {
+                id: pelletId++,
+                x: e.offsetX,
+                y: e.offsetY,
+                element: document.createElement('div')
+            };
+            
+            pellet.element.className = 'pellet';
+            pellet.element.style.left = pellet.x + 'px';
+            pellet.element.style.top = pellet.y + 'px';
+            tank.appendChild(pellet.element);
+            pellets.push(pellet);
+        });
+        
+        // Buy food
+        function buyFood() {
+            if (coins >= 10) {
+                coins -= 10;
+                food += 5;
+                updateHUD();
+            }
+        }
+        
+        // Buy fish
+        function buyFish(type) {
+            const config = fishTypes[type];
+            const cost = type === 'small' ? 20 : 100;
+            
+            if (coins >= cost) {
+                coins -= cost;
+                createFish(type, config);
+                updateHUD();
+            }
+        }
+        
+        // Create a fish
+        function createFish(type, config) {
+            const fish = {
+                id: fishId++,
+                type: type,
+                x: Math.random() * (tank.offsetWidth - 50),
+                y: Math.random() * (tank.offsetHeight - 50),
+                vx: (Math.random() - 0.5) * config.speed,
+                vy: (Math.random() - 0.5) * config.speed,
+                hunger: 100,
+                config: config,
+                element: document.createElement('div'),
+                lastCoinTime: Date.now(),
+                lastHuntTime: Date.now()
+            };
+            
+            fish.element.className = 'fish';
+            fish.element.textContent = config.emoji;
+            fish.element.style.fontSize = config.size + 'px';
+            fish.element.style.left = fish.x + 'px';
+            fish.element.style.top = fish.y + 'px';
+            tank.appendChild(fish.element);
+            fishes.push(fish);
+        }
+        
+        // Show temporary message
+        function showMessage(text, x, y) {
+            const msg = document.createElement('div');
+            msg.className = 'death-msg';
+            msg.textContent = text;
+            msg.style.left = x + 'px';
+            msg.style.top = y + 'px';
+            tank.appendChild(msg);
+            setTimeout(() => msg.remove(), 1000);
+        }
+        
+        // Drop coin from fish
+        function dropCoin(fish) {
+            const coin = {
+                id: coinId++,
+                x: fish.x + fish.config.size / 2,
+                y: fish.y,
+                element: document.createElement('div')
+            };
+            
+            coin.element.className = 'coin';
+            coin.element.textContent = '💰';
+            coin.element.style.left = coin.x + 'px';
+            coin.element.style.top = coin.y + 'px';
+            coin.element.onclick = () => {
+                coins += fish.config.coinValue;
+                coin.element.remove();
+                const index = fallingCoins.indexOf(coin);
+                if (index > -1) fallingCoins.splice(index, 1);
+                updateHUD();
+            };
+            tank.appendChild(coin.element);
+            fallingCoins.push(coin);
+        }
+        
+        // Update HUD
+        function updateHUD() {
+            document.getElementById('coins').textContent = coins;
+            document.getElementById('fishCount').textContent = fishes.length;
+            document.getElementById('foodCount').textContent = food;
+            
+            document.getElementById('buyFoodBtn').disabled = coins < 10;
+            document.getElementById('buySmallFishBtn').disabled = coins < 20;
+            document.getElementById('buyPredatorBtn').disabled = coins < 100;
+        }
+        
+        // Main game loop - where the magic (and fish deaths) happen
+        function gameLoop() {
+            const tankWidth = tank.offsetWidth;
+            const tankHeight = tank.offsetHeight;
+            
+            // Update pellets (make them fall)
+            pellets.forEach((pellet, index) => {
+                pellet.y += 1.5;
+                pellet.element.style.top = pellet.y + 'px';
+                
+                if (pellet.y > tankHeight) {
+                    pellet.element.remove();
+                    pellets.splice(index, 1);
+                }
+            });
+            
+            // Update falling coins
+            fallingCoins.forEach((coin, index) => {
+                coin.y += 2;
+                coin.element.style.top = coin.y + 'px';
+                
+                if (coin.y > tankHeight) {
+                    coin.element.remove();
+                    fallingCoins.splice(index, 1);
+                }
+            });
+            
+            // Update fish
+            fishes.forEach((fish, fishIndex) => {
+                // Hunger decreases over time
+                fish.hunger -= fish.config.hungerRate;
+                
+                // Dead fish tell no tales (and earn no coins)
+                if (fish.hunger <= 0) {
+                    showMessage("💀 Starved!", fish.x, fish.y);
+                    fish.element.remove();
+                    fishes.splice(fishIndex, 1);
+                    updateHUD();
+                    return;
+                }
+                
+                // Predator hunting behavior
+                if (fish.config.isPredator && Date.now() - fish.lastHuntTime > fish.config.huntCooldown) {
+                    let closestPrey = null;
+                    let closestDist = Infinity;
+                    
+                    fishes.forEach(otherFish => {
+                        if (otherFish.id !== fish.id && !otherFish.config.isPredator) {
+                            const dx = otherFish.x - fish.x;
+                            const dy = otherFish.y - fish.y;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (dist < closestDist && dist < 200) {
+                                closestDist = dist;
+                                closestPrey = otherFish;
+                            }
+                        }
+                    });
+                    
+                    if (closestPrey) {
+                        const dx = closestPrey.x - fish.x;
+                        const dy = closestPrey.y - fish.y;
+                        const angle = Math.atan2(dy, dx);
+                        fish.vx = Math.cos(angle) * fish.config.speed * 2;
+                        fish.vy = Math.sin(angle) * fish.config.speed * 2;
+                        
+                        // Check for successful hunt
+                        if (closestDist < 40) {
+                                                      showMessage("🦈 CHOMP!", closestPrey.x, closestPrey.y);
+                            const preyIndex = fishes.indexOf(closestPrey);
+                            closestPrey.element.remove();
+                            fishes.splice(preyIndex, 1);
+                            fish.hunger = Math.min(100, fish.hunger + 30);
+                            fish.lastHuntTime = Date.now();
+                            updateHUD();
+                        }
+                    }
+                }
+                
+                // Normal fish: seek food pellets
+                if (!fish.config.isPredator) {
+                    let targetPellet = null;
+                    let closestDist = Infinity;
+                    
+                    pellets.forEach(pellet => {
+                        const dx = pellet.x - fish.x;
+                        const dy = pellet.y - fish.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < closestDist && dist < 150) {
+                            closestDist = dist;
+                            targetPellet = pellet;
+                        }
+                    });
+                    
+                    if (targetPellet) {
+                        const dx = targetPellet.x - fish.x;
+                        const dy = targetPellet.y - fish.y;
+                        const angle = Math.atan2(dy, dx);
+                        fish.vx = Math.cos(angle) * fish.config.speed * 1.5;
+                        fish.vy = Math.sin(angle) * fish.config.speed * 1.5;
+                        
+                        // Eat pellet
+                        if (closestDist < 20) {
+                            fish.hunger = Math.min(100, fish.hunger + 20);
+                            targetPellet.element.remove();
+                            const pelletIndex = pellets.indexOf(targetPellet);
+                            pellets.splice(pelletIndex, 1);
+                        }
+                    }
+                }
+                
+                // Move fish
+                fish.x += fish.vx;
+                fish.y += fish.vy;
+                
+                // Bounce off walls (fish aren't smart enough to avoid them)
+                if (fish.x < 0 || fish.x > tankWidth - fish.config.size) {
+                    fish.vx *= -1;
+                    fish.x = Math.max(0, Math.min(tankWidth - fish.config.size, fish.x));
+                }
+                if (fish.y < 0 || fish.y > tankHeight - fish.config.size) {
+                    fish.vy *= -1;
+                    fish.y = Math.max(0, Math.min(tankHeight - fish.config.size, fish.y));
+                }
+                
+                // Random direction changes (because fish have ADHD)
+                if (Math.random() < 0.02) {
+                    fish.vx += (Math.random() - 0.5) * 0.5;
+                    fish.vy += (Math.random() - 0.5) * 0.5;
+                    
+                    const speed = Math.sqrt(fish.vx * fish.vx + fish.vy * fish.vy);
+                    const maxSpeed = fish.config.speed;
+                    if (speed > maxSpeed) {
+                        fish.vx = (fish.vx / speed) * maxSpeed;
+                        fish.vy = (fish.vy / speed) * maxSpeed;
+                    }
+                }
+                
+                // Flip fish based on direction
+                fish.element.style.transform = fish.vx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+                
+                // Update position
+                fish.element.style.left = fish.x + 'px';
+                fish.element.style.top = fish.y + 'px';
+                
+                // Drop coins periodically (if not a predator and well-fed)
+                if (!fish.config.isPredator && 
+                    fish.hunger > 50 && 
+                    Date.now() - fish.lastCoinTime > fish.config.coinInterval) {
+                    dropCoin(fish);
+                    fish.lastCoinTime = Date.now();
+                }
+                
+                // Visual hunger indicator (opacity)
+                fish.element.style.opacity = 0.4 + (fish.hunger / 100) * 0.6;
+            });
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Initialize game
+        createBubbles();
+        updateHUD();
+        
+        // Start with a couple fish so you're not staring at an empty tank like a loser
+        createFish('small', fishTypes.small);
+        createFish('small', fishTypes.small);
+        
+        gameLoop();
+        
+        // Pro tips (you probably won't read these)
+        setTimeout(() => {
+            console.log("🎮 PRO TIPS:");
+            console.log("• Click to drop food (duh)");
+            console.log("• Fish drop coins when happy (hunger > 50%)");
+            console.log("• Starving fish = dead fish = your fault");
+            console.log("• Predators eat smaller fish (nature is brutal)");
+            console.log("• Watch fish fade when hungry (it's your warning)");
+            console.log("• Now stop reading and start clicking!");
+        }, 1000);
+    </script>
+</body>
+</html>
