@@ -27,18 +27,18 @@
         }
         
         #tank {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: calc(100vh - 80px);  /* Leave space at bottom for shop */
-    background: linear-gradient(to bottom, #1a4d6d, #0a2a3d);
-    overflow: hidden;
-    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
-    cursor: crosshair;
-    background-size: cover;
-    background-position: center;
-}
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 80px);
+            background: linear-gradient(to bottom, #1a4d6d, #0a2a3d);
+            overflow: hidden;
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+            cursor: crosshair;
+            background-size: cover;
+            background-position: center;
+        }
         
         #hud {
             position: fixed;
@@ -95,21 +95,21 @@
         }
         
         #shop {
-    position: fixed;
-    bottom: 0;  /* Changed from 10px to 0 */
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.95);  /* Made more opaque */
-    padding: 10px;
-    border-radius: 0;  /* Remove rounded corners since it's at bottom */
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 8px;
-    z-index: 1000;
-    max-width: 100%;  /* Changed from 800px to 100% */
-    margin: 0;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);  /* Shadow on top instead */
-}
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 10px;
+            border-radius: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+            z-index: 1000;
+            max-width: 100%;
+            margin: 0;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);
+        }
         
         .shop-btn {
             padding: 8px 12px;
@@ -272,6 +272,7 @@
             border-radius: 15px;
             z-index: 2000;
             text-align: center;
+            border: 3px solid #5aa3ff;
         }
         
         #fishSelectModal h2 {
@@ -284,38 +285,54 @@
             display: inline-block;
             margin: 10px;
             transition: all 0.2s;
+            padding: 10px;
+            border: 3px solid transparent;
+            border-radius: 10px;
         }
         
         .fish-option:hover {
             transform: scale(1.2);
             filter: drop-shadow(0 0 10px rgba(90, 163, 255, 0.8));
+            border-color: #5aa3ff;
+            background: rgba(90, 163, 255, 0.2);
+        }
+        
+        .fish-option:active {
+            transform: scale(1.1);
+        }
+        
+        .fish-price {
+            display: block;
+            font-size: 14px;
+            color: gold;
+            margin-top: 5px;
         }
         
         @media (max-width: 768px) {
-    #hud {
-        font-size: 12px;
-        padding: 8px 12px;
-    }
-    
-    #tank {
-        height: calc(100vh - 90px);  /* Slightly more space on mobile */
-    }
-    
-    #shop {
-        grid-template-columns: repeat(2, 1fr);
-        font-size: 11px;
-        padding: 8px;
-    }
-    
-    .shop-btn {
-        padding: 6px 8px;
-        font-size: 10px;
-    }
-    
-    .fish {
-        font-size: 25px;
-    }
-}
+            #hud {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+            
+            #tank {
+                height: calc(100vh - 90px);
+            }
+            
+            #shop {
+                grid-template-columns: repeat(2, 1fr);
+                font-size: 11px;
+                padding: 8px;
+            }
+            
+            .shop-btn {
+                padding: 6px 8px;
+                font-size: 10px;
+            }
+            
+            .fish {
+                font-size: 25px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -385,12 +402,25 @@
 
     <div id="fishSelectModal">
         <h2>Choose Your Fish!</h2>
+        <p style="color: #aaa; margin-bottom: 15px;">Click fish to buy (20💰 each) • Buy as many as you want!</p>
         <div>
-            <span class="fish-option" onclick="selectFish('🐟')">🐟</span>
-            <span class="fish-option" onclick="selectFish('🐠')">🐠</span>
-            <span class="fish-option" onclick="selectFish('🐡')">🐡</span>
+            <div class="fish-option" onclick="selectFish('🐟')">
+                🐟
+                <span class="fish-price">20💰</span>
+            </div>
+            <div class="fish-option" onclick="selectFish('🐠')">
+                🐠
+                <span class="fish-price">20💰</span>
+            </div>
+            <div class="fish-option" onclick="selectFish('🐡')">
+                🐡
+                <span class="fish-price">20💰</span>
+            </div>
         </div>
-        <button class="modal-btn" onclick="closeFishSelect()" style="margin-top:20px;">Cancel</button>
+        <div style="margin-top: 20px; color: #5aa3ff; font-size: 16px;">
+            💰 <span id="modalCoins">50</span> coins
+        </div>
+        <button class="modal-btn" onclick="closeFishSelect()" style="margin-top:20px;">Close</button>
     </div>
 
     <script>
@@ -448,7 +478,7 @@
         let coinId = 0;
         let isPaused = false;
         let selectedFishEmoji = '🐠';
-        let gameTime = 0; // Track game time independently
+        let gameTime = 0;
         let lastFrameTime = Date.now();
         let bubbleIntervalId = null;
         
@@ -465,7 +495,7 @@
                 size: 30,
                 hungerRate: 0.002,
                 maxHunger: 100,
-                starvationTime: 50000, // 50 seconds without food
+                starvationTime: 50000,
                 coinValue: 5,
                 coinInterval: 8000,
                 isPredator: false
@@ -504,7 +534,6 @@
             document.getElementById('pauseBtn').textContent = isPaused ? '▶️' : '⏸️';
             
             if (!isPaused) {
-                // Reset frame time to prevent time jump
                 lastFrameTime = Date.now();
             }
         }
@@ -544,6 +573,16 @@
         function showFishSelect() {
             if (coins >= 20) {
                 document.getElementById('fishSelectModal').style.display = 'block';
+                updateModalCoins();
+            } else {
+                const shopBtn = document.getElementById('buySmallFishBtn');
+                const originalText = shopBtn.textContent;
+                shopBtn.textContent = "Need more 💰!";
+                shopBtn.style.background = 'linear-gradient(to bottom, #e24a4a, #9e2a2a)';
+                setTimeout(() => {
+                    shopBtn.textContent = originalText;
+                    shopBtn.style.background = 'linear-gradient(to bottom, #4a90e2, #2a5f9e)';
+                }, 1000);
             }
         }
         
@@ -551,10 +590,31 @@
             document.getElementById('fishSelectModal').style.display = 'none';
         }
         
+        function updateModalCoins() {
+            document.getElementById('modalCoins').textContent = coins;
+        }
+        
         function selectFish(emoji) {
-            selectedFishEmoji = emoji;
-            closeFishSelect();
-            buyFish('small');
+            if (coins >= 20) {
+                selectedFishEmoji = emoji;
+                coins -= 20;
+                playSound('buy');
+                createFish('small', fishTypes.small);
+                updateHUD();
+                updateModalCoins();
+                
+                // Visual feedback
+                event.target.style.transform = 'scale(1.3)';
+                setTimeout(() => {
+                    if (event.target) event.target.style.transform = '';
+                }, 200);
+            } else {
+                const modal = document.getElementById('fishSelectModal');
+                modal.style.borderColor = '#ff4444';
+                setTimeout(() => {
+                    modal.style.borderColor = '#5aa3ff';
+                }, 300);
+            }
         }
         
         // Create decorative bubbles
@@ -579,7 +639,6 @@
                     
                     animation.onfinish = () => bubble.remove();
                     
-                    // Pause animation when game is paused
                     if (isPaused) {
                         animation.pause();
                     }
@@ -725,7 +784,7 @@
             coin.element.textContent = isDiamond ? '💎' : '🪙';
             coin.element.style.left = coin.x + 'px';
             coin.element.style.top = coin.y + 'px';
-            coin.element.style.padding = '10px';  // Bigger clickable area
+            coin.element.style.padding = '10px';
             coin.element.onclick = () => collectCoin(coin);
             tank.appendChild(coin.element);
             fallingCoins.push(coin);
@@ -814,14 +873,12 @@
                     
                     if (collector.config.isCrab) {
                         collector.vx = Math.cos(angle) * collector.config.speed;
-                        // Crabs stay on the bottom
                         collector.y = tankHeight - 40;
                     } else {
                         collector.vx = Math.cos(angle) * collector.config.speed;
                         collector.vy = Math.sin(angle) * collector.config.speed;
                     }
                     
-                    // Collect if close enough
                     if (closestDist < collector.config.collectRadius) {
                         collectCoin(targetCoin);
                     }
@@ -867,7 +924,7 @@
                 // Hunger decreases over time
                 fish.hunger -= fish.config.hungerRate;
                 
-                // Check starvation using gameTime instead of Date.now()
+                // Check starvation using gameTime
                 const timeSinceLastFeed = gameTime - fish.lastFeedTime;
                 if (fish.hunger <= 0 || timeSinceLastFeed > fish.config.starvationTime) {
                     showMessage("💀 Starved!", fish.x, fish.y);
@@ -914,7 +971,6 @@
                             fish.lastFeedTime = gameTime;
                             fish.lastHuntTime = gameTime;
                             
-                            // Predator drops diamond when it eats
                             dropCoin(fish, true);
                             
                             updateHUD();
@@ -990,7 +1046,7 @@
                 fish.element.style.left = fish.x + 'px';
                 fish.element.style.top = fish.y + 'px';
                 
-                // Drop coins periodically (if not a predator and well-fed) - use gameTime
+                // Drop coins periodically (if not a predator and well-fed)
                 if (!fish.config.isPredator && 
                     fish.hunger > 50 && 
                     gameTime - fish.lastCoinTime > fish.config.coinInterval) {
@@ -1035,11 +1091,9 @@
             console.log("• Choose from 3 fish types: 🐟🐠🐡");
             console.log("• Use pause ⏸️ button when you need a break");
             console.log("• Change background 🖼️ with preset images or upload your own!");
+            console.log("• Fish modal stays open - buy as many as you want!");
             console.log("• Now stop reading and start clicking!");
         }, 1000);
-    </script>
-</body>
-</html>
     </script>
 </body>
 </html>
