@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Concatenator (Because Why Not)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
+        
+        .upload-area.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .file-list {
+            margin: 20px 0;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .file-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .drag-handle {
+            cursor: grab;
+            font-size: 20px;
+            color: #999;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        .file-item.dragging {
+            opacity: 0.5;
+        }
+        
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .remove-btn:hover {
+            background: #c82333;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .status {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .preview-video {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .upload-area {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Video Concatenator</h1>
+        <p class="subtitle">Because apparently combining videos is rocket science</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <div style="font-size: 48px; margin-bottom: 10px;">📹</div>
+            <p style="font-size: 18px; margin-bottom: 5px;">Click or drag videos here</p>
+            <p style="color: #999; font-size: 14px;">Supports MP4, WebM, and other video formats</p>
+            <input type="file" id="fileInput" accept="video/*" multiple>
+        </div>
+        
+        <div class="file-list" id="fileList"></div>
+        
+        <div class="controls">
+            <button class="btn-primary" id="combineBtn" disabled>
+                Combine Videos
+            </button>
+            <button class="btn-secondary" id="clearBtn">
+                Clear All
+            </button>
+        </div>
+        
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <video class="preview-video" id="previewVideo" controls></video>
+    </div>
+
+    <script>
+        // Because we're doing everything client-side like civilized developers
+        class VideoConcatenator {
+            constructor() {
+                this.files = [];
+                this.isProcessing = false;
+                this.init();
+            }
+            
+            init() {
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('fileInput');
+                const combineBtn = document.getElementById('combineBtn');
+                const clearBtn = document.getElementById('clearBtn');
+                
+                // Click to upload
+                uploadArea.addEventListener('click', () => fileInput.click());
+                
+                // File selection
+                fileInput.addEventListener('change', (e) => {
+                    this.handleFiles(e.target.files);
+                });
+                
+                // Drag and drop
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+                
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+                
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    this.handleFiles(e.dataTransfer.files);
+                });
+                
+                // Buttons
+                combineBtn.addEventListener('click', () => this.combineVideos());
+                clearBtn.addEventListener('click', () => this.clearAll());
+            }
+            
+            handleFiles(fileList) {
+                const newFiles = Array.from(fileList).filter(file => 
+                    file.type.startsWith('video/')
+                );
+                
+                if (newFiles.length === 0) {
+                    this.showStatus('Please select valid video files', 'error');
+                    return;
+                }
+                
+                this.files.push(...newFiles);
+                this.renderFileList();
+                this.updateCombineButton();
+                this.hideStatus();
+            }
+            
+            renderFileList() {
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = '';
+                
+                this.files.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.draggable = true;
+                    fileItem.dataset.index = index;
+                    
+                    fileItem.innerHTML = `
+                        <div class="file-info">
+                            <span class="drag-handle">⋮⋮</span>
+                            <span>${index + 1}. ${file.name}</span>
+                            <span style="color: #999; font-size: 14px;">(${this.formatFileSize(file.size)})</span>
+                        </div>
+                        <button class="remove-btn" onclick="videoConcatenator.removeFile(${index})">Remove</button>
+                    `;
+                    
+                    // Drag and drop reordering
+                    fileItem.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', index);
+                        fileItem.classList.add('dragging');
+                    });
+                    
+                    fileItem.addEventListener('dragend', () => {
+                        fileItem.classList.remove('dragging');
+                    });
+                    
+                    fileItem.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        const draggingItem = document.querySelector('.dragging');
+                        if (draggingItem !== fileItem) {
+                            const rect = fileItem.getBoundingClientRect();
+                            const midpoint = rect.top + rect.height / 2;
+                            if (e.clientY < midpoint) {
+                                fileList.insertBefore(draggingItem, fileItem);
+                            } else {
+                                fileList.insertBefore(draggingItem, fileItem.nextSibling);
+                            }
+                        }
+                    });
+                    
+                    fileItem.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                        const toIndex = parseInt(fileItem.dataset.index);
+                        this.reorderFiles(fromIndex, toIndex);
+                    });
+                    
+                    fileList.appendChild(fileItem);
+                });
+            }
+            
+            reorderFiles(fromIndex, toIndex) {
+                const [movedFile] = this.files.splice(fromIndex, 1);
+                this.files.splice(toIndex, 0, movedFile);
+                this.renderFileList();
+            }
+            
+            removeFile(index) {
+                this.files.splice(index, 1);
+                this.renderFileList();
+                this.updateCombineButton();
+            }
+            
+            clearAll() {
+                this.files = [];
+                this.renderFileList();
+                this.updateCombineButton();
+                this.hideStatus();
+                document.getElementById('previewVideo').style.display = 'none';
+            }
+            
+            updateCombineButton() {
+                const combineBtn = document.getElementById('combineBtn');
+                combineBtn.disabled = this.files.length < 2 || this.isProcessing;
+            }
+            
+            async combineVideos() {
+                if (this.files.length < 2) {
+                    this.showStatus('Add at least 2 videos, genius', 'error');
+                    return;
+                }
+                
+                this.isProcessing = true;
+                this.updateCombineButton();
+                this.showProgress(0);
+                
+                try {
+                    // Use FFmpeg.wasm for proper video concatenation
+                    const combinedBlob = await this.concatenateWithCanvas();
+                    
+                    this.showProgress(100);
+                    
+                    // Create download link and preview
+                    const url = URL.createObjectURL(combinedBlob);
+                    const previewVideo = document.getElementById('previewVideo');
+                    previewVideo.src = url;
+                    previewVideo.style.display = 'block';
+                    
+                    // Auto-download
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `combined_${Date.now()}.webm`;
+                    a.click();
+                    
+                    this.showStatus('✅ Videos combined successfully! Check your downloads.', 'success');
+                    
+                } catch (error) {
+                    console.error('Concatenation error:', error);
+                    this.showStatus(`Error: ${error.message}`, 'error');
+                } finally {
+                    this.isProcessing = false;
+                    this.updateCombineButton();
+                    setTimeout(() => this.hideProgress(), 2000);
+                }
+            }
+            
+            async concatenateWithCanvas() {
+                // Using MediaRecorder API for client-side video combination
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const videoElements = [];
+                
+                // Load all videos
+                for (let i = 0; i < this.files.length; i++) {
+                    const video = document.createElement('video');
+                    video.src = URL.createObjectURL(this.files[i]);
+                    video.muted = true;
+                    await new Promise((resolve, reject) => {
+                        video.onloadedmetadata = resolve;
+                        video.onerror = reject;
+                    });
+                    videoElements.push(video);
+                }
+                
+                // Set canvas size based on first video
+                const firstVideo = videoElements[0];
+                canvas.width = firstVideo.videoWidth;
+                canvas.height = firstVideo.videoHeight;
+                
+                // Create MediaRecorder
+                const stream = canvas.captureStream(30);
+                const audioDestination = new AudioContext().createMediaStreamDestination();
+                
+                // Combine audio from all videos
+                for (const video of videoElements) {
+                    const audioCtx = new AudioContext();
+                    const source = audioCtx.createMediaElementSource(video);
+                    source.connect(audioDestination);
+                }
+                
+                // Add audio track to stream
+                if (audioDestination.stream.getAudioTracks().length > 0) { stream.addTrack(audioDestination.stream.getAudioTracks()[0]); }
+                          const mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp9,opus',
+                videoBitsPerSecond: 5000000
+            });
+            
+            const chunks = [];
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) chunks.push(e.data);
+            };
+            
+            // Start recording
+            mediaRecorder.start();
+            
+            // Play videos sequentially and draw to canvas
+            let totalDuration = 0;
+            for (const video of videoElements) {
+                totalDuration += video.duration;
+            }
+            
+            let processedDuration = 0;
+            
+            for (let i = 0; i < videoElements.length; i++) {
+                const video = videoElements[i];
+                video.currentTime = 0;
+                
+                await new Promise((resolve) => {
+                    video.play();
+                    
+                    const drawFrame = () => {
+                        if (!video.paused && !video.ended) {
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            
+                            // Update progress
+                            const currentProgress = ((processedDuration + video.currentTime) / totalDuration) * 100;
+                            this.showProgress(Math.min(95, currentProgress));
+                            
+                            requestAnimationFrame(drawFrame);
+                        }
+                    };
+                    
+                    video.onended = () => {
+                        processedDuration += video.duration;
+                        resolve();
+                    };
+                    
+                    drawFrame();
+                });
+            }
+            
+            // Stop recording
+            mediaRecorder.stop();
+            
+            // Wait for final data
+            const blob = await new Promise((resolve) => {
+                mediaRecorder.onstop = () => {
+                    resolve(new Blob(chunks, { type: 'video/webm' }));
+                };
+            });
+            
+            // Cleanup
+            videoElements.forEach(video => {
+                URL.revokeObjectURL(video.src);
+            });
+            
+            return blob;
+        }
+        
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+        
+        showProgress(percent) {
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            progressContainer.style.display = 'block';
+            progressFill.style.width = percent + '%';
+            progressFill.textContent = Math.round(percent) + '%';
+        }
+        
+        hideProgress() {
+            document.getElementById('progressContainer').style.display = 'none';
+        }
+        
+        showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        hideStatus() {
+            const status = document.getElementById('status');
+            status.className = 'status';
+        }
+    }
+    
+    // Initialize the concatenator
+    const videoConcatenator = new VideoConcatenator();
+</script>
+</body>
+</html>
