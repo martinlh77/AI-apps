@@ -27,63 +27,92 @@
         }
         
         #tank {
-            position: absolute;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 1200px;
-            height: calc(100vh - 100px);
-            background: linear-gradient(to bottom, #1a4d6d, #0a2a3d);
-            border: 4px solid #2a5f7f;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
-            cursor: crosshair;
-        }
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 80px);  /* Leave space at bottom for shop */
+    background: linear-gradient(to bottom, #1a4d6d, #0a2a3d);
+    overflow: hidden;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+    cursor: crosshair;
+    background-size: cover;
+    background-position: center;
+}
         
         #hud {
-            position: absolute;
+            position: fixed;
             top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px 30px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 15px;
             border-radius: 10px;
             display: flex;
-            gap: 30px;
-            z-index: 100;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            font-size: 14px;
         }
         
         .stat {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 18px;
+            gap: 8px;
             font-weight: bold;
         }
         
         .coin-icon {
             color: gold;
-            font-size: 24px;
+            font-size: 18px;
+        }
+        
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        #pauseBtn, #bgBtn {
+            padding: 8px 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #5aa3ff;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.2s;
+        }
+        
+        #pauseBtn:hover, #bgBtn:hover {
+            background: rgba(30, 30, 30, 0.9);
+            transform: scale(1.05);
         }
         
         #shop {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            gap: 15px;
-            z-index: 100;
-        }
+    position: fixed;
+    bottom: 0;  /* Changed from 10px to 0 */
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.95);  /* Made more opaque */
+    padding: 10px;
+    border-radius: 0;  /* Remove rounded corners since it's at bottom */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    z-index: 1000;
+    max-width: 100%;  /* Changed from 800px to 100% */
+    margin: 0;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.5);  /* Shadow on top instead */
+}
         
         .shop-btn {
-            padding: 10px 20px;
+            padding: 8px 12px;
             background: linear-gradient(to bottom, #4a90e2, #2a5f9e);
             border: 2px solid #5aa3ff;
             border-radius: 8px;
@@ -91,7 +120,8 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 14px;
+            font-size: 12px;
+            white-space: nowrap;
         }
         
         .shop-btn:hover:not(:disabled) {
@@ -105,11 +135,23 @@
             cursor: not-allowed;
         }
         
-        .fish {
+        .fish, .crab, .jellyfish {
             position: absolute;
-            font-size: 30px;
             transition: transform 0.3s;
             z-index: 10;
+            cursor: pointer;
+        }
+        
+        .fish {
+            font-size: 30px;
+        }
+        
+        .crab {
+            font-size: 28px;
+        }
+        
+        .jellyfish {
+            font-size: 32px;
         }
         
         .pellet {
@@ -122,17 +164,17 @@
             box-shadow: 0 0 5px rgba(255, 157, 77, 0.8);
         }
         
-        .coin {
+        .coin, .diamond {
             position: absolute;
-            color: gold;
-            font-size: 20px;
+            font-size: 32px;
             z-index: 15;
+            cursor: pointer;
             animation: sparkle 1s infinite;
         }
         
         @keyframes sparkle {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.5); }
+            0%, 100% { filter: brightness(1); transform: scale(1); }
+            50% { filter: brightness(1.5); transform: scale(1.1); }
         }
         
         .bubble {
@@ -151,6 +193,7 @@
             z-index: 20;
             animation: fadeUp 1s ease-out forwards;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            pointer-events: none;
         }
         
         @keyframes fadeUp {
@@ -159,10 +202,126 @@
                 transform: translateY(-30px);
             }
         }
+        
+        #bgModal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            z-index: 2000;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        #bgModal h2 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .bg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .bg-option {
+            cursor: pointer;
+            border: 3px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        
+        .bg-option:hover {
+            border-color: #5aa3ff;
+            transform: scale(1.05);
+        }
+        
+        .bg-option img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .modal-btn {
+            padding: 10px 20px;
+            background: linear-gradient(to bottom, #4a90e2, #2a5f9e);
+            border: 2px solid #5aa3ff;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        #fishSelectModal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            z-index: 2000;
+            text-align: center;
+        }
+        
+        #fishSelectModal h2 {
+            margin-bottom: 20px;
+        }
+        
+        .fish-option {
+            font-size: 60px;
+            cursor: pointer;
+            display: inline-block;
+            margin: 10px;
+            transition: all 0.2s;
+        }
+        
+        .fish-option:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 0 10px rgba(90, 163, 255, 0.8));
+        }
+        
+        @media (max-width: 768px) {
+    #hud {
+        font-size: 12px;
+        padding: 8px 12px;
+    }
+    
+    #tank {
+        height: calc(100vh - 90px);  /* Slightly more space on mobile */
+    }
+    
+    #shop {
+        grid-template-columns: repeat(2, 1fr);
+        font-size: 11px;
+        padding: 8px;
+    }
+    
+    .shop-btn {
+        padding: 6px 8px;
+        font-size: 10px;
+    }
+    
+    .fish {
+        font-size: 25px;
+    }
+}
     </style>
 </head>
 <body>
     <div id="gameContainer">
+        <div id="tank"></div>
+        
         <div id="hud">
             <div class="stat">
                 <span class="coin-icon">💰</span>
@@ -176,41 +335,134 @@
             </div>
         </div>
         
-        <div id="tank"></div>
+        <div id="controls">
+            <button id="pauseBtn" onclick="togglePause()">⏸️</button>
+            <button id="bgBtn" onclick="openBgModal()">🖼️</button>
+        </div>
         
         <div id="shop">
             <button class="shop-btn" onclick="buyFood()" id="buyFoodBtn">
-                Buy Food (10 coins)
+                🍔 Food (10💰)
             </button>
-            <button class="shop-btn" onclick="buyFish('small')" id="buySmallFishBtn">
-                Buy Small Fish 🐠 (20 coins)
+            <button class="shop-btn" onclick="showFishSelect()" id="buySmallFishBtn">
+                🐠 Fish (20💰)
             </button>
             <button class="shop-btn" onclick="buyFish('predator')" id="buyPredatorBtn">
-                Buy PREDATOR 🦈 (100 coins)
+                🦈 Predator (100💰)
+            </button>
+            <button class="shop-btn" onclick="buyCollector('crab')" id="buyCrabBtn">
+                🦀 Crab (150💰)
+            </button>
+            <button class="shop-btn" onclick="buyCollector('jellyfish')" id="buyJellyfishBtn">
+                🪼 Jellyfish (250💰)
             </button>
         </div>
     </div>
 
+    <div id="bgModal">
+        <h2>🎨 Choose Background</h2>
+        <div class="bg-grid">
+            <div class="bg-option" onclick="setBackground('default')">
+                <div style="width:100%;height:100px;background:linear-gradient(to bottom, #1a4d6d, #0a2a3d);display:flex;align-items:center;justify-content:center;color:white;">Default</div>
+            </div>
+            <div class="bg-option" onclick="setBackground('https://enter.pollinations.ai/api/generate/image/cartoonish%20coral%20reef?model=zimage&seed=6331672&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1600&height=1024&quality=medium&transparent=false')">
+                <img src="https://enter.pollinations.ai/api/generate/image/cartoonish%20coral%20reef?model=zimage&seed=6331672&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1600&height=1024&quality=medium&transparent=false" alt="Coral Reef 1">
+            </div>
+            <div class="bg-option" onclick="setBackground('https://enter.pollinations.ai/api/generate/image/cartoonish%20coral%20reef?model=zimage&seed=954191603&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1600&height=1024&quality=medium&transparent=false')">
+                <img src="https://enter.pollinations.ai/api/generate/image/cartoonish%20coral%20reef?model=zimage&seed=954191603&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1600&height=1024&quality=medium&transparent=false" alt="Coral Reef 2">
+            </div>
+            <div class="bg-option" onclick="setBackground('https://enter.pollinations.ai/api/generate/image/cartoonish%20sea%20floor?model=zimage&seed=754697851&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1600&height=1024&quality=medium&transparent=false')">
+                <img src="https://enter.pollinations.ai/api/generate/image/cartoonish%20sea%20floor?model=zimage&seed=754697851&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1600&height=1024&quality=medium&transparent=false" alt="Sea Floor 1">
+            </div>
+            <div class="bg-option" onclick="setBackground('https://enter.pollinations.ai/api/generate/image/cartoonish%20sea%20floor?model=zimage&seed=405693529&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1600&height=1024&quality=medium&transparent=false')">
+                <img src="https://enter.pollinations.ai/api/generate/image/cartoonish%20sea%20floor?model=zimage&seed=405693529&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1600&height=1024&quality=medium&transparent=false" alt="Sea Floor 2">
+            </div>
+        </div>
+        <input type="file" id="bgUpload" accept="image/*" style="display:none;" onchange="uploadBackground(event)">
+        <button class="modal-btn" onclick="document.getElementById('bgUpload').click()">📁 Upload Image</button>
+        <button class="modal-btn" onclick="closeBgModal()">Close</button>
+    </div>
+
+    <div id="fishSelectModal">
+        <h2>Choose Your Fish!</h2>
+        <div>
+            <span class="fish-option" onclick="selectFish('🐟')">🐟</span>
+            <span class="fish-option" onclick="selectFish('🐠')">🐠</span>
+            <span class="fish-option" onclick="selectFish('🐡')">🐡</span>
+        </div>
+        <button class="modal-btn" onclick="closeFishSelect()" style="margin-top:20px;">Cancel</button>
+    </div>
+
     <script>
-        // Game state - because your fish need someone to manage their pathetic lives
+        // Audio Context for sound effects
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioCtx = new AudioContext();
+        
+        function playSound(type) {
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            switch(type) {
+                case 'buy':
+                    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'death':
+                    oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                    break;
+                case 'collect':
+                    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.05);
+                    break;
+                case 'food':
+                    oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.05);
+                    break;
+            }
+        }
+        
+        // Game state
         let coins = 50;
         let food = 10;
         let fishId = 0;
         let pelletId = 0;
         let coinId = 0;
+        let isPaused = false;
+        let selectedFishEmoji = '🐠';
         
         const tank = document.getElementById('tank');
         const fishes = [];
         const pellets = [];
         const fallingCoins = [];
+        const collectors = [];
         
         // Fish configurations
         const fishTypes = {
             small: {
-                emoji: '🐠',
                 speed: 2,
                 size: 30,
-                hungerRate: 0.003,
+                hungerRate: 0.002,
+                maxHunger: 100,
+                starvationTime: 50000, // 50 seconds without food
                 coinValue: 5,
                 coinInterval: 8000,
                 isPredator: false
@@ -220,16 +472,87 @@
                 speed: 1.5,
                 size: 50,
                 hungerRate: 0.001,
-                coinValue: 0,
+                maxHunger: 100,
+                starvationTime: 100000,
+                coinValue: 50,
                 coinInterval: 0,
                 isPredator: true,
                 huntCooldown: 5000
+            },
+            crab: {
+                emoji: '🦀',
+                speed: 0.8,
+                size: 28,
+                isCrab: true,
+                collectRadius: 50
+            },
+            jellyfish: {
+                emoji: '🪼',
+                speed: 1.2,
+                size: 32,
+                isJellyfish: true,
+                collectRadius: 80
             }
         };
         
-        // Create decorative bubbles because ambiance matters, I guess
+        // Pause/Resume
+        function togglePause() {
+            isPaused = !isPaused;
+            document.getElementById('pauseBtn').textContent = isPaused ? '▶️' : '⏸️';
+        }
+        
+        // Background modal
+        function openBgModal() {
+            document.getElementById('bgModal').style.display = 'block';
+        }
+        
+        function closeBgModal() {
+            document.getElementById('bgModal').style.display = 'none';
+        }
+        
+        function setBackground(url) {
+            if (url === 'default') {
+                tank.style.backgroundImage = 'none';
+                tank.style.background = 'linear-gradient(to bottom, #1a4d6d, #0a2a3d)';
+            } else {
+                tank.style.backgroundImage = `url('${url}')`;
+            }
+            closeBgModal();
+        }
+        
+        function uploadBackground(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    tank.style.backgroundImage = `url('${e.target.result}')`;
+                    closeBgModal();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Fish selection modal
+        function showFishSelect() {
+            if (coins >= 20) {
+                document.getElementById('fishSelectModal').style.display = 'block';
+            }
+        }
+        
+        function closeFishSelect() {
+            document.getElementById('fishSelectModal').style.display = 'none';
+        }
+        
+        function selectFish(emoji) {
+            selectedFishEmoji = emoji;
+            closeFishSelect();
+            buyFish('small');
+        }
+        
+        // Create decorative bubbles
         function createBubbles() {
             setInterval(() => {
+                if (isPaused) return;
                 if (Math.random() > 0.7) {
                     const bubble = document.createElement('div');
                     bubble.className = 'bubble';
@@ -253,13 +576,15 @@
         
         // Drop food pellet
         tank.addEventListener('click', (e) => {
+            if (isPaused) return;
             if (food <= 0) {
-                showMessage("Out of food, cheapskate!", e.offsetX, e.offsetY);
+                showMessage("Out of food!", e.offsetX, e.offsetY);
                 return;
             }
             
             food--;
             updateHUD();
+            playSound('food');
             
             const pellet = {
                 id: pelletId++,
@@ -280,6 +605,7 @@
             if (coins >= 10) {
                 coins -= 10;
                 food += 5;
+                playSound('buy');
                 updateHUD();
             }
         }
@@ -291,7 +617,20 @@
             
             if (coins >= cost) {
                 coins -= cost;
+                playSound('buy');
                 createFish(type, config);
+                updateHUD();
+            }
+        }
+        
+        // Buy collector
+        function buyCollector(type) {
+            const cost = type === 'crab' ? 150 : 250;
+            
+            if (coins >= cost) {
+                coins -= cost;
+                playSound('buy');
+                createCollector(type);
                 updateHUD();
             }
         }
@@ -305,7 +644,8 @@
                 y: Math.random() * (tank.offsetHeight - 50),
                 vx: (Math.random() - 0.5) * config.speed,
                 vy: (Math.random() - 0.5) * config.speed,
-                hunger: 100,
+                hunger: config.maxHunger,
+                lastFeedTime: Date.now(),
                 config: config,
                 element: document.createElement('div'),
                 lastCoinTime: Date.now(),
@@ -313,12 +653,35 @@
             };
             
             fish.element.className = 'fish';
-            fish.element.textContent = config.emoji;
+            fish.element.textContent = type === 'small' ? selectedFishEmoji : config.emoji;
             fish.element.style.fontSize = config.size + 'px';
             fish.element.style.left = fish.x + 'px';
             fish.element.style.top = fish.y + 'px';
             tank.appendChild(fish.element);
             fishes.push(fish);
+        }
+        
+        // Create collector (crab or jellyfish)
+        function createCollector(type) {
+            const config = fishTypes[type];
+            const collector = {
+                id: fishId++,
+                type: type,
+                x: type === 'crab' ? Math.random() * (tank.offsetWidth - 50) : Math.random() * (tank.offsetWidth - 50),
+                y: type === 'crab' ? tank.offsetHeight - 40 : Math.random() * (tank.offsetHeight - 50),
+                vx: (Math.random() - 0.5) * config.speed,
+                vy: type === 'crab' ? 0 : (Math.random() - 0.5) * config.speed,
+                config: config,
+                element: document.createElement('div')
+            };
+            
+            collector.element.className = type;
+            collector.element.textContent = config.emoji;
+            collector.element.style.fontSize = config.size + 'px';
+            collector.element.style.left = collector.x + 'px';
+            collector.element.style.top = collector.y + 'px';
+            tank.appendChild(collector.element);
+            collectors.push(collector);
         }
         
         // Show temporary message
@@ -332,28 +695,34 @@
             setTimeout(() => msg.remove(), 1000);
         }
         
-        // Drop coin from fish
-        function dropCoin(fish) {
+        // Drop coin or diamond from fish
+        function dropCoin(fish, isDiamond = false) {
             const coin = {
                 id: coinId++,
                 x: fish.x + fish.config.size / 2,
                 y: fish.y,
+                value: isDiamond ? 50 : fish.config.coinValue,
+                isDiamond: isDiamond,
                 element: document.createElement('div')
             };
             
-            coin.element.className = 'coin';
-            coin.element.textContent = '💰';
+            coin.element.className = isDiamond ? 'diamond' : 'coin';
+            coin.element.textContent = isDiamond ? '💎' : '🪙';
             coin.element.style.left = coin.x + 'px';
             coin.element.style.top = coin.y + 'px';
-            coin.element.onclick = () => {
-                coins += fish.config.coinValue;
-                coin.element.remove();
-                const index = fallingCoins.indexOf(coin);
-                if (index > -1) fallingCoins.splice(index, 1);
-                updateHUD();
-            };
+            coin.element.style.padding = '10px';  // Bigger clickable area
+            coin.element.onclick = () => collectCoin(coin);
             tank.appendChild(coin.element);
             fallingCoins.push(coin);
+        }
+        
+        function collectCoin(coin) {
+            coins += coin.value;
+            playSound('collect');
+            coin.element.remove();
+            const index = fallingCoins.indexOf(coin);
+            if (index > -1) fallingCoins.splice(index, 1);
+            updateHUD();
         }
         
         // Update HUD
@@ -365,10 +734,17 @@
             document.getElementById('buyFoodBtn').disabled = coins < 10;
             document.getElementById('buySmallFishBtn').disabled = coins < 20;
             document.getElementById('buyPredatorBtn').disabled = coins < 100;
+            document.getElementById('buyCrabBtn').disabled = coins < 150;
+            document.getElementById('buyJellyfishBtn').disabled = coins < 250;
         }
         
-        // Main game loop - where the magic (and fish deaths) happen
+        // Main game loop
         function gameLoop() {
+            if (isPaused) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            
             const tankWidth = tank.offsetWidth;
             const tankHeight = tank.offsetHeight;
             
@@ -383,15 +759,86 @@
                 }
             });
             
-            // Update falling coins
+            // Update falling coins and diamonds
             fallingCoins.forEach((coin, index) => {
-                coin.y += 2;
+                coin.y += 0.8;
                 coin.element.style.top = coin.y + 'px';
                 
-                if (coin.y > tankHeight) {
-                    coin.element.remove();
-                    fallingCoins.splice(index, 1);
+                if (coin.y > tankHeight - 10) {
+                    coin.element.style.top = (tankHeight - 10) + 'px';
                 }
+            });
+            
+            // Update collectors (crabs and jellyfish)
+            collectors.forEach((collector) => {
+                // Seek nearest coin/diamond
+                let targetCoin = null;
+                let closestDist = Infinity;
+                
+                fallingCoins.forEach(coin => {
+                    const dx = coin.x - collector.x;
+                    const dy = coin.y - collector.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        targetCoin = coin;
+                    }
+                });
+                
+                if (targetCoin && closestDist < 300) {
+                    const dx = targetCoin.x - collector.x;
+                    const dy = targetCoin.y - collector.y;
+                    const angle = Math.atan2(dy, dx);
+                    
+                    if (collector.config.isCrab) {
+                        collector.vx = Math.cos(angle) * collector.config.speed;
+                        // Crabs stay on the bottom
+                        collector.y = tankHeight - 40;
+                    } else {
+                        collector.vx = Math.cos(angle) * collector.config.speed;
+                        collector.vy = Math.sin(angle) * collector.config.speed;
+                    }
+                    
+                    // Collect if close enough
+                    if (closestDist < collector.config.collectRadius) {
+                        collectCoin(targetCoin);
+                    }
+                }
+                
+                // Move collector
+                collector.x += collector.vx;
+                if (!collector.config.isCrab) {
+                    collector.y += collector.vy;
+                }
+                
+                // Bounce off walls
+                if (collector.x < 0 || collector.x > tankWidth - collector.config.size) {
+                    collector.vx *= -1;
+                    collector.x = Math.max(0, Math.min(tankWidth - collector.config.size, collector.x));
+                }
+                
+                if (!collector.config.isCrab) {
+                    if (collector.y < 0 || collector.y > tankHeight - collector.config.size) {
+                        collector.vy *= -1;
+                        collector.y = Math.max(0, Math.min(tankHeight - collector.config.size, collector.y));
+                    }
+                }
+                
+                // Random direction changes
+                if (Math.random() < 0.01) {
+                    collector.vx += (Math.random() - 0.5) * 0.3;
+                    if (!collector.config.isCrab) {
+                        collector.vy += (Math.random() - 0.5) * 0.3;
+                    }
+                }
+                
+                // Flip based on direction
+                collector.element.style.transform = collector.vx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+                
+                // Update position
+                collector.element.style.left = collector.x + 'px';
+                collector.element.style.top = collector.y + 'px';
             });
             
             // Update fish
@@ -399,9 +846,11 @@
                 // Hunger decreases over time
                 fish.hunger -= fish.config.hungerRate;
                 
-                // Dead fish tell no tales (and earn no coins)
-                if (fish.hunger <= 0) {
+                // Check starvation
+                const timeSinceLastFeed = Date.now() - fish.lastFeedTime;
+                if (fish.hunger <= 0 || timeSinceLastFeed > fish.config.starvationTime) {
                     showMessage("💀 Starved!", fish.x, fish.y);
+                    playSound('death');
                     fish.element.remove();
                     fishes.splice(fishIndex, 1);
                     updateHUD();
@@ -435,12 +884,18 @@
                         
                         // Check for successful hunt
                         if (closestDist < 40) {
-                                                      showMessage("🦈 CHOMP!", closestPrey.x, closestPrey.y);
+                            showMessage("🦈 CHOMP!", closestPrey.x, closestPrey.y);
+                            playSound('death');
                             const preyIndex = fishes.indexOf(closestPrey);
                             closestPrey.element.remove();
                             fishes.splice(preyIndex, 1);
-                            fish.hunger = Math.min(100, fish.hunger + 30);
+                            fish.hunger = Math.min(fish.config.maxHunger, fish.hunger + 30);
+                            fish.lastFeedTime = Date.now();
                             fish.lastHuntTime = Date.now();
+                            
+                            // Predator drops diamond when it eats
+                            dropCoin(fish, true);
+                            
                             updateHUD();
                         }
                     }
@@ -471,7 +926,8 @@
                         
                         // Eat pellet
                         if (closestDist < 20) {
-                            fish.hunger = Math.min(100, fish.hunger + 20);
+                            fish.hunger = Math.min(fish.config.maxHunger, fish.hunger + 20);
+                            fish.lastFeedTime = Date.now();
                             targetPellet.element.remove();
                             const pelletIndex = pellets.indexOf(targetPellet);
                             pellets.splice(pelletIndex, 1);
@@ -483,7 +939,7 @@
                 fish.x += fish.vx;
                 fish.y += fish.vy;
                 
-                // Bounce off walls (fish aren't smart enough to avoid them)
+                // Bounce off walls
                 if (fish.x < 0 || fish.x > tankWidth - fish.config.size) {
                     fish.vx *= -1;
                     fish.x = Math.max(0, Math.min(tankWidth - fish.config.size, fish.x));
@@ -493,7 +949,7 @@
                     fish.y = Math.max(0, Math.min(tankHeight - fish.config.size, fish.y));
                 }
                 
-                // Random direction changes (because fish have ADHD)
+                // Random direction changes
                 if (Math.random() < 0.02) {
                     fish.vx += (Math.random() - 0.5) * 0.5;
                     fish.vy += (Math.random() - 0.5) * 0.5;
@@ -517,12 +973,12 @@
                 if (!fish.config.isPredator && 
                     fish.hunger > 50 && 
                     Date.now() - fish.lastCoinTime > fish.config.coinInterval) {
-                    dropCoin(fish);
+                    dropCoin(fish, false);
                     fish.lastCoinTime = Date.now();
                 }
                 
                 // Visual hunger indicator (opacity)
-                fish.element.style.opacity = 0.4 + (fish.hunger / 100) * 0.6;
+                fish.element.style.opacity = 0.4 + (fish.hunger / fish.config.maxHunger) * 0.6;
             });
             
             requestAnimationFrame(gameLoop);
@@ -532,20 +988,32 @@
         createBubbles();
         updateHUD();
         
-        // Start with a couple fish so you're not staring at an empty tank like a loser
+        // Start with a couple fish
         createFish('small', fishTypes.small);
         createFish('small', fishTypes.small);
         
         gameLoop();
         
-        // Pro tips (you probably won't read these)
+        // Resume audio context on first user interaction
+        document.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }, { once: true });
+        
+        // Pro tips
         setTimeout(() => {
             console.log("🎮 PRO TIPS:");
             console.log("• Click to drop food (duh)");
-            console.log("• Fish drop coins when happy (hunger > 50%)");
+            console.log("• Fish drop 🪙 coins when happy (hunger > 50%)");
             console.log("• Starving fish = dead fish = your fault");
-            console.log("• Predators eat smaller fish (nature is brutal)");
+            console.log("• Predators eat smaller fish and drop 💎 diamonds worth 50!");
             console.log("• Watch fish fade when hungry (it's your warning)");
+            console.log("• Crabs 🦀 crawl on the bottom collecting coins");
+            console.log("• Jellyfish 🪼 swim around collecting coins and diamonds");
+            console.log("• Choose from 3 fish types: 🐟🐠🐡");
+            console.log("• Use pause ⏸️ button when you need a break");
+            console.log("• Change background 🖼️ with preset images or upload your own!");
             console.log("• Now stop reading and start clicking!");
         }, 1000);
     </script>
