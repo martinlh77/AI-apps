@@ -444,16 +444,20 @@ async concatenateWithCanvas() {
     const ctx = canvas.getContext('2d');
     const videoElements = [];
     
-    // Create ONE AudioContext (because apparently I forgot how those work)
+    // Create ONE AudioContext (because we learned our lesson)
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const audioDestination = audioCtx.createMediaStreamDestination();
     
-    // Load all videos
+    // Load all videos and find dimensions
+    let maxWidth = 0;
+    let maxHeight = 0;
+    let totalAspectRatio = 0;
+    
     for (let i = 0; i < this.files.length; i++) {
         const video = document.createElement('video');
         video.src = URL.createObjectURL(this.files[i]);
-        video.muted = false; // Changed from true to capture audio
-        video.crossOrigin = 'anonymous'; // Prevent CORS issues
+        video.muted = false;
+        video.crossOrigin = 'anonymous';
         
         await new Promise((resolve, reject) => {
             video.onloadedmetadata = resolve;
@@ -462,39 +466,57 @@ async concatenateWithCanvas() {
         
         videoElements.push(video);
         
-        // Connect audio from each video to the SAME AudioContext
+        // Track dimensions
+        maxWidth = Math.max(maxWidth, video.videoWidth);
+        maxHeight = Math.max(maxHeight, video.videoHeight);
+        totalAspectRatio += video.videoWidth / video.videoHeight;
+        
+        // Connect audio
         try {
             const source = audioCtx.createMediaElementSource(video);
             source.connect(audioDestination);
-            // Also connect to destination so we can hear it during processing
             source.connect(audioCtx.destination);
         } catch (e) {
-            // Video might not have audio track, that's fine
             console.warn(`No audio track in video ${i + 1}:`, e.message);
         }
     }
     
-    // Set canvas size based on first video
-    const firstVideo = videoElements[0];
-    canvas.width = firstVideo.videoWidth;
-    canvas.height = firstVideo.videoHeight;
+    // Calculate average aspect ratio to determine canvas size
+    const avgAspectRatio = totalAspectRatio / videoElements.length;
+    
+    // Set canvas to accommodate all videos with a reasonable max size
+    // Use the most common dimension pattern
+    if (avgAspectRatio > 1) {
+        // Landscape oriented videos dominate
+        canvas.width = Math.min(maxWidth, 1920);
+        canvas.height = Math.round(canvas.width / avgAspectRatio);
+    } else {
+        // Portrait oriented videos dominate
+        canvas.height = Math.min(maxHeight, 1920);
+        canvas.width = Math.round(canvas.height * avgAspectRatio);
+    }
+    
+    // Ensure even dimensions (required by some codecs)
+    canvas.width = canvas.width % 2 === 0 ? canvas.width : canvas.width + 1;
+    canvas.height = canvas.height % 2 === 0 ? canvas.height : canvas.height + 1;
+    
+    console.log(`Canvas size: ${canvas.width}x${canvas.height}`);
     
     // Create MediaRecorder with both video and audio
     const stream = canvas.captureStream(30);
     
-    // Add audio track if we have one
     const audioTracks = audioDestination.stream.getAudioTracks();
     if (audioTracks.length > 0) {
         stream.addTrack(audioTracks[0]);
     }
     
-    // Try different codecs because browsers are special snowflakes
+    // Codec fallbacks
     let mimeType = 'video/webm;codecs=vp9,opus';
     if (!MediaRecorder.isTypeSupported(mimeType)) {
         mimeType = 'video/webm;codecs=vp8,opus';
     }
     if (!MediaRecorder.isTypeSupported(mimeType)) {
-        mimeType = 'video/webm'; // Fallback to whatever works
+        mimeType = 'video/webm';
     }
     
     const mediaRecorder = new MediaRecorder(stream, {
@@ -508,8 +530,7 @@ async concatenateWithCanvas() {
         if (e.data.size > 0) chunks.push(e.data);
     };
     
-    // Start recording
-    mediaRecorder.start(100); // Capture in 100ms chunks for smoother recording
+    mediaRecorder.start(100);
     
     // Calculate total duration
     let totalDuration = 0;
@@ -519,17 +540,48 @@ async concatenateWithCanvas() {
     
     let processedDuration = 0;
     
+    // Helper function to draw video with proper scaling and letterboxing
+    const drawVideoToCanvas = (video) => {
+        const videoAspect = video.videoWidth / video.videoHeight;
+        const canvasAspect = canvas.width / canvas.height;
+        
+        let drawWidth, drawHeight, offsetX, offsetY;
+        
+        if (videoAspect > canvasAspect) {
+            // Video is wider - fit to width, letterbox top/bottom
+            drawWidth = canvas.width;
+            drawHeight = canvas.width / videoAspect;
+            offsetX = 0;
+            offsetY = (canvas.height - drawHeight) / 2;
+        } else {
+            // Video is taller - fit to height, letterbox left/right
+            drawHeight = canvas.height;
+            drawWidth = canvas.height * videoAspect;
+            offsetX = (canvas.width - drawWidth) / 2;
+            offsetY = 0;
+        }
+        
+        // Fill background with black (letterboxing)
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw video centered and scaled
+        ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+    };
+    
     // Play videos sequentially and draw to canvas
     for (let i = 0; i < videoElements.length; i++) {
         const video = videoElements[i];
         video.currentTime = 0;
+        
+        console.log(`Processing video ${i + 1}: ${video.videoWidth}x${video.videoHeight}`);
         
         await new Promise((resolve) => {
             let animationId;
             
             const drawFrame = () => {
                 if (!video.paused && !video.ended) {
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    drawVideoToCanvas(video);
                     
                     // Update progress
                     const currentProgress = ((processedDuration + video.currentTime) / totalDuration) * 100;
@@ -549,7 +601,7 @@ async concatenateWithCanvas() {
             video.onerror = (e) => {
                 cancelAnimationFrame(animationId);
                 console.error('Video playback error:', e);
-                resolve(); // Continue with next video even if one fails
+                resolve();
             };
             
             video.play().then(() => {
@@ -560,12 +612,11 @@ async concatenateWithCanvas() {
             });
         });
         
-        // Small delay between videos for stability
         await new Promise(resolve => setTimeout(resolve, 100));
     }
     
     // Draw final frame
-    ctx.drawImage(videoElements[videoElements.length - 1], 0, 0, canvas.width, canvas.height);
+    drawVideoToCanvas(videoElements[videoElements.length - 1]);
     
     // Stop recording
     mediaRecorder.stop();
@@ -576,7 +627,6 @@ async concatenateWithCanvas() {
             resolve(new Blob(chunks, { type: mimeType }));
         };
         
-        // Fallback timeout in case onstop doesn't fire
         setTimeout(() => {
             if (chunks.length > 0) {
                 resolve(new Blob(chunks, { type: mimeType }));
@@ -590,12 +640,10 @@ async concatenateWithCanvas() {
         video.src = '';
     });
     
-    // Close audio context to free resources
     audioCtx.close();
     
     return blob;
-}
-        
+}        
         formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
