@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Froggy's Flying Food Fiasco! 🐸</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            overflow: hidden;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8C8 100%);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            touch-action: none;
+        }
+
+        #gameCanvas {
+            display: block;
+            cursor: crosshair;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8C8 70%, #90EE90 100%);
+        }
+
+        #scoreBoard {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 3px solid #2d5016;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        #score {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2d5016;
+            text-shadow: 2px 2px 0px #90EE90;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            border: 5px solid #2d5016;
+            text-align: center;
+            display: none;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+
+        #gameOver h1 {
+            color: #2d5016;
+            margin-bottom: 20px;
+            font-size: 36px;
+        }
+
+        #gameOver p {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+
+        button {
+            background: #90EE90;
+            border: 3px solid #2d5016;
+            padding: 15px 30px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: 'Comic Sans MS', cursive;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #7CFC00;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="scoreBoard">
+        <div id="score">Score: 0 🪰</div>
+    </div>
+    <div id="gameOver">
+        <h1>Ribbit! Game Over! 🐸</h1>
+        <p id="finalScore"></p>
+        <p>That frog's got quite the ap-fly-tite! 😄</p>
+        <button onclick="location.reload()">Hop Again!</button>
+    </div>
+
+    <script>
+        // Set up canvas - because every frog needs a stage for their tongue acrobatics!
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Game state - keeping track of our amphibian's appetite
+        let score = 0;
+        let gameActive = true;
+        let tongueActive = false;
+        let tongueX = 0;
+        let tongueY = 0;
+        let tongueProgress = 0;
+        let tongueSpeed = 0.15;
+
+        // Frog object - the star of our show (no autographs, please)
+        const frog = {
+            x: canvas.width / 2,
+            y: canvas.height - 80,
+            width: 70,
+            height: 50,
+            speed: 3,
+            direction: 1,
+            mouthOpen: false
+        };
+
+        // Bug types - it's like a buffet, but everything's flying!
+        const bugTypes = {
+            fly: { points: 10, speed: 2, size: 15, color: '#000000', emoji: '🪰' },
+            bee: { points: 25, speed: 3, size: 18, color: '#FFD700', emoji: '🐝' },
+            beetle: { points: 50, speed: 1.5, size: 20, color: '#8B4513', emoji: '🪲' },
+            dragonfly: { points: 100, speed: 4, size: 25, color: '#00CED1', emoji: '🦟' }
+        };
+
+        // Bug army - they don't stand a chance against our tongue-fu master!
+        let bugs = [];
+
+        // Spawn bugs - like a bug factory, but less creepy
+        function spawnBug() {
+            if (!gameActive) return;
+            
+            const types = Object.keys(bugTypes);
+            const type = types[Math.floor(Math.random() * types.length)];
+            const bugData = bugTypes[type];
+            
+            bugs.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * (canvas.height - 150),
+                vx: (Math.random() - 0.5) * bugData.speed,
+                vy: (Math.random() - 0.5) * bugData.speed,
+                type: type,
+                size: bugData.size,
+                rotation: Math.random() * Math.PI * 2
+            });
+        }
+
+        // Initial bug population - the early bird gets the worm, but the frog gets EVERYTHING
+        for (let i = 0; i < 8; i++) {
+            spawnBug();
+        }
+
+        // Keep spawning bugs - because one does not simply run out of flying snacks
+        setInterval(() => {
+            if (gameActive && bugs.length < 15) {
+                spawnBug();
+            }
+        }, 2000);
+
+        // Draw frog - our handsome green friend (he does his own stunts!)
+        function drawFrog() {
+            ctx.save();
+            
+            // Frog body - it ain't easy being green, but it sure is stylish
+            ctx.fillStyle = '#2d5016';
+            ctx.fillRect(frog.x - frog.width/2, frog.y - 5, frog.width, 10);
+            
+            ctx.fillStyle = '#90EE90';
+            ctx.beginPath();
+            ctx.ellipse(frog.x, frog.y, frog.width/2, frog.height/2, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eyes - the better to see you with, my fly!
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(frog.x - 15, frog.y - 20, 12, 0, Math.PI * 2);
+            ctx.arc(frog.x + 15, frog.y - 20, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(frog.x - 15, frog.y - 20, 6, 0, Math.PI * 2);
+            ctx.arc(frog.x + 15, frog.y - 20, 6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Mouth - sometimes open for business!
+            if (frog.mouthOpen || tongueActive) {
+                ctx.fillStyle = '#FF6B6B';
+                ctx.beginPath();
+                ctx.arc(frog.x, frog.y + 5, 8, 0, Math.PI);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+
+        // Draw tongue - the money maker! Or should I say, the honey taker?
+        function drawTongue(targetX, targetY, progress) {
+            ctx.save();
+            ctx.strokeStyle = '#FF69B4';
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            
+            const currentX = frog.x + (targetX - frog.x) * progress;
+            const currentY = frog.y + (targetY - frog.y) * progress;
+            
+            ctx.beginPath();
+            ctx.moveTo(frog.x, frog.y + 5);
+            ctx.lineTo(currentX, currentY);
+            ctx.stroke();
+            
+            // Tongue tip - the business end!
+            ctx.fillStyle = '#FF1493';
+            ctx.beginPath();
+            ctx.arc(currentX, currentY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+        }
+
+        // Draw bugs - the victims of our amphibious appetite
+        function drawBugs() {
+            bugs.forEach(bug => {
+                const bugData = bugTypes[bug.type];
+                ctx.save();
+                ctx.translate(bug.x, bug.y);
+                ctx.rotate(bug.rotation);
+                ctx.font = `${bug.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(bugData.emoji, 0, 0);
+                ctx.restore();
+            });
+        }
+
+        // Update bugs - making them fly like they've had too much sugar
+        function updateBugs() {
+            bugs.forEach(bug => {
+                bug.x += bug.vx;
+                bug.y += bug.vy;
+                bug.rotation += 0.05;
+                
+                // Bounce off walls - no escape from the frog's domain!
+                if (bug.x < 0 || bug.x > canvas.width) bug.vx *= -1;
+                if (bug.y < 0 || bug.y > canvas.height - 100) bug.vy *= -1;
+                
+                // Keep bugs in bounds - like an invisible fence, but for insects
+                bug.x = Math.max(0, Math.min(canvas.width, bug.x));
+                bug.y = Math.max(0, Math.min(canvas.height - 100, bug.y));
+            });
+        }
+
+        // Update frog position - our protagonist's dance moves
+        function updateFrog() {
+            frog.x += frog.speed * frog.direction;
+            
+            // Bounce at edges - even frogs need boundaries
+            if (frog.x > canvas.width - 50 || frog.x < 50) {
+                frog.direction *= -1;
+            }
+        }
+
+        // Handle click/tap - STRIKE LIKE A COBRA! ...wait, wrong reptile
+        canvas.addEventListener('click', handleShoot);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            handleShoot({
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+        });
+
+        function handleShoot(e) {
+            if (!gameActive || tongueActive) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            
+            tongueActive = true;
+            tongueX = clickX;
+            tongueY = clickY;
+            tongueProgress = 0;
+            frog.mouthOpen = true;
+        }
+
+        // Update tongue animation - like a pink lightning bolt of justice!
+        function updateTongue() {
+            if (!tongueActive) return;
+            
+            tongueProgress += tongueSpeed;
+            
+            // Check for bug collision at tongue tip - GOTCHA!
+            if (tongueProgress >= 0.5 && tongueProgress <= 1.0) {
+                const currentX = frog.x + (tongueX - frog.x) * tongueProgress;
+                const currentY = frog.y + (tongueY - frog.y) * tongueProgress;
+                
+                bugs = bugs.filter(bug => {
+                    const dist = Math.sqrt((bug.x - currentX)**2 + (bug.y - currentY)**2);
+                    if (dist < bug.size + 10) {
+                        score += bugTypes[bug.type].points;
+                        document.getElementById('score').textContent = `Score: ${score} 🪰`;
+                        return false; // Bug goes bye-bye!
+                    }
+                    return true;
+                });
+            }
+            
+            // Retract tongue - back to home base
+            if (tongueProgress >= 2.0) {
+                tongueActive = false;
+                tongueProgress = 0;
+                frog.mouthOpen = false;
+            }
+        }
+
+        // Main game loop - where the magic happens (and by magic, I mean tongue physics)
+        function gameLoop() {
+            if (!gameActive) return;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw ground - home sweet home for our frog
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+            
+            // Update everything
+            updateFrog();
+            updateBugs();
+            updateTongue();
+            
+            // Draw everything
+            drawBugs();
+            if (tongueActive) {
+                const progress = tongueProgress > 1 ? 2 - tongueProgress : tongueProgress;
+                drawTongue(tongueX, tongueY, progress);
+            }
+            drawFrog();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Handle window resize - because screens come in all shapes and sizes, unlike frogs
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            frog.y = canvas.height - 80;
+        });
+
+        // Optional: Game over after 60 seconds - even frogs need a lunch break!
+        setTimeout(() => {
+            gameActive = false;
+            document.getElementById('finalScore').textContent = `Final Score: ${score} points!`;
+            document.getElementById('gameOver').style.display = 'block';
+        }, 60000);
+
+        // Start the game! Let's get this show on the pond!
+        console.log("🐸 Froggy says: 'Time to catch some grub! Hope these bugs don't fly the coop... wait, wrong animal again!' 🐸");
+        gameLoop();
+    </script>
+</body>
+</html>
