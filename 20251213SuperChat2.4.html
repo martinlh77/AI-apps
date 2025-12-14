@@ -1,0 +1,3004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pollinations AI Chat (Media Enabled)</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --chat-bg: #ffffff;
+            --text-color: #333333;
+            --input-bg: #ffffff;
+            --border-color: #ddd;
+            --user-msg-bg: #007bff;
+            --user-msg-text: #ffffff;
+            --ai-msg-bg: #e9ecef;
+            --ai-msg-text: #333333;
+            --code-header-bg: #2d2d2d;
+            --scrollbar-thumb: #ccc;
+            --reset-btn-bg: #dc3545;
+            --reset-btn-hover: #c82333;
+            --full-reset-btn-bg: #6c757d;
+            --full-reset-btn-hover: #5a6268;
+            --session-panel-bg: #f8f9fa;
+            --session-active: #007bff;
+            --session-hover: #e9ecef;
+            --preview-bg: #ffffff;
+            --media-studio-bg: #1e293b;
+            --media-card-bg: #334155;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --chat-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --input-bg: #2c2c2c;
+            --border-color: #444;
+            --user-msg-bg: #0056b3;
+            --ai-msg-bg: #333333;
+            --ai-msg-text: #e0e0e0;
+            --scrollbar-thumb: #555;
+            --reset-btn-bg: #dc3545;
+            --reset-btn-hover: #c82333;
+            --full-reset-btn-bg: #6c757d;
+            --full-reset-btn-hover: #5a6268;
+            --session-panel-bg: #2d2d2d;
+            --session-active: #007bff;
+            --session-hover: #444;
+            --preview-bg: #1e1e1e;
+            --media-studio-bg: #0f172a;
+            --media-card-bg: #1e293b;
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; flex-direction: column; transition: background-color 0.3s; }
+
+        /* Header */
+        header { padding: 10px 20px; background-color: var(--chat-bg); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .settings-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-color); }
+        .session-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-color); margin-right: 10px; }
+        
+        /* Main Chat Area */
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        
+        /* Messages */
+        .message-wrapper { display: flex; flex-direction: column; max-width: 85%; }
+        .message-wrapper.user { align-self: flex-end; align-items: flex-end; }
+        .message-wrapper.ai { align-self: flex-start; align-items: flex-start; }
+        
+        .message-sender { font-size: 0.75rem; margin-bottom: 4px; opacity: 0.7; display: flex; align-items: center; gap: 5px; }
+        .copy-msg-btn { cursor: pointer; font-size: 0.8rem; opacity: 0.5; transition: opacity 0.2s; }
+        .copy-msg-btn:hover { opacity: 1; }
+
+        .message-bubble { padding: 12px 16px; border-radius: 12px; line-height: 1.5; position: relative; word-wrap: break-word; overflow-x: auto; }
+        .user .message-bubble { background-color: var(--user-msg-bg); color: var(--user-msg-text); border-bottom-right-radius: 2px; }
+        .ai .message-bubble { background-color: var(--ai-msg-bg); color: var(--ai-msg-text); border-bottom-left-radius: 2px; width: 100%; }
+
+        /* Images in chat */
+        .chat-image { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border-color); cursor: pointer; }
+        .chat-video { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border-color); }
+
+        /* Code Blocks */
+        .code-container { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #444; background: #1e1e1e; }
+        .code-header { background: var(--code-header-bg); color: #ccc; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-family: monospace; }
+        .code-header-buttons { display: flex; gap: 5px; }
+        .copy-code-btn, .preview-code-btn { background: #444; color: #fff; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
+        .copy-code-btn:hover, .preview-code-btn:hover { background: #555; }
+        .preview-code-btn { background: #28a745; }
+        .preview-code-btn:hover { background: #218838; }
+        pre { margin: 0; padding: 10px; overflow-x: auto; }
+        code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9rem; }
+
+        /* Preview Panel */
+        #preview-panel { 
+            position: fixed; 
+            top: 0; 
+            right: -50%; 
+            width: 50%; 
+            height: 100%; 
+            background-color: var(--preview-bg); 
+            border-left: 2px solid var(--border-color); 
+            transition: right 0.3s ease-in-out; 
+            z-index: 2000; 
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+        #preview-panel.open { right: 0; }
+        
+        .preview-header { 
+            padding: 15px 20px; 
+            background-color: var(--chat-bg); 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .preview-header h3 { margin: 0; font-size: 1rem; }
+        .close-preview { 
+            background: none; 
+            border: none; 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+            color: var(--text-color); 
+        }
+        
+        #preview-iframe { 
+            flex: 1; 
+            border: none; 
+            background: white; 
+            width: 100%;
+        }
+        
+        .preview-controls {
+            padding: 10px 20px;
+            background-color: var(--chat-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+        }
+        .preview-control-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: var(--user-msg-bg);
+            color: white;
+            font-size: 0.85rem;
+        }
+        .preview-control-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Input Area */
+        .input-area { background-color: var(--chat-bg); padding: 15px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; align-items: flex-end; }
+        .file-upload-label { cursor: pointer; padding: 10px; color: var(--text-color); }
+        textarea { flex: 1; background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; resize: none; min-height: 44px; max-height: 150px; font-family: inherit; }
+        textarea:focus { outline: none; border-color: var(--user-msg-bg); }
+        .send-btn { background-color: var(--user-msg-bg); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; height: 44px; font-weight: bold; }
+        .send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .stop-btn { background-color: var(--reset-btn-bg); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; height: 44px; font-weight: bold; display: none; }
+        .stop-btn:hover { background-color: var(--reset-btn-hover); }
+        
+        /* Reset Buttons */
+        .reset-buttons { display: flex; gap: 10px; padding: 10px 15px; background-color: var(--chat-bg); border-top: 1px solid var(--border-color); }
+        .reset-btn { 
+            padding: 8px 15px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+        }
+        .reset-btn.reset-chat { 
+            background-color: var(--reset-btn-bg); 
+            color: white; 
+        }
+        .reset-btn.reset-chat:hover { 
+            background-color: var(--reset-btn-hover); 
+        }
+        .reset-btn.full-reset { 
+            background-color: var(--full-reset-btn-bg); 
+            color: white; 
+        }
+        .reset-btn.full-reset:hover { 
+            background-color: var(--full-reset-btn-hover); 
+        }
+
+        /* Session Panel */
+        #session-panel { 
+            position: fixed; 
+            top: 0; 
+            left: -320px; 
+            width: 300px; 
+            height: 100%; 
+            background-color: var(--session-panel-bg); 
+            border-right: 1px solid var(--border-color); 
+            transition: left 0.3s; 
+            z-index: 1000; 
+            padding: 20px; 
+            overflow-y: auto; 
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1); 
+        }
+        #session-panel.open { left: 0; }
+        .session-panel-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            padding-bottom: 10px; 
+            border-bottom: 1px solid var(--border-color); 
+        }
+        .close-session-panel { 
+            background: none; 
+            border: none; 
+            font-size: 1.2rem; 
+            cursor: pointer; 
+            color: var(--text-color); 
+        }
+        .session-list { 
+            margin-top: 10px; 
+        }
+        .session-item { 
+            padding: 12px; 
+            border-radius: 6px; 
+            margin-bottom: 10px; 
+            cursor: pointer; 
+            background-color: var(--chat-bg); 
+            border: 1px solid var(--border-color); 
+            transition: all 0.2s; 
+        }
+        .session-item:hover { 
+            background-color: var(--session-hover); 
+        }
+        .session-item.active { 
+            background-color: var(--session-active); 
+            color: white; 
+        }
+        .session-title { 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            word-break: break-word; 
+        }
+        .session-meta { 
+            font-size: 0.8rem; 
+            opacity: 0.8; 
+        }
+        .session-actions { 
+            display: flex; 
+            gap: 5px; 
+            margin-top: 8px; 
+        }
+        .session-action-btn { 
+            background: none; 
+            border: none; 
+            color: var(--text-color); 
+            cursor: pointer; 
+            font-size: 0.9rem; 
+        }
+        .session-action-btn.delete { 
+            color: #dc3545; 
+        }
+
+        /* Settings Panel */
+        #settings-panel { position: fixed; top: 0; right: -320px; width: 300px; height: 100%; background-color: var(--chat-bg); border-left: 1px solid var(--border-color); transition: right 0.3s; z-index: 1000; padding: 20px; overflow-y: auto; box-shadow: -2px 0 5px rgba(0,0,0,0.1); }
+        #settings-panel.open { right: 0; }
+        .settings-group { margin-bottom: 20px; }
+        .settings-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        .settings-group select, .settings-group input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); }
+        .close-settings { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 1.2rem; }
+
+        /* Audio Controls */
+        .audio-controls { 
+            margin-top: 10px; 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            background: rgba(0,0,0,0.05); 
+            padding: 8px; 
+            border-radius: 5px; 
+        }
+        .audio-btn { 
+            background: var(--user-msg-bg); 
+            color: white; 
+            border: none; 
+            padding: 5px 10px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 0.8rem; 
+        }
+        .audio-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Preview Area for Uploads */
+        #file-preview { display: flex; gap: 10px; flex-wrap: wrap; padding: 0 15px; background: var(--chat-bg); }
+        .preview-item { font-size: 0.8rem; background: var(--ai-msg-bg); padding: 5px 10px; border-radius: 15px; display: flex; align-items: center; gap: 5px; }
+        .remove-file { cursor: pointer; color: red; font-weight: bold; }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateX(200%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 1001;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        /* TTS Modal */
+        #tts-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #tts-modal.open {
+            display: flex;
+        }
+
+        .tts-modal-content {
+            background-color: var(--chat-bg);
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .tts-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tts-modal-header h3 {
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .close-tts-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .tts-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-family: inherit;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .tts-generate-btn {
+            background-color: var(--user-msg-bg);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .tts-generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .tts-generate-btn:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        #tts-output {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: var(--ai-msg-bg);
+            border-radius: 8px;
+            display: none;
+        }
+
+        #tts-output.show {
+            display: block;
+        }
+
+        /* Media Studio Modal */
+        #media-studio-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        #media-studio-modal.open {
+            display: flex;
+        }
+
+        .media-studio-content {
+            background-color: var(--media-studio-bg);
+            padding: 25px;
+            border-radius: 12px;
+            width: 95%;
+            max-width: 1200px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Force dark theme for media studio */
+        #media-studio-modal .media-studio-content,
+        #media-studio-modal .media-card,
+        #media-studio-modal .media-form-group label,
+        #media-studio-modal .media-studio-header h3,
+        #media-studio-modal .checkbox-group label {
+            color: #f1f5f9 !important;
+        }
+
+        #media-studio-modal .media-form-group input,
+        #media-studio-modal .media-form-group select,
+        #media-studio-modal .media-form-group textarea {
+            background: #1e293b !important;
+            color: #f1f5f9 !important;
+            border-color: #475569 !important;
+        }
+
+        .media-studio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .media-studio-header h3 {
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .close-media-studio {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .media-studio-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .media-card {
+            background: var(--media-card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .media-card h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            font-size: 1.1rem;
+        }
+
+        .media-form-group {
+            margin-bottom: 15px;
+        }
+
+        .media-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .media-form-group input,
+        .media-form-group select,
+        .media-form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .media-form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .media-result-preview {
+            width: 100%;
+            min-height: 300px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .media-result-preview img,
+        .media-result-preview video {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+        }
+
+        .media-placeholder {
+            color: var(--text-color);
+            opacity: 0.5;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .media-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid var(--user-msg-bg);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .media-btn {
+            background-color: var(--user-msg-bg);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .media-btn:hover {
+            opacity: 0.9;
+        }
+
+        .media-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .media-btn.secondary {
+            background-color: var(--full-reset-btn-bg);
+        }
+
+        .media-btn.danger {
+            background-color: var(--reset-btn-bg);
+        }
+
+        .media-action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .reference-images-area {
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--bg-color);
+            border-radius: 6px;
+            min-height: 100px;
+        }
+
+        .ref-image-card {
+            display: inline-block;
+            position: relative;
+            margin: 5px;
+            width: 80px;
+            height: 80px;
+        }
+
+        .ref-image-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 2px solid var(--border-color);
+        }
+
+        .ref-remove-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--reset-btn-bg);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #preview-panel { width: 100%; right: -100%; }
+            .message-wrapper { max-width: 95%; }
+            .media-studio-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="display: flex; align-items: center;">
+            <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat</div>
+        </div>
+        <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
+    </header>
+
+    <div id="session-panel">
+        <div class="session-panel-header">
+            <h3>Saved Sessions</h3>
+            <button class="close-session-panel" id="close-sessions">&times;</button>
+        </div>
+        <div id="session-list" class="session-list"></div>
+        <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--border-color);">
+            <button id="new-session-btn" class="reset-btn reset-chat" style="width: 100%;">
+                <i class="fas fa-plus"></i> New Session
+            </button>
+        </div>
+    </div>
+
+    <div id="chat-container">
+        <div class="message-wrapper ai">
+            <div class="message-sender">System</div>
+            <div class="message-bubble">Hello! I am ready to chat. Ensure your Token is set in the settings.</div>
+        </div>
+    </div>
+
+    <div id="file-preview"></div>
+
+    <div class="input-area">
+        <label for="file-input" class="file-upload-label" title="Upload Text, Image, Audio, HTML, JSON">
+            <i class="fas fa-paperclip"></i>
+        </label>
+        <input type="file" id="file-input" multiple style="display: none;" accept="image/*,audio/*,text/*,.json,.html,.js,.css,.py">
+        
+        <button id="tts-popup-btn" class="file-upload-label" style="border: none; background: none;" title="Text-to-Speech">
+            <i class="fas fa-volume-up"></i>
+        </button>
+        
+        <button id="media-studio-btn" class="file-upload-label" style="border: none; background: none;" title="Image & Video Studio">
+            <i class="fas fa-camera"></i>
+        </button>
+        
+        <textarea id="user-input" placeholder="Type a message... (Enter to send, Shift+Enter for new line)"></textarea>
+        <button id="send-btn" class="send-btn" type="button"><i class="fas fa-paper-plane"></i></button>
+        <button id="stop-btn" class="stop-btn" type="button" title="Stop Generation"><i class="fas fa-stop"></i></button>
+    </div>
+
+    <div class="reset-buttons">
+        <button id="reset-chat-btn" class="reset-btn reset-chat" type="button"><i class="fas fa-trash-alt"></i> Reset Chat</button>
+        <button id="full-reset-btn" class="reset-btn full-reset" type="button"><i class="fas fa-redo"></i> Full Reset</button>
+    </div>
+
+    <!-- Preview Panel -->
+    <div id="preview-panel">
+        <div class="preview-header">
+            <h3><i class="fas fa-eye"></i> Live Preview</h3>
+            <button class="close-preview" id="close-preview">&times;</button>
+        </div>
+        <iframe id="preview-iframe" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+        <div class="preview-controls">
+            <button class="preview-control-btn" id="refresh-preview"><i class="fas fa-sync-alt"></i> Refresh</button>
+            <button class="preview-control-btn" id="open-new-tab"><i class="fas fa-external-link-alt"></i> Open in New Tab</button>
+        </div>
+    </div>
+
+    <div id="settings-panel">
+        <div class="close-settings" id="close-settings">&times;</div>
+        <h3>Settings</h3>
+        
+        <div class="settings-group">
+            <label>Theme</label>
+            <button id="theme-toggle" type="button" style="width:100%; padding:8px; cursor:pointer;">Switch to Dark Mode</button>
+        </div>
+
+        <div class="settings-group">
+            <label>Token Key</label>
+            <input type="password" id="api-token" placeholder="Enter Bearer Token">
+        </div>
+
+        <!-- System Message -->
+        <div class="settings-group">
+            <label>System Message</label>
+            <textarea id="system-message" placeholder="You are a helpful AI assistant" rows="3" style="resize: vertical; min-height: 60px;"></textarea>
+            <small style="color:var(--text-color); opacity:0.7;">Defines the AI's role and behavior.</small>
+        </div>
+
+        <div class="settings-group">
+            <label>Voice Style/Emotion</label>
+            <input type="text" id="voice-style" placeholder="e.g. Excited, Whispering, Angry" value="snarky">
+            <small style="color:var(--text-color); opacity:0.7;">
+                Applies to both voice tone and AI response style.
+            </small>
+        </div>
+
+        <div class="settings-group">
+            <label>Model</label>
+            <select id="model-select">
+                <option value="openai-audio">OpenAI Audio 🗣️ (Best for Voice)</option>
+                <option value="qwen-coder">Qwen 2.5 Coder💻</option>
+                <option value="gemini-search">Gemini-Search👁️🔍</option>
+                <option value="gemini-large">Gemini-Large👁️👂🧠💻</option>
+                <option value="claude-large">Claude-Large👁️💻</option>
+                <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
+                <option value="openai-large">Openai-Large👁️💻</option>
+                <option value="nova-micro">Nova-Micro</option>
+                <option value="mistral">Mistral</option>
+                <option value="gemini">Gemini👁️</option>
+                <option value="openai">Openai👁️</option>
+                <option value="openai-fast">Openai-Fast👁️</option>
+                <option value="grok">Grok</option>
+                <option value="perplexity-fast">Perplexity-Fast🔍</option>
+                <option value="chickytutor">Chicky Tutor</option>
+                <option value="claude-fast">Claude-Fast👁️</option>
+                <option value="kimi-k2-thinking">Kimi-k2-Thinking🧠</option>
+                <option value="claude" selected>Claude👁️</option>
+                <option value="openai-reasoning">Openai-Reasoning👁️🧠</option>
+                <option value="deepseek">Deepseek🧠</option>
+            </select>
+        </div>
+
+        <hr>
+        <h4>Audio Settings</h4>
+        
+        <div class="settings-group">
+            <label>Show Audio Button</label>
+            <input type="checkbox" id="audio-enable"> 
+            <span style="font-size:0.9rem;">(Shows button on AI responses)</span>
+        </div>
+
+        <div class="settings-group">
+            <label>
+                <input type="checkbox" id="audio-read-exactly" checked> 
+                Read Text Exactly As Written
+            </label>
+            <small style="color:var(--text-color); opacity:0.7;">
+                When unchecked, openai-audio generates its own response.
+            </small>
+        </div>
+
+        <div class="settings-group">
+            <label>Voice</label>
+            <select id="voice-select">
+                <optgroup label="Standard Voices">
+                    <option value="alloy" selected>Alloy (Neutral)</option>
+                    <option value="echo">Echo (Deep Male)</option>
+                    <option value="fable">Fable (British-ish)</option>
+                    <option value="onyx">Onyx (Deep/Gravel)</option>
+                    <option value="nova">Nova (Energetic Female)</option>
+                    <option value="shimmer">Shimmer (Clear Female)</option>
+                </optgroup>
+                <optgroup label="Extended Voices">
+                    <option value="coral">Coral</option>
+                    <option value="verse">Verse</option>
+                    <option value="ballad">Ballad</option>
+                    <option value="ash">Ash</option>
+                    <option value="sage">Sage</option>
+                    <option value="amuch">Amuch</option>
+                    <option value="dan">Dan</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="settings-group">
+            <label>Audio Length Limit</label>
+            <select id="audio-length-limit">
+                <option value="500">Short (30-60 sec)</option>
+                <option value="1000" selected>Medium (1-2 min)</option>
+                <option value="2000">Long (3-5 min)</option>
+                <option value="4000" disabled>Very Long (10-15 min)</option>
+                <option value="999999" disabled>Unlimited</option>
+            </select>
+            <small style="color:var(--text-color); opacity:0.7;">
+                Longer audio takes more time to generate.
+            </small>
+        </div>
+
+        <div class="settings-group">
+            <label>
+                <input type="checkbox" id="audio-upload-catbox"> 
+                Upload Audio to Catbox.moe
+            </label>
+            <small style="color:var(--text-color); opacity:0.7;">
+                Uploads audio for permanent hosting. Uncheck for local playback only.
+            </small>
+        </div>
+
+        <hr>
+        <h4>Image & Video Settings</h4>
+
+        <div class="settings-group">
+            <label>Default Image Model</label>
+            <select id="default-image-model">
+                <option value="zimage" selected>ZImage</option>
+                <option value="flux">Flux</option>
+                <option value="turbo">Turbo</option>
+                <option value="kontext">Kontext</option>
+                <option value="seedream">SeeDream</option>
+                <option value="seedream-pro">SeeDream Pro</option>
+                <option value="nanobanana">NanoBanana</option>
+                <option value="nanobanana-pro">NanoBanana Pro</option>
+            </select>
+        </div>
+
+        <div class="settings-group">
+            <label>Default Video Model</label>
+            <select id="default-video-model">
+                <option value="seedance" selected>Seedance</option>
+                <option value="seedance-pro">Seedance Pro</option>
+                <option value="veo">Veo</option>
+            </select>
+        </div>
+
+        <div class="settings-group">
+            <label>Default Image Size</label>
+            <select id="default-image-size">
+                <option value="512">512x512</option>
+                <option value="768">768x768</option>
+                <option value="1024" selected>1024x1024</option>
+                <option value="1920">1920x1920</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- TTS Modal -->
+    <div id="tts-modal">
+        <div class="tts-modal-content">
+            <div class="tts-modal-header">
+                <h3><i class="fas fa-volume-up"></i> Text-to-Speech Generator</h3>
+                <button class="close-tts-modal" id="close-tts-modal">&times;</button>
+            </div>
+            
+            <textarea id="tts-text-input" class="tts-textarea" placeholder="Enter text to convert to speech..."></textarea>
+            
+            <button id="tts-generate-btn" class="tts-generate-btn">
+                <i class="fas fa-magic"></i> Generate Audio
+            </button>
+            
+            <div id="tts-output"></div>
+        </div>
+    </div>
+
+    <!-- Media Studio Modal -->
+    <div id="media-studio-modal">
+        <div class="media-studio-content">
+            <div class="media-studio-header">
+                <h3><i class="fas fa-camera"></i> Image & Video Studio</h3>
+                <button class="close-media-studio" id="close-media-studio">&times;</button>
+            </div>
+
+            <div class="media-studio-grid">
+                <!-- Left Panel: Controls -->
+                <div class="media-card">
+                    <h4>Generation Controls</h4>
+
+                    <div class="media-form-group">
+                        <label>Mode</label>
+                        <select id="media-mode-select">
+                            <option value="image">Image Generation</option>
+                            <option value="image-edit">Image Editing</option>
+                            <option value="video">Video Generation</option>
+                        </select>
+                    </div>
+
+                    <div class="media-form-group">
+                        <label>Model</label>
+                        <select id="media-model-select">
+                            <optgroup label="Image Models">
+                                <option value="zimage" selected>ZImage</option>
+                                <option value="flux">Flux</option>
+                                <option value="turbo">Turbo</option>
+                            </optgroup>
+                            <optgroup label="Editor Models">
+                                <option value="kontext">Kontext</option>
+                                <option value="seedream">SeeDream</option>
+                                <option value="seedream-pro">SeeDream Pro</option>
+                                <option value="nanobanana">NanoBanana</option>
+                                <option value="nanobanana-pro">NanoBanana Pro</option>
+                            </optgroup>
+                            <optgroup label="Video Models">
+                                <option value="seedance">Seedance</option>
+                                <option value="seedance-pro">Seedance Pro</option>
+                                <option value="veo">Veo</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="media-form-group">
+                        <label>Prompt</label>
+                        <textarea id="media-prompt" placeholder="Describe what you want to create..."></textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 8px; align-items: center;">
+                            <select id="prompt-enhance-model" style="flex: 1; padding: 8px; font-size: 0.85rem; min-width: 150px;">
+                                <option value="openai-audio">OpenAI Audio 🗣️</option>
+                                <option value="qwen-coder">Qwen 2.5 Coder💻</option>
+                                <option value="gemini-search">Gemini-Search👁️🔍</option>
+                                <option value="gemini-large">Gemini-Large👁️👂🧠💻</option>
+                                <option value="claude-large">Claude-Large👁️💻</option>
+                                <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
+                                <option value="openai-large">Openai-Large👁️💻</option>
+                                <option value="nova-micro">Nova-Micro</option>
+                                <option value="mistral">Mistral</option>
+                                <option value="gemini">Gemini👁️</option>
+                                <option value="openai">Openai👁️</option>
+                                <option value="openai-fast">Openai-Fast👁️</option>
+                                <option value="grok" selected>Grok</option>
+                                <option value="perplexity-fast">Perplexity-Fast🔍</option>
+                                <option value="chickytutor">Chicky Tutor</option>
+                                <option value="claude-fast">Claude-Fast👁️</option>
+                                <option value="kimi-k2-thinking">Kimi-k2-Thinking🧠</option>
+                                <option value="claude">Claude👁️</option>
+                                <option value="openai-reasoning">Openai-Reasoning👁️🧠</option>
+                                <option value="deepseek">Deepseek🧠</option>
+                            </select>
+                            <button class="media-btn secondary" id="prompt-enhance-btn" style="margin: 0; white-space: nowrap; padding: 8px 12px; font-size: 0.85rem;">
+                                <i class="fas fa-magic"></i> Enhance
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="media-form-group" id="media-negative-prompt-group" style="display: none;">
+                        <label>Negative Prompt</label>
+                        <textarea id="media-negative-prompt" placeholder="What to avoid..."></textarea>
+                    </div>
+
+                    <div class="media-form-group" id="media-reference-group" style="display: none;">
+                        <label>Reference Images</label>
+                        <input type="file" id="media-ref-upload" accept="image/*" multiple>
+                        <input type="text" id="media-ref-url" placeholder="Or paste image URL..." style="margin-top: 5px;">
+                        <button class="media-btn secondary" id="media-add-ref-url" style="margin-top: 5px;">Add URL</button>
+                        <div class="reference-images-area" id="media-ref-images"></div>
+                    </div>
+
+                    <div class="media-form-group" id="media-size-group">
+    <label>Size</label>
+    <div class="checkbox-group" id="media-use-ref-dimensions-group" style="display: none; margin-bottom: 10px;">
+        <input type="checkbox" id="media-use-ref-dimensions">
+        <label>Use dimensions from first reference image</label>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <input type="number" id="media-width" value="1024" min="128" max="2048" placeholder="Width">
+        <input type="number" id="media-height" value="1024" min="128" max="2048" placeholder="Height">
+    </div>
+</div>
+
+                    <div class="media-form-group" id="media-video-settings" style="display: none;">
+                        <label>Video Settings</label>
+                        <select id="media-aspect-ratio">
+                            <option value="16:9">16:9 (Landscape)</option>
+                            <option value="9:16">9:16 (Portrait)</option>
+                            <option value="1:1">1:1 (Square)</option>
+                        </select>
+                        <select id="media-duration" style="margin-top: 5px;">
+                            <option value="2">2 seconds</option>
+                            <option value="3">3 seconds</option>
+                            <option value="4" selected>4 seconds</option>
+                            <option value="5">5 seconds</option>
+                            <option value="6">6 seconds</option>
+                            <option value="7">7 seconds</option>
+                            <option value="8">8 seconds</option>
+                            <option value="9">9 seconds</option>
+                            <option value="10">10 seconds</option>
+                        </select>
+                    </div>
+
+                    <div class="media-form-group">
+                        <label>Seed</label>
+                        <input type="number" id="media-seed" value="42">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="media-random-seed" checked>
+                            <label>Randomize</label>
+                        </div>
+                    </div>
+
+                    <div class="media-form-group">
+                        <label>Guidance Scale</label>
+                        <input type="range" id="media-guidance" min="1" max="20" value="7" step="0.5">
+                        <span id="media-guidance-value">7.0</span>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="media-enhance" checked>
+                        <label>Enhance Prompt</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="media-nologo" checked>
+                        <label>No Logo</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="media-private" checked>
+                        <label>Private</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="media-safe" checked>
+                        <label>Safe Mode</label>
+                    </div>
+
+                    <div class="checkbox-group" id="media-transparent-group" style="display: none;">
+                        <input type="checkbox" id="media-transparent">
+                        <label>Transparent Background</label>
+                    </div>
+
+                    <button class="media-btn" id="media-generate-btn">
+                        <i class="fas fa-magic"></i> Generate
+                    </button>
+                </div>
+
+                <!-- Right Panel: Preview & Actions -->
+                <div class="media-card">
+                    <h4>Preview</h4>
+                    <div class="media-result-preview" id="media-preview">
+                        <div class="media-placeholder">Your generated media will appear here</div>
+                    </div>
+
+                    <div class="media-action-buttons" id="media-actions" style="display: none;">
+                        <button class="media-btn secondary" id="media-download-btn">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                        <button class="media-btn secondary" id="media-view-url-btn">
+                            <i class="fas fa-external-link-alt"></i> View URL
+                        </button>
+                    </div>
+
+                    <div class="media-action-buttons" id="media-edit-actions" style="display: none;">
+                        <button class="media-btn" id="media-edit-btn">
+                            <i class="fas fa-edit"></i> Edit This Image
+                        </button>
+                        <button class="media-btn" id="media-animate-btn">
+                            <i class="fas fa-video"></i> Animate
+                        </button>
+                        <button class="media-btn" id="media-regenerate-btn">
+                            <i class="fas fa-sync-alt"></i> Regenerate
+                        </button>
+                    </div>
+
+                    <button class="media-btn secondary" id="media-insert-chat-btn" style="display: none; margin-top: 10px;">
+                        <i class="fas fa-comment"></i> Insert into Chat
+                    </button>
+
+                    <button class="media-btn danger" id="media-clear-btn" style="margin-top: 10px;">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+<script>
+    // --- Configuration ---
+    const USER_API_TOKEN = "plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL";
+    const API_URL = "https://gen.pollinations.ai/v1/chat/completions";
+    const IMAGE_API_URL = "https://gen.pollinations.ai/image";
+    
+    // --- State ---
+    let conversationHistory = [];
+    let uploadedFiles = [];
+    let isDarkMode = false;
+    let isGenerating = false;
+    let currentSessionId = null;
+    let sessions = {};
+    let currentPreviewCode = { html: '', css: '', js: '' };
+    let abortController = null;
+
+    // Media Studio State
+    let mediaState = {
+        referenceImages: [],
+        currentResult: null,
+        currentApiUrl: null,
+        isGenerating: false
+    };
+
+    // --- DOM Elements ---
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const fileInput = document.getElementById('file-input');
+    const filePreview = document.getElementById('file-preview');
+    const settingsPanel = document.getElementById('settings-panel');
+    const settingsBtn = document.getElementById('toggle-settings');
+    const closeSettings = document.getElementById('close-settings');
+    const themeToggle = document.getElementById('theme-toggle');
+    const tokenInput = document.getElementById('api-token');
+    const resetChatBtn = document.getElementById('reset-chat-btn');
+    const fullResetBtn = document.getElementById('full-reset-btn');
+    const notification = document.getElementById('notification');
+    const sessionPanel = document.getElementById('session-panel');
+    const toggleSessions = document.getElementById('toggle-sessions');
+    const closeSessions = document.getElementById('close-sessions');
+    const sessionList = document.getElementById('session-list');
+    const newSessionBtn = document.getElementById('new-session-btn');
+    const previewPanel = document.getElementById('preview-panel');
+    const closePreview = document.getElementById('close-preview');
+    const previewIframe = document.getElementById('preview-iframe');
+    const refreshPreview = document.getElementById('refresh-preview');
+    const openNewTab = document.getElementById('open-new-tab');
+    
+    // Media Studio Elements
+    const mediaStudioBtn = document.getElementById('media-studio-btn');
+    const mediaStudioModal = document.getElementById('media-studio-modal');
+    const closeMediaStudio = document.getElementById('close-media-studio');
+    const mediaModeSelect = document.getElementById('media-mode-select');
+    const mediaModelSelect = document.getElementById('media-model-select');
+    const mediaPrompt = document.getElementById('media-prompt');
+    const mediaNegativePrompt = document.getElementById('media-negative-prompt');
+    const mediaNegativePromptGroup = document.getElementById('media-negative-prompt-group');
+    const mediaReferenceGroup = document.getElementById('media-reference-group');
+    const mediaRefUpload = document.getElementById('media-ref-upload');
+    const mediaRefUrl = document.getElementById('media-ref-url');
+    const mediaAddRefUrl = document.getElementById('media-add-ref-url');
+    const mediaRefImages = document.getElementById('media-ref-images');
+    const mediaWidth = document.getElementById('media-width');
+    const mediaHeight = document.getElementById('media-height');
+    const mediaSizeGroup = document.getElementById('media-size-group');
+    const mediaVideoSettings = document.getElementById('media-video-settings');
+    const mediaAspectRatio = document.getElementById('media-aspect-ratio');
+    const mediaDuration = document.getElementById('media-duration');
+    const mediaSeed = document.getElementById('media-seed');
+    const mediaRandomSeed = document.getElementById('media-random-seed');
+    const mediaGuidance = document.getElementById('media-guidance');
+    const mediaGuidanceValue = document.getElementById('media-guidance-value');
+    const mediaEnhance = document.getElementById('media-enhance');
+    const mediaNologo = document.getElementById('media-nologo');
+    const mediaPrivate = document.getElementById('media-private');
+    const mediaSafe = document.getElementById('media-safe');
+    const mediaTransparent = document.getElementById('media-transparent');
+    const mediaTransparentGroup = document.getElementById('media-transparent-group');
+    const mediaGenerateBtn = document.getElementById('media-generate-btn');
+    const mediaPreview = document.getElementById('media-preview');
+    const mediaActions = document.getElementById('media-actions');
+    const mediaEditActions = document.getElementById('media-edit-actions');
+    const mediaDownloadBtn = document.getElementById('media-download-btn');
+    const mediaViewUrlBtn = document.getElementById('media-view-url-btn');
+    const mediaEditBtn = document.getElementById('media-edit-btn');
+    const mediaAnimateBtn = document.getElementById('media-animate-btn');
+    const mediaRegenerateBtn = document.getElementById('media-regenerate-btn');
+    const mediaInsertChatBtn = document.getElementById('media-insert-chat-btn');
+    const mediaUseRefDimensions = document.getElementById('media-use-ref-dimensions');
+    const mediaClearBtn = document.getElementById('media-clear-btn');
+    
+    // --- Initialization ---
+    if(USER_API_TOKEN) tokenInput.value = USER_API_TOKEN;
+
+    // --- Markdown Renderer Setup with Preview Button ---
+    const renderer = new marked.Renderer();
+    
+    renderer.code = function({ text, lang }) {
+        const validLang = !!(lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
+        
+        let highlighted = text || '';
+        try {
+            if (text) {
+                highlighted = hljs.highlight(text, { language: validLang }).value;
+            }
+        } catch (e) {
+            console.error("Highlight error:", e);
+        }
+
+        const escapedText = (text || '').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        const codeId = 'code-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        
+        const isPreviewable = ['html', 'css', 'javascript', 'js'].includes(validLang.toLowerCase());
+        
+        const previewBtn = isPreviewable ? 
+            `<button class="preview-code-btn" onclick="previewCode('${codeId}', '${validLang}')"><i class="fas fa-eye"></i> Preview</button>` : '';
+
+        return `
+            <div class="code-container">
+                <div class="code-header">
+                    <span>${validLang}</span>
+                    <div class="code-header-buttons">
+                        ${previewBtn}
+                        <button class="copy-code-btn" onclick="copyToClipboard(this, \`${encodeURIComponent(text || '')}\`)">Copy</button>
+                    </div>
+                </div>
+                <pre><code id="${codeId}" class="hljs ${validLang}" data-lang="${validLang}">${highlighted}</code></pre>
+            </div>`;
+    };
+
+    marked.use({ renderer });
+
+    // --- Preview Functions ---
+    window.previewCode = function(codeId, lang) {
+        const codeElement = document.getElementById(codeId);
+        if (!codeElement) return;
+        
+        const code = codeElement.textContent;
+        
+        const messageWrapper = codeElement.closest('.message-wrapper.ai');
+        if (messageWrapper) {
+            extractAllCodeFromMessage(messageWrapper);
+        } else {
+            if (lang.toLowerCase() === 'html') {
+                currentPreviewCode.html = code;
+            } else if (lang.toLowerCase() === 'css') {
+                currentPreviewCode.css = code;
+            } else if (lang.toLowerCase() === 'javascript' || lang.toLowerCase() === 'js') {
+                currentPreviewCode.js = code;
+            }
+        }
+        
+        updatePreview();
+        previewPanel.classList.add('open');
+        showNotification('Preview opened!');
+    };
+
+    function extractAllCodeFromMessage(messageWrapper) {
+        currentPreviewCode = { html: '', css: '', js: '' };
+        
+        const codeBlocks = messageWrapper.querySelectorAll('code[data-lang]');
+        
+        codeBlocks.forEach(codeBlock => {
+            const lang = codeBlock.getAttribute('data-lang').toLowerCase();
+            const code = codeBlock.textContent;
+            
+            if (lang === 'html') {
+                currentPreviewCode.html = code;
+            } else if (lang === 'css') {
+                currentPreviewCode.css = code;
+            } else if (lang === 'javascript' || lang === 'js') {
+                currentPreviewCode.js = code;
+            }
+        });
+    }
+
+    function updatePreview() {
+        const htmlContent = currentPreviewCode.html || '<body></body>';
+        const cssContent = currentPreviewCode.css ? `<style>${currentPreviewCode.css}</style>` : '';
+        const jsContent = currentPreviewCode.js ? `<script>${currentPreviewCode.js}<\/script>` : '';
+        
+        let finalHTML = htmlContent;
+        
+        if (finalHTML.includes('</head>')) {
+            finalHTML = finalHTML.replace('</head>', `${cssContent}</head>`);
+        } else if (finalHTML.includes('<body>')) {
+            finalHTML = finalHTML.replace('<body>', `<head>${cssContent}</head><body>`);
+        } else {
+            finalHTML = `<!DOCTYPE html><html><head>${cssContent}</head><body>${finalHTML}</body></html>`;
+        }
+        
+        if (finalHTML.includes('</body>')) {
+            finalHTML = finalHTML.replace('</body>', `${jsContent}</body>`);
+        } else {
+            finalHTML += jsContent;
+        }
+        
+        const iframe = previewIframe;
+        iframe.srcdoc = finalHTML;
+    }
+
+    closePreview.addEventListener('click', function() {
+        previewPanel.classList.remove('open');
+    });
+
+    refreshPreview.addEventListener('click', function() {
+        updatePreview();
+        showNotification('Preview refreshed!');
+    });
+
+    openNewTab.addEventListener('click', function() {
+        const htmlContent = currentPreviewCode.html || '<body></body>';
+        const cssContent = currentPreviewCode.css ? `<style>${currentPreviewCode.css}</style>` : '';
+        const jsContent = currentPreviewCode.js ? `<script>${currentPreviewCode.js}<\/script>` : '';
+        
+        let finalHTML = htmlContent;
+        
+        if (finalHTML.includes('</head>')) {
+            finalHTML = finalHTML.replace('</head>', `${cssContent}</head>`);
+        } else if (finalHTML.includes('<body>')) {
+            finalHTML = finalHTML.replace('<body>', `<head>${cssContent}</head><body>`);
+        } else {
+            finalHTML = `<!DOCTYPE html><html><head>${cssContent}</head><body>${finalHTML}</body></html>`;
+        }
+        
+        if (finalHTML.includes('</body>')) {
+            finalHTML = finalHTML.replace('</body>', `${jsContent}</body>`);
+        } else {
+            finalHTML += jsContent;
+        }
+        
+        const blob = new Blob([finalHTML], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        
+        showNotification('Opened in new tab!');
+    });
+
+    // --- Helper Functions ---
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // --- Dynamic Voice Loading ---
+    async function loadAvailableVoices() {
+        try {
+            const token = tokenInput.value || USER_API_TOKEN;
+            const res = await fetch('https://gen.pollinations.ai/text/models', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const models = await res.json();
+            
+            const audioModel = models.find(m => m.name === 'openai-audio');
+            
+            if (audioModel && audioModel.voices) {
+                const voiceSelect = document.getElementById('voice-select');
+                
+                const standardVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
+                const extendedVoices = audioModel.voices.filter(v => !standardVoices.includes(v));
+                
+                let html = '<optgroup label="Standard Voices">';
+                standardVoices.forEach(voice => {
+                    const descriptions = {
+                        'alloy': 'Neutral',
+                        'echo': 'Deep Male',
+                        'fable': 'British-ish',
+                        'onyx': 'Deep/Gravel',
+                        'nova': 'Energetic Female',
+                        'shimmer': 'Clear Female'
+                    };
+                    html += `<option value="${voice}">${voice.charAt(0).toUpperCase() + voice.slice(1)} (${descriptions[voice]})</option>`;
+                });
+                html += '</optgroup>';
+                
+                if (extendedVoices.length > 0) {
+                    html += `<optgroup label="Extended Voices (${extendedVoices.length})">`;
+                    extendedVoices.forEach(voice => {
+                        html += `<option value="${voice}">${voice.charAt(0).toUpperCase() + voice.slice(1)}</option>`;
+                    });
+                    html += '</optgroup>';
+                }
+                
+                voiceSelect.innerHTML = html;
+                console.log(`✅ Loaded ${audioModel.voices.length} voices from API`);
+            }
+        } catch (e) {
+            console.error('Failed to load voices from API:', e);
+            console.log('Using hardcoded voice list as fallback');
+        }
+    }
+
+    // --- Event Listeners ---
+    settingsBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        settingsPanel.classList.add('open');
+    });
+
+    closeSettings.addEventListener('click', function(e) {
+        e.preventDefault();
+        settingsPanel.classList.remove('open');
+    });
+    
+    themeToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        isDarkMode = !isDarkMode;
+        document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+        themeToggle.innerText = isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode";
+    });
+
+    userInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        if(this.value === '') this.style.height = '44px';
+    });
+
+    userInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    sendBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        sendMessage();
+    });
+
+    stopBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (abortController) {
+            abortController.abort();
+            abortController = null;
+            isGenerating = false;
+            sendBtn.style.display = 'inline-block';
+            stopBtn.style.display = 'none';
+            const spinners = document.querySelectorAll('.fa-spinner');
+            spinners.forEach(s => {
+                const bubble = s.closest('.message-bubble');
+                if(bubble) bubble.innerHTML += '<br>[Stopped by user]';
+            });
+        }
+    });
+
+    fileInput.addEventListener('change', handleFileUpload);
+    
+   
+    // Reset buttons
+    resetChatBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        resetChat();
+    });
+    
+    fullResetBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        fullReset();
+    });
+    
+    // Session panel
+    toggleSessions.addEventListener('click', function(e) {
+        e.preventDefault();
+        sessionPanel.classList.add('open');
+    });
+    
+    closeSessions.addEventListener('click', function(e) {
+        e.preventDefault();
+        sessionPanel.classList.remove('open');
+    });
+    
+    newSessionBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        createNewSession();
+    });
+
+    // --- File Upload Logic ---
+    function handleFileUpload(e) {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const content = evt.target.result;
+                
+                let fileType = 'text';
+                if(file.type.startsWith('image')) fileType = 'image';
+                else if(file.type.startsWith('audio')) fileType = 'audio';
+                
+                uploadedFiles.push({
+                    name: file.name,
+                    type: fileType,
+                    content: content,
+                    mime: file.type
+                });
+                renderFilePreviews();
+            };
+            
+            if (file.type.startsWith('image') || file.type.startsWith('audio')) {
+                reader.readAsDataURL(file);
+            } else {
+                reader.readAsText(file);
+            }
+        });
+        fileInput.value = '';
+    }
+
+    function renderFilePreviews() {
+        filePreview.innerHTML = '';
+        uploadedFiles.forEach((file, index) => {
+            const el = document.createElement('div');
+            el.className = 'preview-item';
+            el.innerHTML = `<span>${file.name}</span> <span class="remove-file" onclick="removeFile(${index})">&times;</span>`;
+            filePreview.appendChild(el);
+        });
+    }
+
+    window.removeFile = function(index) {
+        uploadedFiles.splice(index, 1);
+        renderFilePreviews();
+    };
+
+    window.copyToClipboard = function(btn, encodedCode) {
+        const code = decodeURIComponent(encodedCode);
+        navigator.clipboard.writeText(code).then(() => {
+            const originalText = btn.innerText;
+            btn.innerText = "Copied!";
+            setTimeout(() => btn.innerText = originalText, 2000);
+        });
+    };
+
+    window.copyMessage = function(btn, textId) {
+        const el = document.getElementById(textId);
+        if (el) {
+            const text = el.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const icon = btn.querySelector('i');
+                if (icon) {
+                    icon.className = "fas fa-check";
+                    setTimeout(() => icon.className = "fas fa-copy", 2000);
+                }
+            });
+        }
+    };
+
+    // --- Audio Generation Function ---
+    async function generateAudioForMessage(msgId, textContent, messagesContext = null) {
+        const audioBtn = document.getElementById(`audio-btn-${msgId}`);
+        if (!audioBtn) return;
+        
+        const originalText = audioBtn.innerHTML;
+        audioBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        
+        const newSeed = Math.floor(Math.random() * 999999);
+        
+        try {
+            const maxLength = parseInt(document.getElementById('audio-length-limit')?.value || '4000');
+            const text = textContent.slice(0, maxLength);
+            const voice = document.getElementById('voice-select').value;
+            const tone = document.getElementById('voice-style').value;
+            const readExactly = document.getElementById('audio-read-exactly').checked;
+            
+            let tts_prompt;
+            if (readExactly) {
+                tts_prompt = `${tone ? `(in a ${tone} tone) ` : ""}Read the following text exactly as written, word for word: "${text}"`;
+            } else {
+                tts_prompt = text;
+            }
+            
+            const token = tokenInput.value || USER_API_TOKEN;
+            const apiLink = `https://gen.pollinations.ai/text/${encodeURIComponent(tts_prompt)}?model=openai-audio&seed=${newSeed}&voice=${voice}&stream=false&private=false`;
+            const fetchUrl = `${apiLink}&key=${token}`;
+            
+            const res = await fetch(fetchUrl);
+            
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Audio generation failed: ${res.status} ${res.statusText}. ${errorText}`);
+            }
+            
+            const audioBlob = await res.blob();
+            
+            if (audioBlob.size === 0) throw new Error("Empty audio file received");
+            
+            const localBlobUrl = URL.createObjectURL(audioBlob);
+            
+            const container = document.getElementById(`audio-container-${msgId}`);
+            if (!container) return;
+            
+            const previousAudio = container.querySelector('audio');
+            if (previousAudio) previousAudio.parentElement.remove();
+            
+            container.innerHTML = `
+                <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <audio controls autoplay src="${localBlobUrl}"></audio>
+                    <button class="audio-btn" onclick="generateAudioForMessage('${msgId}', \`${textContent.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
+                        <i class="fas fa-sync-alt"></i> Re-run
+                    </button>
+                    <span style="color:var(--text-color); opacity:0.7; font-size:0.8em;">
+                        Voice: ${voice} | Seed: ${newSeed} | 
+                        <span id="upload-status-${msgId}">Uploading to catbox...</span>
+                    </span>
+                </div>
+            `;
+            
+            const uploadToCatbox = document.getElementById('audio-upload-catbox')?.checked;
+
+            if (uploadToCatbox) {
+                try {
+                    const formData = new FormData();
+                    formData.append('reqtype', 'fileupload');
+                    formData.append('fileToUpload', audioBlob, `audio_${msgId}_${newSeed}.mp3`);
+                    
+                    const uploadRes = await fetch(
+                        'https://corsproxy.io/?' + encodeURIComponent('https://catbox.moe/user/api.php'), 
+                        {
+                            method: 'POST',
+                            body: formData
+                        }
+                    );
+                    
+                    if (!uploadRes.ok) throw new Error(`Catbox upload failed: ${uploadRes.status}`);
+                    
+                    const catboxUrl = (await uploadRes.text()).trim();
+                    
+                    if (catboxUrl.startsWith('http')) {
+                        const statusSpan = document.getElementById(`upload-status-${msgId}`);
+                        if (statusSpan) {
+                            statusSpan.innerHTML = `<a href="${catboxUrl}" target="_blank" style="color:var(--accent);">Direct link</a>`;
+                        }
+                    } else {
+                        throw new Error("Invalid catbox response");
+                    }
+                    
+                } catch (uploadError) {
+                    console.error("Catbox upload error:", uploadError);
+                    const statusSpan = document.getElementById(`upload-status-${msgId}`);
+                    if (statusSpan) {
+                        statusSpan.innerHTML = `<span style="color:orange; font-size:0.7em;">⚠️ Upload failed (local playback only)</span>`;
+                    }
+                }
+            } else {
+                const statusSpan = document.getElementById(`upload-status-${msgId}`);
+                if (statusSpan) {
+                    statusSpan.innerHTML = `<span style="color:var(--text-color); opacity:0.7; font-size:0.7em;">Local playback only</span>`;
+                }
+            }
+            
+        } catch (e) {
+            showNotification("Audio generation failed: " + e.message);
+            console.error("Audio error details:", e);
+        } finally {
+            audioBtn.innerHTML = originalText;
+        }
+    }
+
+    // --- Main Send Message Function ---
+    async function sendMessage(regenerateSeed = null, previousContext = null) {
+        const text = userInput.value.trim();
+        if ((!text && uploadedFiles.length === 0 && !regenerateSeed) || isGenerating) return;
+
+        let messagesPayload = [];
+
+        if (regenerateSeed && previousContext) {
+            messagesPayload = previousContext;
+        } else {
+            let userContent = [];
+            
+            if (text) userContent.push({ type: "text", text: text });
+            
+            uploadedFiles.forEach(f => {
+                if (f.type === 'image') {
+                    userContent.push({ type: "image_url", image_url: { url: f.content } });
+                } else if (f.type === 'audio') {
+                    userContent.push({ type: "text", text: `[User uploaded audio file: ${f.name}]` }); 
+                } else {
+                    userContent.push({ type: "text", text: `[File: ${f.name}]\n${f.content}` });
+                }
+            });
+
+            const userMsgObj = { role: 'user', content: userContent };
+            
+            if(!regenerateSeed) {
+                appendMessage('user', text, uploadedFiles);
+                conversationHistory.push(userMsgObj);
+                userInput.value = '';
+                userInput.style.height = '44px';
+                uploadedFiles = [];
+                renderFilePreviews();
+            }
+
+            messagesPayload = [...conversationHistory];
+        }
+
+        const emotion = document.getElementById('voice-style').value;
+        const customSystemMessage = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
+        const systemMsg = {
+            role: 'system',
+            content: `${customSystemMessage} ${emotion ? 'Voice and Response Style/Emotion: ' + emotion : ''}`,
+            cache_control: { type: 'ephemeral' }
+        };
+
+        const finalMessages = [systemMsg, ...messagesPayload];
+
+        const token = tokenInput.value || USER_API_TOKEN;
+        if (!token) {
+            showNotification("Please enter your API Token in settings.");
+            return;
+        }
+
+        const modelSelect = document.getElementById('model-select');
+        let model = modelSelect.value;
+        
+        const seed = regenerateSeed !== null ? regenerateSeed : Math.floor(Math.random() * 10000);
+
+        const requestBody = {
+            messages: finalMessages,
+            model: model,
+            stream: true,
+            seed: seed,
+            temperature: 1,
+            max_tokens: 4096
+        };
+
+        isGenerating = true;
+        sendBtn.style.display = 'none';
+        stopBtn.style.display = 'inline-block';
+        abortController = new AbortController();
+        
+        const aiMsgId = 'ai-msg-' + Date.now();
+        const aiContentId = 'ai-content-' + aiMsgId;
+        
+        if(!regenerateSeed) {
+            appendPlaceholder('ai', aiMsgId, aiContentId);
+        }
+
+        const aiContentDiv = document.getElementById(aiContentId);
+        let accumulatedText = "";
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(requestBody),
+                signal: abortController.signal
+            });
+
+            if (!response.ok) {
+                let errorMsg = response.statusText || `Status ${response.status}`;
+                try {
+                    const errorObj = await response.json();
+                    if (errorObj.error && errorObj.error.message) {
+                        errorMsg = errorObj.error.message;
+                    }
+                } catch (e) {
+                    // Could not parse JSON error, stick to status
+                }
+                throw new Error(errorMsg);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            let buffer = ''; 
+
+            let firstChunk = true;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                buffer += chunk;
+
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); 
+
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
+                        if (firstChunk) {
+                            aiContentDiv.innerHTML = '';
+                            firstChunk = false;
+                        }
+                        try {
+                            const json = JSON.parse(trimmedLine.substring(6));
+                            const delta = json.choices[0].delta;
+
+                            if (delta.content) {
+                                accumulatedText += delta.content;
+                                aiContentDiv.innerHTML = marked.parse(accumulatedText);
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                                
+                                if (previewPanel.classList.contains('open')) {
+                                    const messageWrapper = aiContentDiv.closest('.message-wrapper.ai');
+                                    if (messageWrapper) {
+                                        extractAllCodeFromMessage(messageWrapper);
+                                        updatePreview();
+                                    }
+                                }
+                            }
+                            
+                        } catch (e) {
+                            console.error("Error parsing stream line", e);
+                        }
+                    }
+                }
+            }
+
+            conversationHistory.push({ role: 'assistant', content: accumulatedText });
+
+            const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
+            if (audioBtn) {
+                audioBtn.style.display = 'inline-block';
+                audioBtn.onclick = function() {
+                    generateAudioForMessage(aiContentId, accumulatedText);
+                };
+            }
+
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                aiContentDiv.innerHTML += `<br><span style="color:orange">[Stopped by user]</span>`;
+            } else {
+                if(aiContentDiv.innerHTML.includes('fa-spinner')) {
+                     aiContentDiv.innerHTML = '';                }
+                aiContentDiv.innerHTML += `<div style="color:red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin-top: 5px;"><strong>Error:</strong> ${error.message}</div>`;
+            }
+        } finally {
+            saveConversationToStorage();
+            isGenerating = false;
+            sendBtn.style.display = 'inline-block';
+            stopBtn.style.display = 'none';
+            abortController = null;
+        }
+    }
+
+
+    function appendMessage(role, text, files = []) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `message-wrapper ${role}`;
+        
+        const sender = role === 'user' ? 'You' : 'AI';
+        const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        
+        let fileHtml = '';
+        if(files.length > 0) {
+            files.forEach(f => {
+                if(f.type === 'image') {
+                    fileHtml += `<img src="${f.content}" class="chat-image" alt="${f.name}" onclick="openImageInStudio('${f.content}')">`;
+                } else {
+                    fileHtml += `<div class="code-container"><div class="code-header">File: ${f.name}</div><pre>${f.type === 'text' ? escapeHtml(f.content.substring(0, 100)) + '...' : '[Binary Data]'}</pre></div>`;
+                }
+            });
+        }
+
+        let displayContent;
+        if (role === 'ai') {
+            displayContent = marked.parse(text || '');
+        } else {
+            displayContent = `<div style="white-space: pre-wrap;">${escapeHtml(text || '')}</div>`;
+        }
+
+        let audioButtonHtml = '';
+        if (role === 'ai') {
+            const showAudioButton = document.getElementById('audio-enable')?.checked;
+            if (showAudioButton) {
+                audioButtonHtml = `
+                    <button id="audio-btn-${msgId}" class="audio-btn" 
+                            onclick="generateAudioForMessage('${msgId}', \`${(text || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)"
+                            style="margin-top:8px;">
+                        <i class="fas fa-volume-up"></i> Generate Audio
+                    </button>
+                    <div id="audio-container-${msgId}"></div>
+                `;
+            }
+        }
+
+        wrapper.innerHTML = `
+            <div class="message-sender">
+                ${sender} 
+                <span class="copy-msg-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
+            </div>
+            <div class="message-bubble">
+                <div id="${msgId}">${displayContent}</div>
+                ${fileHtml}
+                ${audioButtonHtml}
+            </div>
+        `;
+        
+        chatContainer.appendChild(wrapper);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function appendPlaceholder(role, id, contentId) {
+        const wrapper = document.createElement('div');
+        wrapper.className = `message-wrapper ${role}`;
+        wrapper.id = id;
+        
+        const showAudioButton = document.getElementById('audio-enable')?.checked;
+        const audioButtonHtml = showAudioButton ? `
+        <button id="audio-btn-${contentId}" class="audio-btn" style="margin-top:8px; display:none;">
+            <i class="fas fa-volume-up"></i> Generate Audio
+        </button>
+        <div id="audio-container-${contentId}"></div>
+    ` : '';
+        
+        wrapper.innerHTML = `
+            <div class="message-sender">
+                AI <span class="copy-msg-btn" onclick="copyMessage(this, '${contentId}')"><i class="fas fa-copy"></i></span>
+            </div>
+            <div class="message-bubble">
+                <div id="${contentId}"><i class="fas fa-spinner fa-spin"></i> Thinking...</div>
+                ${audioButtonHtml}
+            </div>
+        `;
+        
+        chatContainer.appendChild(wrapper);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // --- Reset Functions ---
+    function resetChat() {
+        conversationHistory = [];
+        chatContainer.innerHTML = `
+            <div class="message-wrapper ai">
+                <div class="message-sender">System</div>
+                <div class="message-bubble">Chat history cleared. Start a new conversation!</div>
+            </div>
+        `;
+        showNotification("Chat history cleared!");
+        saveConversationToStorage();
+    }
+    
+    function fullReset() {
+        conversationHistory = [];
+        uploadedFiles = [];
+        isGenerating = false;
+        currentPreviewCode = { html: '', css: '', js: '' };
+        chatContainer.innerHTML = `
+            <div class="message-wrapper ai">
+                <div class="message-sender">System</div>
+                <div class="message-bubble">Full reset complete. Welcome back!</div>
+            </div>
+        `;
+        userInput.value = '';
+        userInput.style.height = '44px';
+        filePreview.innerHTML = '';
+        if (USER_API_TOKEN) {
+            tokenInput.value = USER_API_TOKEN;
+        }
+        previewPanel.classList.remove('open');
+        showNotification("Full reset completed!");
+        localStorage.removeItem('chatSessions');
+        localStorage.removeItem('currentSessionId');
+        sessions = {};
+        currentSessionId = null;
+        createNewSession();
+    }
+    
+    // --- Session Functions ---
+    function createNewSession() {
+        const timestamp = new Date().toISOString();
+        const title = `Session ${Object.keys(sessions).length + 1} - ${formatDateTime(timestamp)}`;
+        
+        const sessionId = 'session_' + Date.now();
+        sessions[sessionId] = {
+            id: sessionId,
+            title: title,
+            timestamp: timestamp,
+            conversation: []
+        };
+        
+        currentSessionId = sessionId;
+        conversationHistory = [];
+        
+        chatContainer.innerHTML = `
+            <div class="message-wrapper ai">
+                <div class="message-sender">System</div>
+                <div class="message-bubble">New session created: ${title}</div>
+            </div>
+        `;
+        
+        saveAllDataToStorage();
+        loadSessionsToList();
+        showNotification("New session created!");
+        sessionPanel.classList.remove('open');
+    }
+    
+    function loadSessionsToList() {
+        sessionList.innerHTML = '';
+        
+        const sortedSessions = Object.values(sessions).sort((a, b) => 
+            new Date(b.timestamp) - new Date(a.timestamp)
+        );
+        
+        sortedSessions.forEach(session => {
+            const sessionItem = document.createElement('div');
+            sessionItem.className = `session-item ${currentSessionId === session.id ? 'active' : ''}`;
+            sessionItem.dataset.sessionId = session.id;
+            
+            if (!session.title) {
+                session.title = `Session ${session.id.split('_')[1]} - ${formatDateTime(session.timestamp)}`;
+            }
+            
+            sessionItem.innerHTML = `
+                <div class="session-title" id="session-title-${session.id}">${session.title}</div>
+                <div class="session-meta">${formatDateTime(session.timestamp)}</div>
+                <div class="session-actions">
+                    <button class="session-action-btn rename" data-session-id="${session.id}"><i class="fas fa-edit"></i></button>
+                    <button class="session-action-btn delete" data-session-id="${session.id}"><i class="fas fa-trash"></i></button>
+                </div>
+            `;
+            
+            sessionItem.addEventListener('click', function(e) {
+                if (!e.target.closest('.session-action-btn')) {
+                    loadSession(session.id);
+                }
+            });
+            
+            sessionList.appendChild(sessionItem);
+        });
+        
+        document.querySelectorAll('.session-action-btn.rename').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const sessionId = btn.dataset.sessionId;
+                renameSession(sessionId);
+            });
+        });
+        
+        document.querySelectorAll('.session-action-btn.delete').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const sessionId = btn.dataset.sessionId;
+                deleteSession(sessionId);
+            });
+        });
+    }
+    
+    function loadSession(sessionId) {
+        if (!sessions[sessionId]) return;
+        
+        currentSessionId = sessionId;
+        conversationHistory = sessions[sessionId].conversation || [];
+        
+        loadSessionsToList();
+        
+        chatContainer.innerHTML = '';
+        
+        if (conversationHistory.length === 0) {
+            chatContainer.innerHTML = `
+                <div class="message-wrapper ai">
+                    <div class="message-sender">System</div>
+                    <div class="message-bubble">Loaded session: ${sessions[sessionId].title}</div>
+                </div>
+            `;
+        } else {
+            conversationHistory.forEach(msg => {
+                if (msg.role === 'user') {
+                    let textContent = '';
+                    if (Array.isArray(msg.content)) {
+                        msg.content.forEach(item => {
+                            if (item.type === 'text') {
+                                textContent += item.text + '\n';
+                            }
+                        });
+                        textContent = textContent.trim();
+                    } else {
+                        textContent = msg.content;
+                    }
+                    appendMessage('user', textContent);
+                } else if (msg.role === 'assistant') {
+                    appendMessage('ai', msg.content);
+                }
+            });
+        }
+        
+        showNotification(`Loaded session: ${sessions[sessionId].title}`);
+        saveAllDataToStorage();
+        sessionPanel.classList.remove('open');
+    }
+    
+    function renameSession(sessionId) {
+        const session = sessions[sessionId];
+        if (!session) return;
+        
+        const newTitle = prompt("Enter new title for session:", session.title);
+        if (newTitle !== null && newTitle.trim() !== "") {
+            session.title = newTitle.trim();
+            saveAllDataToStorage();
+            loadSessionsToList();
+            showNotification("Session renamed!");
+        }
+    }
+    
+    function deleteSession(sessionId) {
+        if (!sessions[sessionId]) return;
+        
+        if (confirm(`Are you sure you want to delete "${sessions[sessionId].title}"?`)) {
+            delete sessions[sessionId];
+            if (currentSessionId === sessionId) {
+                if (Object.keys(sessions).length > 0) {
+                    const firstSessionId = Object.keys(sessions)[0];
+                    loadSession(firstSessionId);
+                } else {
+                    createNewSession();
+                }
+            }
+            saveAllDataToStorage();
+            loadSessionsToList();
+            showNotification("Session deleted!");
+        }
+    }
+    
+    function formatDateTime(isoString) {
+        const date = new Date(isoString);
+        return date.toLocaleString();
+    }
+    
+    // --- Storage Functions ---
+    function saveAllDataToStorage() {
+        const dataToSave = {
+            sessions: sessions,
+            currentSessionId: currentSessionId,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('chatSessions', JSON.stringify(dataToSave));
+    }
+    
+    function loadAllDataFromStorage() {
+        const savedData = localStorage.getItem('chatSessions');
+        if (savedData) {
+            try {
+                const parsedData = JSON.parse(savedData);
+                sessions = parsedData.sessions || {};
+                currentSessionId = parsedData.currentSessionId || null;
+                
+                if (!currentSessionId || !sessions[currentSessionId]) {
+                    if (Object.keys(sessions).length > 0) {
+                        currentSessionId = Object.keys(sessions)[0];
+                    } else {
+                        createNewSession();
+                        return;
+                    }
+                }
+                
+                loadSession(currentSessionId);
+            } catch (e) {
+                console.error("Failed to parse saved data:", e);
+                sessions = {};
+                currentSessionId = null;
+                createNewSession();
+            }
+        } else {
+            createNewSession();
+        }
+        
+        loadSessionsToList();
+    }
+    
+    function saveConversationToStorage() {
+        if (currentSessionId && sessions[currentSessionId]) {
+            sessions[currentSessionId].conversation = conversationHistory;
+            saveAllDataToStorage();
+        }
+    }
+    
+    // --- Notification Function ---
+    function showNotification(message) {
+        notification.textContent = message;
+        notification.classList.add('show');
+        setTimeout(function() {
+            notification.classList.remove('show');
+        }, 3000);
+    }
+
+    // --- Keyboard shortcut for preview ---
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') {
+            e.preventDefault();
+            if (previewPanel.classList.contains('open')) {
+                previewPanel.classList.remove('open');
+            } else {
+                const lastAiMessage = chatContainer.querySelector('.message-wrapper.ai:last-child');
+                if (lastAiMessage) {
+                    extractAllCodeFromMessage(lastAiMessage);
+                    updatePreview();
+                    previewPanel.classList.add('open');
+                } else {
+                    showNotification('No code to preview!');
+                }
+            }
+        }
+    });
+
+    // --- TTS Popup Functionality ---
+    const ttsModal = document.getElementById('tts-modal');
+    const ttsPopupBtn = document.getElementById('tts-popup-btn');
+    const closeTtsModal = document.getElementById('close-tts-modal');
+    const ttsTextInput = document.getElementById('tts-text-input');
+    const ttsGenerateBtn = document.getElementById('tts-generate-btn');
+    const ttsOutput = document.getElementById('tts-output');
+
+    ttsPopupBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        ttsModal.classList.add('open');
+        ttsTextInput.focus();
+    });
+
+    closeTtsModal.addEventListener('click', function() {
+        ttsModal.classList.remove('open');
+    });
+
+    ttsModal.addEventListener('click', function(e) {
+        if (e.target === ttsModal) {
+            ttsModal.classList.remove('open');
+        }
+    });
+
+    ttsGenerateBtn.addEventListener('click', async function() {
+        const text = ttsTextInput.value.trim();
+        
+        if (!text) {
+            showNotification('Please enter text to convert to speech');
+            return;
+        }
+        
+        const maxLength = parseInt(document.getElementById('audio-length-limit')?.value || '4000');
+        const truncatedText = text.slice(0, maxLength);
+        
+        ttsGenerateBtn.disabled = true;
+        ttsGenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        ttsOutput.classList.remove('show');
+        
+        try {
+            await generateStandaloneTTS(truncatedText);
+        } catch (error) {
+            showNotification('TTS generation failed: ' + error.message);
+            console.error('TTS error:', error);
+        } finally {
+            ttsGenerateBtn.disabled = false;
+            ttsGenerateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Audio';
+        }
+    });
+
+    async function generateStandaloneTTS(text) {
+        const voice = document.getElementById('voice-select').value;
+        const tone = document.getElementById('voice-style').value;
+        const readExactly = document.getElementById('audio-read-exactly').checked;
+        const uploadToCatbox = document.getElementById('audio-upload-catbox')?.checked;
+        const newSeed = Math.floor(Math.random() * 999999);
+        
+        let tts_prompt;
+        if (readExactly) {
+            tts_prompt = `${tone ? `(in a ${tone} tone) ` : ""}Read the following text exactly as written, word for word: "${text}"`;
+        } else {
+            tts_prompt = text;
+        }
+        
+        const token = tokenInput.value || USER_API_TOKEN;
+        const apiLink = `https://gen.pollinations.ai/text/${encodeURIComponent(tts_prompt)}?model=openai-audio&seed=${newSeed}&voice=${voice}&stream=false&private=false`;
+        const fetchUrl = `${apiLink}&key=${token}`;
+        
+        const res = await fetch(fetchUrl);
+        
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Audio generation failed: ${res.status} ${res.statusText}. ${errorText}`);
+        }
+        
+        const audioBlob = await res.blob();
+        
+        if (audioBlob.size === 0) throw new Error("Empty audio file received");
+        
+        const localBlobUrl = URL.createObjectURL(audioBlob);
+        
+        let catboxLinkHtml = '';
+        
+        if (uploadToCatbox) {
+            try {
+                const formData = new FormData();
+                formData.append('reqtype', 'fileupload');
+                formData.append('fileToUpload', audioBlob, `tts_${newSeed}.mp3`);
+                
+                const uploadRes = await fetch(
+                    'https://corsproxy.io/?' + encodeURIComponent('https://catbox.moe/user/api.php'), 
+                    {
+                        method: 'POST',
+                        body: formData
+                    }
+                );
+                
+                if (!uploadRes.ok) throw new Error(`Catbox upload failed: ${uploadRes.status}`);
+                
+                const catboxUrl = (await uploadRes.text()).trim();
+                
+                if (catboxUrl.startsWith('http')) {
+                    catboxLinkHtml = `
+                        <div style="margin-top: 10px; padding: 10px; background: var(--chat-bg); border-radius: 5px;">
+                            <strong>Direct Link:</strong><br>
+                            <a href="${catboxUrl}" target="_blank" style="color: var(--user-msg-bg); word-break: break-all;">${catboxUrl}</a>
+                            <button class="audio-btn" onclick="navigator.clipboard.writeText('${catboxUrl}'); showNotification('Link copied!');" style="margin-left: 10px;">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (uploadError) {
+                console.error("Catbox upload error:", uploadError);
+                catboxLinkHtml = '<div style="margin-top: 10px; color: orange;">⚠️ Upload to Catbox failed (local playback only)</div>';
+            }
+        }
+        
+        ttsOutput.innerHTML = `
+            <div style="color: var(--text-color);">
+                <strong>Generated Audio:</strong>
+                <div style="margin-top: 10px;">
+                    <audio controls src="${localBlobUrl}" style="width: 100%;"></audio>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.85em; opacity: 0.8;">
+                    Voice: ${voice} | Seed: ${newSeed}
+                </div>
+                ${catboxLinkHtml}
+            </div>
+        `;
+        
+        ttsOutput.classList.add('show');
+        showNotification('Audio generated successfully!');
+    }
+
+    // ==========================================
+    // === MEDIA STUDIO FUNCTIONS START HERE ===
+    // ==========================================
+
+    // --- Media Studio Modal Controls ---
+    mediaStudioBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        openMediaStudio();
+    });
+
+    closeMediaStudio.addEventListener('click', function() {
+        mediaStudioModal.classList.remove('open');
+    });
+
+    mediaStudioModal.addEventListener('click', function(e) {
+        if (e.target === mediaStudioModal) {
+            mediaStudioModal.classList.remove('open');
+        }
+    });
+
+    function openMediaStudio() {
+        mediaStudioModal.classList.add('open');
+        updateMediaStudioUI();
+        
+        // Set defaults from settings
+        const defaultImageModel = document.getElementById('default-image-model').value;
+        const defaultSize = document.getElementById('default-image-size').value;
+        
+        mediaModelSelect.value = defaultImageModel;
+        mediaWidth.value = defaultSize;
+        mediaHeight.value = defaultSize;
+    }
+
+    // --- Media Studio UI Updates ---
+    mediaModeSelect.addEventListener('change', updateMediaStudioUI);
+    mediaModelSelect.addEventListener('change', updateMediaStudioUI);
+
+    function updateMediaStudioUI() {
+    const mode = mediaModeSelect.value;
+    const model = mediaModelSelect.value;
+    
+    const isVideoModel = ['seedance', 'seedance-pro', 'veo'].includes(model);
+    const isEditorModel = ['kontext', 'seedream', 'seedream-pro', 'nanobanana', 'nanobanana-pro'].includes(model);
+    const isSeedream = ['seedream', 'seedream-pro'].includes(model);
+    
+    const useRefDimensionsGroup = document.getElementById('media-use-ref-dimensions-group');
+    
+    // Show/hide controls based on mode and model
+    if (mode === 'video' || isVideoModel) {
+        mediaSizeGroup.style.display = 'none';
+        mediaVideoSettings.style.display = 'block';
+        mediaReferenceGroup.style.display = isEditorModel && model !== 'veo' ? 'block' : 'none';
+        mediaTransparentGroup.style.display = 'none';
+        if (useRefDimensionsGroup) useRefDimensionsGroup.style.display = 'none';
+            
+            // Update duration options based on model
+            const currentDuration = mediaDuration.value;
+            mediaDuration.innerHTML = '';
+            
+            if (model === 'veo') {
+                // Veo only supports 4, 6, 8 seconds
+                [4, 6, 8].forEach(val => {
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.text = `${val} seconds`;
+                    if (val === 4 || val === parseInt(currentDuration)) opt.selected = true;
+                    mediaDuration.appendChild(opt);
+                });
+            } else {
+                // Seedance supports 2-10 seconds
+                for (let i = 2; i <= 10; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.text = `${i} seconds`;
+                    if (i === 4 || i === parseInt(currentDuration)) opt.selected = true;
+                    mediaDuration.appendChild(opt);
+                }
+            }
+            } else if (mode === 'image-edit') {
+        mediaSizeGroup.style.display = 'block';
+        mediaVideoSettings.style.display = 'none';
+        mediaReferenceGroup.style.display = 'block';
+        mediaTransparentGroup.style.display = 'block';
+        if (useRefDimensionsGroup) useRefDimensionsGroup.style.display = 'flex';
+        } else {
+        mediaSizeGroup.style.display = 'block';
+        mediaVideoSettings.style.display = 'none';
+        mediaReferenceGroup.style.display = 'none';
+        mediaTransparentGroup.style.display = 'block';
+        if (useRefDimensionsGroup) useRefDimensionsGroup.style.display = 'none';
+    }
+        
+        mediaNegativePromptGroup.style.display = isSeedream ? 'block' : 'none';
+        
+        // Update model select based on mode
+        if (mode === 'video') {
+            // Filter to show only video models
+            Array.from(mediaModelSelect.options).forEach(opt => {
+                const isVideo = ['seedance', 'seedance-pro', 'veo'].includes(opt.value);
+                opt.style.display = isVideo ? 'block' : 'none';
+            });
+            if (!isVideoModel) {
+                mediaModelSelect.value = 'seedance';
+            }
+        } else {
+            // Show all models
+            Array.from(mediaModelSelect.options).forEach(opt => {
+                opt.style.display = 'block';
+            });
+        }
+    }
+
+    // --- Guidance Scale Sync ---
+mediaGuidance.addEventListener('input', function() {
+    mediaGuidanceValue.textContent = parseFloat(this.value).toFixed(1);
+});
+
+// --- Use Reference Dimensions Handler ---
+mediaUseRefDimensions.addEventListener('change', function() {
+    if (this.checked && mediaState.referenceImages.length > 0) {
+        const firstImage = mediaState.referenceImages[0];
+        mediaWidth.value = firstImage.width;
+        mediaHeight.value = firstImage.height;
+        mediaWidth.disabled = true;
+        mediaHeight.disabled = true;
+        showNotification(`Dimensions set to ${firstImage.width}×${firstImage.height}`);
+    } else {
+        mediaWidth.disabled = false;
+        mediaHeight.disabled = false;
+    }
+});
+
+    // --- Reference Image Management ---
+    mediaRefUpload.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            if (file.type.startsWith('image/')) {
+                addMediaReferenceImage(file, 'file');
+            }
+        });
+        this.value = '';
+    });
+
+    mediaAddRefUrl.addEventListener('click', function() {
+        const url = mediaRefUrl.value.trim();
+        if (url) {
+            addMediaReferenceImage(url, 'url');
+            mediaRefUrl.value = '';
+        }
+    });
+
+    function addMediaReferenceImage(source, type) {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        
+        const tempUrl = type === 'file' ? URL.createObjectURL(source) : source;
+        img.src = tempUrl;
+        
+        img.onload = function() {
+            const imageData = {
+                type: type,
+                source: source,
+                previewUrl: tempUrl,
+                width: this.naturalWidth,
+                height: this.naturalHeight
+            };
+            
+            mediaState.referenceImages.push(imageData);
+            renderMediaReferenceImages();
+            showNotification('Reference image added');
+        };
+        
+        img.onerror = function() {
+            if (type === 'file') URL.revokeObjectURL(tempUrl);
+            showNotification('Failed to load image');
+        };
+    }
+
+    function renderMediaReferenceImages() {
+    mediaRefImages.innerHTML = '';
+    
+    if (mediaState.referenceImages.length === 0) {
+        mediaRefImages.innerHTML = '<div class="media-placeholder" style="padding: 20px;">No reference images added</div>';
+        // Disable the checkbox if no images
+        const useRefDimCheckbox = document.getElementById('media-use-ref-dimensions');
+        if (useRefDimCheckbox) {
+            useRefDimCheckbox.checked = false;
+            useRefDimCheckbox.disabled = true;
+        }
+        return;
+    }
+    
+    // Enable the checkbox if images exist
+    const useRefDimCheckbox = document.getElementById('media-use-ref-dimensions');
+    if (useRefDimCheckbox) {
+        useRefDimCheckbox.disabled = false;
+    }
+        
+        mediaState.referenceImages.forEach((img, index) => {
+            const card = document.createElement('div');
+            card.className = 'ref-image-card';
+            card.style.height = 'auto';
+            
+            card.innerHTML = `
+                <div style="position: relative; width: 80px; height: 80px;">
+                    <img src="${img.previewUrl}" alt="Reference ${index + 1}" style="width: 100%; height: 100%; object-fit: contain;">
+                    <button class="ref-remove-btn" onclick="removeMediaReferenceImage(${index})">&times;</button>
+                </div>
+                <div style="font-size: 10px; color: var(--text-color); text-align: center; margin-top: 2px; opacity: 0.8;">${img.width}×${img.height}</div>
+            `;
+            
+            mediaRefImages.appendChild(card);
+        });
+    }
+
+    window.removeMediaReferenceImage = function(index) {
+        const img = mediaState.referenceImages[index];
+        if (img.type === 'file') {
+            URL.revokeObjectURL(img.previewUrl);
+        }
+        mediaState.referenceImages.splice(index, 1);
+        renderMediaReferenceImages();
+    };
+
+    // --- Main Media Generation Function ---
+    // --- Prompt Enhancement Function ---
+    const promptEnhanceBtn = document.getElementById('prompt-enhance-btn');
+    const promptEnhanceModel = document.getElementById('prompt-enhance-model');
+
+    promptEnhanceBtn.addEventListener('click', async function() {
+        const originalPrompt = mediaPrompt.value.trim();
+        
+        if (!originalPrompt) {
+            showNotification('Please enter a prompt first');
+            return;
+        }
+        
+        promptEnhanceBtn.disabled = true;
+        promptEnhanceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enhancing...';
+        
+        try {
+            const enhancedPrompt = await enhancePrompt(originalPrompt);
+            mediaPrompt.value = enhancedPrompt;
+            showNotification('Prompt enhanced successfully!');
+        } catch (error) {
+            showNotification('Enhancement failed: ' + error.message);
+            console.error('Prompt enhancement error:', error);
+        } finally {
+            promptEnhanceBtn.disabled = false;
+            promptEnhanceBtn.innerHTML = '<i class="fas fa-magic"></i> Prompt Enhance';
+        }
+    });
+
+    async function enhancePrompt(originalPrompt) {
+        const token = tokenInput.value || USER_API_TOKEN;
+        const model = promptEnhanceModel.value;
+        
+        if (!token) {
+            throw new Error('API token not set');
+        }
+        
+        const systemMessage = {
+            role: 'system',
+            content: 'You are an expert at enhancing image/video generation prompts. When given a prompt, expand it with vivid details, artistic style descriptions, lighting, mood, and technical specifications that will help create a better image or video. Keep the core idea but make it more descriptive and specific. Return ONLY the enhanced prompt, no explanations or additional text.'
+        };
+        
+        const userMessage = {
+            role: 'user',
+            content: `Enhance this image/video generation prompt: "${originalPrompt}"`
+        };
+        
+        const requestBody = {
+            messages: [systemMessage, userMessage],
+            model: model,
+            stream: false,
+            temperature: 0.7,
+            max_tokens: 500
+        };
+        
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+            let errorMsg = response.statusText || `Status ${response.status}`;
+            try {
+                const errorObj = await response.json();
+                if (errorObj.error && errorObj.error.message) {
+                    errorMsg = errorObj.error.message;
+                }
+            } catch (e) {
+                // Could not parse JSON error
+            }
+            throw new Error(errorMsg);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            throw new Error('Invalid response format');
+        }
+        
+        const enhancedPrompt = data.choices[0].message.content.trim();
+        
+        // Remove any quotation marks that might wrap the prompt
+        return enhancedPrompt.replace(/^["']|["']$/g, '');
+    }
+
+    mediaGenerateBtn.addEventListener('click', async function() {
+        const prompt = mediaPrompt.value.trim();
+        
+        if (!prompt) {
+            showNotification('Please enter a prompt');
+            return;
+        }
+        
+        mediaState.isGenerating = true;
+        mediaGenerateBtn.disabled = true;
+        mediaGenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        
+        mediaPreview.innerHTML = '<div class="media-loading"><div class="spinner"></div></div>';
+        mediaActions.style.display = 'none';
+        mediaEditActions.style.display = 'none';
+        mediaInsertChatBtn.style.display = 'none';
+        
+        try {
+            const result = await generateMedia();
+            displayMediaResult(result);
+        } catch (error) {
+            showNotification('Generation failed: ' + error.message);
+            mediaPreview.innerHTML = `<div class="media-placeholder" style="color: red;">Generation failed: ${error.message}</div>`;
+        } finally {
+            mediaState.isGenerating = false;
+            mediaGenerateBtn.disabled = false;
+            mediaGenerateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate';
+        }
+    });
+
+    async function generateMedia() {
+        const token = tokenInput.value || USER_API_TOKEN;
+        const model = mediaModelSelect.value;
+        const prompt = mediaPrompt.value.trim();
+        const seed = mediaRandomSeed.checked ? Math.floor(Math.random() * 1000000) : parseInt(mediaSeed.value);
+        
+        if (mediaRandomSeed.checked) {
+            mediaSeed.value = seed;
+        }
+        
+        const isVideoModel = ['seedance', 'seedance-pro', 'veo'].includes(model);
+        
+        const params = new URLSearchParams({
+            model: model,
+            seed: seed,
+            enhance: mediaEnhance.checked ? 'true' : 'false',
+            nologo: mediaNologo.checked ? 'true' : 'false',
+            private: mediaPrivate.checked ? 'true' : 'false',
+            safe: mediaSafe.checked ? 'true' : 'false',
+            guidance_scale: mediaGuidance.value
+        });
+        
+        if (isVideoModel) {
+            params.append('aspectRatio', mediaAspectRatio.value);
+            params.append('duration', mediaDuration.value);
+        } else {
+            params.append('width', mediaWidth.value);
+            params.append('height', mediaHeight.value);
+            params.append('transparent', mediaTransparent.checked ? 'true' : 'false');
+        }
+        
+        // Handle reference images
+        if (mediaState.referenceImages.length > 0) {
+            const imageUrls = [];
+            
+            for (const refImg of mediaState.referenceImages) {
+                if (refImg.type === 'url') {
+                    imageUrls.push(refImg.source);
+                } else if (refImg.type === 'file') {
+                    // Upload file to catbox
+                    try {
+                        const uploadedUrl = await uploadImageToCatbox(refImg.source);
+                        imageUrls.push(uploadedUrl);
+                    } catch (e) {
+                        console.error('Failed to upload reference image:', e);
+                    }
+                }
+            }
+            
+            if (imageUrls.length > 0) {
+                params.append('image', imageUrls.join(','));
+            }
+        }
+        
+        // Negative prompt for seedream
+        if (['seedream', 'seedream-pro'].includes(model) && mediaNegativePrompt.value.trim()) {
+            params.append('negative_prompt', mediaNegativePrompt.value.trim());
+        }
+        
+        const fullUrl = `${IMAGE_API_URL}/${encodeURIComponent(prompt)}?${params.toString()}`;
+        mediaState.currentApiUrl = fullUrl;
+        
+        const response = await fetch(`${fullUrl}&key=${token}`);
+        
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        
+        return {
+            type: isVideoModel ? 'video' : 'image',
+            url: blobUrl,
+            apiUrl: fullUrl
+        };
+    }
+
+    async function uploadImageToCatbox(file) {
+        const formData = new FormData();
+        formData.append('reqtype', 'fileupload');
+        formData.append('fileToUpload', file);
+        
+        const response = await fetch(
+            'https://corsproxy.io/?' + encodeURIComponent('https://litterbox.catbox.moe/resources/internals/api.php'),
+            {
+                method: 'POST',
+                body: formData
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+        
+        const url = await response.text();
+        if (!url.startsWith('http')) {
+            throw new Error('Invalid upload response');
+        }
+        
+        return url.trim();
+    }
+
+    function displayMediaResult(result) {
+        mediaState.currentResult = result;
+        
+        if (result.type === 'video') {
+            mediaPreview.innerHTML = `<video controls autoplay loop muted playsinline src="${result.url}"></video>`;
+        } else {
+            mediaPreview.innerHTML = `<img src="${result.url}" alt="Generated Image">`;
+        }
+        
+        mediaActions.style.display = 'flex';
+        mediaInsertChatBtn.style.display = 'block';
+        
+        if (result.type === 'image') {
+            mediaEditActions.style.display = 'flex';
+        } else {
+            mediaEditActions.style.display = 'none';
+        }
+        
+        showNotification('Media generated successfully!');
+    }
+
+    // --- Media Action Buttons ---
+    mediaDownloadBtn.addEventListener('click', function() {
+        if (mediaState.currentResult) {
+            const a = document.createElement('a');
+            a.href = mediaState.currentResult.url;
+            const ext = mediaState.currentResult.type === 'video' ? 'mp4' : 'png';
+            a.download = `pollinations_${Date.now()}.${ext}`;
+            a.click();
+        }
+    });
+
+    mediaViewUrlBtn.addEventListener('click', function() {
+        if (mediaState.currentApiUrl) {
+            const urlObj = new URL(mediaState.currentApiUrl);
+            urlObj.searchParams.delete('key');
+            window.open(urlObj.toString(), '_blank');
+        }
+    });
+
+    mediaEditBtn.addEventListener('click', function() {
+        if (mediaState.currentResult && mediaState.currentResult.type === 'image') {
+            // Switch to edit mode and use current image as reference
+            mediaModeSelect.value = 'image-edit';
+            
+            // Clear existing references and add current image
+            mediaState.referenceImages.forEach(img => {
+                if (img.type === 'file') URL.revokeObjectURL(img.previewUrl);
+            });
+            mediaState.referenceImages = [];
+            
+            addMediaReferenceImage(mediaState.currentResult.apiUrl, 'url');
+            updateMediaStudioUI();
+            showNotification('Ready to edit image');
+        }
+    });
+
+    mediaAnimateBtn.addEventListener('click', function() {
+        if (mediaState.currentResult && mediaState.currentResult.type === 'image') {
+            // Switch to video mode
+            mediaModeSelect.value = 'video';
+            const defaultVideoModel = document.getElementById('default-video-model').value;
+            mediaModelSelect.value = defaultVideoModel;
+            
+            // Clear existing references and add current image
+            mediaState.referenceImages.forEach(img => {
+                if (img.type === 'file') URL.revokeObjectURL(img.previewUrl);
+            });
+            mediaState.referenceImages = [];
+            
+            addMediaReferenceImage(mediaState.currentResult.apiUrl, 'url');
+            updateMediaStudioUI();
+            showNotification('Ready to animate image');
+        }
+    });
+
+    mediaRegenerateBtn.addEventListener('click', function() {
+        if (mediaPrompt.value.trim()) {
+            mediaGenerateBtn.click();
+        }
+    });
+
+    mediaInsertChatBtn.addEventListener('click', function() {
+        if (mediaState.currentResult) {
+            insertMediaIntoChat(mediaState.currentResult);
+            mediaStudioModal.classList.remove('open');
+        }
+    });
+
+    mediaClearBtn.addEventListener('click', function() {
+        // Clear all state
+        mediaState.referenceImages.forEach(img => {
+            if (img.type === 'file') URL.revokeObjectURL(img.previewUrl);
+        });
+        mediaState.referenceImages = [];
+        mediaState.currentResult = null;
+        mediaState.currentApiUrl = null;
+        
+        // Reset form
+        mediaPrompt.value = '';
+        mediaNegativePrompt.value = '';
+        mediaRefUrl.value = '';
+        mediaSeed.value = '42';
+        mediaRandomSeed.checked = true;
+        mediaGuidance.value = '7';
+        mediaGuidanceValue.textContent = '7.0';
+        
+        // Reset preview
+        mediaPreview.innerHTML = '<div class="media-placeholder">Your generated media will appear here</div>';
+        mediaActions.style.display = 'none';
+        mediaEditActions.style.display = 'none';
+        mediaInsertChatBtn.style.display = 'none';
+        
+        renderMediaReferenceImages();
+        showNotification('Cleared');
+    });
+
+    function insertMediaIntoChat(result) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'message-wrapper user';
+        
+        const msgId = 'msg-' + Date.now();
+        
+        let mediaHtml = '';
+        if (result.type === 'video') {
+            mediaHtml = `<video class="chat-video" controls loop muted playsinline src="${result.url}"></video>`;
+        } else {
+            mediaHtml = `<img class="chat-image" src="${result.url}" alt="Generated Image" onclick="openImageInStudio('${result.url}')">`;
+        }
+        
+        const urlObj = new URL(result.apiUrl);
+        urlObj.searchParams.delete('key');
+        const cleanUrl = urlObj.toString();
+        
+        wrapper.innerHTML = `
+            <div class="message-sender">
+                You 
+                <span class="copy-msg-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
+            </div>
+            <div class="message-bubble">
+                <div id="${msgId}">Generated ${result.type}</div>
+                ${mediaHtml}
+                <div style="margin-top: 8px; font-size: 0.8em;">
+                    <a href="${cleanUrl}" target="_blank" style="color: var(--user-msg-text); opacity: 0.8;">View Original</a>
+                </div>
+            </div>
+        `;
+        
+        chatContainer.appendChild(wrapper);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        
+        showNotification(`${result.type === 'video' ? 'Video' : 'Image'} inserted into chat`);
+    }
+
+    // Function to open an image directly in the studio
+    window.openImageInStudio = function(imageUrl) {
+        openMediaStudio();
+        
+        // Clear existing references
+        mediaState.referenceImages.forEach(img => {
+            if (img.type === 'file') URL.revokeObjectURL(img.previewUrl);
+        });
+        mediaState.referenceImages = [];
+        
+        // Add the clicked image as reference
+        addMediaReferenceImage(imageUrl, 'url');
+        
+        // Set to edit mode
+        mediaModeSelect.value = 'image-edit';
+        updateMediaStudioUI();
+        
+        showNotification('Image loaded into studio');
+    };
+
+    // ==========================================
+    // === MEDIA STUDIO FUNCTIONS END HERE ===
+    // ==========================================
+
+    // Load available voices from API
+    loadAvailableVoices();
+
+    // --- Initialize App ---
+    loadAllDataFromStorage();
+
+    console.log("Chat application with media studio initialized successfully!");
+    console.log("Press Ctrl+Shift+P to toggle code preview");
+    console.log("Click the camera icon to open the Media Studio");
+
+</script>
+</body>
+</html>
