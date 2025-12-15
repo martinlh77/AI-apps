@@ -34,6 +34,7 @@
             border-radius: 15px;
             border: 3px solid #2d5016;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 10;
         }
 
         #score {
@@ -43,29 +44,57 @@
             text-shadow: 2px 2px 0px #90EE90;
         }
 
-        #gameOver {
+        #round {
+            font-size: 20px;
+            color: #2d5016;
+            margin-top: 5px;
+        }
+
+        #timer {
+            font-size: 24px;
+            color: #FF4500;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        #roundTransition {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
+            padding: 40px 60px;
             border-radius: 20px;
             border: 5px solid #2d5016;
             text-align: center;
             display: none;
             box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            z-index: 100;
         }
 
-        #gameOver h1 {
+        #roundTransition h1 {
             color: #2d5016;
             margin-bottom: 20px;
-            font-size: 36px;
+            font-size: 48px;
+            animation: pulse 0.5s ease-in-out infinite;
         }
 
-        #gameOver p {
-            font-size: 20px;
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        #roundTransition p {
+            font-size: 24px;
             margin: 10px 0;
+            color: #FF4500;
+        }
+
+        .pun {
+            font-style: italic;
+            color: #2d5016;
+            font-size: 18px;
+            margin-top: 15px;
         }
 
         button {
@@ -95,12 +124,14 @@
     <canvas id="gameCanvas"></canvas>
     <div id="scoreBoard">
         <div id="score">Score: 0 🪰</div>
+        <div id="round">Round: 1</div>
+        <div id="timer">Time: 60s</div>
     </div>
-    <div id="gameOver">
-        <h1>Ribbit! Game Over! 🐸</h1>
-        <p id="finalScore"></p>
-        <p>That frog's got quite the ap-fly-tite! 😄</p>
-        <button onclick="location.reload()">Hop Again!</button>
+    <div id="roundTransition">
+        <h1 id="transitionTitle">Round 2!</h1>
+        <p id="transitionMessage">Things are getting BUG-NANAS! 🍌🪰</p>
+        <p class="pun" id="transitionPun">Hope you're not feeling too fly-gued!</p>
+        <button onclick="startNextRound()">Hop To It!</button>
     </div>
 
     <script>
@@ -112,12 +143,17 @@
 
         // Game state - keeping track of our amphibian's appetite
         let score = 0;
+        let currentRound = 1;
         let gameActive = true;
         let tongueActive = false;
         let tongueX = 0;
         let tongueY = 0;
         let tongueProgress = 0;
         let tongueSpeed = 0.15;
+        let roundTimer = 60;
+        let timerInterval = null;
+        let spawnInterval = null;
+        let speedMultiplier = 1;
 
         // Frog object - the star of our show (no autographs, please)
         const frog = {
@@ -141,7 +177,21 @@
         // Bug army - they don't stand a chance against our tongue-fu master!
         let bugs = [];
 
-        // Spawn bugs - like a bug factory, but less creepy
+        // Hilarious puns for round transitions - because I'm a comedy genius (and modest too!)
+        const roundPuns = [
+            "Hope you're not feeling too fly-gued!",
+            "Time to really BEETLE the odds!",
+            "Don't worry, bee happy! ...wait, DO worry!",
+            "This is un-BEE-lievable!",
+            "You're really on a roll... or should I say, a lily pad!",
+            "Hop you can handle this!",
+            "Things are about to get toad-ally crazy!",
+            "You're killing it! Unlike those bugs you're eating...",
+            "Ribbit or leave it, here comes another round!",
+            "I'd make a joke about flies, but it might not land well!"
+        ];
+
+        // Spawn bugs - like a bug factory, but less creepy and MORE INTENSE
         function spawnBug() {
             if (!gameActive) return;
             
@@ -152,25 +202,83 @@
             bugs.push({
                 x: Math.random() * canvas.width,
                 y: Math.random() * (canvas.height - 150),
-                vx: (Math.random() - 0.5) * bugData.speed,
-                vy: (Math.random() - 0.5) * bugData.speed,
+                vx: (Math.random() - 0.5) * bugData.speed * speedMultiplier,
+                vy: (Math.random() - 0.5) * bugData.speed * speedMultiplier,
                 type: type,
                 size: bugData.size,
                 rotation: Math.random() * Math.PI * 2
             });
         }
 
-        // Initial bug population - the early bird gets the worm, but the frog gets EVERYTHING
-        for (let i = 0; i < 8; i++) {
-            spawnBug();
-        }
-
-        // Keep spawning bugs - because one does not simply run out of flying snacks
-        setInterval(() => {
-            if (gameActive && bugs.length < 15) {
+        // Initial bug population - TRIPLE the chaos!
+        function initializeRound() {
+            bugs = [];
+            const initialBugCount = 25; // Way more bugs than before!
+            for (let i = 0; i < initialBugCount; i++) {
                 spawnBug();
             }
-        }, 2000);
+        }
+
+        // Start spawning bugs at a frantic pace - it's raining bugs, hallelujah!
+        function startBugSpawning() {
+            if (spawnInterval) clearInterval(spawnInterval);
+            
+            // Spawn faster as rounds progress - because why not make it EXTRA spicy?
+            const spawnRate = Math.max(300, 800 - (currentRound * 50));
+            
+            spawnInterval = setInterval(() => {
+                if (gameActive && bugs.length < 50 + (currentRound * 5)) {
+                    spawnBug();
+                }
+            }, spawnRate);
+        }
+
+        // Round timer - tick tock, better catch those bugs!
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            roundTimer = 60;
+            
+            timerInterval = setInterval(() => {
+                if (!gameActive) return;
+                
+                roundTimer--;
+                document.getElementById('timer').textContent = `Time: ${roundTimer}s`;
+                
+                if (roundTimer <= 0) {
+                    endRound();
+                }
+            }, 1000);
+        }
+
+        // End round and show transition - intermission for our amphibious athlete!
+        function endRound() {
+            gameActive = false;
+            clearInterval(timerInterval);
+            clearInterval(spawnInterval);
+            
+            currentRound++;
+            speedMultiplier += 0.3; // Bugs get 30% faster each round - they've been hitting the gym!
+            
+            const transitionDiv = document.getElementById('roundTransition');
+            document.getElementById('transitionTitle').textContent = `Round ${currentRound}!`;
+            document.getElementById('transitionMessage').textContent = 
+                `Speed Multiplier: ${speedMultiplier.toFixed(1)}x 🚀`;
+            document.getElementById('transitionPun').textContent = 
+                roundPuns[Math.min(currentRound - 2, roundPuns.length - 1)];
+            
+            transitionDiv.style.display = 'block';
+        }
+
+        // Start next round - back to the grind!
+        function startNextRound() {
+            document.getElementById('roundTransition').style.display = 'none';
+            document.getElementById('round').textContent = `Round: ${currentRound}`;
+            gameActive = true;
+            
+            initializeRound();
+            startBugSpawning();
+            startTimer();
+        }
 
         // Draw frog - our handsome green friend (he does his own stunts!)
         function drawFrog() {
@@ -248,12 +356,12 @@
             });
         }
 
-        // Update bugs - making them fly like they've had too much sugar
+        // Update bugs - making them fly like they've had too much sugar AND espresso!
         function updateBugs() {
             bugs.forEach(bug => {
                 bug.x += bug.vx;
                 bug.y += bug.vy;
-                bug.rotation += 0.05;
+                bug.rotation += 0.05 * speedMultiplier;
                 
                 // Bounce off walls - no escape from the frog's domain!
                 if (bug.x < 0 || bug.x > canvas.width) bug.vx *= -1;
@@ -288,7 +396,7 @@
         });
 
         function handleShoot(e) {
-            if (!gameActive || tongueActive) return;
+                        if (!gameActive || tongueActive) return;
             
             const rect = canvas.getBoundingClientRect();
             const clickX = e.clientX - rect.left;
@@ -317,7 +425,7 @@
                     if (dist < bug.size + 10) {
                         score += bugTypes[bug.type].points;
                         document.getElementById('score').textContent = `Score: ${score} 🪰`;
-                        return false; // Bug goes bye-bye!
+                        return false; // Bug goes bye-bye to flavor town!
                     }
                     return true;
                 });
@@ -333,8 +441,6 @@
 
         // Main game loop - where the magic happens (and by magic, I mean tongue physics)
         function gameLoop() {
-            if (!gameActive) return;
-            
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
@@ -342,10 +448,12 @@
             ctx.fillStyle = '#228B22';
             ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
             
-            // Update everything
-            updateFrog();
-            updateBugs();
-            updateTongue();
+            if (gameActive) {
+                // Update everything
+                updateFrog();
+                updateBugs();
+                updateTongue();
+            }
             
             // Draw everything
             drawBugs();
@@ -365,15 +473,14 @@
             frog.y = canvas.height - 80;
         });
 
-        // Optional: Game over after 60 seconds - even frogs need a lunch break!
-        setTimeout(() => {
-            gameActive = false;
-            document.getElementById('finalScore').textContent = `Final Score: ${score} points!`;
-            document.getElementById('gameOver').style.display = 'block';
-        }, 60000);
-
-        // Start the game! Let's get this show on the pond!
-        console.log("🐸 Froggy says: 'Time to catch some grub! Hope these bugs don't fly the coop... wait, wrong animal again!' 🐸");
+        // Initialize the game - LET'S GET HOPPIN'!
+        console.log("🐸 Froggy says: 'Welcome to the NEVER-ENDING bug buffet! I hope you brought your appetite... and your A-game!' 🐸");
+        console.log("🪰 Each round lasts 60 seconds and the bugs get FASTER! Good luck, you'll need it!");
+        console.log("💡 Pro tip: Don't try to eat your actual screen. Trust me on this one.");
+        
+        initializeRound();
+        startBugSpawning();
+        startTimer();
         gameLoop();
     </script>
 </body>
