@@ -1,0 +1,229 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Two‑Step Fraction Equations – Quick Play (v4, offline)</title>
+  <style>
+    :root { --bg:#f7fafc; --panel:#fff; --border:#e5e7eb; --text:#0f172a; --muted:#475569; --good:#16a34a; --bad:#ef4444; --hint:#f59e0b; --accent:#10b981; --accent2:#6366f1; }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:var(--bg); color:var(--text); margin:0}
+    header{background:linear-gradient(90deg,#a7f3d0,#93c5fd); padding:16px}
+    h1{margin:0; font-size:22px}
+    main{max-width:880px; margin:16px auto; padding:0 12px}
+    .card{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 6px 20px rgba(0,0,0,0.06)}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .equation{font-size:28px; font-weight:800}
+    input[type=text]{padding:10px 12px; border:1px solid var(--border); border-radius:12px; font-size:18px; width:220px}
+    button{background:var(--accent); color:#064e3b; border:none; border-radius:12px; padding:10px 14px; font-weight:700; cursor:pointer}
+    button.secondary{background:var(--accent2); color:#111827}
+    button:disabled{opacity:0.6; cursor:not-allowed}
+    .small{color:var(--muted); font-size:14px}
+    .good{color:var(--good)}
+    .bad{color:var(--bad)}
+    .hint{color:var(--hint)}
+    .pill{display:inline-block; padding:4px 8px; border:1px solid var(--border); border-radius:999px; background:#ecfeff}
+    .score{font-weight:800}
+    canvas{border:1px solid var(--border); border-radius:12px; background:#fff}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Two‑Step Fraction Equations – Quick Play (Offline)</h1>
+    <div class="small">No internet, APIs, or external media required. Enter the final value of <strong>x</strong>. Parentheses: <em>divide by the outside factor first</em>, then remove the constant. Equations show <strong>proper fractions</strong> or <strong>mixed numbers</strong> only.</div>
+  </header>
+  <main>
+    <section class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <span class="pill">Mode</span>
+          <select id="mode">
+            <option value="random">🎲 Random</option>
+            <option value="standard">Regular fractions (proper only)</option>
+            <option value="paren">With parentheses (divide first)</option>
+            <option value="mixed">Mixed‑number coefficients</option>
+            <option value="word">Word problems</option>
+          </select>
+          <span class="pill">Denominator Max</span>
+          <select id="denom">
+            <option selected>6</option>
+            <option>8</option>
+          </select>
+          <span class="pill">Solution Range</span>
+          <select id="range">
+            <option value="5">±5</option>
+            <option value="10" selected>±10</option>
+          </select>
+        </div>
+        <div>
+          <button id="newBtn" class="secondary" type="button">New Question</button>
+        </div>
+      </div>
+      <hr />
+      <div id="context" class="small"></div>
+      <div id="eq" class="equation">(1/2)x + 1/4 = 3/4</div>
+      <div class="row" style="margin-top:12px">
+        <label for="answer"><strong>Answer:</strong> x = </label>
+        <input id="answer" type="text" placeholder="e.g., 3/2 or 1 1/2" />
+        <button id="checkBtn" type="button">Check</button>
+        <button id="hintBtn" class="secondary" type="button">Hint</button>
+      </div>
+      <div id="feedback" style="margin-top:8px"></div>
+      <div style="margin-top:12px" class="small">+10 per correct. Every <strong>3 correct</strong> earns a <strong>play credit</strong> for the mini‑game.</div>
+      <div style="margin-top:8px">Score: <span id="score" class="score">0</span> | Streak: <span id="streak" class="score">0</span> | Correct total: <span id="total" class="score">0</span> | Play credits: <span id="credits" class="score">0</span></div>
+    </section>
+
+    <section id="gameSection" class="card" style="margin-top:16px">
+      <h3>🎮 Mini‑Game: Star Catcher (Offline)</h3>
+      <div class="small">Use ◀ ▶ to move the paddle. Collect as many stars as you can in <strong>45 seconds</strong>. New stars appear as you play. You need a <strong>play credit</strong> to start.</div>
+      <canvas id="gameCanvas" width="500" height="320"></canvas>
+      <div class="row" style="margin-top:8px">
+        <button id="playBtn" type="button" disabled>Play</button>
+        <div class="small">Stars: <span id="stars">0</span></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // --- Pure offline JavaScript (no APIs) ---
+    function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){let t=b;b=a%b;a=t}return a||1}
+    class Frac{ constructor(n,d=1){ if(d===0) throw new Error('zero denom'); this.n=n; this.d=d; this.simplify(); }
+      static from(x){ if(x instanceof Frac) return new Frac(x.n,x.d); const s=(''+x).trim();
+        if(/^[-+]?\d+$/.test(s)) return new Frac(parseInt(s,10),1);
+        if(/^[-+]?\d+\s+\d+\/\d+$/.test(s)){ const [w,f]=s.split(/\s+/); const [fn,fd]=f.split('/').map(Number); const W=parseInt(w,10); const sign=W<0?-1:1; const absW=Math.abs(W); return new Frac(sign*(absW*fd+fn),fd); }
+        if(/^[-+]?\d+\/\d+$/.test(s)){ const [n,d]=s.split('/').map(Number); return new Frac(n,d); }
+        if(/^[-+]?\d*\.\d+$/.test(s)){ const num=parseFloat(s); const d=1000; return new Frac(Math.round(num*d),d).simplify(); }
+        throw new Error('bad fraction'); }
+      simplify(){ const s=this.d<0?-1:1; this.n*=s; this.d*=s; const g=gcd(this.n,this.d); this.n/=g; this.d/=g; return this }
+      add(f){f=Frac.from(f);return new Frac(this.n*f.d+f.n*this.d,this.d*f.d)}
+      sub(f){f=Frac.from(f);return new Frac(this.n*f.d-f.n*this.d,this.d*f.d)}
+      mul(f){f=Frac.from(f);return new Frac(this.n*f.n,this.d*f.d)}
+      div(f){f=Frac.from(f); if(f.n===0) throw new Error('div0'); return new Frac(this.n*f.d,this.d*f.n)}
+      toString(){ return this.d===1? ''+this.n : this.n+'/'+this.d }
+      toMixedString(){ const n=this.n,d=this.d; const sign=n<0?'-':''; const absn=Math.abs(n); const whole=Math.floor(absn/d); const rem=absn%d; if(rem===0) return sign+whole; if(whole===0) return sign+rem+'/'+d; return sign+whole+' '+rem+'/'+d; }
+    }
+    function ri(min,max){ return Math.floor(Math.random()*(max-min+1))+min }
+    function choice(a){ return a[Math.floor(Math.random()*a.length)] }
+
+    // Helpers
+    function fmt(fr){ fr=Frac.from(fr); const absn=Math.abs(fr.n); if(absn>=fr.d) return fr.toMixedString(); return fr.toString(); }
+    function properRand(denMax){ const d=ri(2,denMax); const n=ri(1,d-1); return new Frac(n,d); }
+
+    let current=null, score=0, streak=0, total=0, credits=0, autoNextTimer=null;
+
+    function newProblem(){ try{
+      const mode=document.getElementById('mode').value;
+      const maxD=parseInt(document.getElementById('denom').value,10);
+      const range=parseInt(document.getElementById('range').value,10);
+      const type = mode==='random'? choice(['standard','paren','mixed','word']) : mode;
+      if(type==='standard') current=makeStandard(maxD,range);
+      else if(type==='paren') current=makeParen(maxD,range);
+      else if(type==='mixed') current=makeMixed(maxD,range);
+      else if(type==='word') current=makeWord();
+      document.getElementById('eq').textContent=current.eq;
+      document.getElementById('context').textContent=current.context;
+      document.getElementById('answer').value='';
+      document.getElementById('answer').focus();
+      setFeedback('','');
+    }catch(e){ setFeedback('Error creating problem: '+e.message,'bad'); }
+    }
+
+    function makeStandard(maxD, range){
+      const coef=properRand(maxD), constT=properRand(maxD), sign=choice(['+','-']);
+      const x=Frac.from(ri(-range,range));
+      const left=coef.mul(x); const rhs = sign==='+'? left.add(constT) : left.sub(constT);
+      return { eq:`${fmt(coef)}x ${sign} ${fmt(constT)} = ${fmt(rhs)}`, context:'Regular fractions: remove the constant, then undo the coefficient.', solution:x };
+    }
+    function makeParen(maxD, range){
+      const k=properRand(maxD), c=properRand(maxD), sign=choice(['+','-']);
+      const x=Frac.from(ri(-range,range)); const inner= sign==='+'? x.add(c): x.sub(c); const rhs=k.mul(inner);
+      return { eq:`${fmt(k)}(x ${sign} ${fmt(c)}) = ${fmt(rhs)}`, context:'Divide by the outside factor first. Then remove the constant (no distribution).', solution:x };
+    }
+    function makeMixed(maxD, range){
+      const whole=ri(1,3), n=ri(1,maxD), d=ri(2,maxD); const coef=new Frac(whole*d+n,d);
+      const c=properRand(maxD); const sign=choice(['+','-']); const x=Frac.from(ri(-range,range));
+      const left=coef.mul(x); const rhs= sign==='+'? left.add(c): left.sub(c);
+      return { eq:`${whole} ${n}/${d}x ${sign} ${fmt(c)} = ${fmt(rhs)}`, context:'Undo the constant, then multiply by the reciprocal of the mixed‑number coefficient.', solution:x };
+    }
+    function makeWord(){
+      const items=[
+        {text:'Recipe: 1/2 cup per batch + 1/4 extra. Total 3/4. Find b.', eq:'(1/2)b + 1/4 = 3/4', sol:new Frac(1,1)},
+        {text:'Fabric: 1 1/3 yd per strip. 16 yd roll, 4 yd left. Find s.', eq:'(1 1/3)s + 4 = 16', sol:new Frac(9,1)},
+        {text:'Rows: 4 rows each: p plants + 1/2 walkway. Total 10. Find p.', eq:'4(p + 1/2) = 10', sol:new Frac(2,1)},
+        {text:'Study: 2 days: h hours/day + 1 1/2 extra total. 7 hours total. Find h.', eq:'2(h + 1 1/2) = 7', sol:new Frac(2,1)}
+      ];
+      const w=choice(items); return { eq:w.eq, context:w.text, solution:w.sol };
+    }
+
+    function setFeedback(text, cls){ const fb=document.getElementById('feedback'); fb.innerHTML = text? `<div class="${cls}">${text}</div>`:''; }
+
+    function check(){ try{
+      const ans=document.getElementById('answer').value.trim(); if(!ans){ setFeedback('Type an answer for x. Example: 3/2 or 1 1/2.','hint'); return; }
+      let ok=false; try{ const guess=Frac.from(ans); ok = (guess.n===current.solution.n && guess.d===current.solution.d); }catch(e){ setFeedback('Use a valid fraction or mixed number format.','bad'); return; }
+      if(ok){ score+=10; streak++; total++; setFeedback('✅ <strong>Correct!</strong> Great work.','good'); updateScore(); if(total%3===0){ credits++; updateScore(); setFeedback('✅ <strong>Correct!</strong> Great work. 🎉 Play credit earned!','good'); document.getElementById('playBtn').disabled = false; }
+        if(autoNextTimer) clearTimeout(autoNextTimer); autoNextTimer = setTimeout(()=>{ newProblem(); }, 1500);
+      } else { streak=0; setFeedback('❌ Not quite. Try a different fraction or use the hint.','bad'); updateScore(); }
+    }catch(e){ setFeedback('Error checking answer: '+e.message,'bad'); }
+    }
+
+    function updateScore(){
+      document.getElementById('score').textContent=score;
+      document.getElementById('streak').textContent=streak;
+      document.getElementById('total').textContent=total;
+      document.getElementById('credits').textContent=credits;
+    }
+
+    function hint(){ const ctx=current.context || 'Remove the constant, then undo the coefficient.'; setFeedback('Hint: '+ctx,'hint'); }
+
+    // Bind events with explicit button types to avoid form submits in some containers
+    document.getElementById('newBtn').addEventListener('click', newProblem);
+    document.getElementById('checkBtn').addEventListener('click', check);
+    document.getElementById('hintBtn').addEventListener('click', hint);
+    document.getElementById('answer').addEventListener('keydown', (e)=>{ if(e.key==='Enter') check(); });
+
+    // Init
+    newProblem();
+
+    // --- Mini‑Game: Star Catcher (no audio, offline) ---
+    const canvas=document.getElementById('gameCanvas'); const ctxg=canvas.getContext('2d');
+    let running=false;
+    document.getElementById('playBtn').addEventListener('click', ()=>{ if(!running && credits>0){ credits--; updateScore(); startGame(); } });
+
+    function startGame(){
+      running=true;
+      document.getElementById('playBtn').disabled = true;
+      let paddle={x:canvas.width/2-45,y:canvas.height-22,w:90,h:10};
+      let ball={x:canvas.width/2,y:canvas.height/2,vx:2.4,vy:-2.4,r:8};
+      let stars=0; let items=[]; let time=45; document.getElementById('stars').textContent='0';
+      for(let i=0;i<12;i++){ items.push(makeStar()); }
+      const keys={left:false,right:false};
+      window.onkeydown=(e)=>{ if(e.key==='ArrowLeft') keys.left=true; if(e.key==='ArrowRight') keys.right=true; };
+      window.onkeyup=(e)=>{ if(e.key==='ArrowLeft') keys.left=false; if(e.key==='ArrowRight') keys.right=false; };
+      const spawn = setInterval(()=>{ items.push(makeStar()); }, 1800);
+      const timer = setInterval(()=>{ time--; if(time<=0){ endGame(); } },1000);
+
+      function makeStar(){ return {x:ri(20,canvas.width-20), y:ri(20,canvas.height-60), r:6, taken:false}; }
+      function endGame(){ clearInterval(timer); clearInterval(spawn); running=false; setFeedback('⏱️ Time! Stars collected: '+stars+'. Earn 3 more correct answers to play again.','good'); document.getElementById('playBtn').disabled = (credits<=0); }
+      function loop(){ if(!running){ draw(); return; } update(); draw(); requestAnimationFrame(loop); }
+      function update(){
+        if(keys.left) paddle.x-=6; if(keys.right) paddle.x+=6; paddle.x=Math.max(0,Math.min(canvas.width-paddle.w,paddle.x));
+        ball.x+=ball.vx; ball.y+=ball.vy; if(ball.x-ball.r<0||ball.x+ball.r>canvas.width) ball.vx*=-1; if(ball.y-ball.r<0) ball.vy*=-1;
+        if(ball.y+ball.r>=paddle.y && ball.x>paddle.x && ball.x<paddle.x+paddle.w){ ball.vy=-Math.abs(ball.vy); }
+        if(ball.y-ball.r>canvas.height){ ball.x=canvas.width/2; ball.y=canvas.height/2; ball.vx=2.4; ball.vy=-2.4; }
+        items.forEach(it=>{ const dx=ball.x-it.x, dy=ball.y-it.y; if(!it.taken && Math.hypot(dx,dy) < ball.r+it.r){ it.taken=true; stars++; document.getElementById('stars').textContent=stars; } });
+        items = items.filter(it=>!it.taken);
+      }
+      function draw(){
+        ctxg.clearRect(0,0,canvas.width,canvas.height);
+        const g=ctxg.createLinearGradient(0,0,0,canvas.height); g.addColorStop(0,'#dbeafe'); g.addColorStop(1,'#ecfeff'); ctxg.fillStyle=g; ctxg.fillRect(0,0,canvas.width,canvas.height);
+        ctxg.fillStyle='#10b981'; ctxg.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);
+        ctxg.fillStyle='#6366f1'; ctxg.beginPath(); ctxg.arc(ball.x,ball.y,ball.r,0,Math.PI*2); ctxg.fill();
+        items.forEach(it=>{ ctxg.fillStyle='#f59e0b'; ctxg.beginPath(); ctxg.arc(it.x,it.y,it.r,0,Math.PI*2); ctxg.fill(); });
+        ctxg.fillStyle='#334155'; ctxg.font='14px system-ui'; ctxg.fillText('Time: '+time+'s', 10, 18);
+      }
+      loop();
+    }
+  </script>
+</body>
+</html>
