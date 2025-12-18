@@ -382,79 +382,50 @@
             timelineSelection.style.width = widthPercent + '%';
         }
 
-// Trim video
-trimBtn.addEventListener('click', async () => {
-    const startTime = parseFloat(startTimeInput.value) || 0;
-    const endTime = parseFloat(endTimeInput.value);
+        // Trim video
+        trimBtn.addEventListener('click', async () => {
+            const startTime = parseFloat(startTimeInput.value) || 0;
+            const endTime = parseFloat(endTimeInput.value);
 
-    if (startTime >= endTime) {
-        showError('Start time must be before end time. Physics, you know? ⏰');
-        return;
-    }
+            if (startTime >= endTime) {
+                showError('Start time must be before end time. Physics, you know? ⏰');
+                return;
+            }
 
-    if (!currentVideoFile) {
-        showError('No video loaded. Did you forget something? 🤔');
-        return;
-    }
+            if (!currentVideoFile) {
+                showError('No video loaded. Did you forget something? 🤔');
+                return;
+            }
 
-    try {
-        hideError();
-        progress.style.display = 'block';
-        progressText.textContent = 'Loading FFmpeg... (this might take a moment)';
-        trimBtn.disabled = true;
+            try {
+                hideError();
+                progress.style.display = 'block';
+                progressText.textContent = 'Loading FFmpeg... (this might take a moment)';
+                trimBtn.disabled = true;
 
-        await loadFFmpeg();
+                await loadFFmpeg();
 
-        progressText.textContent = 'Writing video to memory...';
-        await ffmpeg.writeFile('input.mp4', await fetchFile(currentVideoFile));
+                progressText.textContent = 'Writing video to memory...';
+                await ffmpeg.writeFile('input.mp4', await fetchFile(currentVideoFile));
 
-        const duration = endTime - startTime;
-        progressText.textContent = 'Trimming video... ✂️ (re-encoding for compatibility)';
+                progressText.textContent = 'Trimming video... ✂️ (re-encoding for compatibility)';
 
-        // FFmpeg command: trim with re-encoding for better compatibility
-        await ffmpeg.exec([
-            '-i', 'input.mp4',
-            '-ss', startTime.toString(),
-            '-to', endTime.toString(),
-            '-c:v', 'libx264',       // H.264 video codec
-            '-preset', 'veryfast',   // Encoding speed (ultrafast/veryfast/fast/medium)
-            '-crf', '23',            // Quality level (18-28, lower = better)
-            '-c:a', 'aac',           // AAC audio codec
-            '-b:a', '128k',          // Audio bitrate
-            '-movflags', '+faststart', // Web optimization
-            'output.mp4'
-        ]);
+                // FFmpeg command: trim with re-encoding for better compatibility
+                await ffmpeg.exec([
+                    '-i', 'input.mp4',
+                    '-ss', startTime.toString(),
+                    '-to', endTime.toString(),
+                    '-c:v', 'libx264',       // H.264 video codec
+                    '-preset', 'veryfast',   // Encoding speed (ultrafast/veryfast/fast/medium)
+                    '-crf', '23',            // Quality level (18-28, lower = better)
+                    '-c:a', 'aac',           // AAC audio codec
+                    '-b:a', '128k',          // Audio bitrate
+                    '-movflags', '+faststart', // Web optimization
+                    'output.mp4'
+                ]);
 
-        progressText.textContent = 'Reading trimmed video...';
-        const data = await ffmpeg.readFile('output.mp4');
-
-        // Create download
-        const blob = new Blob([data.buffer], { type: 'video/mp4' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        const nameWithoutExt = currentVideoName.replace(/\.[^/.]+$/, '');
-        a.download = `${nameWithoutExt}_trimmed.mp4`;
-        a.click();
-
-        // Cleanup
-        await ffmpeg.deleteFile('input.mp4');
-        await ffmpeg.deleteFile('output.mp4');
-
-        progressText.textContent = '✅ Done! Your trimmed video is downloading.';
-        setTimeout(() => {
-            progress.style.display = 'none';
-        }, 3000);
-
-    } catch (error) {
-        showError(`Failed to trim video: ${error.message || 'Unknown error'} 😤`);
-        console.error('Full error:', error);
-        progress.style.display = 'none';
-    } finally {
-        trimBtn.disabled = false;
-    }
-});
+                progressText.textContent = 'Reading trimmed video...';
+                const data = await ffmpeg.readFile('output.mp4');
 
                 // Create download
                 const blob = new Blob([data.buffer], { type: 'video/mp4' });
@@ -476,8 +447,8 @@ trimBtn.addEventListener('click', async () => {
                 }, 3000);
 
             } catch (error) {
-                showError('Failed to trim video. Maybe try shorter segments? 🤷‍♂️');
-                console.error(error);
+                showError(`Failed to trim video: ${error.message || 'Unknown error'} 😤`);
+                console.error('Full error:', error);
                 progress.style.display = 'none';
             } finally {
                 trimBtn.disabled = false;
