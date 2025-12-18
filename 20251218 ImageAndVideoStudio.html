@@ -344,6 +344,7 @@
                                 <select id="aspectRatioSelect" class="w-full">
                                     <option value="16:9">16:9 (Landscape)</option>
                                     <option value="9:16">9:16 (Portrait)</option>
+                                    <option value="1:1">1:1 (Square)</option>
                                 </select>
                             </div>
                             <div>
@@ -525,6 +526,7 @@
             const hasCustomKey = apiKeyInput.value.trim().length > 0;
             const veoOption = modelSelect.querySelector('option[value="veo"]');
             const nanobananaProOption = modelSelect.querySelector('option[value="nanobanana-pro"]');
+            const seedanceOption = modelSelect.querySelector('option[value="seedance"]');
             
             if (veoOption) {
                 veoOption.disabled = !hasCustomKey;
@@ -541,6 +543,14 @@
                     updateUIForModel();
                 }
             }
+            
+            if (seedanceOption) {
+                seedanceOption.disabled = !hasCustomKey;
+                if (!hasCustomKey && modelSelect.value === 'seedance') {
+                    modelSelect.value = 'zimage';
+                    updateUIForModel();
+                }
+            }
         }
 
         // --- Utility Functions ---
@@ -551,10 +561,17 @@
             else if (type === 'success') className = 'bg-green-500 text-white p-3 rounded-lg text-center';
             else className = 'bg-blue-500 text-white p-3 rounded-lg text-center';
 
-            messageArea.innerHTML = `<div class="${className}">${html}</div>`;
-            setTimeout(() => {
-                messageArea.innerHTML = '';
-            }, 7000); 
+            const dismissBtn = type === 'error' 
+                ? '<button onclick="this.parentElement.remove()" class="ml-3 px-3 py-1 bg-white/20 hover:bg-white/30 rounded font-semibold">✕ Dismiss</button>' 
+                : '';
+            
+            messageArea.innerHTML = `<div class="${className}">${html}${dismissBtn}</div>`;
+            
+            if (type !== 'error') {
+                setTimeout(() => {
+                    messageArea.innerHTML = '';
+                }, 7000); 
+            }
         }
 
         function getRandomSeed() {
