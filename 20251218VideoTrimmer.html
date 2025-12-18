@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Trimmer - Because Scissors Don't Work on Videos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="file"],
+        input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="file"]:focus,
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .video-container {
+            display: none;
+            margin: 30px 0;
+        }
+
+        video {
+            width: 100%;
+            max-height: 500px;
+            border-radius: 12px;
+            background: #000;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .time-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input[type="number"] {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .timeline {
+            margin: 20px 0;
+        }
+
+        .timeline-bar {
+            position: relative;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 8px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .timeline-selection {
+            position: absolute;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.4);
+            border-left: 3px solid #667eea;
+            border-right: 3px solid #667eea;
+        }
+
+        .progress {
+            display: none;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #d32f2f;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .time-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Video Trimmer</h1>
+        <p class="subtitle">For when you recorded way too much footage</p>
+
+        <div class="upload-section">
+            <div class="input-group">
+                <label for="fileUpload">📁 Upload a Video File</label>
+                <input type="file" id="fileUpload" accept="video/*">
+            </div>
+
+            <div class="input-group">
+                <label for="urlInput">🔗 Or Paste a Direct Video URL</label>
+                <input type="url" id="urlInput" placeholder="https://example.com/video.mp4">
+                <button class="btn" id="loadUrlBtn" style="margin-top: 10px;">Load URL</button>
+            </div>
+        </div>
+
+        <div class="error" id="errorMsg"></div>
+
+        <div class="video-container" id="videoContainer">
+            <video id="videoPlayer" controls crossorigin="anonymous"></video>
+
+            <div class="controls">
+                <div class="timeline">
+                    <label>Timeline Preview</label>
+                    <div class="timeline-bar" id="timelineBar">
+                        <div class="timeline-selection" id="timelineSelection"></div>
+                    </div>
+                </div>
+
+                <div class="time-inputs">
+                    <div class="time-group">
+                        <label for="startTime">⏱️ Start Time (seconds)</label>
+                        <input type="number" id="startTime" value="0" min="0" step="0.1">
+                        <button class="btn" id="setStartBtn" style="margin-top: 5px;">Set to Current</button>
+                    </div>
+                    <div class="time-group">
+                        <label for="endTime">⏱️ End Time (seconds)</label>
+                        <input type="number" id="endTime" value="0" min="0" step="0.1">
+                        <button class="btn" id="setEndBtn" style="margin-top: 5px;">Set to Current</button>
+                    </div>
+                </div>
+
+                <div style="text-align: center;">
+                    <button class="btn" id="trimBtn">✂️ Trim & Download Video</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress" id="progress">
+            <div class="spinner"></div>
+            <p id="progressText">Processing your video... Go grab a coffee ☕</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+
+    <script>
+        const { FFmpeg } = FFmpegWASM;
+        const { fetchFile, toBlobURL } = FFmpegUtil;
+
+        let ffmpeg = null;
+        let currentVideoFile = null;
+        let currentVideoName = 'video.mp4';
+
+        const fileUpload = document.getElementById('fileUpload');
+        const urlInput = document.getElementById('urlInput');
+        const loadUrlBtn = document.getElementById('loadUrlBtn');
+        const videoContainer = document.getElementById('videoContainer');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const startTimeInput = document.getElementById('startTime');
+        const endTimeInput = document.getElementById('endTime');
+        const setStartBtn = document.getElementById('setStartBtn');
+        const setEndBtn = document.getElementById('setEndBtn');
+        const trimBtn = document.getElementById('trimBtn');
+        const progress = document.getElementById('progress');
+        const progressText = document.getElementById('progressText');
+        const errorMsg = document.getElementById('errorMsg');
+        const timelineSelection = document.getElementById('timelineSelection');
+
+        // Initialize FFmpeg (lazily, because it's chunky)
+        async function loadFFmpeg() {
+            if (ffmpeg) return;
+            
+            try {
+                ffmpeg = new FFmpeg();
+                
+                const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+                await ffmpeg.load({
+                    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                });
+
+                ffmpeg.on('log', ({ message }) => {
+                    console.log(message);
+                });
+
+                ffmpeg.on('progress', ({ progress: p }) => {
+                    progressText.textContent = `Processing... ${Math.round(p * 100)}%`;
+                });
+            } catch (error) {
+                showError('Failed to load FFmpeg. Try refreshing the page. 🙄');
+                console.error(error);
+            }
+        }
+
+        // Handle file upload
+        fileUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                currentVideoFile = file;
+                currentVideoName = file.name;
+                loadVideo(URL.createObjectURL(file));
+                urlInput.value = '';
+            }
+        });
+
+        // Handle URL load
+        loadUrlBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showError('Um... you need to actually paste a URL first. 🤷');
+                return;
+            }
+
+            try {
+                hideError();
+                progress.style.display = 'block';
+                progressText.textContent = 'Fetching video from URL...';
+
+                const response = await fetch(url);
+                const blob = await response.blob();
+                currentVideoFile = new File([blob], 'video.mp4', { type: blob.type });
+                currentVideoName = url.split('/').pop().split('?')[0] || 'video.mp4';
+                
+                loadVideo(URL.createObjectURL(blob));
+                fileUpload.value = '';
+                progress.style.display = 'none';
+            } catch (error) {
+                showError('Failed to load video from URL. Check if it\'s a direct video link. 🔍');
+                progress.style.display = 'none';
+                console.error(error);
+            }
+        });
+
+        function loadVideo(url) {
+            videoPlayer.src = url;
+            videoContainer.style.display = 'block';
+            hideError();
+
+            videoPlayer.addEventListener('loadedmetadata', () => {
+                endTimeInput.value = videoPlayer.duration.toFixed(2);
+                updateTimeline();
+            });
+
+            videoPlayer.addEventListener('timeupdate', updateTimeline);
+        }
+
+        // Set start/end times
+        setStartBtn.addEventListener('click', () => {
+            startTimeInput.value = videoPlayer.currentTime.toFixed(2);
+            updateTimeline();
+        });
+
+        setEndBtn.addEventListener('click', () => {
+            endTimeInput.value = videoPlayer.currentTime.toFixed(2);
+            updateTimeline();
+        });
+
+        startTimeInput.addEventListener('input', updateTimeline);
+        endTimeInput.addEventListener('input', updateTimeline);
+
+        function updateTimeline() {
+            const duration = videoPlayer.duration;
+            const start = parseFloat(startTimeInput.value) || 0;
+            const end = parseFloat(endTimeInput.value) || duration;
+
+            const startPercent = (start / duration) * 100;
+            const widthPercent = ((end - start) / duration) * 100;
+
+            timelineSelection.style.left = startPercent + '%';
+            timelineSelection.style.width = widthPercent + '%';
+        }
+
+        // Trim video
+        trimBtn.addEventListener('click', async () => {
+            const startTime = parseFloat(startTimeInput.value) || 0;
+            const endTime = parseFloat(endTimeInput.value);
+
+            if (startTime >= endTime) {
+                showError('Start time must be before end time. Physics, you know? ⏰');
+                return;
+            }
+
+            if (!currentVideoFile) {
+                showError('No video loaded. Did you forget something? 🤔');
+                return;
+            }
+
+            try {
+                hideError();
+                progress.style.display = 'block';
+                progressText.textContent = 'Loading FFmpeg... (this might take a moment)';
+                trimBtn.disabled = true;
+
+                await loadFFmpeg();
+
+                progressText.textContent = 'Writing video to memory...';
+                await ffmpeg.writeFile('input.mp4', await fetchFile(currentVideoFile));
+
+                const duration = endTime - startTime;
+                progressText.textContent = 'Trimming video... ✂️';
+
+                // FFmpeg command: trim video while keeping quality
+                await ffmpeg.exec([
+                    '-i', 'input.mp4',
+                    '-ss', startTime.toString(),
+                    '-t', duration.toString(),
+                    '-c', 'copy', // Copy streams without re-encoding (fast!)
+                    'output.mp4'
+                ]);
+
+                progressText.textContent = 'Reading trimmed video...';
+                const data = await ffmpeg.readFile('output.mp4');
+
+                // Create download
+                const blob = new Blob([data.buffer], { type: 'video/mp4' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                const nameWithoutExt = currentVideoName.replace(/\.[^/.]+$/, '');
+                a.download = `${nameWithoutExt}_trimmed.mp4`;
+                a.click();
+
+                // Cleanup
+                await ffmpeg.deleteFile('input.mp4');
+                await ffmpeg.deleteFile('output.mp4');
+
+                progressText.textContent = '✅ Done! Your trimmed video is downloading.';
+                setTimeout(() => {
+                    progress.style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                showError('Failed to trim video. Maybe try shorter segments? 🤷‍♂️');
+                console.error(error);
+                progress.style.display = 'none';
+            } finally {
+                trimBtn.disabled = false;
+            }
+        });
+
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMsg.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
