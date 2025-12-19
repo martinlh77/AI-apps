@@ -181,6 +181,15 @@
             display: none;
         }
 
+        .warning {
+            color: #f57c00;
+            padding: 10px;
+            background: #fff3e0;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -200,6 +209,10 @@
     <div class="container">
         <h1>🎬 Video Trimmer</h1>
         <p class="subtitle">For when you recorded way too much footage</p>
+
+        <div class="warning">
+            ⚠️ Note: This uses single-threaded FFmpeg (slower but more compatible). Large videos may take a while.
+        </div>
 
         <div class="upload-section">
             <div class="input-group">
@@ -285,14 +298,15 @@
         const errorMsg = document.getElementById('errorMsg');
         const timelineSelection = document.getElementById('timelineSelection');
 
-        // Initialize FFmpeg
+        // Initialize FFmpeg with SINGLE-THREADED build (no workers!)
         async function loadFFmpeg() {
             if (ffmpegLoaded) return;
             
             try {
                 ffmpeg = new FFmpeg();
                 
-                const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+                // Use single-threaded core build
+                const baseURL = 'https://unpkg.com/@ffmpeg/core-st@0.12.6/dist/esm';
                 
                 await ffmpeg.load({
                     coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
@@ -304,13 +318,13 @@
                 });
 
                 ffmpeg.on('progress', ({ progress: p }) => {
-                    if (progressText) {
+                    if (progressText && p > 0) {
                         progressText.textContent = `Processing... ${Math.round(p * 100)}%`;
                     }
                 });
 
                 ffmpegLoaded = true;
-                console.log('FFmpeg loaded successfully');
+                console.log('FFmpeg loaded successfully (single-threaded)');
             } catch (error) {
                 showError('Failed to load FFmpeg. Try refreshing the page. 🙄');
                 console.error('FFmpeg load error:', error);
@@ -414,7 +428,7 @@
             try {
                 hideError();
                 progress.style.display = 'block';
-                progressText.textContent = 'Loading FFmpeg... (this might take a moment)';
+                progressText.textContent = 'Loading FFmpeg... (downloading ~32MB, be patient) 🐌';
                 trimBtn.disabled = true;
 
                 await loadFFmpeg();
@@ -426,7 +440,7 @@
                 progressText.textContent = 'Writing video to memory...';
                 await ffmpeg.writeFile('input.mp4', await fetchFile(currentVideoFile));
 
-                progressText.textContent = 'Trimming video... ✂️ (re-encoding for compatibility)';
+                progressText.textContent = 'Trimming video... ✂️ (this will take a moment)';
 
                 await ffmpeg.exec([
                     '-i', 'input.mp4',
