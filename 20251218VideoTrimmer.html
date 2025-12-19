@@ -211,7 +211,7 @@
         <p class="subtitle">For when you recorded way too much footage</p>
 
         <div class="warning">
-            ⚠️ Note: This uses single-threaded FFmpeg (slower but more compatible). Large videos may take a while.
+            ⚠️ First use will download ~32MB. Processing happens in your browser (nothing uploaded to servers).
         </div>
 
         <div class="upload-section">
@@ -265,18 +265,12 @@
         </div>
     </div>
 
-    <script type="importmap">
-    {
-        "imports": {
-            "@ffmpeg/ffmpeg": "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js",
-            "@ffmpeg/util": "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js"
-        }
-    }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 
-    <script type="module">
-        import { FFmpeg } from '@ffmpeg/ffmpeg';
-        import { toBlobURL, fetchFile } from '@ffmpeg/util';
+    <script>
+        const { FFmpeg } = FFmpegWASM;
+        const { fetchFile } = FFmpegUtil;
 
         let ffmpeg = null;
         let ffmpegLoaded = false;
@@ -298,19 +292,19 @@
         const errorMsg = document.getElementById('errorMsg');
         const timelineSelection = document.getElementById('timelineSelection');
 
-        // Initialize FFmpeg with SINGLE-THREADED build (no workers!)
+        // Initialize FFmpeg - using jsdelivr with better CORS
         async function loadFFmpeg() {
             if (ffmpegLoaded) return;
             
             try {
                 ffmpeg = new FFmpeg();
                 
-                // Use single-threaded core build
-                const baseURL = 'https://unpkg.com/@ffmpeg/core-st@0.12.6/dist/esm';
+                // Use jsdelivr CDN which has proper CORS headers
+                const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.12.6/dist/umd';
                 
                 await ffmpeg.load({
-                    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-                    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                    coreURL: `${baseURL}/ffmpeg-core.js`,
+                    wasmURL: `${baseURL}/ffmpeg-core.wasm`,
                 });
 
                 ffmpeg.on('log', ({ message }) => {
@@ -324,9 +318,9 @@
                 });
 
                 ffmpegLoaded = true;
-                console.log('FFmpeg loaded successfully (single-threaded)');
+                console.log('FFmpeg loaded successfully');
             } catch (error) {
-                showError('Failed to load FFmpeg. Try refreshing the page. 🙄');
+                showError(`Failed to load FFmpeg: ${error.message}. Try refreshing or use Chrome/Firefox. 🙄`);
                 console.error('FFmpeg load error:', error);
                 throw error;
             }
@@ -355,8 +349,13 @@
                 hideError();
                 progress.style.display = 'block';
                 progressText.textContent = 'Fetching video from URL...';
+                loadUrlBtn.disabled = true;
 
                 const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
                 const blob = await response.blob();
                 currentVideoFile = new File([blob], 'video.mp4', { type: blob.type });
                 currentVideoName = url.split('/').pop().split('?')[0] || 'video.mp4';
@@ -365,9 +364,11 @@
                 fileUpload.value = '';
                 progress.style.display = 'none';
             } catch (error) {
-                showError('Failed to load video from URL. Check if it\'s a direct video link. 🔍');
+                showError(`Failed to load video: ${error.message}. CORS might be blocking it. 🔍`);
                 progress.style.display = 'none';
                 console.error(error);
+            } finally {
+                loadUrlBtn.disabled = false;
             }
         });
 
@@ -379,7 +380,7 @@
             videoPlayer.addEventListener('loadedmetadata', () => {
                 endTimeInput.value = videoPlayer.duration.toFixed(2);
                 updateTimeline();
-            });
+            }, { once: true });
 
             videoPlayer.addEventListener('timeupdate', updateTimeline);
         }
@@ -400,6 +401,8 @@
 
         function updateTimeline() {
             const duration = videoPlayer.duration;
+            if (!duration || isNaN(duration)) return;
+            
             const start = parseFloat(startTimeInput.value) || 0;
             const end = parseFloat(endTimeInput.value) || duration;
 
@@ -415,6 +418,11 @@
             const startTime = parseFloat(startTimeInput.value) || 0;
             const endTime = parseFloat(endTimeInput.value);
 
+            if (isNaN(endTime) || endTime <= 0) {
+                showError('Please wait for the video to fully load first. 🙄');
+                return;
+            }
+
             if (startTime >= endTime) {
                 showError('Start time must be before end time. Physics, you know? ⏰');
                 return;
@@ -428,7 +436,7 @@
             try {
                 hideError();
                 progress.style.display = 'block';
-                progressText.textContent = 'Loading FFmpeg... (downloading ~32MB, be patient) 🐌';
+                progressText.textContent = 'Loading FFmpeg... (first time takes ~15 seconds) 🐌';
                 trimBtn.disabled = true;
 
                 await loadFFmpeg();
@@ -440,14 +448,14 @@
                 progressText.textContent = 'Writing video to memory...';
                 await ffmpeg.writeFile('input.mp4', await fetchFile(currentVideoFile));
 
-                progressText.textContent = 'Trimming video... ✂️ (this will take a moment)';
+                progressText.textContent = 'Trimming video... ✂️';
 
                 await ffmpeg.exec([
                     '-i', 'input.mp4',
                     '-ss', startTime.toString(),
                     '-to', endTime.toString(),
                     '-c:v', 'libx264',
-                    '-preset', 'veryfast',
+                    '-preset', 'ultrafast',
                     '-crf', '23',
                     '-c:a', 'aac',
                     '-b:a', '128k',
@@ -465,7 +473,12 @@
                 a.href = url;
                 const nameWithoutExt = currentVideoName.replace(/\.[^/.]+$/, '');
                 a.download = `${nameWithoutExt}_trimmed.mp4`;
+                document.body.appendChild(a);
                 a.click();
+                document.body.removeChild(a);
+                
+                // Cleanup
+                setTimeout(() => URL.revokeObjectURL(url), 100);
 
                 await ffmpeg.deleteFile('input.mp4');
                 await ffmpeg.deleteFile('output.mp4');
