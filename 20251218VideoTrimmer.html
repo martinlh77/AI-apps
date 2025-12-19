@@ -252,231 +252,232 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
-
-<script>
-    const { FFmpeg } = FFmpegWASM;
-    const { fetchFile, toBlobURL } = FFmpegUtil;
-
-    let ffmpeg = null;
-    let ffmpegLoaded = false;
-    let currentVideoFile = null;
-    let currentVideoName = 'video.mp4';
-
-    const fileUpload = document.getElementById('fileUpload');
-    const urlInput = document.getElementById('urlInput');
-    const loadUrlBtn = document.getElementById('loadUrlBtn');
-    const videoContainer = document.getElementById('videoContainer');
-    const videoPlayer = document.getElementById('videoPlayer');
-    const startTimeInput = document.getElementById('startTime');
-    const endTimeInput = document.getElementById('endTime');
-    const setStartBtn = document.getElementById('setStartBtn');
-    const setEndBtn = document.getElementById('setEndBtn');
-    const trimBtn = document.getElementById('trimBtn');
-    const progress = document.getElementById('progress');
-    const progressText = document.getElementById('progressText');
-    const errorMsg = document.getElementById('errorMsg');
-    const timelineSelection = document.getElementById('timelineSelection');
-
-    // Initialize FFmpeg (lazily, because it's chunky)
-    async function loadFFmpeg() {
-        if (ffmpegLoaded) return;
-        
-        try {
-            if (!ffmpeg) {
-                ffmpeg = new FFmpeg();
-            }
-            
-            const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-            await ffmpeg.load({
-                coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-                wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-            });
-
-            ffmpeg.on('log', ({ message }) => {
-                console.log(message);
-            });
-
-            ffmpeg.on('progress', ({ progress: p }) => {
-                if (progressText) {
-                    progressText.textContent = `Processing... ${Math.round(p * 100)}%`;
-                }
-            });
-
-            ffmpegLoaded = true;
-            console.log('FFmpeg loaded successfully');
-        } catch (error) {
-            showError('Failed to load FFmpeg. Try refreshing the page. 🙄');
-            console.error('FFmpeg load error:', error);
-            throw error;
+    <script type="importmap">
+    {
+        "imports": {
+            "@ffmpeg/ffmpeg": "https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js",
+            "@ffmpeg/util": "https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js"
         }
     }
+    </script>
 
-    // Handle file upload
-    fileUpload.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            currentVideoFile = file;
-            currentVideoName = file.name;
-            loadVideo(URL.createObjectURL(file));
-            urlInput.value = '';
-        }
-    });
+    <script type="module">
+        import { FFmpeg } from '@ffmpeg/ffmpeg';
+        import { toBlobURL, fetchFile } from '@ffmpeg/util';
 
-    // Handle URL load
-    loadUrlBtn.addEventListener('click', async () => {
-        const url = urlInput.value.trim();
-        if (!url) {
-            showError('Um... you need to actually paste a URL first. 🤷');
-            return;
-        }
+        let ffmpeg = null;
+        let ffmpegLoaded = false;
+        let currentVideoFile = null;
+        let currentVideoName = 'video.mp4';
 
-        try {
-            hideError();
-            progress.style.display = 'block';
-            progressText.textContent = 'Fetching video from URL...';
+        const fileUpload = document.getElementById('fileUpload');
+        const urlInput = document.getElementById('urlInput');
+        const loadUrlBtn = document.getElementById('loadUrlBtn');
+        const videoContainer = document.getElementById('videoContainer');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const startTimeInput = document.getElementById('startTime');
+        const endTimeInput = document.getElementById('endTime');
+        const setStartBtn = document.getElementById('setStartBtn');
+        const setEndBtn = document.getElementById('setEndBtn');
+        const trimBtn = document.getElementById('trimBtn');
+        const progress = document.getElementById('progress');
+        const progressText = document.getElementById('progressText');
+        const errorMsg = document.getElementById('errorMsg');
+        const timelineSelection = document.getElementById('timelineSelection');
 
-            const response = await fetch(url);
-            const blob = await response.blob();
-            currentVideoFile = new File([blob], 'video.mp4', { type: blob.type });
-            currentVideoName = url.split('/').pop().split('?')[0] || 'video.mp4';
+        // Initialize FFmpeg
+        async function loadFFmpeg() {
+            if (ffmpegLoaded) return;
             
-            loadVideo(URL.createObjectURL(blob));
-            fileUpload.value = '';
-            progress.style.display = 'none';
-        } catch (error) {
-            showError('Failed to load video from URL. Check if it\'s a direct video link. 🔍');
-            progress.style.display = 'none';
-            console.error(error);
+            try {
+                ffmpeg = new FFmpeg();
+                
+                const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+                
+                await ffmpeg.load({
+                    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                });
+
+                ffmpeg.on('log', ({ message }) => {
+                    console.log(message);
+                });
+
+                ffmpeg.on('progress', ({ progress: p }) => {
+                    if (progressText) {
+                        progressText.textContent = `Processing... ${Math.round(p * 100)}%`;
+                    }
+                });
+
+                ffmpegLoaded = true;
+                console.log('FFmpeg loaded successfully');
+            } catch (error) {
+                showError('Failed to load FFmpeg. Try refreshing the page. 🙄');
+                console.error('FFmpeg load error:', error);
+                throw error;
+            }
         }
-    });
 
-    function loadVideo(url) {
-        videoPlayer.src = url;
-        videoContainer.style.display = 'block';
-        hideError();
+        // Handle file upload
+        fileUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                currentVideoFile = file;
+                currentVideoName = file.name;
+                loadVideo(URL.createObjectURL(file));
+                urlInput.value = '';
+            }
+        });
 
-        videoPlayer.addEventListener('loadedmetadata', () => {
-            endTimeInput.value = videoPlayer.duration.toFixed(2);
+        // Handle URL load
+        loadUrlBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            if (!url) {
+                showError('Um... you need to actually paste a URL first. 🤷');
+                return;
+            }
+
+            try {
+                hideError();
+                progress.style.display = 'block';
+                progressText.textContent = 'Fetching video from URL...';
+
+                const response = await fetch(url);
+                const blob = await response.blob();
+                currentVideoFile = new File([blob], 'video.mp4', { type: blob.type });
+                currentVideoName = url.split('/').pop().split('?')[0] || 'video.mp4';
+                
+                loadVideo(URL.createObjectURL(blob));
+                fileUpload.value = '';
+                progress.style.display = 'none';
+            } catch (error) {
+                showError('Failed to load video from URL. Check if it\'s a direct video link. 🔍');
+                progress.style.display = 'none';
+                console.error(error);
+            }
+        });
+
+        function loadVideo(url) {
+            videoPlayer.src = url;
+            videoContainer.style.display = 'block';
+            hideError();
+
+            videoPlayer.addEventListener('loadedmetadata', () => {
+                endTimeInput.value = videoPlayer.duration.toFixed(2);
+                updateTimeline();
+            });
+
+            videoPlayer.addEventListener('timeupdate', updateTimeline);
+        }
+
+        // Set start/end times
+        setStartBtn.addEventListener('click', () => {
+            startTimeInput.value = videoPlayer.currentTime.toFixed(2);
             updateTimeline();
         });
 
-        videoPlayer.addEventListener('timeupdate', updateTimeline);
-    }
+        setEndBtn.addEventListener('click', () => {
+            endTimeInput.value = videoPlayer.currentTime.toFixed(2);
+            updateTimeline();
+        });
 
-    // Set start/end times
-    setStartBtn.addEventListener('click', () => {
-        startTimeInput.value = videoPlayer.currentTime.toFixed(2);
-        updateTimeline();
-    });
+        startTimeInput.addEventListener('input', updateTimeline);
+        endTimeInput.addEventListener('input', updateTimeline);
 
-    setEndBtn.addEventListener('click', () => {
-        endTimeInput.value = videoPlayer.currentTime.toFixed(2);
-        updateTimeline();
-    });
+        function updateTimeline() {
+            const duration = videoPlayer.duration;
+            const start = parseFloat(startTimeInput.value) || 0;
+            const end = parseFloat(endTimeInput.value) || duration;
 
-    startTimeInput.addEventListener('input', updateTimeline);
-    endTimeInput.addEventListener('input', updateTimeline);
+            const startPercent = (start / duration) * 100;
+            const widthPercent = ((end - start) / duration) * 100;
 
-    function updateTimeline() {
-        const duration = videoPlayer.duration;
-        const start = parseFloat(startTimeInput.value) || 0;
-        const end = parseFloat(endTimeInput.value) || duration;
-
-        const startPercent = (start / duration) * 100;
-        const widthPercent = ((end - start) / duration) * 100;
-
-        timelineSelection.style.left = startPercent + '%';
-        timelineSelection.style.width = widthPercent + '%';
-    }
-
-    // Trim video
-    trimBtn.addEventListener('click', async () => {
-        const startTime = parseFloat(startTimeInput.value) || 0;
-        const endTime = parseFloat(endTimeInput.value);
-
-        if (startTime >= endTime) {
-            showError('Start time must be before end time. Physics, you know? ⏰');
-            return;
+            timelineSelection.style.left = startPercent + '%';
+            timelineSelection.style.width = widthPercent + '%';
         }
 
-        if (!currentVideoFile) {
-            showError('No video loaded. Did you forget something? 🤔');
-            return;
-        }
+        // Trim video
+        trimBtn.addEventListener('click', async () => {
+            const startTime = parseFloat(startTimeInput.value) || 0;
+            const endTime = parseFloat(endTimeInput.value);
 
-        try {
-            hideError();
-            progress.style.display = 'block';
-            progressText.textContent = 'Loading FFmpeg... (this might take a moment)';
-            trimBtn.disabled = true;
-
-            // Make sure FFmpeg is actually loaded
-            await loadFFmpeg();
-
-            if (!ffmpegLoaded) {
-                throw new Error('FFmpeg failed to load properly');
+            if (startTime >= endTime) {
+                showError('Start time must be before end time. Physics, you know? ⏰');
+                return;
             }
 
-            progressText.textContent = 'Writing video to memory...';
-            await ffmpeg.writeFile('input.mp4', await fetchFile(currentVideoFile));
+            if (!currentVideoFile) {
+                showError('No video loaded. Did you forget something? 🤔');
+                return;
+            }
 
-            progressText.textContent = 'Trimming video... ✂️ (re-encoding for compatibility)';
+            try {
+                hideError();
+                progress.style.display = 'block';
+                progressText.textContent = 'Loading FFmpeg... (this might take a moment)';
+                trimBtn.disabled = true;
 
-            // FFmpeg command: trim with re-encoding for better compatibility
-            await ffmpeg.exec([
-                '-i', 'input.mp4',
-                '-ss', startTime.toString(),
-                '-to', endTime.toString(),
-                '-c:v', 'libx264',       // H.264 video codec
-                '-preset', 'veryfast',   // Encoding speed (ultrafast/veryfast/fast/medium)
-                '-crf', '23',            // Quality level (18-28, lower = better)
-                '-c:a', 'aac',           // AAC audio codec
-                '-b:a', '128k',          // Audio bitrate
-                '-movflags', '+faststart', // Web optimization
-                'output.mp4'
-            ]);
+                await loadFFmpeg();
 
-            progressText.textContent = 'Reading trimmed video...';
-            const data = await ffmpeg.readFile('output.mp4');
+                if (!ffmpegLoaded) {
+                    throw new Error('FFmpeg failed to load properly');
+                }
 
-            // Create download
-            const blob = new Blob([data.buffer], { type: 'video/mp4' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            const nameWithoutExt = currentVideoName.replace(/\.[^/.]+$/, '');
-            a.download = `${nameWithoutExt}_trimmed.mp4`;
-            a.click();
+                progressText.textContent = 'Writing video to memory...';
+                await ffmpeg.writeFile('input.mp4', await fetchFile(currentVideoFile));
 
-            // Cleanup
-            await ffmpeg.deleteFile('input.mp4');
-            await ffmpeg.deleteFile('output.mp4');
+                progressText.textContent = 'Trimming video... ✂️ (re-encoding for compatibility)';
 
-            progressText.textContent = '✅ Done! Your trimmed video is downloading.';
-            setTimeout(() => {
+                await ffmpeg.exec([
+                    '-i', 'input.mp4',
+                    '-ss', startTime.toString(),
+                    '-to', endTime.toString(),
+                    '-c:v', 'libx264',
+                    '-preset', 'veryfast',
+                    '-crf', '23',
+                    '-c:a', 'aac',
+                    '-b:a', '128k',
+                    '-movflags', '+faststart',
+                    'output.mp4'
+                ]);
+
+                progressText.textContent = 'Reading trimmed video...';
+                const data = await ffmpeg.readFile('output.mp4');
+
+                const blob = new Blob([data.buffer], { type: 'video/mp4' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                const nameWithoutExt = currentVideoName.replace(/\.[^/.]+$/, '');
+                a.download = `${nameWithoutExt}_trimmed.mp4`;
+                a.click();
+
+                await ffmpeg.deleteFile('input.mp4');
+                await ffmpeg.deleteFile('output.mp4');
+
+                progressText.textContent = '✅ Done! Your trimmed video is downloading.';
+                setTimeout(() => {
+                    progress.style.display = 'none';
+                }, 3000);
+
+            } catch (error) {
+                showError(`Failed to trim video: ${error.message || 'Unknown error'} 😤`);
+                console.error('Full error:', error);
                 progress.style.display = 'none';
-            }, 3000);
+            } finally {
+                trimBtn.disabled = false;
+            }
+        });
 
-        } catch (error) {
-            showError(`Failed to trim video: ${error.message || 'Unknown error'} 😤`);
-            console.error('Full error:', error);
-            progress.style.display = 'none';
-        } finally {
-            trimBtn.disabled = false;
+        function showError(message) {
+            errorMsg.textContent = message;
+            errorMsg.style.display = 'block';
         }
-    });
 
-    function showError(message) {
-        errorMsg.textContent = message;
-        errorMsg.style.display = 'block';
-    }
-
-    function hideError() {
-        errorMsg.style.display = 'none';
-    }
-</script>
+        function hideError() {
+            errorMsg.style.display = 'none';
+        }
+    </script>
 </body>
 </html>
