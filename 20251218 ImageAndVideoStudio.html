@@ -221,8 +221,9 @@
         .history-item img, .history-item video {
             width: 100%;
             height: 100px;
-            object-fit: cover;
+            object-fit: contain;
             display: block;
+            background: rgba(0, 0, 0, 0.5);
         }
         .history-timestamp {
             position: absolute;
@@ -479,7 +480,7 @@
                 <!-- NEW: History Section -->
                 <div class="history-section">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-lg font-semibold">Generation History</h3>
+                        <h3 class="text-lg font-semibold">Generation History (50 max)</h3>
                         <button id="clearHistoryBtn" class="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Clear All</button>
                     </div>
                     <div id="historyGrid" class="history-grid">
