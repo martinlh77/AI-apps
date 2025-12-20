@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Restyler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root { --accent: #3b82f6; }
+        .spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--accent); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-overlay { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; border-radius: 0.75rem; }
+        #draw-canvas-container { cursor: crosshair; background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 20px 20px; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 40px; }
+        .tab-btn.active { border-bottom: 2px solid var(--accent); color: var(--accent); }
+        .style-chip { cursor: pointer; transition: 0.2s; user-select: none; border: 1px solid #1e293b; }
+        .style-chip.selected { background-color: var(--accent); color: white; border-color: var(--accent); }
+        canvas { touch-action: none; background-color: transparent; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+
+    <nav class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <h1 class="text-xl font-bold tracking-tighter text-blue-500">IMAGE <span class="text-slate-500 font-light">RESTYLER</span></h1>
+            <div class="flex gap-2">
+                <button onclick="resetApp()" class="px-3 py-1 text-xs font-bold text-red-400 border border-red-900/50 rounded hover:bg-red-900/20">Reset App</button>
+                <button onclick="toggleSidebar('settingsSidebar')" class="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg text-sm transition">⚙️ Settings</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-4 space-y-6">
+            <div class="flex border-b border-slate-800">
+                <button onclick="switchTab('input')" id="tab-input" class="tab-btn active px-6 py-2 text-sm font-bold uppercase">Image Source</button>
+                <button onclick="switchTab('restyle')" id="tab-restyle" class="tab-btn px-6 py-2 text-sm font-bold uppercase">Restyle Engine</button>
+            </div>
+
+            <div id="panel-input" class="space-y-4">
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
+                    <label class="block text-[10px] font-black text-slate-500 mb-3 uppercase tracking-widest">Load or Create</label>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button onclick="document.getElementById('fileInput').click()" class="bg-slate-800 hover:bg-slate-700 py-3 rounded-lg text-xs font-bold">📁 Upload</button>
+                        <button onclick="openDrawingBoard()" class="bg-blue-600 hover:bg-blue-500 py-3 rounded-lg text-xs font-bold">🎨 Draw Board</button>
+                    </div>
+                    <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="handleFileUpload(event)">
+                    <div class="flex gap-2">
+                        <input type="text" id="urlInput" placeholder="Direct Image URL..." class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs outline-none focus:border-blue-500">
+                        <button onclick="loadUrl()" class="bg-slate-800 px-3 rounded-lg text-xs">Load</button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
+                    <label class="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Generate New</label>
+                    <textarea id="mainPrompt" rows="3" placeholder="A futuristic cyberpunk city..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-blue-500 mb-3"></textarea>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="generateImage()" id="btnGenMain" class="bg-indigo-600 hover:bg-indigo-500 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+                            <span id="spinGen" class="spinner hidden"></span> Generate
+                        </button>
+                        <button onclick="generateImage(true)" class="bg-slate-800 hover:bg-slate-700 py-3 rounded-lg text-sm">Regenerate</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-restyle" class="hidden space-y-4">
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800">
+                    <label class="block text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Restyle Instructions</label>
+                    <input type="text" id="restyleInput" placeholder="Add specific changes here..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm outline-none focus:border-blue-500 mb-4">
+                    
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase">Artistic Styles</label>
+                        <button onclick="randomizeStyles()" class="text-[10px] text-blue-400 font-bold">RANDOMIZE</button>
+                    </div>
+                    <div id="styleContainer" class="flex flex-wrap gap-2 h-44 overflow-y-auto p-2 bg-slate-950 rounded-lg border border-slate-800 text-[10px]"></div>
+
+                    <div class="mt-4 space-y-2">
+                        <button onclick="restyleDescription()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                            <span id="spinRestyle" class="spinner hidden"></span> Restyle Prompt
+                        </button>
+                        <button onclick="generateFromRestyle()" class="w-full border border-purple-600 text-purple-400 hover:bg-purple-600/10 py-3 rounded-lg text-xs font-bold">Generate Restyled Image</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8 space-y-6">
+            <div id="previewCard" class="bg-slate-900 rounded-2xl border border-slate-800 p-4 relative shadow-2xl overflow-hidden">
+                <div id="imageLoading" class="loading-overlay hidden">
+                    <div class="spinner !w-10 !h-10 mb-2"></div>
+                    <span class="text-xs font-bold text-blue-400 tracking-widest">GENERATING PIXELS</span>
+                </div>
+                
+                <div class="flex justify-between items-center mb-3">
+                    <span id="resBadge" class="text-[10px] font-mono bg-slate-800 px-2 py-1 rounded border border-slate-700">0 x 0</span>
+                    <button onclick="sendToDrawingBoard()" class="text-[10px] bg-blue-900/30 text-blue-400 px-3 py-1 rounded hover:bg-blue-900/50 transition">Import to Board</button>
+                </div>
+
+                <div class="bg-black/40 rounded-xl overflow-hidden mb-4 flex justify-center items-center min-h-[350px]">
+                    <img id="mainImage" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="max-w-full max-h-[70vh] object-contain" alt="Preview">
+                </div>
+
+                <div class="flex flex-wrap gap-3 items-center justify-between pt-4 border-t border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <select id="detailSelect" class="bg-slate-800 text-[10px] font-bold rounded px-2 py-2 border border-slate-700 outline-none">
+                            <option value="basic" selected>Basic</option>
+                            <option value="detailed">Detailed</option>
+                            <option value="highly detailed">Highly Detailed</option>
+                            <option value="insanely detailed">Insanely Detailed</option>
+                        </select>
+                        <button onclick="describeImage()" id="btnDesc" class="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-lg text-xs font-bold flex items-center gap-2">
+                            <span id="spinDesc" class="spinner hidden !w-3 !h-3"></span> Describe
+                        </button>
+                    </div>
+                    <div class="flex gap-2">
+                        <a id="apiLink" target="_blank" class="text-[10px] text-slate-500 hover:text-blue-400 self-center mr-2">Original URL</a>
+                        <button onclick="copyToClipboard()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg">Copy</button>
+                        <button onclick="downloadImage()" class="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-5">
+                <h3 class="text-[10px] font-black text-slate-500 uppercase mb-3 tracking-widest">Image Description Output</h3>
+                <div id="descriptionContent" class="text-sm leading-relaxed text-slate-400 italic">No analysis performed yet.</div>
+            </div>
+        </div>
+    </main>
+
+    <div id="settingsSidebar" class="fixed inset-y-0 right-0 w-80 bg-slate-900 shadow-2xl transform translate-x-full transition-transform duration-300 z-[60] border-l border-slate-800 overflow-y-auto">
+        <div class="p-6 space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold">Preferences</h2>
+                <button onclick="toggleSidebar('settingsSidebar')" class="text-slate-500 hover:text-white">✕</button>
+            </div>
+
+            <section>
+                <label class="block text-[10px] font-black text-slate-500 mb-2 uppercase">API Key (Optional)</label>
+                <input type="password" id="apiKey" oninput="validateModels()" placeholder="plln_pk_..." class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm outline-none">
+            </section>
+
+            <section class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 mb-2 uppercase">Image Model</label>
+                    <select id="imageModel" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 mb-1 uppercase">Vision Model (Description)</label>
+                    <select id="textModelDesc" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm outline-none mb-3"></select>
+                    <label class="block text-[10px] font-black text-slate-500 mb-1 uppercase">Text Model (Restyle)</label>
+                    <select id="textModelRestyle" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm outline-none"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 mb-2 uppercase">Quality Level</label>
+                    <select id="qualitySelect" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-sm outline-none">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="hd">HD (Enhance On)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 mb-2 uppercase flex justify-between">Guidance Scale <span id="gsVal">7</span></label>
+                    <input type="range" id="guidanceScale" min="1" max="20" value="7" class="w-full accent-blue-500" oninput="document.getElementById('gsVal').innerText=this.value">
+                </div>
+            </section>
+
+            <section class="grid grid-cols-2 gap-2">
+                <label class="flex items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
+                    <input type="checkbox" id="optPrivate" checked> <span class="text-[9px] font-bold uppercase">Private</span>
+                </label>
+                <label class="flex items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
+                    <input type="checkbox" id="optNoFeed" checked> <span class="text-[9px] font-bold uppercase">No Feed</span>
+                </label>
+                <label class="flex items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
+                    <input type="checkbox" id="optNoLogo" checked> <span class="text-[9px] font-bold uppercase">No Logo</span>
+                </label>
+                <label class="flex items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
+                    <input type="checkbox" id="optSafe" checked> <span class="text-[9px] font-bold uppercase">Safe</span>
+                </label>
+                <label class="flex items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
+                    <input type="checkbox" id="optTransparent"> <span class="text-[9px] font-bold uppercase">Transparent</span>
+                </label>
+                <label class="flex items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer">
+                    <input type="checkbox" id="optEnhance"> <span class="text-[9px] font-bold uppercase">Enhance</span>
+                </label>
+            </section>
+
+            <section>
+                <label class="block text-[10px] font-black text-slate-500 mb-2 uppercase">Output Dimensions</label>
+                <div class="flex gap-2">
+                    <input type="number" id="dimW" placeholder="W" class="w-1/2 bg-slate-950 border border-slate-800 rounded p-2 text-xs">
+                    <input type="number" id="dimH" placeholder="H" class="w-1/2 bg-slate-950 border border-slate-800 rounded p-2 text-xs">
+                </div>
+                <label class="flex items-center gap-2 mt-2 cursor-pointer">
+                    <input type="checkbox" id="matchOrig" checked> <span class="text-[9px] text-slate-500">Auto-match source image size</span>
+                </label>
+            </section>
+        </div>
+    </div>
+
+    <div id="drawModal" class="fixed inset-0 z-[100] hidden flex flex-col bg-slate-950/98 backdrop-blur-md">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+            <div class="flex items-center gap-4">
+                <h3 class="font-bold text-sm text-blue-400">Vector Workspace</h3>
+                <div class="flex bg-slate-800 rounded-lg overflow-hidden border border-slate-700">
+                    <button onclick="setTool('select')" id="tool-select" class="p-2 bg-blue-600" title="Select/Move">🎯</button>
+                    <button onclick="setTool('pen')" id="tool-pen" class="p-2" title="Pen">🖊️</button>
+                    <button onclick="setTool('rect')" id="tool-rect" class="p-2" title="Rectangle">⬜</button>
+                    <button onclick="setTool('circle')" id="tool-circle" class="p-2" title="Circle">⭕</button>
+                    <button onclick="setTool('text')" id="tool-text" class="p-2" title="Text">T</button>
+                </div>
+                <div class="flex gap-1 ml-4 border-l border-slate-700 pl-4">
+                    <button onclick="undo()" class="p-2 bg-slate-800 rounded hover:bg-slate-700" title="Undo (Ctrl+Z)">↩️</button>
+                    <button onclick="redo()" class="p-2 bg-slate-800 rounded hover:bg-slate-700" title="Redo (Ctrl+Y)">↪️</button>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="clearCanvas()" class="text-[10px] bg-red-900/30 text-red-400 px-4 py-2 rounded font-bold">CLEAR CANVAS</button>
+                <button onclick="closeDrawingBoard()" class="text-slate-400 hover:text-white px-3">✕</button>
+            </div>
+        </div>
+        
+        <div class="flex-1 flex overflow-hidden">
+            <div class="w-64 p-5 border-r border-slate-800 space-y-6 bg-slate-900/50 overflow-y-auto">
+                <div>
+                    <label class="block text-[9px] font-black text-slate-500 uppercase mb-2 tracking-widest">Draw Settings</label>
+                    <input type="color" id="drawColor" value="#3b82f6" class="w-full h-10 bg-transparent border-0 cursor-pointer rounded mb-2">
+                    <input type="range" id="drawStroke" min="1" max="60" value="5" class="w-full accent-blue-500">
+                </div>
+
+                <div id="textSettings" class="pt-6 border-t border-slate-800 space-y-3">
+                    <label class="block text-[9px] font-black text-slate-500 uppercase mb-2 tracking-widest">Text Config</label>
+                    <input type="text" id="drawText" placeholder="Type text here..." class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs outline-none focus:border-blue-500" oninput="updateTextPreview()">
+<select id="drawFont" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs outline-none" onchange="updateTextPreview()">
+    <option value="Arial">Sans-Serif (Arial)</option>
+    <option value="Georgia">Serif (Georgia)</option>
+    <option value="Courier New">Monospace</option>
+    <option value="Impact">Impact</option>
+    <option value="Comic Sans MS">Comic Sans</option>
+</select>
+<label class="block text-[9px] text-slate-500 mt-2 mb-1">Font Size</label>
+<input type="number" id="drawFontSize" value="24" min="8" max="200" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs outline-none focus:border-blue-500" oninput="updateTextPreview()">
+                </div>
+
+                <div class="pt-6 border-t border-slate-800">
+                    <label class="block text-[9px] font-black text-slate-500 uppercase mb-2 tracking-widest">Canvas Dimensions</label>
+                    <div class="flex gap-2 mb-4">
+                        <input type="number" id="canvasWidth" value="1000" min="100" max="4096" placeholder="Width" class="w-1/2 bg-slate-950 border border-slate-800 rounded p-2 text-xs outline-none focus:border-blue-500">
+                        <input type="number" id="canvasHeight" value="800" min="100" max="4096" placeholder="Height" class="w-1/2 bg-slate-950 border border-slate-800 rounded p-2 text-xs outline-none focus:border-blue-500">
+                    </div>
+                    <button onclick="applyCanvasDimensions()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 rounded text-[9px] font-bold mb-4">APPLY DIMENSIONS</button>
+                </div>
+                
+                <div class="pt-6 border-t border-slate-800">
+                    <label class="block text-[9px] font-black text-slate-500 uppercase mb-2 tracking-widest">Canvas Background</label>
+                    <div class="flex items-center gap-2 mb-2">
+                        <input type="color" id="bgColorPicker" value="#ffffff" oninput="updateCanvasBg(this.value)" class="w-10 h-10 bg-transparent border-0 cursor-pointer">
+                        <button onclick="toggleCanvasBg(false)" class="flex-1 py-2 bg-slate-800 rounded text-[9px] font-bold">REMOVE BG</button>
+                    </div>
+                </div>
+                <div class="pt-6 border-t border-slate-800">
+                    <button onclick="document.getElementById('drawUpload').click()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 rounded text-[10px] font-black tracking-tighter uppercase">Import Image</button>
+                    <input type="file" id="drawUpload" class="hidden" accept="image/*" onchange="drawImportImage(event)">
+                    <button onclick="resizeCanvasToImage()" id="btnResizeCanvas" class="hidden w-full mt-2 py-2 border border-slate-700 rounded text-[9px] text-slate-400">FIT TO SOURCE</button>
+                </div>
+                <div class="text-[9px] text-slate-500 italic space-y-1">
+                    <p>• [Ctrl+V] to paste from clipboard</p>
+                    <p>• [DEL] to remove selected</p>
+                    <p>• [Ctrl+Z / Y] Undo/Redo</p>
+                </div>
+            </div>
+            <div id="draw-canvas-container" class="flex-1 bg-slate-950">
+                <canvas id="vectorCanvas"></canvas>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-800 flex justify-end gap-3 bg-slate-900/50">
+            <button onclick="copyCanvasToClipboard()" class="px-6 py-2 bg-slate-800 rounded-lg text-xs font-bold">Copy to Clipboard</button>
+            <button onclick="saveCanvasToApp()" class="px-8 py-2 bg-blue-600 rounded-lg text-xs font-bold">Finish & Push to App</button>
+        </div>
+    </div>
+
+    <script>
+        const PUBLIC_KEY = "plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL";
+        const STYLES = ["Art Deco", "Renaissance", "3D-Animation", "Pixar", "Cartoon", "2D-Flat", "Art Nouveau", "Picture Book", "Line Art", "Watercolor", "Pencil Art", "Futuristic", "Archaic", "Holographic", "Cyberpunk", "Steampunk", "Studio Ghibli", "Synthwave", "Oil Painting", "Ukiyo-e", "Gothic", "Minimalist", "Hyperrealistic", "Paper Cut", "Voxel Art", "Graffiti", "Impressionist", "Blueprint"];
+        
+        const TEXT_MODELS = {
+            basic: ["mistral", "grok", "gemini", "gemini-fast", "gemini-search", "openai", "openai-fast", "perplexity-fast", "claude-fast"],
+            pro: ["claude", "perplexity-reasoning", "claude-large", "gemini-large", "openai-large"]
+        };
+        const IMAGE_MODELS = {
+            basic: ["zimage", "flux", "turbo"],
+            pro: ["seedream", "seedream-pro", "kontext", "nanobanana", "nanobanana-pro"]
+        };
+
+        let currentSeed = Math.floor(Math.random() * 100000);
+        let selectedStyles = new Set();
+        let canvasBgColor = "#ffffff";
+        let hasCanvasBg = true;
+        
+        // --- Drawing Board State ---
+        let dCanvas, dCtx;
+        let elements = [];
+        let history = [];
+        let redoStack = [];
+        let curTool = 'select';
+        let isDown = false;
+        let dragTarget = null;
+        let dragType = 'move'; 
+        let startX, startY;
+        let lastImportedImg = null;
+
+        window.onload = () => {
+            initStyles();
+            validateModels();
+            initDraw();
+            setupGlobalShortcuts();
+        };
+
+        function switchTab(t) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${t}`).classList.add('active');
+            document.getElementById('panel-input').classList.toggle('hidden', t !== 'input');
+            document.getElementById('panel-restyle').classList.toggle('hidden', t !== 'restyle');
+        }
+
+        function toggleSidebar(id) {
+            document.getElementById(id).classList.toggle('translate-x-full');
+        }
+
+        function validateModels() {
+            const hasKey = document.getElementById('apiKey').value.trim().length > 0;
+            const iSel = document.getElementById('imageModel');
+            const tSelDesc = document.getElementById('textModelDesc');
+            const tSelRestyle = document.getElementById('textModelRestyle');
+            [iSel, tSelDesc, tSelRestyle].forEach(s => s.innerHTML = '');
+            const populate = (sel, listBasic, listPro) => {
+                listBasic.forEach(m => sel.add(new Option(m, m)));
+                listPro.forEach(m => {
+                    const opt = new Option(m + (hasKey ? "" : " 🔒"), m);
+                    opt.disabled = !hasKey;
+                    sel.add(opt);
+                });
+            };
+            populate(iSel, IMAGE_MODELS.basic, IMAGE_MODELS.pro);
+            populate(tSelDesc, TEXT_MODELS.basic, TEXT_MODELS.pro);
+            populate(tSelRestyle, TEXT_MODELS.basic, TEXT_MODELS.pro);
+        }
+
+        async function getBase64Image(url) {
+            if (url.startsWith('data:')) return url;
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        function setPreview(src) {
+            const img = document.getElementById('mainImage');
+            document.getElementById('imageLoading').classList.remove('hidden');
+            img.crossOrigin = "anonymous";
+            img.src = src;
+            img.onload = () => {
+                document.getElementById('resBadge').innerText = `${img.naturalWidth} x ${img.naturalHeight}`;
+                if(document.getElementById('matchOrig').checked) {
+                    document.getElementById('dimW').value = img.naturalWidth;
+                    document.getElementById('dimH').value = img.naturalHeight;
+                }
+                document.getElementById('imageLoading').classList.add('hidden');
+            };
+        }
+
+        function handleFileUpload(e) {
+            const reader = new FileReader();
+            reader.onload = (ev) => setPreview(ev.target.result);
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        function loadUrl() {
+            const url = document.getElementById('urlInput').value;
+            if(url) setPreview(url);
+        }
+
+        async function generateImage(isRegen = false) {
+            const prompt = document.getElementById('mainPrompt').value;
+            if(!prompt) return;
+            if(isRegen) currentSeed++;
+
+            document.getElementById('spinGen').classList.remove('hidden');
+            document.getElementById('imageLoading').classList.remove('hidden');
+
+            const params = new URLSearchParams({
+                model: document.getElementById('imageModel').value,
+                seed: currentSeed,
+                width: document.getElementById('dimW').value || 1024,
+                height: document.getElementById('dimH').value || 1024,
+                private: document.getElementById('optPrivate').checked,
+                nofeed: document.getElementById('optNoFeed').checked,
+                nologo: document.getElementById('optNoLogo').checked,
+                safe: document.getElementById('optSafe').checked,
+                enhance: document.getElementById('optEnhance').checked || document.getElementById('qualitySelect').value === 'hd',
+                transparent: document.getElementById('optTransparent').checked,
+                guidance: document.getElementById('guidanceScale').value
+            });
+
+            const key = document.getElementById('apiKey').value || PUBLIC_KEY;
+            const finalUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?${params.toString()}&key=${key}`;
+            
+            setPreview(finalUrl);
+            document.getElementById('apiLink').href = finalUrl.replace(`&key=${key}`, '');
+            document.getElementById('spinGen').classList.add('hidden');
+        }
+
+        async function describeImage() {
+            const img = document.getElementById('mainImage');
+            if(img.src.length < 50) return alert("Load an image first");
+
+            const spin = document.getElementById('spinDesc');
+            const content = document.getElementById('descriptionContent');
+            spin.classList.remove('hidden');
+            content.innerText = "Processing image for AI context...";
+
+            const detail = document.getElementById('detailSelect').value;
+            const key = document.getElementById('apiKey').value || PUBLIC_KEY;
+            
+            const base64Data = await getBase64Image(img.src);
+
+            const systemMap = {
+                basic: "Describe this image in 2 sentences.",
+                detailed: "Describe this image in 2 detailed paragraphs.",
+                'highly detailed': "Exhaustive artistic description. Mention subjects, lighting, and composition.",
+                'insanely detailed': "Provide a forensic-level description. Include estimated ages, specific hex-like color palettes, foreground/background depth, specific architectural or biological details, and lighting vectors."
+            };
+
+            try {
+                const res = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+                    body: JSON.stringify({
+                        model: document.getElementById('textModelDesc').value,
+                        messages: [
+                            { role: "system", content: systemMap[detail] },
+                            { role: "user", content: [{ type: "image_url", image_url: { url: base64Data } }] }
+                        ]
+                    })
+                });
+                const data = await res.json();
+                content.innerText = data.choices[0].message.content;
+            } catch (e) { content.innerText = "Vision analysis error."; }
+            finally { spin.classList.add('hidden'); }
+        }
+
+        function initStyles() {
+            const c = document.getElementById('styleContainer');
+            STYLES.forEach(s => {
+                const chip = document.createElement('div');
+                chip.className = "style-chip px-3 py-1 rounded-full hover:border-blue-500";
+                chip.textContent = s;
+                chip.onclick = () => {
+                    chip.classList.toggle('selected');
+                    if(chip.classList.contains('selected')) selectedStyles.add(s);
+                    else selectedStyles.delete(s);
+                };
+                c.appendChild(chip);
+            });
+        }
+
+        function randomizeStyles() {
+            document.querySelectorAll('.style-chip').forEach(c => c.classList.remove('selected'));
+            selectedStyles.clear();
+            const count = Math.floor(Math.random() * 5) + 1;
+            for(let i=0; i<count; i++) {
+                const idx = Math.floor(Math.random() * STYLES.length);
+                const chip = document.getElementById('styleContainer').children[idx];
+                chip.classList.add('selected');
+                selectedStyles.add(STYLES[idx]);
+            }
+        }
+
+        async function restyleDescription() {
+            const current = document.getElementById('descriptionContent').innerText;
+            const user = document.getElementById('restyleInput').value;
+            const styles = Array.from(selectedStyles).join(", ");
+            const spin = document.getElementById('spinRestyle');
+            spin.classList.remove('hidden');
+            const key = document.getElementById('apiKey').value || PUBLIC_KEY;
+
+            try {
+                const res = await fetch('https://gen.pollinations.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+                    body: JSON.stringify({
+                        model: document.getElementById('textModelRestyle').value,
+                        messages: [{ role: "user", content: `Modify this image description. Incorporate: "${user}". Apply styles: ${styles}. Return only the description. Original: ${current}` }]
+                    })
+                });
+                const data = await res.json();
+                document.getElementById('descriptionContent').innerText = data.choices[0].message.content;
+            } catch (e) { alert("Restyle error."); }
+            finally { spin.classList.add('hidden'); }
+        }
+
+        function generateFromRestyle() {
+            document.getElementById('mainPrompt').value = document.getElementById('descriptionContent').innerText;
+            switchTab('input');
+            generateImage(true);
+        }
+
+        // --- Drawing Board System (Updated) ---
+        function initDraw() {
+    dCanvas = document.getElementById('vectorCanvas');
+    dCtx = dCanvas.getContext('2d');
+    dCanvas.width = parseInt(document.getElementById('canvasWidth').value) || 1000;
+    dCanvas.height = parseInt(document.getElementById('canvasHeight').value) || 800;
+            dCanvas.onmousedown = (e) => dDown(e);
+            dCanvas.onmousemove = (e) => dMove(e);
+            window.onmouseup = () => dUp();
+            saveHistory(); // Initial state
+            drawAll();
+        }
+function updateTextPreview() {
+    if(dragTarget && dragTarget.type === 'text') {
+        dragTarget.text = document.getElementById('drawText').value;
+        drawAll();
+    }
+}
+
+        function setupGlobalShortcuts() {
+            window.addEventListener('keydown', (e) => {
+                if (document.getElementById('drawModal').classList.contains('hidden')) return;
+                
+                if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
+                if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+                if (e.key === 'Delete' && dragTarget) {
+                    elements = elements.filter(el => el !== dragTarget);
+                    dragTarget = null;
+                    saveHistory();
+                    drawAll();
+                }
+            });
+
+            window.addEventListener('paste', async (e) => {
+                if (document.getElementById('drawModal').classList.contains('hidden')) return;
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (const item of items) {
+                    if (item.type.indexOf("image") !== -1) {
+                        const blob = item.getAsFile();
+                        const reader = new FileReader();
+                        reader.onload = (ev) => {
+                            const img = new Image();
+                            img.onload = () => {
+                                const el = { type: 'image', img, x: 100, y: 100, w: img.width, h: img.height, stroke: 0 };
+                                elements.push(el);
+                                saveHistory();
+                                drawAll();
+                            };
+                            img.src = ev.target.result;
+                        };
+                        reader.readAsDataURL(blob);
+                    }
+                }
+            });
+        }
+
+        function updateCanvasBg(val) { canvasBgColor = val; hasCanvasBg = true; drawAll(); }
+        function toggleCanvasBg(on) { hasCanvasBg = on; drawAll(); }
+
+        function dDown(e) {
+            const rect = dCanvas.getBoundingClientRect();
+            startX = (e.clientX - rect.left) * (dCanvas.width / rect.width);
+            startY = (e.clientY - rect.top) * (dCanvas.height / rect.height);
+            isDown = true;
+
+            if(curTool === 'select') {
+                if(dragTarget) {
+                    const h = getHandleAt(startX, startY, dragTarget);
+                    if(h) { dragType = 'resize'; return; }
+                }
+                dragTarget = [...elements].reverse().find(el => isPointIn(startX, startY, el));
+                dragType = 'move';
+                drawAll();
+                return;
+            }
+
+            if(curTool === 'text') {
+    const txt = document.getElementById('drawText').value || "Sample Text";
+    dragTarget = {
+        type: 'text', x: startX, y: startY, w: 200, h: 40,
+        text: txt,
+        font: document.getElementById('drawFont').value,
+        fontSize: parseInt(document.getElementById('drawFontSize').value),
+        color: document.getElementById('drawColor').value,
+        stroke: document.getElementById('drawStroke').value
+    };
+            } else {
+                dragTarget = {
+                    type: curTool, x: startX, y: startY, w: 0, h: 0, 
+                    color: document.getElementById('drawColor').value,
+                    stroke: document.getElementById('drawStroke').value,
+                    points: [{x: startX, y: startY}]
+                };
+            }
+            elements.push(dragTarget);
+        }
+
+        function dMove(e) {
+            if(!isDown || !dragTarget) return;
+            const rect = dCanvas.getBoundingClientRect();
+            const cx = (e.clientX - rect.left) * (dCanvas.width / rect.width);
+            const cy = (e.clientY - rect.top) * (dCanvas.height / rect.height);
+
+            if(curTool === 'select') {
+                const dx = cx - startX;
+                const dy = cy - startY;
+                if(dragType === 'move') {
+                    if(dragTarget.type === 'pen') dragTarget.points.forEach(p => { p.x += dx; p.y += dy; });
+                    dragTarget.x += dx; dragTarget.y += dy;
+                } else {
+                    dragTarget.w += dx; dragTarget.h += dy;
+                }
+                startX = cx; startY = cy;
+            } else if(curTool === 'pen') {
+                dragTarget.points.push({x: cx, y: cy});
+            } else if(curTool === 'text') {
+                dragTarget.x = cx; dragTarget.y = cy;
+            } else {
+                dragTarget.w = cx - dragTarget.x;
+                dragTarget.h = cy - dragTarget.y;
+            }
+            drawAll();
+        }
+
+        function dUp() {
+            if(isDown && dragTarget && dragTarget.type === 'pen') finalizePenBounds(dragTarget);
+            if(isDown) saveHistory();
+            isDown = false;
+        }
+
+        function finalizePenBounds(el) {
+            const xs = el.points.map(p => p.x);
+            const ys = el.points.map(p => p.y);
+            el.x = Math.min(...xs); el.y = Math.min(...ys);
+            el.w = Math.max(...xs) - el.x; el.h = Math.max(...ys) - el.y;
+        }
+
+        function drawAll() {
+            dCtx.clearRect(0, 0, dCanvas.width, dCanvas.height);
+            if(hasCanvasBg) { 
+                dCtx.fillStyle = canvasBgColor; 
+                dCtx.fillRect(0, 0, dCanvas.width, dCanvas.height); 
+            }
+
+            elements.forEach(el => {
+                dCtx.beginPath();
+                dCtx.strokeStyle = el.color;
+                dCtx.fillStyle = el.color;
+                dCtx.lineWidth = el.stroke;
+                dCtx.lineCap = 'round';
+                dCtx.lineJoin = 'round';
+
+                if(el.type === 'pen') {
+                    el.points.forEach((p, i) => i === 0 ? dCtx.moveTo(p.x, p.y) : dCtx.lineTo(p.x, p.y));
+                    dCtx.stroke();
+                } else if(el.type === 'rect') { dCtx.strokeRect(el.x, el.y, el.w, el.h); }
+                else if(el.type === 'circle') {
+                    dCtx.ellipse(el.x + el.w/2, el.y + el.h/2, Math.abs(el.w/2), Math.abs(el.h/2), 0, 0, Math.PI*2);
+                    dCtx.stroke();
+                } else if(el.type === 'image') { dCtx.drawImage(el.img, el.x, el.y, el.w, el.h); }
+                else if(el.type === 'text') {
+    const size = el.fontSize || 24;
+    dCtx.font = `${size}px ${el.font}`;
+    dCtx.fillText(el.text, el.x, el.y);
+    // Update text bounds for selection
+    const metrics = dCtx.measureText(el.text);
+    el.w = metrics.width;
+    el.h = size;
+}
+
+                if(el === dragTarget) {
+                    dCtx.setLineDash([5, 5]);
+                    dCtx.strokeStyle = '#3b82f6';
+                    dCtx.strokeRect(el.x - 4, el.y - (el.type==='text'?el.h:4), el.w + 8, el.h + 8);
+                    dCtx.setLineDash([]);
+                    dCtx.fillStyle = '#3b82f6';
+                    dCtx.fillRect(el.x + el.w - 5, el.y + el.h - 5, 10, 10);
+                }
+            });
+        }
+
+        function isPointIn(x, y, el) { 
+            if(el.type === 'text') return x >= el.x && x <= el.x + el.w && y >= el.y - el.h && y <= el.y;
+            return x >= el.x && x <= el.x + el.w && y >= el.y && y <= el.y + el.h; 
+        }
+        function getHandleAt(x, y, el) { return (Math.abs(x - (el.x + el.w)) < 15 && Math.abs(y - (el.y + el.h)) < 15) ? 'br' : null; }
+        function setTool(t) { curTool = t; document.querySelectorAll('[id^="tool-"]').forEach(b => b.classList.remove('bg-blue-600')); document.getElementById(`tool-${t}`).classList.add('bg-blue-600'); }
+
+        function drawImportImage(e) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const el = { type: 'image', img, x: 50, y: 50, w: img.width, h: img.height, stroke: 0 };
+                    elements.push(el); lastImportedImg = img;
+                    document.getElementById('btnResizeCanvas').classList.remove('hidden');
+                    saveHistory(); drawAll();
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+
+        function resizeCanvasToImage() {
+            if(!lastImportedImg) return;
+            dCanvas.width = lastImportedImg.width;
+            dCanvas.height = lastImportedImg.height;
+            drawAll();
+        }
+
+function applyCanvasDimensions() {
+    const newW = parseInt(document.getElementById('canvasWidth').value) || 1000;
+    const newH = parseInt(document.getElementById('canvasHeight').value) || 800;
+    dCanvas.width = newW;
+    dCanvas.height = newH;
+    drawAll();
+}
+
+        function sendToDrawingBoard() {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => {
+                elements.push({ type: 'image', img, x: 0, y: 0, w: img.width, h: img.height, stroke: 0 });
+                lastImportedImg = img;
+                openDrawingBoard(); resizeCanvasToImage(); saveHistory(); drawAll();
+            };
+            img.src = document.getElementById('mainImage').src;
+        }
+
+        // Logic fix: Clone objects instead of stringifying to preserve Image references
+        function saveHistory() { 
+            history.push(elements.map(el => {
+                const clone = {...el};
+                if(el.type === 'pen') clone.points = el.points.map(p => ({...p}));
+                return clone;
+            })); 
+            if(history.length > 50) history.shift(); 
+            redoStack = []; 
+        }
+        
+        function undo() { 
+            if(history.length < 2) return; 
+            redoStack.push(history.pop()); 
+            elements = history[history.length - 1].map(el => {
+                const clone = {...el};
+                if(el.type === 'pen') clone.points = el.points.map(p => ({...p}));
+                return clone;
+            });
+            drawAll(); 
+        }
+
+        function redo() { 
+            if(redoStack.length === 0) return; 
+            const state = redoStack.pop(); 
+            history.push(state); 
+            elements = state.map(el => {
+                const clone = {...el};
+                if(el.type === 'pen') clone.points = el.points.map(p => ({...p}));
+                return clone;
+            });
+            drawAll(); 
+        }
+
+        function openDrawingBoard() { document.getElementById('drawModal').classList.remove('hidden'); drawAll(); }
+        function closeDrawingBoard() { document.getElementById('drawModal').classList.add('hidden'); }
+        function clearCanvas() { elements = []; saveHistory(); drawAll(); }
+        function saveCanvasToApp() { setPreview(dCanvas.toDataURL("image/png")); closeDrawingBoard(); }
+
+        function resetApp() { if(confirm("Reset entire app state?")) location.reload(); }
+
+        async function copyToClipboard() {
+            const blob = await fetch(document.getElementById('mainImage').src).then(r => r.blob());
+            navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
+            alert("Copied!");
+        }
+
+        function downloadImage() {
+            const a = document.createElement('a');
+            a.href = document.getElementById('mainImage').src;
+            a.download = `restyled-${currentSeed}.png`;
+            a.click();
+        }
+
+        async function copyCanvasToClipboard() {
+            dCanvas.toBlob(blob => {
+                navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+                alert("Canvas copied!");
+            });
+        }
+    </script>
+</body>
+</html>
