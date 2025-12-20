@@ -522,36 +522,39 @@
             return apiKeyInput.value.trim() || apiKey;
         }
 
-        function updateModelAvailability() {
-            const hasCustomKey = apiKeyInput.value.trim().length > 0;
-            const veoOption = modelSelect.querySelector('option[value="veo"]');
-            const nanobananaProOption = modelSelect.querySelector('option[value="nanobanana-pro"]');
-            const seedanceOption = modelSelect.querySelector('option[value="seedance"]');
-            
-            if (veoOption) {
-                veoOption.disabled = !hasCustomKey;
-                if (!hasCustomKey && modelSelect.value === 'veo') {
-                    modelSelect.value = 'zimage';
-                    updateUIForModel();
-                }
-            }
-            
-            if (nanobananaProOption) {
-                nanobananaProOption.disabled = !hasCustomKey;
-                if (!hasCustomKey && modelSelect.value === 'nanobanana-pro') {
-                    modelSelect.value = 'zimage';
-                    updateUIForModel();
-                }
-            }
-            
-            if (seedanceOption) {
-                seedanceOption.disabled = !hasCustomKey;
-                if (!hasCustomKey && modelSelect.value === 'seedance') {
-                    modelSelect.value = 'zimage';
-                    updateUIForModel();
-                }
-            }
+function updateModelAvailability() {
+    const hasCustomKey = apiKeyInput.value.trim().length > 0;
+    const veoOption = modelSelect.querySelector('option[value="veo"]');
+    const nanobananaProOption = modelSelect.querySelector('option[value="nanobanana-pro"]');
+    const seedanceOption = modelSelect.querySelector('option[value="seedance"]');
+    
+    if (veoOption) {
+        veoOption.disabled = !hasCustomKey;
+        if (!hasCustomKey && modelSelect.value === 'veo') {
+            modelSelect.value = 'zimage';
+            updateUIForModel();
         }
+    }
+    
+    if (nanobananaProOption) {
+        nanobananaProOption.disabled = !hasCustomKey;
+        if (!hasCustomKey && modelSelect.value === 'nanobanana-pro') {
+            modelSelect.value = 'zimage';
+            updateUIForModel();
+        }
+    }
+    
+    if (seedanceOption) {
+        seedanceOption.disabled = !hasCustomKey;
+        if (!hasCustomKey && modelSelect.value === 'seedance') {
+            modelSelect.value = 'zimage';
+            updateUIForModel();
+        }
+    }
+    
+    // Call this ONCE at the END
+    updateUIForModel();
+}
 
         // --- Utility Functions ---
 
@@ -864,15 +867,21 @@ function updateUIForModel() {
             });
             audioControlContainer.style.display = 'flex'; 
         } else if (isSeedance || isSeedancePro) {
-            for(let i=2; i<=10; i++) {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.text = `${i} seconds`;
-                if(i===4) opt.selected = true; 
-                durationSelect.appendChild(opt);
-            }
-            audioControlContainer.style.display = 'none'; 
+    const hasCustomKey = apiKeyInput.value.trim().length > 0;
+    for(let i=2; i<=10; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.text = `${i} seconds`;
+        if(i===4) opt.selected = true;
+        // Disable durations > 4 seconds if no custom key
+        if (i > 4 && !hasCustomKey) {
+            opt.disabled = true;
+            opt.text += ' (Requires API Key)';
         }
+        durationSelect.appendChild(opt);
+    }
+    audioControlContainer.style.display = 'none'; 
+}
 
     } else {
         imageDimensionsGroup.style.display = 'grid'; 
@@ -897,26 +906,41 @@ function updateUIForModel() {
 }
 
         async function generateImage() {
-            if (!promptInput.value.trim()) {
-                displayMessage('Please enter a prompt.', 'error');
-                return;
-            }
+    if (!promptInput.value.trim()) {
+        displayMessage('Please enter a prompt.', 'error');
+        return;
+    }
 
-            toggleLoading(true);
-            messageArea.innerHTML = '';
-            resultImage.style.display = 'none';
-            resultVideo.style.display = 'none';
-            resultVideo.src = '';
-            viewBtn.disabled = downloadBtn.disabled = true;
+    // DECLARE model ONCE, use it throughout
+    const model = modelSelect.value;
+    const isSeedance = model === 'seedance';
+    const isSeedancePro = model === 'seedance-pro';
+    const hasCustomKey = apiKeyInput.value.trim().length > 0;
+    
+    // Validate duration for Seedance models BEFORE anything else
+    if ((isSeedance || isSeedancePro) && VIDEO_MODELS.includes(model)) {
+        const selectedDuration = parseInt(durationSelect.value);
+        if (selectedDuration > 4 && !hasCustomKey) {
+            displayMessage('Durations longer than 4 seconds require a custom API key for Seedance models.', 'error');
+            return;
+        }
+    }
 
-            const model = modelSelect.value;
-            const prompt = promptInput.value;
-            let seed = randomizeSeedCheckbox.checked ? getRandomSeed() : seedInput.value;
-            if (randomizeSeedCheckbox.checked) seedInput.value = seed;
+    toggleLoading(true);
+    messageArea.innerHTML = '';
+    resultImage.style.display = 'none';
+    resultVideo.style.display = 'none';
+    resultVideo.src = '';
+    viewBtn.disabled = downloadBtn.disabled = true;
 
-            const isVideoModel = VIDEO_MODELS.includes(model);
-            const isEditorModel = EDITOR_MODELS.includes(model);
-            const isVeo = model === 'veo';
+    // REMOVE the duplicate "const model = modelSelect.value;" that was here at line 609
+    const prompt = promptInput.value;
+    let seed = randomizeSeedCheckbox.checked ? getRandomSeed() : seedInput.value;
+    if (randomizeSeedCheckbox.checked) seedInput.value = seed;
+
+    const isVideoModel = VIDEO_MODELS.includes(model);
+    const isEditorModel = EDITOR_MODELS.includes(model);
+    const isVeo = model === 'veo';
 
             const params = new URLSearchParams({
                 model: model,
