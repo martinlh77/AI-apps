@@ -9,16 +9,16 @@
     <style>
         /* Custom Dark Theme Variables */
         :root {
-            --bg: #1e293b; /* Slate 800 */
-            --card: #334155; /* Slate 700 */
-            --text: #f1f5f9; /* Slate 100 */
-            --primary: #6366f1; /* Indigo 500 */
-            --primary-hover: #4f46e5; /* Indigo 600 */
-            --subtle: #94a3b8; /* Slate 400 */
-            --border: #475569; /* Slate 600 */
-            --input: #475569; /* Slate 600 */
-            --img-bg: #111827; /* Gray 900 */
-            --enhance: #6366f1; /* Primary color for Enhance button */
+            --bg: #1e293b;
+            --card: #334155;
+            --text: #f1f5f9;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --subtle: #94a3b8;
+            --border: #475569;
+            --input: #475569;
+            --img-bg: #111827;
+            --enhance: #6366f1;
             --enhance-hover: #4f46e5;
         }
         body {
@@ -43,7 +43,6 @@
             padding: 0.75rem;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        /* Range Slider Styling */
         input[type=range] {
             -webkit-appearance: none; 
             background: transparent; 
@@ -91,14 +90,13 @@
             100% { transform: rotate(360deg); }
         }
         .error-message {
-            background-color: #ef4444; /* Red 500 */
+            background-color: #ef4444;
             color: white;
             padding: 0.75rem;
             border-radius: 0.5rem;
             text-align: center;
         }
 
-/* --- MULTI IMAGE MANAGER STYLES (UPDATED FOR LARGER, NON-TRUNCATED VIEW) --- */
         .ref-controls {
             display: flex;
             flex-wrap: wrap;
@@ -128,17 +126,16 @@
             background-color: var(--border);
         }
 
-        /* Multi Image Card Display */
         .ref-card-container {
             width: 100%;
             display: flex;
-            flex-wrap: wrap; /* Allow multiple images on one line */
+            flex-wrap: wrap;
             justify-content: flex-start;
-            gap: 15px; /* Increased gap for better spacing */
+            gap: 15px;
         }
         .ref-card {
-            width: 150px; /* Fixed, larger width for the card */
-            height: auto; /* Allows height to adjust based on content */
+            width: 150px;
+            height: auto;
             background: rgba(0, 0, 0, 0.2);
             border: 1px solid var(--border);
             border-radius: 6px;
@@ -149,13 +146,11 @@
             position: relative;
         }
 
-        /* Removed @media query for simplified, fixed-width flow */
-
         .ref-card img {
             width: 100%;
-            max-height: 150px; /* Set a reasonable maximum height */
-            height: auto; /* Allows proportional scaling */
-            object-fit: contain; /* CRUCIAL: Ensures the entire image is visible without cropping */
+            max-height: 150px;
+            height: auto;
+            object-fit: contain;
             background-color: rgba(0,0,0,0.5); 
             border-radius: 4px;
         }
@@ -189,12 +184,84 @@
             z-index: 10;
         }
         
-        /* Video Result Styles */
         video {
             max-width: 100%;
             max-height: 100%;
             border-radius: 0.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        /* --- HISTORY STYLES --- */
+        .history-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .history-item {
+            position: relative;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+        .history-item:hover {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+        .history-item img, .history-item video {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            display: block;
+        }
+        .history-timestamp {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 10px;
+            padding: 2px 4px;
+            text-align: center;
+            font-family: monospace;
+        }
+        .history-remove {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            line-height: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .history-item:hover .history-remove {
+            opacity: 1;
+        }
+        .history-empty {
+            text-align: center;
+            color: var(--subtle);
+            font-style: italic;
+            padding: 2rem;
         }
     </style>
     <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
@@ -408,6 +475,17 @@
                     <button id="downloadBtn" class="flex-1 py-2 bg-green-600 text-white font-semibold rounded-lg disabled:opacity-50" disabled>Download</button>
                     <button id="refreshBtn" class="py-2 px-4 bg-red-500 text-white font-semibold rounded-lg">Reset</button>
                 </div>
+
+                <!-- NEW: History Section -->
+                <div class="history-section">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-lg font-semibold">Generation History</h3>
+                        <button id="clearHistoryBtn" class="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Clear All</button>
+                    </div>
+                    <div id="historyGrid" class="history-grid">
+                        <div class="history-empty">No history yet. Generate something!</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -437,7 +515,7 @@
         // --- END FIREBASE INITIALIZATION ---
 
         // --- DOM Elements ---
-        const apiKeyInput = document.getElementById('apiKeyInput'); // Added
+        const apiKeyInput = document.getElementById('apiKeyInput');
         const modelSelect = document.getElementById('modelSelect');
         const promptInput = document.getElementById('promptInput');
         const seedInput = document.getElementById('seedInput');
@@ -451,6 +529,7 @@
         const downloadBtn = document.getElementById('downloadBtn');
         const refreshBtn = document.getElementById('refreshBtn');
         const enhancePromptBtn = document.getElementById('enhancePromptBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
         // Results
         const resultImage = document.getElementById('resultImage');
@@ -458,6 +537,7 @@
         const placeholderText = document.getElementById('placeholderText');
         const loadingIndicator = document.getElementById('loadingIndicator');
         const messageArea = document.getElementById('message-area');
+        const historyGrid = document.getElementById('historyGrid');
 
         // Groups
         const imageInputGroup = document.getElementById('imageInputGroup');
@@ -503,6 +583,8 @@
         let originalPrompt = ''; 
         let referenceImages = []; 
         const MAX_IMAGES = 14;
+        const HISTORY_KEY = 'pollinations_generation_history';
+        const MAX_HISTORY = 50; // Limit history to 50 items
 
         // --- Constants ---
         const IMAGE_API_BASE_URL = 'https://enter.pollinations.ai/api/generate/image';
@@ -522,39 +604,209 @@
             return apiKeyInput.value.trim() || apiKey;
         }
 
-function updateModelAvailability() {
-    const hasCustomKey = apiKeyInput.value.trim().length > 0;
-    const veoOption = modelSelect.querySelector('option[value="veo"]');
-    const nanobananaProOption = modelSelect.querySelector('option[value="nanobanana-pro"]');
-    const seedanceOption = modelSelect.querySelector('option[value="seedance"]');
-    
-    if (veoOption) {
-        veoOption.disabled = !hasCustomKey;
-        if (!hasCustomKey && modelSelect.value === 'veo') {
-            modelSelect.value = 'zimage';
+        // --- HISTORY MANAGEMENT ---
+        function loadHistory() {
+            try {
+                const stored = localStorage.getItem(HISTORY_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                console.error('Failed to load history:', e);
+                return [];
+            }
+        }
+
+        function saveHistory(history) {
+            try {
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            } catch (e) {
+                console.error('Failed to save history:', e);
+            }
+        }
+
+        function addToHistory(url, isVideo = false) {
+            // Only store if it's an actual URL, not a blob
+            if (url.startsWith('blob:')) {
+                return; // Skip blob URLs
+            }
+            
+            // Remove API key from URL before storing
+            const cleanUrl = url.split('&key=')[0].split('?key=')[0];
+            
+            const history = loadHistory();
+            const newItem = {
+                url: cleanUrl,
+                timestamp: Date.now(),
+                isVideo: isVideo
+            };
+            
+            // Add to beginning of array
+            history.unshift(newItem);
+            
+            // Limit history size
+            if (history.length > MAX_HISTORY) {
+                history.length = MAX_HISTORY;
+            }
+            
+            saveHistory(history);
+            renderHistory();
+        }
+
+        function removeFromHistory(index) {
+            const history = loadHistory();
+            history.splice(index, 1);
+            saveHistory(history);
+            renderHistory();
+        }
+
+        function clearAllHistory() {
+            if (confirm('Are you sure you want to clear all generation history?')) {
+                localStorage.removeItem(HISTORY_KEY);
+                renderHistory();
+                displayMessage('History cleared successfully.', 'success');
+            }
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            // Less than 1 minute
+            if (diff < 60000) {
+                return 'Just now';
+            }
+            // Less than 1 hour
+            if (diff < 3600000) {
+                const mins = Math.floor(diff / 60000);
+                return `${mins}m ago`;
+            }
+            // Less than 1 day
+            if (diff < 86400000) {
+                const hours = Math.floor(diff / 3600000);
+                return `${hours}h ago`;
+            }
+            // Less than 7 days
+            if (diff < 604800000) {
+                const days = Math.floor(diff / 86400000);
+                return `${days}d ago`;
+            }
+            
+            // Otherwise show date
+            return date.toLocaleDateString();
+        }
+
+        function renderHistory() {
+            const history = loadHistory();
+            
+            if (history.length === 0) {
+                historyGrid.innerHTML = '<div class="history-empty">No history yet. Generate something!</div>';
+                return;
+            }
+            
+            historyGrid.innerHTML = '';
+            
+            history.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                // Create media element (img or video)
+                const mediaEl = document.createElement(item.isVideo ? 'video' : 'img');
+                mediaEl.src = item.url;
+                if (item.isVideo) {
+                    mediaEl.muted = true;
+                    mediaEl.loop = true;
+                    mediaEl.playsInline = true;
+                    // Play on hover
+                    historyItem.addEventListener('mouseenter', () => {
+                        mediaEl.play().catch(() => {});
+                    });
+                    historyItem.addEventListener('mouseleave', () => {
+                        mediaEl.pause();
+                        mediaEl.currentTime = 0;
+                    });
+                }
+                
+                // Create timestamp overlay
+                const timestamp = document.createElement('div');
+                timestamp.className = 'history-timestamp';
+                timestamp.textContent = formatTimestamp(item.timestamp);
+                
+                // Create remove button
+                const removeBtn = document.createElement('div');
+                removeBtn.className = 'history-remove';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    removeFromHistory(index);
+                };
+                
+                // Click to load into preview
+                historyItem.onclick = () => {
+                    loadHistoryItem(item);
+                };
+                
+                historyItem.appendChild(mediaEl);
+                historyItem.appendChild(timestamp);
+                historyItem.appendChild(removeBtn);
+                historyGrid.appendChild(historyItem);
+            });
+        }
+
+        function loadHistoryItem(item) {
+            // Set both the display URL AND the API URL
+            generatedImageUrl = item.url;
+            generatedApiUrl = item.url; // This ensures "View Original URL" works
+            
+            if (item.isVideo) {
+                resultVideo.src = item.url;
+                resultVideo.style.display = 'block';
+                resultImage.style.display = 'none';
+                resultVideo.load();
+                resultVideo.play().catch(e => console.log("Auto-play prevented"));
+            } else {
+                resultImage.src = item.url;
+                resultImage.style.display = 'block';
+                resultVideo.style.display = 'none';
+            }
+            
+            placeholderText.style.display = 'none';
+            viewBtn.disabled = downloadBtn.disabled = false;
+            
+            displayMessage('Loaded from history!', 'success');
+        }
+
+        function updateModelAvailability() {
+            const hasCustomKey = apiKeyInput.value.trim().length > 0;
+            const veoOption = modelSelect.querySelector('option[value="veo"]');
+            const nanobananaProOption = modelSelect.querySelector('option[value="nanobanana-pro"]');
+            const seedanceOption = modelSelect.querySelector('option[value="seedance"]');
+            
+            if (veoOption) {
+                veoOption.disabled = !hasCustomKey;
+                if (!hasCustomKey && modelSelect.value === 'veo') {
+                    modelSelect.value = 'zimage';
+                    updateUIForModel();
+                }
+            }
+            
+            if (nanobananaProOption) {
+                nanobananaProOption.disabled = !hasCustomKey;
+                if (!hasCustomKey && modelSelect.value === 'nanobanana-pro') {
+                    modelSelect.value = 'zimage';
+                    updateUIForModel();
+                }
+            }
+            
+            if (seedanceOption) {
+                seedanceOption.disabled = !hasCustomKey;
+                if (!hasCustomKey && modelSelect.value === 'seedance') {
+                    modelSelect.value = 'zimage';
+                    updateUIForModel();
+                }
+            }
+            
             updateUIForModel();
         }
-    }
-    
-    if (nanobananaProOption) {
-        nanobananaProOption.disabled = !hasCustomKey;
-        if (!hasCustomKey && modelSelect.value === 'nanobanana-pro') {
-            modelSelect.value = 'zimage';
-            updateUIForModel();
-        }
-    }
-    
-    if (seedanceOption) {
-        seedanceOption.disabled = !hasCustomKey;
-        if (!hasCustomKey && modelSelect.value === 'seedance') {
-            modelSelect.value = 'zimage';
-            updateUIForModel();
-        }
-    }
-    
-    // Call this ONCE at the END
-    updateUIForModel();
-}
 
         // --- Utility Functions ---
 
@@ -803,7 +1055,6 @@ function updateModelAvailability() {
             const fullUrl = `${TEXT_API_BASE_URL}/${encodeURIComponent(fullTextPrompt)}?${textParams.toString()}`;
 
             try {
-                // Updated to use active key
                 const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
                 if (!response.ok) throw new Error(await response.text());
 
@@ -843,104 +1094,100 @@ function updateModelAvailability() {
 
         // --- Main Application Logic ---
 
-function updateUIForModel() {
-    const model = modelSelect.value;
-    const isVideoModel = VIDEO_MODELS.includes(model);
-    const isEditorModel = EDITOR_MODELS.includes(model);
-   const isSeedream = SEEDREAM_MODEL.includes(model);
-    const isVeo = model === 'veo';
-    const isSeedance = model === 'seedance';
-    const isSeedancePro = model === 'seedance-pro';
+        function updateUIForModel() {
+            const model = modelSelect.value;
+            const isVideoModel = VIDEO_MODELS.includes(model);
+            const isEditorModel = EDITOR_MODELS.includes(model);
+            const isSeedream = SEEDREAM_MODEL.includes(model);
+            const isVeo = model === 'veo';
+            const isSeedance = model === 'seedance';
+            const isSeedancePro = model === 'seedance-pro';
 
-    if (isVideoModel) {
-        imageDimensionsGroup.style.display = 'none'; 
-        transparentGroup.classList.add('hidden');    
-        videoControlsGroup.style.display = 'block';  
-        
-        durationSelect.innerHTML = '';
-        if (isVeo) {
-            [4, 6, 8].forEach(val => {
-                const opt = document.createElement('option');
-                opt.value = val;
-                opt.text = `${val} seconds`;
-                durationSelect.appendChild(opt);
-            });
-            audioControlContainer.style.display = 'flex'; 
-        } else if (isSeedance || isSeedancePro) {
-    const hasCustomKey = apiKeyInput.value.trim().length > 0;
-    for(let i=2; i<=10; i++) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.text = `${i} seconds`;
-        if(i===4) opt.selected = true;
-        // Disable durations > 4 seconds if no custom key
-        if (i > 4 && !hasCustomKey) {
-            opt.disabled = true;
-            opt.text += ' (Requires API Key)';
+            if (isVideoModel) {
+                imageDimensionsGroup.style.display = 'none'; 
+                transparentGroup.classList.add('hidden');    
+                videoControlsGroup.style.display = 'block';  
+                
+                durationSelect.innerHTML = '';
+                if (isVeo) {
+                    [4, 6, 8].forEach(val => {
+                        const opt = document.createElement('option');
+                        opt.value = val;
+                        opt.text = `${val} seconds`;
+                        durationSelect.appendChild(opt);
+                    });
+                    audioControlContainer.style.display = 'flex'; 
+                } else if (isSeedance || isSeedancePro) {
+                    const hasCustomKey = apiKeyInput.value.trim().length > 0;
+                    for(let i=2; i<=10; i++) {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        opt.text = `${i} seconds`;
+                        if(i===4) opt.selected = true;
+                        if (i > 4 && !hasCustomKey) {
+                            opt.disabled = true;
+                            opt.text += ' (Requires API Key)';
+                        }
+                        durationSelect.appendChild(opt);
+                    }
+                    audioControlContainer.style.display = 'none'; 
+                }
+
+            } else {
+                imageDimensionsGroup.style.display = 'grid'; 
+                transparentGroup.classList.remove('hidden'); 
+                videoControlsGroup.style.display = 'none';   
+            }
+
+            if (isEditorModel && !isVeo) {
+                imageInputGroup.style.display = 'block';
+                dimCheckContainer.style.display = (isSeedance || isSeedancePro) ? 'none' : 'flex';
+            } else {
+                imageInputGroup.style.display = 'none';
+            }
+
+            negativePromptGroup.style.display = isSeedream ? 'block' : 'none';
+            generateBtn.innerText = isVideoModel ? 'Generate Video' : 'Generate / Edit Image';
+            
+            if (isSeedream) {
+                widthInput.value = 1920;
+                heightInput.value = 1920;
+            }
         }
-        durationSelect.appendChild(opt);
-    }
-    audioControlContainer.style.display = 'none'; 
-}
-
-    } else {
-        imageDimensionsGroup.style.display = 'grid'; 
-        transparentGroup.classList.remove('hidden'); 
-        videoControlsGroup.style.display = 'none';   
-    }
-
-    if (isEditorModel && !isVeo) {
-        imageInputGroup.style.display = 'block';
-        dimCheckContainer.style.display = (isSeedance || isSeedancePro) ? 'none' : 'flex';
-    } else {
-        imageInputGroup.style.display = 'none';
-    }
-
-    negativePromptGroup.style.display = isSeedream ? 'block' : 'none';
-    generateBtn.innerText = isVideoModel ? 'Generate Video' : 'Generate / Edit Image';
-    
-    if (isSeedream) {
-        widthInput.value = 1920;
-        heightInput.value = 1920;
-    }
-}
 
         async function generateImage() {
-    if (!promptInput.value.trim()) {
-        displayMessage('Please enter a prompt.', 'error');
-        return;
-    }
+            if (!promptInput.value.trim()) {
+                displayMessage('Please enter a prompt.', 'error');
+                return;
+            }
 
-    // DECLARE model ONCE, use it throughout
-    const model = modelSelect.value;
-    const isSeedance = model === 'seedance';
-    const isSeedancePro = model === 'seedance-pro';
-    const hasCustomKey = apiKeyInput.value.trim().length > 0;
-    
-    // Validate duration for Seedance models BEFORE anything else
-    if ((isSeedance || isSeedancePro) && VIDEO_MODELS.includes(model)) {
-        const selectedDuration = parseInt(durationSelect.value);
-        if (selectedDuration > 4 && !hasCustomKey) {
-            displayMessage('Durations longer than 4 seconds require a custom API key for Seedance models.', 'error');
-            return;
-        }
-    }
+            const model = modelSelect.value;
+            const isSeedance = model === 'seedance';
+            const isSeedancePro = model === 'seedance-pro';
+            const hasCustomKey = apiKeyInput.value.trim().length > 0;
+            
+            if ((isSeedance || isSeedancePro) && VIDEO_MODELS.includes(model)) {
+                const selectedDuration = parseInt(durationSelect.value);
+                if (selectedDuration > 4 && !hasCustomKey) {
+                    displayMessage('Durations longer than 4 seconds require a custom API key for Seedance models.', 'error');
+                    return;
+                }
+            }
 
-    toggleLoading(true);
-    messageArea.innerHTML = '';
-    resultImage.style.display = 'none';
-    resultVideo.style.display = 'none';
-    resultVideo.src = '';
-    viewBtn.disabled = downloadBtn.disabled = true;
+            toggleLoading(true);
+            messageArea.innerHTML = '';
+            resultImage.style.display = 'none';
+            resultVideo.style.display = 'none';
+            resultVideo.src = '';
+            viewBtn.disabled = downloadBtn.disabled = true;
 
-    // REMOVE the duplicate "const model = modelSelect.value;" that was here at line 609
-    const prompt = promptInput.value;
-    let seed = randomizeSeedCheckbox.checked ? getRandomSeed() : seedInput.value;
-    if (randomizeSeedCheckbox.checked) seedInput.value = seed;
+            const prompt = promptInput.value;
+            let seed = randomizeSeedCheckbox.checked ? getRandomSeed() : seedInput.value;
+            if (randomizeSeedCheckbox.checked) seedInput.value = seed;
 
-    const isVideoModel = VIDEO_MODELS.includes(model);
-    const isEditorModel = EDITOR_MODELS.includes(model);
-    const isVeo = model === 'veo';
+            const isVideoModel = VIDEO_MODELS.includes(model);
+            const isEditorModel = EDITOR_MODELS.includes(model);
+            const isVeo = model === 'veo';
 
             const params = new URLSearchParams({
                 model: model,
@@ -1019,7 +1266,6 @@ function updateUIForModel() {
 
             for (let i = 0; i < maxRetries; i++) {
                 try {
-                    // Updated to use active key
                     const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
                     if (!response.ok) throw new Error(await response.text());
 
@@ -1061,54 +1307,64 @@ function updateUIForModel() {
 
                 toggleLoading(false);
                 viewBtn.disabled = downloadBtn.disabled = false;
+                
+                // ADD TO HISTORY - Use the full API URL, not blob
+                const urlToStore = generatedImageUrl.startsWith('blob:') ? generatedApiUrl : generatedImageUrl;
+                
+                // Wait 1 second before adding to history to ensure the image is available
+                setTimeout(() => {
+                    addToHistory(urlToStore, isVideoResult);
+                }, 1000);
+                
                 displayMessage(isVideoResult ? 'Video successfully generated!' : 'Image successfully generated!', 'success');
             }
         }
 
-function resetForm() {
-    apiKeyInput.value = ''; // Reset the API key input as well
-    promptInput.value = '';
-    seedInput.value = '42';
-    widthInput.value = DEFAULT_DIMENSION;  
-    heightInput.value = DEFAULT_DIMENSION; 
-    negativePromptInput.value = '';
-    randomizeSeedCheckbox.checked = true;
-    privateCheckbox.checked = true; 
-    noLogoCheckbox.checked = true; 
-    enhanceCheckbox.checked = true; 
-    askDimensionsCheckbox.checked = false;
-    safeCheckbox.checked = true;
-    noFeedCheckbox.checked = true;
-    transparentCheckbox.checked = false;
-    guidanceScaleSlider.value = 7;
-    guidanceScaleInput.value = 7;
-    qualitySelect.value = 'medium';
-    audioCheckbox.checked = false;
-    aspectRatioSelect.selectedIndex = 0;
-    originalPrompt = '';
-    updatePromptControls(false); 
-    referenceImages.forEach(img => {
-        if (img.type === 'file' && img.previewUrl) {
-            URL.revokeObjectURL(img.previewUrl);
+        function resetForm() {
+            apiKeyInput.value = '';
+            promptInput.value = '';
+            seedInput.value = '42';
+            widthInput.value = DEFAULT_DIMENSION;  
+            heightInput.value = DEFAULT_DIMENSION; 
+            negativePromptInput.value = '';
+            randomizeSeedCheckbox.checked = true;
+            privateCheckbox.checked = true; 
+            noLogoCheckbox.checked = true; 
+            enhanceCheckbox.checked = true; 
+            askDimensionsCheckbox.checked = false;
+            safeCheckbox.checked = true;
+            noFeedCheckbox.checked = true;
+            transparentCheckbox.checked = false;
+            guidanceScaleSlider.value = 7;
+            guidanceScaleInput.value = 7;
+            qualitySelect.value = 'medium';
+            audioCheckbox.checked = false;
+            aspectRatioSelect.selectedIndex = 0;
+            originalPrompt = '';
+            updatePromptControls(false); 
+            referenceImages.forEach(img => {
+                if (img.type === 'file' && img.previewUrl) {
+                    URL.revokeObjectURL(img.previewUrl);
+                }
+            });
+            referenceImages = []; 
+            updateGalleryUI();
+            refUrlInput.value = '';
+            refFileInput.value = '';
+            generatedImageUrl = null;
+            resultImage.style.display = 'none';
+            resultVideo.style.display = 'none';
+            resultVideo.pause();
+            resultVideo.src = '';
+            resultImage.src = '';
+            placeholderText.style.display = 'block';
+            viewBtn.disabled = downloadBtn.disabled = true;
+            messageArea.innerHTML = '';
+            toggleLoading(false);
+            updateUIForModel();
         }
-    });
-    referenceImages = []; 
-    updateGalleryUI();
-    refUrlInput.value = '';
-    refFileInput.value = '';
-    generatedImageUrl = null;
-    resultImage.style.display = 'none';
-    resultVideo.style.display = 'none';
-    resultVideo.pause();
-    resultVideo.src = '';
-    resultImage.src = '';
-    placeholderText.style.display = 'block';
-    viewBtn.disabled = downloadBtn.disabled = true;
-    messageArea.innerHTML = '';
-    toggleLoading(false);
-    updateUIForModel();
-}
 
+        // --- Event Listeners ---
         modelSelect.addEventListener('change', updateUIForModel);
         
         askDimensionsCheckbox.addEventListener('change', () => {
@@ -1153,12 +1409,15 @@ function resetForm() {
         });
 
         refreshBtn.addEventListener('click', resetForm);
-        if (enhancePromptBtn) enhancePromptBtn.addEventListener('click', handlePromptEnhancement);
+        
+        clearHistoryBtn.addEventListener('click', clearAllHistory);
 
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             updateUIForModel();
             updatePromptControls(false);
             updateModelAvailability();
+            renderHistory(); // Load and display history
         });
     </script>
 </body>
