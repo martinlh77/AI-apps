@@ -652,11 +652,14 @@
             renderHistory();
         }
 
-        function removeFromHistory(index) {
-            const history = loadHistory();
-            history.splice(index, 1);
-            saveHistory(history);
-            renderHistory();
+                function removeFromHistory(index) {
+            if (confirm('Are you sure you want to remove this item from history?')) {
+                const history = loadHistory();
+                history.splice(index, 1);
+                saveHistory(history);
+                renderHistory();
+                displayMessage('Item removed from history.', 'success');
+            }
         }
 
         function clearAllHistory() {
