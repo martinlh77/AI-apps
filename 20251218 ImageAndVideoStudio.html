@@ -418,7 +418,7 @@
                             <div>
                                 <label class="block text-xs text-subtle mb-1">Duration (Sec)</label>
                                 <select id="durationSelect" class="w-full">
-                                    </select>
+                                </select>
                             </div>
                         </div>
                         <div id="audio-control-container" class="flex items-center space-x-2 pt-1 hidden">
@@ -477,10 +477,10 @@
                     <button id="refreshBtn" class="py-2 px-4 bg-red-500 text-white font-semibold rounded-lg">Reset</button>
                 </div>
 
-                <!-- NEW: History Section -->
+                <!-- History Section -->
                 <div class="history-section">
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-lg font-semibold">Generation History (50 max)</h3>
+                        <h3 class="text-lg font-semibold">Generation History (100 max)</h3>
                         <button id="clearHistoryBtn" class="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Clear All</button>
                     </div>
                     <div id="historyGrid" class="history-grid">
@@ -529,7 +529,6 @@
         const viewBtn = document.getElementById('viewBtn');
         const downloadBtn = document.getElementById('downloadBtn');
         const refreshBtn = document.getElementById('refreshBtn');
-        const enhancePromptBtn = document.getElementById('enhancePromptBtn');
         const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
         // Results
@@ -585,7 +584,7 @@
         let referenceImages = []; 
         const MAX_IMAGES = 14;
         const HISTORY_KEY = 'pollinations_generation_history';
-        const MAX_HISTORY = 50; // Limit history to 50 items
+        const MAX_HISTORY = 100;
 
         // --- Constants ---
         const IMAGE_API_BASE_URL = 'https://enter.pollinations.ai/api/generate/image';
@@ -624,7 +623,7 @@
             }
         }
 
-        function addToHistory(url, isVideo = false) {
+        function addToHistory(url, isVideo = false, prompt = '') {
             // Only store if it's an actual URL, not a blob
             if (url.startsWith('blob:')) {
                 return; // Skip blob URLs
@@ -634,10 +633,51 @@
             const cleanUrl = url.split('&key=')[0].split('?key=')[0];
             
             const history = loadHistory();
+            
+            // Capture ALL current settings
             const newItem = {
                 url: cleanUrl,
                 timestamp: Date.now(),
-                isVideo: isVideo
+                isVideo: isVideo,
+                prompt: prompt || promptInput.value.trim(),
+                
+                // Model and core settings
+                model: modelSelect.value,
+                seed: seedInput.value,
+                guidanceScale: guidanceScaleInput.value,
+                
+                // Image settings
+                width: widthInput.value,
+                height: heightInput.value,
+                quality: qualitySelect.value,
+                transparent: transparentCheckbox.checked,
+                
+                // Video settings
+                aspectRatio: aspectRatioSelect.value,
+                duration: durationSelect.value,
+                audio: audioCheckbox.checked,
+                
+                // Privacy and enhancement settings
+                private: privateCheckbox.checked,
+                noFeed: noFeedCheckbox.checked,
+                noLogo: noLogoCheckbox.checked,
+                enhance: enhanceCheckbox.checked,
+                safe: safeCheckbox.checked,
+                
+                // Image input settings
+                imageUsageMode: document.querySelector('input[name="imageUsage"]:checked')?.value,
+                useDimensionsFromImage: askDimensionsCheckbox.checked,
+                
+                // Reference images (store URLs only, not blobs)
+                referenceImages: referenceImages.map(img => ({
+                    type: img.type,
+                    url: img.type === 'url' ? img.source : null, // Only save URL references
+                    width: img.width,
+                    height: img.height
+                })).filter(img => img.url), // Only keep URL-based references
+                
+                // Seedream negative prompt
+                negativePrompt: negativePromptInput.value.trim()
             };
             
             // Add to beginning of array
@@ -652,7 +692,7 @@
             renderHistory();
         }
 
-                function removeFromHistory(index) {
+        function removeFromHistory(index) {
             if (confirm('Are you sure you want to remove this item from history?')) {
                 const history = loadHistory();
                 history.splice(index, 1);
@@ -712,6 +752,7 @@
             history.forEach((item, index) => {
                 const historyItem = document.createElement('div');
                 historyItem.className = 'history-item';
+                historyItem.title = `Model: ${item.model || 'Unknown'}\nSeed: ${item.seed || 'Unknown'}\nClick to load all settings`;
                 
                 // Create media element (img or video)
                 const mediaEl = document.createElement(item.isVideo ? 'video' : 'img');
@@ -744,7 +785,7 @@
                     removeFromHistory(index);
                 };
                 
-                // Click to load into preview
+                // Click to load into preview with ALL settings
                 historyItem.onclick = () => {
                     loadHistoryItem(item);
                 };
@@ -759,8 +800,82 @@
         function loadHistoryItem(item) {
             // Set both the display URL AND the API URL
             generatedImageUrl = item.url;
-            generatedApiUrl = item.url; // This ensures "View Original URL" works
+            generatedApiUrl = item.url;
             
+            // Load the prompt
+            if (item.prompt) {
+                promptInput.value = item.prompt;
+            }
+            
+            // Load model
+            if (item.model) {
+                modelSelect.value = item.model;
+                updateUIForModel(); // Update UI based on model
+            }
+            
+            // Load core settings
+            if (item.seed !== undefined) {
+                seedInput.value = item.seed;
+                randomizeSeedCheckbox.checked = false; // Don't randomize when loading history
+            }
+            
+            if (item.guidanceScale !== undefined) {
+                guidanceScaleInput.value = item.guidanceScale;
+                guidanceScaleSlider.value = item.guidanceScale;
+            }
+            
+            // Load image settings
+            if (item.width !== undefined) widthInput.value = item.width;
+            if (item.height !== undefined) heightInput.value = item.height;
+            if (item.quality !== undefined) qualitySelect.value = item.quality;
+            if (item.transparent !== undefined) transparentCheckbox.checked = item.transparent;
+            
+            // Load video settings
+            if (item.aspectRatio !== undefined) aspectRatioSelect.value = item.aspectRatio;
+            if (item.duration !== undefined) durationSelect.value = item.duration;
+            if (item.audio !== undefined) audioCheckbox.checked = item.audio;
+            
+            // Load privacy and enhancement settings
+            if (item.private !== undefined) privateCheckbox.checked = item.private;
+            if (item.noFeed !== undefined) noFeedCheckbox.checked = item.noFeed;
+            if (item.noLogo !== undefined) noLogoCheckbox.checked = item.noLogo;
+            if (item.enhance !== undefined) enhanceCheckbox.checked = item.enhance;
+            if (item.safe !== undefined) safeCheckbox.checked = item.safe;
+            
+            // Load image input settings
+            if (item.imageUsageMode) {
+                const radioBtn = document.querySelector(`input[name="imageUsage"][value="${item.imageUsageMode}"]`);
+                if (radioBtn) radioBtn.checked = true;
+            }
+            
+            if (item.useDimensionsFromImage !== undefined) {
+                askDimensionsCheckbox.checked = item.useDimensionsFromImage;
+            }
+            
+            // Load reference images (URL-based only)
+            if (item.referenceImages && item.referenceImages.length > 0) {
+                // Clear existing reference images
+                referenceImages.forEach(img => {
+                    if (img.type === 'file' && img.previewUrl) {
+                        URL.revokeObjectURL(img.previewUrl);
+                    }
+                });
+                referenceImages = [];
+                
+                // Add saved reference images
+                item.referenceImages.forEach(savedImg => {
+                    if (savedImg.url) {
+                        setReferenceImage(savedImg.url, 'url');
+                    }
+                });
+            }
+            
+            // Load negative prompt
+            if (item.negativePrompt) {
+                negativePromptInput.value = item.negativePrompt;
+            }
+            
+            // Display the media
             if (item.isVideo) {
                 resultVideo.src = item.url;
                 resultVideo.style.display = 'block';
@@ -776,7 +891,7 @@
             placeholderText.style.display = 'none';
             viewBtn.disabled = downloadBtn.disabled = false;
             
-            displayMessage('Loaded from history!', 'success');
+            displayMessage('✅ Loaded from history with ALL settings restored!', 'success');
         }
 
         function updateModelAvailability() {
@@ -1317,7 +1432,7 @@
                 
                 // Wait 1 second before adding to history to ensure the image is available
                 setTimeout(() => {
-                    addToHistory(urlToStore, isVideoResult);
+                    addToHistory(urlToStore, isVideoResult, prompt);
                 }, 1000);
                 
                 displayMessage(isVideoResult ? 'Video successfully generated!' : 'Image successfully generated!', 'success');
