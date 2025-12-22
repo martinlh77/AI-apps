@@ -572,44 +572,63 @@
 
         /* MOBILE ADJUSTMENTS */
         @media (max-width: 768px) {
+            body { overflow-y: auto; height: auto; }
             h1 { font-size: 2.5rem; }
-            #game-container { border: none; height: 100vh; }
+            
+            #game-container { 
+                border: none; 
+                height: auto; 
+                min-height: 100vh;
+                overflow: visible; 
+            }
+
+            .screen { 
+                height: auto; 
+                min-height: 100vh;
+                overflow: visible; 
+            }
+
+            #screen-game {
+                overflow: visible !important;
+            }
             
             /* Vertical layout for controls */
             #controls-area { 
                 flex-direction: column; 
                 height: auto; 
-                max-height: none; /* Allow expansion */
-                padding-bottom: 20px; 
+                min-height: 400px;
+                max-height: none; 
+                padding-bottom: 40px; 
                 overflow: visible;
             }
 
-            /* Wheel Container: Keep Aspect Ratio */
-            #wheel-container { 
-                width: 100%; 
-                height: 160px; /* Fixed height container */
-                border-right: none; 
-                border-bottom: 2px solid #333; 
-                padding: 5px 0; 
-                background: #000;
+            #board-area {
+                min-height: 250px;
+                flex: none;
             }
 
-            /* The wheel itself: responsive but square */
-            #wheel-canvas { 
-                width: auto; 
-                height: 100%; 
-                aspect-ratio: 1/1; 
-                max-width: 150px; 
-                max-height: 150px;
+            /* Wheel Container: Square and centered */
+            #wheel-container { 
+                width: 100%; 
+                height: 180px; 
+                border-right: none; 
+                border-bottom: 2px solid #333; 
+                padding: 10px 0; 
+                background: #000;
+                flex-shrink: 0;
             }
-            #wheel-pointer {
-                top: 0;
+
+            #wheel-canvas { 
+                width: 160px; 
+                height: 160px; 
             }
 
             #center-play-area { 
                 order: 2; 
                 width: 100%;
                 box-sizing: border-box;
+                overflow: visible;
+                padding: 15px 10px;
             }
 
             /* Player Area: Horizontal Scroll */
@@ -620,11 +639,13 @@
                 overflow-x: auto; 
                 border-left: none; 
                 border-top: 2px solid #333; 
-                height: 80px; 
+                height: 90px; 
                 padding: 10px 5px;
                 box-sizing: border-box;
                 white-space: nowrap;
+                flex-shrink: 0;
             }
+
             .player-card { 
                 min-width: 160px; 
                 margin-right: 10px; 
@@ -633,17 +654,15 @@
                 box-sizing: border-box;
             }
 
-            /* Board Items */
             .tile { width: 18px; height: 28px; font-size: 1.1rem; border-width: 1px; }
             
-            /* Vanna Visibility on Mobile */
             #vanna-container { 
-                display: block; /* Force visible */
-                opacity: 0.3; /* More transparent */
-                right: -20%; /* Shifted right */
+                display: block; 
+                opacity: 0.3; 
+                right: -20%; 
                 top: 55%;
-                transform: translateY(-50%) scale(0.6); /* Smaller */
-                z-index: 0; /* Behind everything */
+                transform: translateY(-50%) scale(0.6); 
+                z-index: 0; 
             }
             
             #category-display { 
@@ -657,17 +676,17 @@
             #puzzle-board { 
                 width: 98%; 
                 padding: 10px 5px; 
-                background: rgba(0,0,170, 0.85); /* Slightly transparent to see stars/vanna */
+                background: rgba(0,0,170, 0.85); 
             }
 
             .letter-btn {
-                width: 28px; height: 35px; margin: 2px; font-size: 1rem;
+                width: 32px; height: 38px; margin: 2px; font-size: 1.1rem;
             }
 
             /* Modal adjustments */
             #modal-content {
                 width: 95%;
-                padding: 10px;
+                padding: 15px;
             }
             #char-grid {
                 grid-template-columns: repeat(3, 1fr);
@@ -675,6 +694,7 @@
         }
     </style>
 </head>
+<!-- Rest of the HTML remains exactly the same as provided -->
 <body>
 
 <div id="game-container">
