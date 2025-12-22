@@ -2,14 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Updated meta tag to allow pinching/zooming as requested -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Emoji Mahjong Solitaire</title>
     <style>
         :root {
-            /* Base dimensions - logic relies on these remaining constant 
-               Scaling is handled via CSS Transform */
-            --tile-w: 46px; 
-            --tile-h: 60px;
+            --tile-w: 44px;
+            --tile-h: 58px;
             --tile-depth: 6px;
             --bg-color: #2e7d32;
             --tile-face: #fffbf0;
@@ -23,8 +22,9 @@
             margin: 0;
             background-color: var(--bg-color);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            touch-action: none;
+            /* Changed to allow scrolling and pinch-zooming on mobile */
+            overflow: auto;
+            touch-action: manipulation;
             display: flex;
             flex-direction: column;
             height: 100vh;
@@ -32,6 +32,8 @@
 
         /* --- UI Overlay & Menus --- */
         #ui-layer {
+            position: absolute;
+            top: 0; left: 0; right: 0;
             height: 60px;
             background: rgba(0,0,0,0.5);
             display: flex;
@@ -40,13 +42,11 @@
             padding: 0 15px;
             z-index: 1000;
             color: white;
-            flex-shrink: 0; /* Prevent UI from squishing */
         }
 
         .stat-box {
             font-size: 14px;
             font-weight: bold;
-            white-space: nowrap;
         }
 
         .stat-value { color: var(--accent); }
@@ -61,8 +61,8 @@
             border: none;
             border-radius: 4px;
             color: white;
-            padding: 8px 12px;
-            font-size: 13px;
+            padding: 5px 10px;
+            font-size: 12px;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             transition: transform 0.1s;
@@ -100,11 +100,10 @@
             padding: 20px;
             border-radius: 10px;
             min-width: 300px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
         label { display: block; margin-bottom: 5px; color: #aaa; }
-        select { padding: 8px; width: 100%; margin-bottom: 10px; font-size: 16px; }
+        select { padding: 5px; width: 100%; margin-bottom: 10px; }
         
         .checkbox-container {
             display: flex;
@@ -115,7 +114,7 @@
             margin-bottom: 10px;
             cursor: pointer;
         }
-        .checkbox-container input { width: 20px; height: 20px; }
+        .checkbox-container input { width: 18px; height: 18px; }
 
         /* --- Game Board --- */
         #game-container {
@@ -125,17 +124,15 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 100%;
-            height: 100%;
         }
 
         #board {
             position: relative;
             transform-origin: center center;
-            /* Width/Height set dynamically by JS based on layout bounds */
-            background: rgba(0,0,0,0.05);
+            width: 1000px; 
+            height: 700px;
+            background: rgba(0,0,0,0.1);
             border-radius: 20px;
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.2);
         }
 
         /* --- Tiles --- */
@@ -144,44 +141,38 @@
             width: var(--tile-w);
             height: var(--tile-h);
             background: var(--tile-face);
-            border-radius: 6px;
+            border-radius: 4px;
             box-shadow: 
-                2px 3px 0px var(--tile-side), 
-                4px 5px 6px rgba(0,0,0,0.3);
+                2px 2px 0px var(--tile-side), 
+                3px 3px 4px rgba(0,0,0,0.4);
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 32px;
+            font-size: 28px;
             cursor: pointer;
             transition: transform 0.1s, box-shadow 0.1s, filter 0.2s;
             user-select: none;
             box-sizing: border-box;
             border: 1px solid #ccc;
-            z-index: 1; /* Base z-index */
         }
 
         .tile.selected {
             background-color: #e3f2fd;
-            transform: translate(-2px, -3px) !important;
+            transform: translate(-2px, -2px);
             box-shadow: 
-                4px 6px 0px var(--tile-side), 
-                6px 8px 10px rgba(0,0,0,0.4) !important;
+                4px 4px 0px var(--tile-side), 
+                5px 5px 6px rgba(0,0,0,0.5);
             border: 2px solid #2196f3;
         }
 
         .tile.hint-glow {
             animation: pulse 1s infinite;
             border: 2px solid #ffeb3b;
-            z-index: 1000 !important;
         }
 
         .tile.blocked {
-            filter: brightness(0.75);
-            color: rgba(0,0,0,0.5); /* Dim emoji */
+            filter: brightness(0.85);
             cursor: default;
-            box-shadow: 
-                1px 1px 0px var(--tile-side), 
-                2px 2px 2px rgba(0,0,0,0.2);
         }
 
         .paused .tile {
@@ -200,42 +191,58 @@
         /* Toast for Auto Solve */
         #toast {
             position: absolute;
-            bottom: 30px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.8);
             color: white;
-            padding: 12px 24px;
-            border-radius: 30px;
+            padding: 10px 20px;
+            border-radius: 20px;
             z-index: 1500;
             display: none;
             font-weight: bold;
-            font-size: 16px;
-            pointer-events: none;
         }
 
         /* --- Mobile Adjustments --- */
         @media (max-width: 600px) {
+            #game-container {
+                /* Allow scrolling so enlarged tiles can be panned */
+                overflow: auto !important;
+                display: block !important;
+                justify-content: flex-start !important;
+                align-items: flex-start !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #board {
+                /* Force a larger scale to prevent 'tiny' tiles, and align left to fix 'shift' */
+                transform: scale(0.8) !important; 
+                transform-origin: top left !important;
+                margin: 60px 10px 10px 10px; /* Room for UI */
+            }
+
             #ui-layer { 
                 flex-wrap: wrap; 
                 height: auto; 
-                padding: 10px; 
-                gap: 5px;
+                padding: 5px; 
+                position: fixed; /* Keep UI accessible while scrolling board */
             }
+
             .stat-box { 
-                font-size: 12px; 
-                margin-right: 10px; 
-                flex: 1;
-                text-align: center;
+                font-size: 11px; 
+                margin-right: 8px; 
             }
+
             #controls { 
                 width: 100%; 
                 justify-content: center; 
-                margin-top: 5px; 
+                margin-top: 5px;
+                gap: 5px;
             }
+
             button { 
-                padding: 10px 15px; /* Larger touch targets */
-                flex: 1;
+                padding: 6px 8px; 
+                font-size: 10px;
             }
         }
     </style>
@@ -243,19 +250,16 @@
 <body>
 
     <div id="ui-layer">
-        <div style="display:flex; width: 100%; justify-content: space-between; max-width: 600px; margin: 0 auto;">
+        <div style="display:flex; flex-wrap:wrap;">
             <div class="stat-box">Score: <span id="score" class="stat-value">0</span></div>
-            <div class="stat-box">Time: <span id="timer" class="stat-value">00:00</span></div>
-            <div class="stat-box">Pairs: <span id="pairs-left" class="stat-value">0</span></div>
+            <div class="stat-box" style="margin-left: 15px;">Time: <span id="timer" class="stat-value">00:00</span></div>
+            <div class="stat-box" style="margin-left: 15px;">Matches: <span id="pairs-left" class="stat-value">0</span></div>
         </div>
-        </div>
-    
-    <div id="mobile-controls-wrapper" style="position: absolute; top: 40px; left:0; width: 100%; display: flex; justify-content: center; z-index: 900; pointer-events: none;">
-        <div id="controls" style="pointer-events: auto; padding: 5px; background: rgba(0,0,0,0.3); border-radius: 0 0 10px 10px;">
-            <button class="info" onclick="game.hint()">Hint</button>
+        <div id="controls">
+            <button class="info" onclick="game.hint()">Hint (-50)</button>
             <button class="warning" id="pause-btn" onclick="game.togglePause()">Pause</button>
-            <button class="info" onclick="game.manualReshuffle()">Shuffle</button>
-            <button style="background:purple" onclick="game.startAutoSolve()">Auto</button>
+            <button class="info" onclick="game.manualReshuffle()">Reshuffle</button>
+            <button style="background:purple" onclick="game.startAutoSolve()">Auto-Solve</button>
             <button class="danger" onclick="game.quit()">Quit</button>
         </div>
     </div>
@@ -266,7 +270,7 @@
     </div>
 
     <div id="main-menu" class="modal">
-        <h1 style="font-size: 3rem;">Emoji Mahjong</h1>
+        <h1>Emoji Mahjong</h1>
         <div class="menu-group">
             <div>
                 <label>Difficulty</label>
@@ -294,16 +298,16 @@
                 <span>Guaranteed Solvable</span>
             </div>
 
-            <button class="info" style="font-size: 1.2rem; padding: 12px;" onclick="game.start()">Start Game</button>
+            <button class="info" style="font-size: 1.2rem; padding: 10px;" onclick="game.start()">Start Game</button>
         </div>
     </div>
 
     <div id="overlay-modal" class="modal hidden">
         <h1 id="overlay-title">Paused</h1>
         <div class="menu-group">
-            <p id="overlay-msg" style="font-size: 1.2rem; margin-bottom: 20px;"></p>
-            <button class="info" id="overlay-action" style="font-size: 1.1rem; padding: 10px;">Resume</button>
-            <button class="danger" onclick="game.quit()" style="font-size: 1.1rem; padding: 10px;">Quit to Menu</button>
+            <p id="overlay-msg"></p>
+            <button class="info" id="overlay-action">Resume</button>
+            <button class="danger" onclick="game.quit()">Quit to Menu</button>
         </div>
     </div>
 
@@ -319,10 +323,8 @@ const EMOJIS = [
     "🌽", "🌶️", "🥐", "🥖", "🧀", "🥩", "🍤", "🍦", "🍩", "🍪"
 ];
 
-// Constants matching CSS
-const TILE_W = 46;
-const TILE_H = 60;
-const TILE_OFFSET_Z = 6;
+const TILE_W = 44;
+const TILE_H = 58;
 
 // Layout Generators (Returns array of {x, y, z})
 const LAYOUTS = {
@@ -333,7 +335,6 @@ const LAYOUTS = {
         for(let x=5; x<=9; x++) for(let y=3; y<=6; y++) tiles.push({x,y,z:2});
         for(let x=6; x<=8; x++) for(let y=4; y<=5; y++) tiles.push({x,y,z:3});
         tiles.push({x:7, y:4.5, z:4});
-        // Extra wings
         tiles.push({x:0, y:4.5, z:0}, {x:14, y:4.5, z:0}, {x:14, y:1.5, z:0}, {x:14, y:7.5, z:0}, {x:0, y:1.5, z:0}, {x:0, y:7.5, z:0});
         return tiles;
     },
@@ -399,31 +400,38 @@ class MahjongGame {
     }
 
     start() {
+        // 1. Read Settings from Menu DOM
         this.settings = {
             difficulty: document.getElementById('difficulty').value,
             layout: document.getElementById('layout-select').value,
             guaranteed: document.getElementById('guaranteed-check').checked
         };
         
+        // 2. Hide Menu
         document.getElementById('main-menu').classList.add('hidden');
         document.getElementById('overlay-modal').classList.add('hidden');
 
+        // 3. Load Level
         this.loadLevel();
     }
     
     restart() {
+        // Restarts the game using the current this.settings
         document.getElementById('overlay-modal').classList.add('hidden');
         this.loadLevel();
     }
 
     loadLevel() {
+        // Tiles count config
         let maxTiles = 144;
         if(this.settings.difficulty === 'easy') maxTiles = 36;
         if(this.settings.difficulty === 'medium') maxTiles = 72;
         if(this.settings.difficulty === 'hard') maxTiles = 108;
         
+        // Generate Layout Geometry
         let rawLayout = LAYOUTS[this.settings.layout]();
         
+        // Trim layout to difficulty
         if (rawLayout.length > maxTiles) {
             rawLayout.sort((a,b) => {
                 if(a.z !== b.z) return b.z - a.z;
@@ -435,15 +443,13 @@ class MahjongGame {
         }
         if(rawLayout.length % 2 !== 0) rawLayout.pop();
 
+        // Initialize Values
         this.initBoard(rawLayout, this.settings.guaranteed);
         this.resetStats();
         this.startTimer();
-        
-        // Initial zoom and listener
         this.adjustZoom();
-        window.removeEventListener('resize', this._resizeListener);
-        this._resizeListener = () => this.adjustZoom();
-        window.addEventListener('resize', this._resizeListener);
+        
+        window.addEventListener('resize', () => this.adjustZoom());
     }
 
     initBoard(layout, guaranteed) {
@@ -453,29 +459,10 @@ class MahjongGame {
         this.isAutoSolving = false;
         this.isPaused = false;
 
-        // --- DYNAMIC BOUNDING BOX CALCULATION ---
-        // This fixes the "tiny tiles" issue by ensuring the board is only 
-        // as big as the specific layout requires.
-        let minX = Infinity, maxX = -Infinity;
-        let minY = Infinity, maxY = -Infinity;
-
-        layout.forEach(p => {
-            if(p.x < minX) minX = p.x;
-            if(p.x > maxX) maxX = p.x;
-            if(p.y < minY) minY = p.y;
-            if(p.y > maxY) maxY = p.y;
-        });
-
-        // Add padding (1 tile width/height buffer)
-        const boardWidth = (maxX - minX + 2) * TILE_W;
-        const boardHeight = (maxY - minY + 2.5) * TILE_H;
-        
-        this.board.style.width = `${boardWidth}px`;
-        this.board.style.height = `${boardHeight}px`;
-
         const totalTiles = layout.length;
         const pairsNeeded = totalTiles / 2;
         
+        // 1. Prepare Value Pairs
         let valuesBase = [];
         for (let i = 0; i < pairsNeeded; i++) {
             let emoji = EMOJIS[i % EMOJIS.length]; 
@@ -483,11 +470,14 @@ class MahjongGame {
             valuesBase.push(emoji, emoji);
         }
 
+        // 2. Assign Values (With Solvability Check if requested)
         let finalValues = [];
+        
         if (guaranteed) {
             let attempts = 0;
             let success = false;
             while(!success && attempts < 500) {
+                // Shuffle copy
                 let testValues = [...valuesBase].sort(() => Math.random() - 0.5);
                 if (this.simulateSolvability(layout, testValues)) {
                     finalValues = testValues;
@@ -501,19 +491,16 @@ class MahjongGame {
             finalValues = [...valuesBase].sort(() => Math.random() - 0.5);
         }
 
+        // 3. Render
         layout.forEach((pos, index) => {
             const el = document.createElement('div');
             el.className = 'tile';
             el.dataset.id = index;
             el.textContent = finalValues[index];
             
-            // Re-center logic based on bounding box
-            // We shift everything so minX becomes 0 + padding
-            const normalizedX = pos.x - minX + 0.5; 
-            const normalizedY = pos.y - minY + 0.5;
-
-            const left = normalizedX * (TILE_W) + (pos.z * 5); 
-            const top = normalizedY * (TILE_H) + (pos.z * -5);
+            // Position
+            const left = pos.x * (TILE_W) + (pos.z * 5); 
+            const top = pos.y * (TILE_H) + (pos.z * -5);
             
             el.style.left = `${left}px`;
             el.style.top = `${top}px`;
@@ -538,39 +525,60 @@ class MahjongGame {
     }
 
     /**
-     * Solvability Check Logic
+     * Logic to check if a tile configuration is solvable
+     * Used for the "Guaranteed" feature
      */
     simulateSolvability(layout, values) {
+        // Create a lightweight virtual board
         let virtualTiles = layout.map((pos, i) => ({
             id: i, x: pos.x, y: pos.y, z: pos.z, val: values[i], active: true
         }));
+
         let activeCount = virtualTiles.length;
 
+        // Helper to check blocked status in virtual board (using the robust logic)
         const isFree = (t, allTiles) => {
             if (!t.active) return false;
             let blockedLeft = false, blockedRight = false, blockedTop = false;
 
             for (let other of allTiles) {
                 if (!other.active || other.id === t.id) continue;
+                
+                // 1. Check for tiles on top (z+1)
                 const isOverlapping = Math.abs(t.x - other.x) < 0.9 && Math.abs(t.y - other.y) < 0.9;
-                if (other.z === t.z + 1 && isOverlapping) blockedTop = true;
+                if (other.z === t.z + 1 && isOverlapping) {
+                    blockedTop = true;
+                }
+
+                // 2. Check for lateral blocking (same z)
                 if (other.z === t.z) {
                     const yOverlap = Math.abs(t.y - other.y) < 1.0;
+
                     if (yOverlap) {
-                        if (other.x - t.x > 0.5 && Math.abs(t.x - other.x) < 1.5) blockedRight = true;
-                        if (t.x - other.x > 0.5 && Math.abs(t.x - other.x) < 1.5) blockedLeft = true;
+                        // Tile is to the left of 'other' (i.e., 'other' is blocking the right side of 't')
+                        if (other.x - t.x > 0.5 && Math.abs(t.x - other.x) < 1.5) {
+                            blockedRight = true;
+                        }
+                        // Tile is to the right of 'other' (i.e., 'other' is blocking the left side of 't')
+                        if (t.x - other.x > 0.5 && Math.abs(t.x - other.x) < 1.5) {
+                            blockedLeft = true;
+                        }
                     }
                 }
             }
             return !blockedTop && !(blockedLeft && blockedRight);
         };
 
+        // Greedy Solver Loop
         while (activeCount > 0) {
             let freeTiles = virtualTiles.filter(t => isFree(t, virtualTiles));
             let matchFound = false;
+
+            // Find first pair
             for (let i = 0; i < freeTiles.length; i++) {
                 for (let j = i + 1; j < freeTiles.length; j++) {
                     if (freeTiles[i].val === freeTiles[j].val) {
+                        // Remove them
                         freeTiles[i].active = false;
                         freeTiles[j].active = false;
                         activeCount -= 2;
@@ -580,9 +588,10 @@ class MahjongGame {
                 }
                 if(matchFound) break;
             }
-            if (!matchFound) return false;
+
+            if (!matchFound) return false; // Stuck
         }
-        return true;
+        return true; // Solved
     }
 
     resetStats() {
@@ -604,6 +613,11 @@ class MahjongGame {
         }, 1000);
     }
 
+    /* --- Core Game Logic --- */
+
+    /**
+     * UPDATED: Critical refinement to lateral blocking logic.
+     */
     isTileFree(tile) {
         if (!tile.active) return false;
         let blockedLeft = false, blockedRight = false, blockedTop = false;
@@ -611,18 +625,37 @@ class MahjongGame {
         for (let other of this.tiles) {
             if (!other.active || other.id === tile.id) continue;
             
+            // Overlap check threshold (1.0 is full overlap, 0.9 is safer)
             const xOverlap = Math.abs(tile.x - other.x) < 0.9;
             const yOverlap = Math.abs(tile.y - other.y) < 0.9;
 
-            if (other.z === tile.z + 1 && xOverlap && yOverlap) blockedTop = true;
+            // 1. Vertical Blocking (Tile on top)
+            if (other.z === tile.z + 1 && xOverlap && yOverlap) { 
+                blockedTop = true;
+            }
+
+            // 2. Lateral Blocking (Tile on same Z level)
             if (other.z === tile.z) {
+                // Check if the other tile overlaps significantly in the Y direction
                 const yProximate = Math.abs(tile.y - other.y) < 1.0; 
+
                 if (yProximate) {
-                    if (tile.x - other.x > 0.5 && Math.abs(tile.x - other.x) < 1.5) blockedLeft = true;
-                    if (other.x - tile.x > 0.5 && Math.abs(tile.x - other.x) < 1.5) blockedRight = true;
+                    // Blocking Left: The other tile's center (other.x) is slightly less than tile's center (tile.x)
+                    // The other tile must cover the left half of 'tile'
+                    if (tile.x - other.x > 0.5 && Math.abs(tile.x - other.x) < 1.5) {
+                         blockedLeft = true;
+                    }
+
+                    // Blocking Right: The other tile's center (other.x) is slightly greater than tile's center (tile.x)
+                    // The other tile must cover the right half of 'tile'
+                    if (other.x - tile.x > 0.5 && Math.abs(tile.x - other.x) < 1.5) {
+                        blockedRight = true;
+                    }
                 }
             }
         }
+        
+        // A tile is free if NOT blocked on top AND NOT blocked on BOTH sides (left AND right).
         return !blockedTop && !(blockedLeft && blockedRight);
     }
 
@@ -645,6 +678,7 @@ class MahjongGame {
             }
         });
 
+        // Count possible matches
         for(let i=0; i<freeTiles.length; i++) {
             for(let j=i+1; j<freeTiles.length; j++) {
                 if(freeTiles[i].val === freeTiles[j].val) matches++;
@@ -656,7 +690,10 @@ class MahjongGame {
         if (activeCount === 0) {
             this.gameOver(true);
         } else if (matches === 0 && activeCount > 0) {
-            if (!this.isAutoSolving) this.showNoMovesModal();
+            if (!this.isAutoSolving) {
+                this.showNoMovesModal();
+            }
+            // If AutoSolving, logic is handled in step loop
         }
         
         return freeTiles;
@@ -705,12 +742,17 @@ class MahjongGame {
         tile2.active = false;
         this.selectedTile = null;
         
+        // --- Scoring Adjustment ---
         if (!this.isAutoSolving) {
             this.score += 100 * (1 + (this.settings.difficulty === 'hard' ? 0.5 : 0));
             document.getElementById('score').innerText = this.score;
         }
+        // --------------------------
+
         this.checkAvailableMoves();
     }
+
+    /* --- Features --- */
 
     togglePause() {
         this.isPaused = !this.isPaused;
@@ -736,7 +778,7 @@ class MahjongGame {
     }
 
     showNoMovesModal() {
-        this.isPaused = true;
+        this.isPaused = true; // Pause timer automatically
         const modal = document.getElementById('overlay-modal');
         modal.classList.remove('hidden');
         document.getElementById('overlay-title').innerText = "No Matches!";
@@ -746,7 +788,7 @@ class MahjongGame {
         actionBtn.innerText = "Shuffle Board";
         actionBtn.onclick = () => {
             this.manualReshuffle();
-            this.togglePause();
+            this.togglePause(); // Unpause after shuffle
         };
     }
 
@@ -779,16 +821,21 @@ class MahjongGame {
         }
     }
 
+    // Wrapper for manual button click
     manualReshuffle() {
         this.performShuffle();
     }
 
+    /**
+     * Ensure values are randomly reassigned only to active tiles.
+     */
     performShuffle() {
         const activeTiles = this.tiles.filter(t => t.active);
         const values = activeTiles.map(t => t.val);
         
         if(values.length % 2 !== 0) return; 
 
+        // Shuffle logic
         values.sort(() => Math.random() - 0.5);
 
         activeTiles.forEach((t, i) => {
@@ -830,6 +877,7 @@ class MahjongGame {
 
         const freeTiles = this.checkAvailableMoves();
         
+        // Find match
         let pair = null;
         for(let i=0; i<freeTiles.length; i++) {
             for(let j=i+1; j<freeTiles.length; j++) {
@@ -842,22 +890,30 @@ class MahjongGame {
         }
 
         if(pair) {
+            // Highlight
             pair[0].el.classList.add('selected');
             pair[1].el.classList.add('selected');
 
+            // Wait then remove
             setTimeout(() => {
                 this.matchTiles(pair[0], pair[1]);
-                setTimeout(() => this.autoSolveStep(), 600);
+                setTimeout(() => this.autoSolveStep(), 600); // Loop
             }, 600);
         } else {
+            // No matches found
             const remaining = this.tiles.filter(t => t.active).length;
             if(remaining > 0) {
+                // STUCK - Auto Reshuffle
                 this.showToast("No matches. Shuffling...");
+                
+                // Pause timer logic simulation
                 const wasPaused = this.isPaused;
-                this.isPaused = true;
+                this.isPaused = true; // Stop timer during shuffle calc
+                
                 this.performShuffle();
+                
                 setTimeout(() => {
-                    this.isPaused = wasPaused;
+                    this.isPaused = wasPaused; // Restore timer
                     this.autoSolveStep();
                 }, 1000);
             } else {
@@ -882,6 +938,7 @@ class MahjongGame {
         document.getElementById('overlay-title').innerText = win ? "You Win!" : "Game Over";
         document.getElementById('overlay-msg').innerText = `Final Score: ${this.score}\nTime: ${document.getElementById('timer').innerText}`;
         
+        // "Play Again" calls restart() instead of quit()
         const actionBtn = document.getElementById('overlay-action');
         actionBtn.innerText = "Play Again";
         actionBtn.onclick = () => this.restart();
@@ -892,25 +949,16 @@ class MahjongGame {
     adjustZoom() {
         const container = document.getElementById('game-container');
         const board = document.getElementById('board');
-        const padding = 20; // Safety margin
+        const padding = 20;
         
-        // 1. Get container size
         const availableW = container.clientWidth - padding;
-        const availableH = container.clientHeight - padding - 40; // Extra buffer for top controls
+        const availableH = container.clientHeight - padding;
         
-        // 2. Get actual board size (set by initBoard)
-        const boardW = parseInt(board.style.width, 10);
-        const boardH = parseInt(board.style.height, 10);
-
-        if(!boardW || !boardH) return;
-
-        // 3. Calculate Scale
-        const scaleX = availableW / boardW;
-        const scaleY = availableH / boardH;
+        const scaleX = availableW / 1000;
+        const scaleY = availableH / 700;
         
-        // Use the smaller scale to fit the whole board
-        // Max scale limit removed to allow huge tiles on phone if space permits
-        const scale = Math.min(scaleX, scaleY); 
+        // Max scale increased from 1.2 to 2.0 to allow for larger tiles on mobile when appropriate
+        const scale = Math.min(scaleX, scaleY, 2.0); 
 
         board.style.transform = `scale(${scale})`;
     }
