@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bouncing Babies - Because Fire Safety is Overrated</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bouncing Babies - With Start Screen!</title>
     <style>
         * {
             margin: 0;
@@ -28,11 +28,83 @@
             background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 100%);
         }
         
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+        
+        #startScreen.hidden {
+            display: none;
+        }
+        
+        #gameTitle {
+            font-size: 60px;
+            color: #FFD700;
+            text-shadow: 3px 3px 6px black;
+            margin-bottom: 20px;
+            animation: titleBounce 1s infinite;
+        }
+        
+        @keyframes titleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        #gameSubtitle {
+            font-size: 24px;
+            color: white;
+            text-shadow: 2px 2px 4px black;
+            margin-bottom: 40px;
+        }
+        
+        #startButton {
+            padding: 20px 40px;
+            font-size: 32px;
+            background: #FFD700;
+            border: 4px solid #DAA520;
+            border-radius: 15px;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
+        }
+        
+        #startButton:hover {
+            background: #FFA500;
+            transform: scale(1.05);
+        }
+        
+        #startButton:active {
+            transform: scale(0.95);
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 16px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            text-align: center;
+            max-width: 90%;
+        }
+        
         #building {
             position: absolute;
-            right: 10%;
+            left: 5%;
             top: 0;
-            width: 150px;
+            width: 120px;
             height: 200px;
             background: #8B4513;
             border: 3px solid #654321;
@@ -40,8 +112,8 @@
         
         .window {
             position: absolute;
-            width: 30px;
-            height: 40px;
+            width: 25px;
+            height: 35px;
             background: #FF6600;
             border: 2px solid #FF4500;
             animation: flicker 0.5s infinite;
@@ -54,7 +126,7 @@
         
         #ambulance {
             position: absolute;
-            left: 5%;
+            right: 5%;
             bottom: 10px;
             width: 100px;
             height: 60px;
@@ -74,13 +146,28 @@
             font-weight: bold;
         }
         
+        #ambulanceEmoji {
+            position: absolute;
+            right: 5%;
+            bottom: 75px;
+            font-size: 60px;
+            z-index: 100;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
         .baby {
             position: absolute;
             font-size: 30px;
             transition: none;
+            z-index: 10;
         }
         
-        .trampoline {
+        #trampoline {
             position: absolute;
             bottom: 80px;
             width: 80px;
@@ -88,18 +175,28 @@
             background: #FFD700;
             border: 3px solid #DAA520;
             border-radius: 50%;
-            cursor: pointer;
-            transition: bottom 0.1s;
+            transition: left 0.15s ease-out, bottom 0.05s;
+            z-index: 5;
         }
         
-        .trampoline.active {
+        #trampoline.bouncing {
             bottom: 70px;
             background: #FFA500;
         }
         
-        #trampoline1 { left: 20%; }
-        #trampoline2 { left: 45%; }
-        #trampoline3 { left: 70%; }
+        .position-marker {
+            position: absolute;
+            bottom: 60px;
+            width: 80px;
+            height: 5px;
+            background: rgba(255, 215, 0, 0.3);
+            border: 1px dashed #DAA520;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+        }
         
         #score {
             position: absolute;
@@ -121,6 +218,16 @@
             z-index: 1000;
         }
         
+        #gameInstructions {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            font-size: 14px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            z-index: 1000;
+        }
+        
         #gameOver {
             position: absolute;
             top: 50%;
@@ -131,58 +238,177 @@
             text-shadow: 3px 3px 6px black;
             display: none;
             z-index: 2000;
+            text-align: center;
+        }
+        
+        #restartBtn {
+            display: none;
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            font-size: 24px;
+            background: #FFD700;
+            border: 3px solid #DAA520;
+            border-radius: 10px;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 2001;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #restartBtn:active {
+            background: #FFA500;
+            transform: translateX(-50%) scale(0.95);
         }
         
         .mobileControls {
-            position: absolute;
-            bottom: 20px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
             width: 100%;
             display: none;
             justify-content: space-around;
-            padding: 0 10%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1500;
         }
         
         .mobileButton {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 215, 0, 0.8);
+            width: 30%;
+            height: 70px;
+            background: rgba(255, 215, 0, 0.9);
             border: 3px solid #DAA520;
             border-radius: 10px;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             color: #333;
             touch-action: manipulation;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        @media (max-width: 768px) {
+        .mobileButton:active {
+            background: rgba(255, 165, 0, 0.9);
+            transform: scale(0.95);
+        }
+        
+        @media (max-width: 768px), (max-height: 600px) {
             .mobileControls {
                 display: flex;
             }
+            
             #gameContainer {
                 max-width: 100vw;
                 max-height: 100vh;
+            }
+            
+            #gameInstructions {
+                display: none;
+            }
+            
+            #gameOver {
+                font-size: 36px;
+            }
+            
+            #ambulanceEmoji {
+                font-size: 50px;
+                bottom: 70px;
+            }
+            
+            #gameTitle {
+                font-size: 48px;
+            }
+            
+            #gameSubtitle {
+                font-size: 18px;
+            }
+            
+            #startButton {
+                font-size: 28px;
+                padding: 15px 30px;
+            }
+            
+            #instructions {
+                font-size: 14px;
+            }
+        }
+        
+        @media (orientation: landscape) and (max-height: 500px) {
+            #building {
+                height: 150px;
+            }
+            
+            .mobileButton {
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            #gameOver {
+                font-size: 32px;
+            }
+            
+            #restartBtn {
+                padding: 10px 20px;
+                font-size: 18px;
+            }
+            
+            #ambulanceEmoji {
+                font-size: 40px;
+                bottom: 60px;
+            }
+            
+            #gameTitle {
+                font-size: 36px;
+            }
+            
+            #gameSubtitle {
+                font-size: 16px;
+            }
+            
+            #startButton {
+                font-size: 24px;
+                padding: 12px 25px;
             }
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
+        <div id="startScreen">
+            <div id="gameTitle">👶 BOUNCING BABIES 👶</div>
+            <div id="gameSubtitle">Save the babies from the burning building!</div>
+            <button id="startButton">START GAME</button>
+            <div id="instructions">
+                Press 1, 2, or 3 to move the trampoline<br>
+                Bounce each baby three times to save them!
+            </div>
+        </div>
+        
         <div id="score">Score: 0</div>
-        <div id="level">Level: 1</div>
-        <div id="gameOver">GAME OVER<br><span style="font-size: 24px;">Press SPACE to restart</span></div>
+        <div id="level">Level: 1 | Lives: ❤️❤️❤️</div>
+        <div id="gameInstructions">Press 1, 2, or 3 to move trampoline</div>
+        <div id="gameOver">GAME OVER</div>
+        <button id="restartBtn">RESTART</button>
         
         <div id="building">
-            <div class="window" style="left: 20px; top: 30px;"></div>
-            <div class="window" style="right: 20px; top: 30px;"></div>
-            <div class="window" style="left: 20px; top: 90px;"></div>
-            <div class="window" style="right: 20px; top: 90px;"></div>
+            <div class="window" style="left: 15px; top: 30px;"></div>
+            <div class="window" style="right: 15px; top: 30px;"></div>
+            <div class="window" style="left: 15px; top: 90px;"></div>
+            <div class="window" style="right: 15px; top: 90px;"></div>
         </div>
         
         <div id="ambulance"></div>
+        <div id="ambulanceEmoji">🚑</div>
         
-        <div id="trampoline1" class="trampoline"></div>
-        <div id="trampoline2" class="trampoline"></div>
-        <div id="trampoline3" class="trampoline"></div>
+        <div class="position-marker" id="marker1">1</div>
+        <div class="position-marker" id="marker2">2</div>
+        <div class="position-marker" id="marker3">3</div>
+        
+        <div id="trampoline"></div>
         
         <div class="mobileControls">
             <button class="mobileButton" data-pos="1">1</button>
@@ -192,173 +418,341 @@
     </div>
 
     <script>
-        // Oh boy, here we go simulating child rescue in JavaScript
+        // NOW with proper start screen and better sounds!
         const game = {
             score: 0,
             level: 1,
             lives: 3,
             babies: [],
-            trampolinePositions: [1, 2, 3],
-            activeTrampolines: new Set(),
+            trampolinePosition: 1,
             gameRunning: false,
             spawnTimer: null,
             audioContext: null,
+            positions: [],
+            lastLevelScore: 0,
+            containerRect: null,
+            currentPattern: [],
+            patternIndex: 0,
+            
+            BABY_CYCLE_TIME: 6000,
             
             init() {
                 this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                this.calculatePositions();
                 this.setupControls();
-                this.startGame();
+                this.updateTrampolinePosition();
+                this.buildCurrentPattern();
+                this.setupStartButton();
+                
+                window.addEventListener('resize', () => {
+                    this.calculatePositions();
+                    this.updateTrampolinePosition();
+                });
+            },
+            
+            setupStartButton() {
+                const startButton = document.getElementById('startButton');
+                const startScreen = document.getElementById('startScreen');
+                
+                const startGame = () => {
+                    // Initialize audio context on user interaction
+                    if (this.audioContext.state === 'suspended') {
+                        this.audioContext.resume();
+                    }
+                    
+                    startScreen.classList.add('hidden');
+                    this.startGame();
+                };
+                
+                startButton.addEventListener('click', startGame);
+                startButton.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    startGame();
+                });
+            },
+            
+            buildCurrentPattern() {
+                this.currentPattern = [];
+                const level = this.level;
+                
+                if (level === 1) {
+                    for (let i = 0; i < 5; i++) {
+                        this.currentPattern.push({ babies: 1, delayAfter: 4000 });
+                    }
+                } else if (level === 2) {
+                    for (let i = 0; i < 6; i++) {
+                        this.currentPattern.push({ babies: 1, delayAfter: 3500 });
+                    }
+                } else if (level === 3) {
+                    for (let i = 0; i < 4; i++) {
+                        this.currentPattern.push({ 
+                            babies: 2, 
+                            babySpacing: 250,
+                            delayAfter: 7000
+                        });
+                    }
+                } else if (level === 4) {
+                    this.currentPattern.push({ babies: 1, delayAfter: 3000 });
+                    this.currentPattern.push({ babies: 2, babySpacing: 250, delayAfter: 7000 });
+                    this.currentPattern.push({ babies: 1, delayAfter: 3000 });
+                    this.currentPattern.push({ babies: 2, babySpacing: 250, delayAfter: 7000 });
+                } else if (level === 5) {
+                    for (let i = 0; i < 4; i++) {
+                        this.currentPattern.push({ babies: 2, babySpacing: 250, delayAfter: 6500 });
+                    }
+                } else if (level === 6) {
+                    this.currentPattern.push({ babies: 2, babySpacing: 250, delayAfter: 6500 });
+                    this.currentPattern.push({ babies: 1, delayAfter: 3000 });
+                    this.currentPattern.push({ babies: 3, babySpacing: 200, delayAfter: 8500 });
+                    this.currentPattern.push({ babies: 2, babySpacing: 250, delayAfter: 6500 });
+                } else if (level === 7) {
+                    for (let i = 0; i < 3; i++) {
+                        this.currentPattern.push({ babies: 2, babySpacing: 250, delayAfter: 6000 });
+                        this.currentPattern.push({ babies: 3, babySpacing: 200, delayAfter: 8000 });
+                    }
+                } else if (level === 8) {
+                    for (let i = 0; i < 3; i++) {
+                        this.currentPattern.push({ babies: 3, babySpacing: 200, delayAfter: 7500 });
+                        this.currentPattern.push({ babies: 2, babySpacing: 250, delayAfter: 5500 });
+                    }
+                } else if (level === 9) {
+                    for (let i = 0; i < 4; i++) {
+                        this.currentPattern.push({ babies: 3, babySpacing: 180, delayAfter: 7000 });
+                        this.currentPattern.push({ babies: 2, babySpacing: 200, delayAfter: 5000 });
+                    }
+                } else {
+                    for (let i = 0; i < 3; i++) {
+                        this.currentPattern.push({ babies: 3, babySpacing: 180, delayAfter: 6500 });
+                        this.currentPattern.push({ babies: 4, babySpacing: 150, delayAfter: 9000 });
+                        this.currentPattern.push({ babies: 2, babySpacing: 200, delayAfter: 4500 });
+                    }
+                }
+                
+                this.patternIndex = 0;
+            },
+            
+            calculatePositions() {
+                const container = document.getElementById('gameContainer');
+                this.containerRect = container.getBoundingClientRect();
+                const building = document.getElementById('building');
+                const buildingRect = building.getBoundingClientRect();
+                const ambulance = document.getElementById('ambulance');
+                const ambulanceRect = ambulance.getBoundingClientRect();
+                
+                const buildingRight = buildingRect.right - this.containerRect.left;
+                const ambulanceLeft = ambulanceRect.left - this.containerRect.left;
+                
+                const totalDistance = ambulanceLeft - buildingRight;
+                const spacing = totalDistance / 4;
+                
+                this.positions = [
+                    buildingRight + spacing - 40,
+                    buildingRight + spacing * 2 - 40,
+                    buildingRight + spacing * 3 - 40
+                ];
+                
+                for (let i = 0; i < 3; i++) {
+                    const marker = document.getElementById(`marker${i + 1}`);
+                    if (marker) {
+                        marker.style.left = this.positions[i] + 'px';
+                    }
+                }
             },
             
             setupControls() {
-                // Keyboard controls - because sometimes you need both hands to save babies
                 document.addEventListener('keydown', (e) => {
-                    if (e.key === ' ' && !this.gameRunning) {
-                        location.reload();
+                    if ((e.key === ' ' || e.key === 'Enter') && !this.gameRunning) {
+                        const startScreen = document.getElementById('startScreen');
+                        if (!startScreen.classList.contains('hidden')) {
+                            // Start the game
+                            startScreen.classList.add('hidden');
+                            this.startGame();
+                        } else {
+                            // Restart
+                            this.restart();
+                        }
                         return;
                     }
                     
                     const keyMap = {'1': 1, '2': 2, '3': 3};
                     const pos = keyMap[e.key];
-                    if (pos) {
-                        this.activateTrampoline(pos);
+                    if (pos && this.gameRunning) {
+                        this.moveTrampolineTo(pos);
                     }
                 });
                 
-                document.addEventListener('keyup', (e) => {
-                    const keyMap = {'1': 1, '2': 2, '3': 3};
-                    const pos = keyMap[e.key];
-                    if (pos) {
-                        this.deactivateTrampoline(pos);
-                    }
-                });
-                
-                // Mobile/Touch controls
                 document.querySelectorAll('.mobileButton').forEach(btn => {
-                    btn.addEventListener('touchstart', (e) => {
+                    const handlePress = (e) => {
                         e.preventDefault();
-                        const pos = parseInt(btn.dataset.pos);
-                        this.activateTrampoline(pos);
-                    });
+                        if (this.gameRunning) {
+                            const pos = parseInt(btn.dataset.pos);
+                            this.moveTrampolineTo(pos);
+                        }
+                    };
                     
-                    btn.addEventListener('touchend', (e) => {
-                        e.preventDefault();
-                        const pos = parseInt(btn.dataset.pos);
-                        this.deactivateTrampoline(pos);
-                    });
-                    
-                    // Also support mouse for testing
-                    btn.addEventListener('mousedown', (e) => {
-                        const pos = parseInt(btn.dataset.pos);
-                        this.activateTrampoline(pos);
-                    });
-                    
-                    btn.addEventListener('mouseup', (e) => {
-                        const pos = parseInt(btn.dataset.pos);
-                        this.deactivateTrampoline(pos);
-                    });
+                    btn.addEventListener('touchstart', handlePress);
+                    btn.addEventListener('click', handlePress);
                 });
                 
-                // Direct trampoline clicks
-                for (let i = 1; i <= 3; i++) {
-                    const tramp = document.getElementById(`trampoline${i}`);
-                    tramp.addEventListener('mousedown', () => this.activateTrampoline(i));
-                    tramp.addEventListener('mouseup', () => this.deactivateTrampoline(i));
+                const restartBtn = document.getElementById('restartBtn');
+                restartBtn.addEventListener('click', () => this.restart());
+                restartBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.restart();
+                });
+            },
+            
+            moveTrampolineTo(position) {
+                if (position < 1 || position > 3) return;
+                this.trampolinePosition = position;
+                this.updateTrampolinePosition();
+            },
+            
+            updateTrampolinePosition() {
+                const trampoline = document.getElementById('trampoline');
+                const targetX = this.positions[this.trampolinePosition - 1];
+                trampoline.style.left = targetX + 'px';
+            },
+            
+            playBounceSound(bounceNumber) {
+                // Create a more nostalgic "boing" sound with multiple frequencies
+                try {
+                    const now = this.audioContext.currentTime;
+                    
+                    // Main oscillator
+                    const osc1 = this.audioContext.createOscillator();
+                    const gain1 = this.audioContext.createGain();
+                    
+                    osc1.connect(gain1);
+                    gain1.connect(this.audioContext.destination);
+                    
+                    // Frequency increases with each bounce (nostalgic!)
+                    const baseFreq = 200 + (bounceNumber * 150);
+                    osc1.frequency.setValueAtTime(baseFreq * 2, now);
+                    osc1.frequency.exponentialRampToValueAtTime(baseFreq, now + 0.15);
+                    
+                    osc1.type = 'sine';
+                    
+                    gain1.gain.setValueAtTime(0.4, now);
+                    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    
+                    osc1.start(now);
+                    osc1.stop(now + 0.15);
+                    
+                    // Add a second harmonic for richness
+                    const osc2 = this.audioContext.createOscillator();
+                    const gain2 = this.audioContext.createGain();
+                    
+                    osc2.connect(gain2);
+                    gain2.connect(this.audioContext.destination);
+                    
+                    osc2.frequency.setValueAtTime(baseFreq * 3, now);
+                    osc2.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 0.15);
+                    
+                    osc2.type = 'triangle';
+                    
+                    gain2.gain.setValueAtTime(0.2, now);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    
+                    osc2.start(now);
+                    osc2.stop(now + 0.15);
+                } catch (e) {
+                    // Silent failure
                 }
             },
             
-            activateTrampoline(pos) {
-                this.activeTrampolines.add(pos);
-                document.getElementById(`trampoline${pos}`).classList.add('active');
-            },
-            
-            deactivateTrampoline(pos) {
-                this.activeTrampolines.delete(pos);
-                document.getElementById(`trampoline${pos}`).classList.remove('active');
-            },
-            
             playSound(frequency, duration) {
-                // Making beautiful beep-boop music
-                const oscillator = this.audioContext.createOscillator();
-                const gainNode = this.audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                
-                oscillator.frequency.value = frequency;
-                oscillator.type = 'square';
-                
-                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
-                
-                oscillator.start(this.audioContext.currentTime);
-                oscillator.stop(this.audioContext.currentTime + duration);
+                try {
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    oscillator.frequency.value = frequency;
+                    oscillator.type = 'square';
+                    
+                    gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                    
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + duration);
+                } catch (e) {
+                    // Silent failure
+                }
             },
             
             startGame() {
                 this.gameRunning = true;
+                document.getElementById('gameOver').style.display = 'none';
+                document.getElementById('restartBtn').style.display = 'none';
                 this.updateDisplay();
-                this.spawnBabies();
+                this.spawnNextWave();
                 this.gameLoop();
             },
             
-            spawnBabies() {
-                const patterns = [
-                    [1], // One baby
-                    [1, 1], // Two babies, one after another
-                    [1, 1, 1], // Three babies
-                    [2], // Two simultaneous
-                    [3], // Three simultaneous
-                ];
+            spawnNextWave() {
+                if (!this.gameRunning) return;
                 
-                const patternIndex = Math.min(Math.floor(this.level / 2), patterns.length - 1);
-                const pattern = patterns[patternIndex];
+                if (this.patternIndex >= this.currentPattern.length) {
+                    this.buildCurrentPattern();
+                }
                 
-                const spawnDelay = Math.max(2000 - (this.level * 100), 800);
+                const wave = this.currentPattern[this.patternIndex];
+                const spacing = wave.babySpacing || 250;
                 
-                this.spawnTimer = setTimeout(() => {
-                    pattern.forEach((count) => {
-                        if (count === 1) {
+                for (let i = 0; i < wave.babies; i++) {
+                    setTimeout(() => {
+                        if (this.gameRunning) {
                             this.createBaby();
-                        } else {
-                            for (let i = 0; i < count; i++) {
-                                this.createBaby();
-                            }
                         }
-                    });
-                    
-                    if (this.gameRunning) {
-                        this.spawnBabies();
-                    }
-                }, spawnDelay);
+                    }, i * spacing);
+                }
+                
+                this.patternIndex++;
+                const nextDelay = wave.delayAfter;
+                this.spawnTimer = setTimeout(() => this.spawnNextWave(), nextDelay);
             },
             
             createBaby() {
+                const container = document.getElementById('gameContainer');
+                const building = document.getElementById('building');
+                const buildingRect = building.getBoundingClientRect();
+                
+                const targetLandingX = this.positions[0] + 40;
+                
+                const buildingBottom = buildingRect.bottom - this.containerRect.top;
+                const trampolineTop = this.containerRect.height - 95;
+                const fallDistance = trampolineTop - buildingBottom;
+                
+                const gravity = 0.5;
+                const initialVY = 1;
+                
+                const a = 0.5 * gravity;
+                const b = initialVY;
+                const c = -fallDistance;
+                const timeToFall = (-b + Math.sqrt(b*b - 4*a*c)) / (2*a);
+                
+                const buildingCenterX = buildingRect.left + (buildingRect.width / 2) - this.containerRect.left;
+                const horizontalDistance = targetLandingX - buildingCenterX;
+                const horizontalVelocity = horizontalDistance / timeToFall;
+                
                 const baby = {
                     element: document.createElement('div'),
-                    x: 0,
-                    y: 0,
-                    vx: -3,
-                    vy: 0,
-                    bounces: 0,
-                    targetPosition: Math.floor(Math.random() * 3) + 1,
+                    x: buildingCenterX - 15,
+                    y: buildingBottom,
+                    vx: horizontalVelocity,
+                    vy: initialVY,
+                    bounceCount: 0,
                     state: 'falling'
                 };
                 
                 baby.element.className = 'baby';
                 baby.element.textContent = '👶';
-                
-                const building = document.getElementById('building');
-                const buildingRect = building.getBoundingClientRect();
-                const containerRect = document.getElementById('gameContainer').getBoundingClientRect();
-                
-                baby.x = buildingRect.left - containerRect.left + 60;
-                baby.y = buildingRect.top - containerRect.top + 50;
-                
                 baby.element.style.left = baby.x + 'px';
                 baby.element.style.top = baby.y + 'px';
                 
-                document.getElementById('gameContainer').appendChild(baby.element);
+                container.appendChild(baby.element);
                 this.babies.push(baby);
             },
             
@@ -371,55 +765,86 @@
             
             updateBabies() {
                 const container = document.getElementById('gameContainer');
-                const containerRect = container.getBoundingClientRect();
-                const ambulance = document.getElementById('ambulance').getBoundingClientRect();
+                const trampoline = document.getElementById('trampoline');
+                const trampolineRect = trampoline.getBoundingClientRect();
+                const ambulance = document.getElementById('ambulance');
+                const ambulanceRect = ambulance.getBoundingClientRect();
                 
                 this.babies = this.babies.filter(baby => {
-                    baby.vy += 0.5; // Gravity, because physics
+                    baby.vy += 0.5;
                     baby.x += baby.vx;
                     baby.y += baby.vy;
                     
-                    // Check trampoline collisions
-                    if (baby.bounces < 3 && baby.y > containerRect.height - 150) {
-                        const trampolineY = containerRect.height - 95;
+                    const babyCenterX = baby.x + 15;
+                    const babyCenterY = baby.y + 15;
+                    
+                    const trampolineTop = trampolineRect.top - this.containerRect.top;
+                    const trampolineLeft = trampolineRect.left - this.containerRect.left;
+                    const trampolineRight = trampolineRect.right - this.containerRect.left;
+                    
+                    if (baby.vy > 0 && 
+                        baby.y + 30 >= trampolineTop && 
+                        baby.y + 30 <= trampolineTop + 25 &&
+                        babyCenterX >= trampolineLeft &&
+                        babyCenterX <= trampolineRight &&
+                        baby.bounceCount < 3) {
                         
-                        if (baby.y >= trampolineY && baby.vy > 0) {
-                            const expectedPos = baby.bounces === 0 ? baby.targetPosition : 
-                                              baby.bounces === 1 ? 2 : 
-                                              baby.bounces === 2 ? (baby.targetPosition === 1 ? 3 : 1) : 2;
+                        const expectedPosition = baby.bounceCount + 1;
+                        
+                        if (this.trampolinePosition === expectedPosition) {
+                            baby.vy = -20;
+                            baby.y = trampolineTop - 30;
+                            baby.bounceCount++;
                             
-                            if (this.activeTrampolines.has(expectedPos)) {
-                                const trampRect = document.getElementById(`trampoline${expectedPos}`).getBoundingClientRect();
-                                const babyRect = baby.element.getBoundingClientRect();
+                            trampoline.classList.add('bouncing');
+                            setTimeout(() => trampoline.classList.remove('bouncing'), 100);
+                            
+                            // Use the new nostalgic bounce sound
+                            this.playBounceSound(baby.bounceCount);
+                            
+                            if (baby.bounceCount < 3) {
+                                const nextTargetX = this.positions[baby.bounceCount] + 40;
+                                const horizontalDistance = nextTargetX - babyCenterX;
                                 
-                                if (babyRect.left < trampRect.right && babyRect.right > trampRect.left) {
-                                    baby.vy = -12;
-                                    baby.y = trampolineY - 10;
-                                    baby.bounces++;
+                                const timeToNextBounce = 2 * 20 / 0.5;
+                                baby.vx = horizontalDistance / timeToNextBounce;
+                            } else {
+                                const ambulanceCenterX = ambulanceRect.left + (ambulanceRect.width / 2) - this.containerRect.left;
+                                const ambulanceTop = ambulanceRect.top - this.containerRect.top;
+                                
+                                const horizontalDistance = ambulanceCenterX - babyCenterX;
+                                const verticalDistance = ambulanceTop - baby.y;
+                                
+                                const a = 0.5 * 0.5;
+                                const b = -20;
+                                const c = verticalDistance;
+                                
+                                const discriminant = b*b - 4*a*c;
+                                if (discriminant >= 0) {
+                                    const t1 = (-b + Math.sqrt(discriminant)) / (2*a);
+                                    const t2 = (-b - Math.sqrt(discriminant)) / (2*a);
+                                    const timeToAmbulance = Math.max(t1, t2);
                                     
-                                    // Bounce sounds with increasing pitch
-                                    this.playSound(300 + (baby.bounces * 150), 0.1);
-                                    
-                                    // Adjust horizontal velocity
-                                    if (baby.bounces === 1) {
-                                        baby.vx = 0;
-                                    } else if (baby.bounces === 2) {
-                                        baby.vx = baby.targetPosition === 1 ? 3 : -3;
-                                    } else if (baby.bounces === 3) {
-                                        baby.vx = -3;
-                                    }
+                                    baby.vx = horizontalDistance / timeToAmbulance;
+                                } else {
+                                    baby.vx = horizontalDistance / 40;
                                 }
+                                
+                                baby.state = 'saved';
                             }
                         }
                     }
                     
-                    // Check if baby reached ambulance
-                    if (baby.bounces === 3) {
+                    if (baby.state === 'saved' && baby.bounceCount >= 3) {
                         const babyRect = baby.element.getBoundingClientRect();
-                        if (babyRect.left < ambulance.right && 
-                            babyRect.right > ambulance.left &&
-                            babyRect.bottom >= ambulance.top) {
-                            this.score += 10;
+                        
+                        const hitboxMargin = 20;
+                        if (babyRect.left < ambulanceRect.right + hitboxMargin && 
+                            babyRect.right > ambulanceRect.left - hitboxMargin &&
+                            babyRect.bottom >= ambulanceRect.top - hitboxMargin &&
+                            babyRect.top <= ambulanceRect.bottom) {
+                            
+                            this.score += 10 * this.level;
                             this.updateDisplay();
                             this.playSound(600, 0.2);
                             baby.element.remove();
@@ -427,11 +852,24 @@
                         }
                     }
                     
-                    // Check if baby fell off screen (tragic)
-                    if (baby.y > containerRect.height) {
-                                              this.playSound(100, 0.3);
+                    if (baby.y > this.containerRect.height + 20) {
+                        this.playSound(100, 0.3);
                         baby.element.remove();
                         this.lives--;
+                        this.updateDisplay();
+                        
+                        if (this.lives <= 0) {
+                            this.endGame();
+                        }
+                        return false;
+                    }
+                    
+                    if (baby.x > this.containerRect.width + 50 && baby.bounceCount < 3) {
+                        this.playSound(100, 0.3);
+                        baby.element.remove();
+                        this.lives--;
+                        this.updateDisplay();
+                        
                         if (this.lives <= 0) {
                             this.endGame();
                         }
@@ -449,10 +887,10 @@
                 document.getElementById('score').textContent = `Score: ${this.score}`;
                 document.getElementById('level').textContent = `Level: ${this.level} | Lives: ${'❤️'.repeat(this.lives)}`;
                 
-                // Level up every 50 points - because arbitrary numbers are fun
-                if (this.score > 0 && this.score % 50 === 0 && this.score !== this.lastLevelScore) {
-                    this.level++;
-                    this.lastLevelScore = this.score;
+                const newLevel = Math.floor(this.score / 100) + 1;
+                if (newLevel > this.level) {
+                    this.level = newLevel;
+                    this.buildCurrentPattern();
                     this.playSound(800, 0.3);
                 }
             },
@@ -461,33 +899,20 @@
                 this.gameRunning = false;
                 clearTimeout(this.spawnTimer);
                 document.getElementById('gameOver').style.display = 'block';
+                document.getElementById('restartBtn').style.display = 'block';
                 
-                // Clean up remaining babies
                 this.babies.forEach(baby => baby.element.remove());
                 this.babies = [];
+            },
+            
+            restart() {
+                location.reload();
             }
         };
         
-        // Wait for user interaction before starting (for audio context)
-        document.addEventListener('click', () => {
-            if (!game.gameRunning && !document.getElementById('gameOver').style.display) {
-                game.init();
-            }
-        }, { once: true });
-        
-        document.addEventListener('touchstart', () => {
-            if (!game.gameRunning && !document.getElementById('gameOver').style.display) {
-                game.init();
-            }
-        }, { once: true });
-        
-        // Start immediately on desktop
+        // Initialize on load
         window.addEventListener('load', () => {
-            setTimeout(() => {
-                if (!game.gameRunning) {
-                    game.init();
-                }
-            }, 100);
+            game.init();
         });
     </script>
 </body>
