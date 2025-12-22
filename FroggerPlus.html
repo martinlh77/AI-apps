@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Emoji Frogger: Rainbow Edition</title>
+    <title>Emoji Frogger: Chroma Edition</title>
     <style>
         body {
             margin: 0; padding: 0; background: #111;
@@ -111,7 +111,7 @@
             </div>
 
             <div class="bug-info">
-                <div>🪲 +150 Pts</div>
+                <div>🐞 +150 Pts</div>
                 <div>✨ Invincible</div>
             </div>
         </div>
@@ -152,15 +152,15 @@ let gameActive = false, isChallenge = false, timeLeft = 0;
 const frog = { 
     x: 5, y: 12, 
     isGhost: false, timer: 0, 
-    hue: 0,
-    isRandomHue: false
+    hue: 0
 };
 
 const layout = [3, 2, 2, 2, 2, 2, 0, 1, 1, 1, 1, 1, 0];
 const pads = [1, 3, 5, 7, 9];
+const bugPool = ['🪰', '🐝', '🦟', '🐞', '🐜', '🦋', '🐛'];
 let obstacles = [], bugs = [];
 
-// Customizer UI Logic
+// UI Logic
 const hueSlider = document.getElementById('hue-slider');
 const randomToggle = document.getElementById('random-color-toggle');
 const colorPreview = document.getElementById('color-preview');
@@ -178,15 +178,14 @@ randomToggle.addEventListener('change', () => {
     if(!randomToggle.checked) {
         frog.hue = hueSlider.value;
         colorPreview.style.filter = `hue-rotate(${frog.hue}deg)`;
-    } else {
-        colorPreview.style.filter = 'none';
-    }
+    } else colorPreview.style.filter = 'none';
 });
 
 class Obstacle {
     constructor(row, type, speed, emoji, width = 1) {
         this.row = row; this.type = type; this.speed = speed; this.emoji = emoji; this.width = width;
         this.x = Math.random() * COLS;
+        this.hue = Math.floor(Math.random() * 360); // Randomize car color
     }
     update(dt) {
         this.x += this.speed * dt;
@@ -194,7 +193,10 @@ class Obstacle {
         if (this.speed < 0 && this.x < -this.width) this.x = COLS;
     }
     draw() {
-        ctx.save(); ctx.font = `${GRID * 0.85}px Arial`;
+        ctx.save(); 
+        ctx.font = `${GRID * 0.85}px Arial`;
+        if (this.type === 'car') ctx.filter = `hue-rotate(${this.hue}deg)`;
+        
         for (let i = 0; i < this.width; i++) {
             const bx = (this.x + i) * GRID; const by = (this.row + 0.82) * GRID;
             if (this.type === 'car' && this.speed > 0) {
@@ -210,21 +212,24 @@ class Bug {
     constructor() {
         this.row = Math.floor(Math.random() * 10) + 1;
         this.x = Math.floor(Math.random() * COLS);
-        this.isGold = Math.random() > 0.8;
-        this.emoji = this.isGold ? '✨' : '🪲'; this.ttl = 500;
+        this.isGold = Math.random() > 0.85;
+        this.hue = Math.floor(Math.random() * 360);
+        this.emoji = this.isGold ? '✨' : bugPool[Math.floor(Math.random() * bugPool.length)];
+        this.ttl = 500;
     }
     draw() {
         ctx.save();
         ctx.globalAlpha = this.ttl < 100 ? 0.4 : 1;
-        ctx.font = `${GRID * 0.7}px Arial`;
-        ctx.fillText(this.emoji, this.x * GRID + (GRID*0.15), (this.row + 0.75) * GRID);
+        if (!this.isGold) ctx.filter = `hue-rotate(${this.hue}deg)`;
+        ctx.font = `${GRID * 0.75}px Arial`;
+        ctx.fillText(this.emoji, this.x * GRID + (GRID*0.1), (this.row + 0.78) * GRID);
         ctx.restore();
     }
 }
 
 function initLevel() {
     obstacles = [];
-    const s = 1 + (level - 1) * 0.12; 
+    const s = 1 + (level - 1) * 0.1; // Slower speed increase
     obstacles.push(new Obstacle(11, 'car', 1.8 * s, '🏎️'), new Obstacle(11, 'car', 1.8 * s, '🏎️'));
     obstacles.push(new Obstacle(10, 'car', -1.3 * s, '🚕'), new Obstacle(10, 'car', -1.3 * s, '🚕'));
     obstacles.push(new Obstacle(9, 'car', 2.1 * s, '🚚', 2), new Obstacle(8, 'car', -1.8 * s, '🚓'));
@@ -244,9 +249,7 @@ function die() {
 
 function resetFrog() { 
     frog.x = 5; frog.y = 12; 
-    if(randomToggle.checked) {
-        frog.hue = Math.floor(Math.random() * 360);
-    }
+    if(randomToggle.checked) frog.hue = Math.floor(Math.random() * 360);
 }
 
 function updateUI() {
