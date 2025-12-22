@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Puzzle Maker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <style>
+        body {
+            touch-action: pan-y;
+            overscroll-behavior: none;
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #puzzle-container {
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: #e5e7eb;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            touch-action: none;
+            min-height: 300px;
+        }
+        canvas {
+            display: block;
+            touch-action: none;
+            cursor: grab;
+        }
+        canvas:active {
+            cursor: grabbing;
+        }
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.15s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-primary:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background-color: #4b5563;
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.15s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-secondary:hover {
+            background-color: #374151;
+        }
+        .btn-accent {
+            background-color: #9333ea;
+            color: white;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transition: all 0.15s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-accent:hover {
+            background-color: #7e22ce;
+        }
+        .btn-accent:disabled {
+            background-color: #c084fc;
+            cursor: not-allowed;
+        }
+        .input-field {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+        }
+        .input-field:focus {
+            outline: none;
+            ring: 2px;
+            ring-color: #3b82f6;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: fall linear forwards;
+            pointer-events: none;
+            z-index: 100;
+        }
+        @keyframes fall {
+            to { transform: translateY(calc(100vh + 1000px)) rotate(720deg); }
+        }
+        #preview-overlay {
+            background-color: rgba(0,0,0,0.8);
+            z-index: 50;
+        }
+        .loading-spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid white;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-puzzle-piece text-blue-600 mr-2"></i>AI Puzzle Maker</h1>
+            <div id="timer-display" class="text-xl font-mono font-bold text-gray-700 hidden">00:00</div>
+        </div>
+    </header>
+
+    <main class="flex-grow p-4 max-w-7xl mx-auto w-full flex flex-col gap-6">
+        <div id="controls" class="bg-white rounded-lg shadow p-4 space-y-4">
+            <div class="flex border-b border-gray-200 mb-4">
+                <button onclick="switchTab('generate')" id="tab-generate" class="py-2 px-4 text-blue-600 border-b-2 border-blue-600 font-medium transition-colors">AI Generate</button>
+                <button onclick="switchTab('upload')" id="tab-upload" class="py-2 px-4 text-gray-500 font-medium hover:text-gray-700 transition-colors">Upload / URL</button>
+            </div>
+
+            <div id="panel-generate" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Image Prompt</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="prompt-input" class="input-field" placeholder="Describe the image you want...">
+                        <button id="btn-random-prompt" onclick="generateRandomPrompt()" class="btn-accent whitespace-nowrap min-w-[100px]" title="Get Random Prompt">
+                            <i class="fas fa-dice mr-2"></i> Random
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                        <select id="model-select" class="input-field">
+                            <option value="flux">Flux</option>
+                            <option value="zimage" selected>Zimage</option>
+                            <option value="seedream">SeeDream</option>
+                            <option value="turbo">Turbo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                        <select id="difficulty-select" class="input-field" onchange="checkRestartState()">
+                            <option value="3">Easy (3x3)</option>
+                            <option value="4" selected>Medium (4x4)</option>
+                            <option value="6">Hard (6x6)</option>
+                            <option value="8">Expert (8x8)</option>
+                            <option value="12">Master (12x12)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="generateImage()" id="btn-gen-image" class="w-full btn-primary h-12">
+                    <span id="btn-gen-text"><i class="fas fa-magic mr-2"></i> Generate Image</span>
+                    <div id="btn-gen-loader" class="loading-spinner hidden"></div>
+                </button>
+            </div>
+
+            <div id="panel-upload" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Upload File</label>
+                    <input type="file" id="file-input" accept="image/*" class="input-field p-1">
+                </div>
+                <div class="text-center text-gray-500 text-sm">- OR -</div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="url-input" class="input-field" placeholder="https://example.com/image.jpg">
+                        <button onclick="loadImageFromURL()" id="btn-url-load" class="btn-primary min-w-[80px]">
+                            Load
+                        </button>
+                    </div>
+                </div>
+                <div>
+                     <label class="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
+                     <select id="difficulty-select-upload" class="input-field" onchange="checkRestartState()">
+                         <option value="3">Easy (3x3)</option>
+                         <option value="4" selected>Medium (4x4)</option>
+                         <option value="6">Hard (6x6)</option>
+                         <option value="8">Expert (8x8)</option>
+                         <option value="12">Master (12x12)</option>
+                     </select>
+                </div>
+            </div>
+
+            <div id="image-actions" class="hidden flex flex-wrap gap-2 items-center bg-gray-50 p-2 rounded border border-gray-200">
+                <span class="text-sm font-semibold text-gray-700 mr-auto">Image Ready</span>
+                <a id="download-link" href="#" target="_blank" class="text-blue-600 text-sm hover:underline"><i class="fas fa-external-link-alt"></i> Open Full Image</a>
+                <button onclick="startGame()" class="btn-primary bg-green-600 hover:bg-green-700 text-sm py-1 px-3">
+                    <i class="fas fa-play mr-1"></i> Scramble & Start
+                </button>
+            </div>
+        </div>
+
+        <div id="game-ui" class="hidden flex flex-col gap-2">
+            <div class="flex flex-wrap gap-2 justify-between items-center mb-1 bg-white p-2 rounded shadow-sm">
+                <span id="progress-text" class="text-sm font-semibold text-gray-600">Pieces: 0/0</span>
+                
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="togglePreview()" class="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 py-1 px-3 rounded transition-colors">
+                        <i class="fas fa-eye"></i> Peek
+                    </button>
+                    <button onclick="restartGame()" class="text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-1 px-3 rounded border border-yellow-200 transition-colors">
+                        <i class="fas fa-sync-alt"></i> Restart / Re-cut
+                    </button>
+                    <button onclick="giveUp()" id="btn-give-up" class="text-sm bg-red-100 hover:bg-red-200 text-red-700 py-1 px-3 rounded border border-red-200 transition-colors">
+                        Give Up
+                    </button>
+                </div>
+            </div>
+            
+            <div id="puzzle-container" class="w-full flex items-center justify-center bg-gray-200">
+                <div id="canvas-loader" class="hidden flex-col items-center justify-center text-gray-500">
+                     <div class="loading-spinner border-gray-400 border-t-blue-600 mb-2" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                     <span>Loading Image...</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="initial-preview-container" class="flex justify-center items-center bg-gray-100 rounded-lg min-h-[200px] border-2 border-dashed border-gray-300 relative">
+            <p id="placeholder-text" class="text-gray-400 absolute">Generate or upload an image to begin</p>
+            <div id="main-loader" class="hidden z-10 flex flex-col items-center">
+                 <div class="loading-spinner border-blue-200 border-t-blue-600 mb-3" style="width: 50px; height: 50px; border-width: 5px;"></div>
+                 <span class="text-gray-600 font-semibold">Loading Image...</span>
+            </div>
+            <img id="source-image" class="hidden max-h-[50vh] max-w-full rounded shadow-md object-contain transition-opacity duration-300" crossorigin="anonymous">
+        </div>
+    </main>
+
+    <div id="preview-overlay" class="fixed inset-0 hidden flex items-center justify-center p-4" onclick="togglePreview()">
+        <img id="modal-image" class="max-w-full max-h-full rounded shadow-2xl border-4 border-white">
+    </div>
+
+    <script>
+        const POLLINATIONS_KEY = "plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL";
+        
+        const state = {
+            image: null,
+            pieces: [],
+            groups: [],
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0,
+            rows: 4,
+            cols: 4,
+            pieceWidth: 0,
+            pieceHeight: 0,
+            isDragging: false,
+            dragGroup: null,
+            lastMouse: { x: 0, y: 0 },
+            startTime: 0,
+            timerInterval: null,
+            isSolved: false,
+            scale: 1,
+            activeTab: 'generate',
+            currentImageUrl: ''
+        };
+
+        const els = {
+            prompt: document.getElementById('prompt-input'),
+            model: document.getElementById('model-select'),
+            diffGen: document.getElementById('difficulty-select'),
+            diffUp: document.getElementById('difficulty-select-upload'),
+            img: document.getElementById('source-image'),
+            container: document.getElementById('puzzle-container'),
+            initialContainer: document.getElementById('initial-preview-container'),
+            placeholderText: document.getElementById('placeholder-text'),
+            mainLoader: document.getElementById('main-loader'),
+            timer: document.getElementById('timer-display'),
+            actions: document.getElementById('image-actions'),
+            gameUi: document.getElementById('game-ui'),
+            download: document.getElementById('download-link'),
+            modalImg: document.getElementById('modal-image'),
+            overlay: document.getElementById('preview-overlay'),
+            btnGen: document.getElementById('btn-gen-image'),
+            btnGenText: document.getElementById('btn-gen-text'),
+            btnGenLoader: document.getElementById('btn-gen-loader'),
+            btnRandom: document.getElementById('btn-random-prompt'),
+            btnUrlLoad: document.getElementById('btn-url-load'),
+            giveUpBtn: document.getElementById('btn-give-up')
+        };
+
+        function switchTab(tab) {
+            state.activeTab = tab;
+            document.getElementById('tab-generate').className = tab === 'generate' 
+                ? "py-2 px-4 text-blue-600 border-b-2 border-blue-600 font-medium transition-colors" 
+                : "py-2 px-4 text-gray-500 font-medium hover:text-gray-700 transition-colors";
+            document.getElementById('tab-upload').className = tab === 'upload' 
+                ? "py-2 px-4 text-blue-600 border-b-2 border-blue-600 font-medium transition-colors" 
+                : "py-2 px-4 text-gray-500 font-medium hover:text-gray-700 transition-colors";
+            
+            document.getElementById('panel-generate').classList.toggle('hidden', tab !== 'generate');
+            document.getElementById('panel-upload').classList.toggle('hidden', tab !== 'upload');
+        }
+
+async function generateRandomPrompt() {
+    const btn = els.btnRandom;
+    const originalHtml = btn.innerHTML;
+    
+    btn.innerHTML = '<div class="loading-spinner" style="width: 14px; height: 14px; border-width: 2px;"></div>';
+    btn.disabled = true;
+
+    // 1. Create a high-entropy random seed
+    const seed = Math.floor(Math.random() * 999999999); 
+    
+    const topics = ['surreal dreamscape', 'cyberpunk noir', 'whimsical fairytale', 'abstract expressionism', 'retro sci-fi', 'ancient ruins', 'underwater city', 'steampunk invention', 'majestic wildlife', 'pixel art landscape'];
+    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+    
+    // 2. Updated API Endpoint structure
+    const promptText = `give me a creative and detailed image prompt about ${randomTopic}`;
+    const url = `https://gen.pollinations.ai/text/${encodeURIComponent(promptText)}?model=openai&seed=${seed}&key=${POLLINATIONS_KEY}`;
+
+    try {
+        const response = await fetch(url);
+        const text = await response.text();
+        els.prompt.value = text.trim();
+    } catch (e) {
+        console.error("Prompt generation failed", e);
+        els.prompt.value = "A vibrant and detailed illustration of a futuristic city with flying cars and neon lights.";
+    } finally {
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
+    }
+}
+
+async function generateImage() {
+    const prompt = els.prompt.value.trim() || "Surprise me with a beautiful artistic image";
+    const model = els.model.value;
+    const seed = Math.floor(Math.random() * 10000000);
+    
+    els.btnGen.disabled = true;
+    els.btnGenText.classList.add('hidden');
+    els.btnGenLoader.classList.remove('hidden');
+
+    // ADDED: &_t=${Date.now()} to prevent caching
+    const url = `https://gen.pollinations.ai/api/generate/image/${encodeURIComponent(prompt)}?model=${model}&seed=${seed}&enhance=true&nologo=true&width=1024&height=1024&key=${POLLINATIONS_KEY}&_t=${Date.now()}`;
+    
+    try {
+        await loadAndDisplayImage(url);
+    } catch (e) {
+        console.error(e);
+    } finally {
+        els.btnGen.disabled = false;
+        els.btnGenText.classList.remove('hidden');
+        els.btnGenLoader.classList.add('hidden');
+    }
+}
+
+        function loadImageFromURL() {
+            const url = document.getElementById('url-input').value.trim();
+            if(url) {
+                const btn = els.btnUrlLoad;
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+                
+                loadAndDisplayImage(url).finally(() => {
+                    btn.innerHTML = orig;
+                    btn.disabled = false;
+                });
+            }
+        }
+
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                els.placeholderText.classList.add('hidden');
+                els.img.classList.add('hidden');
+                els.mainLoader.classList.remove('hidden');
+                
+                reader.onload = (evt) => loadAndDisplayImage(evt.target.result);
+                reader.readAsDataURL(file);
+            }
+        });
+
+async function loadAndDisplayImage(src) {
+    // 1. Reset UI State
+    stopTimer();
+    els.gameUi.classList.add('hidden');
+    els.initialContainer.classList.remove('hidden');
+    els.placeholderText.classList.add('hidden');
+    els.img.classList.add('hidden');
+    els.mainLoader.classList.remove('hidden');
+    els.actions.classList.add('hidden');
+
+    // 2. Fetch the image data explicitly
+    try {
+        const response = await fetch(src);
+
+        // If the server returns an error (like Rate Limit or Model Error)
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API Error: ${errorText}`);
+        }
+
+        // 3. Convert valid response to a Blob (Binary Object)
+        const blob = await response.blob();
+        const objectURL = URL.createObjectURL(blob);
+
+        // 4. Clean up the URL for the Download link
+        let cleanUrl = src;
+        if (src.includes('pollinations.ai') && src.includes('key=')) {
+            cleanUrl = src.replace(/&key=[^&]*/, '');
+        }
+        state.currentImageUrl = cleanUrl;
+        els.download.href = cleanUrl;
+        els.modalImg.src = objectURL; // Use the local object URL for preview
+
+        // 5. Load the Blob into the HTML Image Element
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                els.img.src = objectURL; // Use local blob
+                els.img.classList.remove('hidden');
+                els.mainLoader.classList.add('hidden');
+                state.image = img;
+                els.actions.classList.remove('hidden');
+                resolve();
+            };
+            img.onerror = (e) => {
+                alert("Image format verification failed. The file may be corrupt.");
+                els.mainLoader.classList.add('hidden');
+                els.placeholderText.classList.remove('hidden');
+                reject(e);
+            };
+            img.src = objectURL;
+        });
+
+    } catch (error) {
+        // Now you will see the REAL error (e.g., "Rate limit exceeded")
+        console.error("Generation Error:", error);
+        alert(`Failed to load image: ${error.message}`);
+        
+        els.mainLoader.classList.add('hidden');
+        els.placeholderText.classList.remove('hidden');
+        throw error;
+    }
+}
+
+        class Piece {
+            constructor(r, c, img, width, height, shape) {
+                this.r = r;
+                this.c = c;
+                this.width = width;
+                this.height = height;
+                this.shape = shape;
+                
+                this.correctX = c * width;
+                this.correctY = r * height;
+                
+                this.path = new Path2D();
+                this.generatePath();
+            }
+
+            generatePath() {
+                const w = this.width;
+                const h = this.height;
+                const s = this.shape;
+                const sz = Math.min(w, h) * 0.22;
+
+                let x = 0;
+                let y = 0;
+                
+                this.path.moveTo(x, y);
+
+                if (s.top === 1) {
+                    this.path.lineTo(x + w * 0.4, y);
+                    this.path.bezierCurveTo(x + w * 0.4, y - sz, x + w * 0.6, y - sz, x + w * 0.6, y);
+                    this.path.lineTo(x + w, y);
+                } else if (s.top === -1) {
+                    this.path.lineTo(x + w * 0.4, y);
+                    this.path.bezierCurveTo(x + w * 0.4, y + sz, x + w * 0.6, y + sz, x + w * 0.6, y);
+                    this.path.lineTo(x + w, y);
+                } else {
+                    this.path.lineTo(x + w, y);
+                }
+
+                x += w;
+
+                if (s.right === 1) {
+                    this.path.lineTo(x, y + h * 0.4);
+                    this.path.bezierCurveTo(x + sz, y + h * 0.4, x + sz, y + h * 0.6, x, y + h * 0.6);
+                    this.path.lineTo(x, y + h);
+                } else if (s.right === -1) {
+                    this.path.lineTo(x, y + h * 0.4);
+                    this.path.bezierCurveTo(x - sz, y + h * 0.4, x - sz, y + h * 0.6, x, y + h * 0.6);
+                    this.path.lineTo(x, y + h);
+                } else {
+                    this.path.lineTo(x, y + h);
+                }
+
+                y += h;
+
+                if (s.bottom === 1) {
+                    this.path.lineTo(x - w * 0.4, y);
+                    this.path.bezierCurveTo(x - w * 0.4, y + sz, x - w * 0.6, y + sz, x - w * 0.6, y);
+                    this.path.lineTo(x - w, y);
+                } else if (s.bottom === -1) {
+                    this.path.lineTo(x - w * 0.4, y);
+                    this.path.bezierCurveTo(x - w * 0.4, y - sz, x - w * 0.6, y - sz, x - w * 0.6, y);
+                    this.path.lineTo(x - w, y);
+                } else {
+                    this.path.lineTo(x - w, y);
+                }
+
+                x -= w;
+
+                if (s.left === 1) {
+                    this.path.lineTo(x, y - h * 0.4);
+                    this.path.bezierCurveTo(x - sz, y - h * 0.4, x - sz, y - h * 0.6, x, y - h * 0.6);
+                    this.path.lineTo(x, y - h);
+                } else if (s.left === -1) {
+                    this.path.lineTo(x, y - h * 0.4);
+                    this.path.bezierCurveTo(x + sz, y - h * 0.4, x + sz, y - h * 0.6, x, y - h * 0.6);
+                    this.path.lineTo(x, y - h);
+                } else {
+                    this.path.lineTo(x, y - h);
+                }
+            }
+        }
+
+        function startGame() {
+            if (!state.image) return;
+
+            els.initialContainer.classList.add('hidden');
+            els.actions.classList.add('hidden');
+            els.gameUi.classList.remove('hidden');
+            els.timer.classList.remove('hidden');
+            els.giveUpBtn.disabled = false;
+            els.giveUpBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            let dVal;
+            if (state.activeTab === 'generate') {
+                dVal = parseInt(els.diffGen.value);
+            } else {
+                dVal = parseInt(els.diffUp.value);
+            }
+            state.rows = dVal;
+            state.cols = dVal; 
+
+            createPuzzle();
+            scramble();
+            startTimer();
+            draw();
+        }
+
+        function restartGame() {
+            startGame();
+        }
+
+        function checkRestartState() {
+        }
+
+        function createPuzzle() {
+            const img = state.image;
+            const aspect = img.width / img.height;
+            
+            const containerW = Math.min(els.container.offsetWidth, 1200); 
+            
+            if (aspect > 1) {
+                state.cols = Math.round(state.rows * aspect);
+            } else {
+                state.rows = Math.round(state.cols / aspect);
+            }
+            state.cols = Math.max(2, state.cols);
+            state.rows = Math.max(2, state.rows);
+
+            state.canvas = document.createElement('canvas');
+            state.ctx = state.canvas.getContext('2d');
+            
+            state.width = containerW;
+            state.height = containerW / aspect;
+
+            const dpr = window.devicePixelRatio || 1;
+            state.scale = dpr;
+            state.canvas.width = state.width * dpr;
+            state.canvas.height = state.height * dpr;
+            state.canvas.style.width = state.width + 'px';
+            state.canvas.style.height = state.height + 'px';
+            state.ctx.scale(dpr, dpr);
+
+            els.container.innerHTML = '';
+            els.container.appendChild(state.canvas);
+
+            state.canvas.addEventListener('mousedown', handleStart);
+            state.canvas.addEventListener('touchstart', handleStart, {passive: false});
+            window.addEventListener('mousemove', handleMove);
+            window.addEventListener('touchmove', handleMove, {passive: false});
+            window.addEventListener('mouseup', handleEnd);
+            window.addEventListener('touchend', handleEnd);
+
+            state.pieces = [];
+            state.groups = [];
+            state.pieceWidth = state.width / state.cols;
+            state.pieceHeight = state.height / state.rows;
+
+            for (let r = 0; r < state.rows; r++) {
+                for (let c = 0; c < state.cols; c++) {
+                    const shape = {
+                        top: r === 0 ? 0 : -state.pieces[(r-1)*state.cols + c].shape.bottom,
+                        right: c === state.cols - 1 ? 0 : (Math.random() > 0.5 ? 1 : -1),
+                        bottom: r === state.rows - 1 ? 0 : (Math.random() > 0.5 ? 1 : -1),
+                        left: c === 0 ? 0 : -state.pieces[state.pieces.length - 1].shape.right
+                    };
+                    
+                    const p = new Piece(r, c, img, state.pieceWidth, state.pieceHeight, shape);
+                    state.pieces.push(p);
+                    state.groups.push({ pieces: [p], x: 0, y: 0 });
+                }
+            }
+
+            updateProgress();
+        }
+
+        function scramble() {
+            state.isSolved = false;
+            const margin = Math.min(state.pieceWidth, state.pieceHeight) / 2;
+
+            state.groups.forEach(g => {
+                const p = g.pieces[0];
+                const minX = -p.correctX + margin;
+                const maxX = state.width - p.correctX - p.width - margin;
+                const minY = -p.correctY + margin;
+                const maxY = state.height - p.correctY - p.height - margin;
+
+                g.x = Math.random() * (maxX - minX) + minX;
+                g.y = Math.random() * (maxY - minY) + minY;
+            });
+            draw();
+        }
+
+        function getEventPos(e) {
+            if (e.touches && e.touches.length > 0) {
+                const rect = state.canvas.getBoundingClientRect();
+                return {
+                    x: e.touches[0].clientX - rect.left,
+                    y: e.touches[0].clientY - rect.top
+                };
+            }
+            return { x: e.offsetX, y: e.offsetY };
+        }
+
+        function handleStart(e) {
+            if (state.isSolved) return;
+            e.preventDefault();
+            const pos = getEventPos(e);
+            state.lastMouse = pos;
+
+            for (let i = state.groups.length - 1; i >= 0; i--) {
+                const g = state.groups[i];
+                for (let p of g.pieces) {
+                    const globalX = p.correctX + g.x;
+                    const globalY = p.correctY + g.y;
+if (pos.x >= globalX && pos.x <= globalX + p.width &&
+                    pos.y >= globalY && pos.y <= globalY + p.height) {
+                    
+                    state.isDragging = true;
+                    state.dragGroup = g;
+                    
+                    state.groups.splice(i, 1);
+                    state.groups.push(g);
+                    draw();
+                    return;
+                }
+            }
+        }
+    }
+
+    function handleMove(e) {
+        if (!state.isDragging || !state.dragGroup) return;
+        e.preventDefault();
+        const pos = getEventPos(e);
+        
+        const dx = pos.x - state.lastMouse.x;
+        const dy = pos.y - state.lastMouse.y;
+        
+        state.dragGroup.x += dx;
+        state.dragGroup.y += dy;
+        
+        state.lastMouse = pos;
+        draw();
+    }
+
+    function handleEnd(e) {
+        if (!state.isDragging) return;
+        state.isDragging = false;
+        
+        checkSnaps();
+        draw();
+        
+        if (state.groups.length === 1) {
+            checkWin();
+        }
+    }
+
+    function checkSnaps() {
+        const group = state.dragGroup;
+        if (!group) return;
+        
+        const tolerance = Math.max(state.pieceWidth * 0.25, 10);
+        let merged = false;
+
+        for (let i = state.groups.length - 1; i >= 0; i--) {
+            const target = state.groups[i];
+            if (target === group) continue;
+
+            for (let p1 of group.pieces) {
+                for (let p2 of target.pieces) {
+                    const dr = p1.r - p2.r;
+                    const dc = p1.c - p2.c;
+                    const isNeighbor = (Math.abs(dr) + Math.abs(dc)) === 1;
+
+                    if (isNeighbor) {
+                        const correctP1X = (p2.correctX + target.x) + (dc * state.pieceWidth);
+                        const correctP1Y = (p2.correctY + target.y) + (dr * state.pieceHeight);
+
+                        const currentP1X = p1.correctX + group.x;
+                        const currentP1Y = p1.correctY + group.y;
+
+                        const dist = Math.hypot(currentP1X - correctP1X, currentP1Y - correctP1Y);
+
+                        if (dist < tolerance) {
+                            mergeGroups(target, group);
+                            merged = true;
+                            playSnapSound();
+                            break;
+                        }
+                    }
+                }
+                if (merged) break;
+            }
+            if (merged) break;
+        }
+    }
+
+    function mergeGroups(target, source) {
+        target.pieces.push(...source.pieces);
+        const idx = state.groups.indexOf(source);
+        if (idx > -1) state.groups.splice(idx, 1);
+        state.dragGroup = null;
+        updateProgress();
+    }
+
+    function playSnapSound() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 800;
+            gain.gain.value = 0.05;
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.1);
+            osc.stop(ctx.currentTime + 0.1);
+        }
+    }
+
+    function giveUp() {
+        if (state.isSolved) return;
+        stopTimer();
+        state.isSolved = true;
+        els.giveUpBtn.disabled = true;
+        els.giveUpBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        
+        state.groups.forEach(g => {
+            g.x = 0;
+            g.y = 0;
+        });
+        const allPieces = state.groups.flatMap(g => g.pieces);
+        state.groups = [{ pieces: allPieces, x: 0, y: 0 }];
+        
+        draw();
+        updateProgress();
+        setTimeout(() => alert("Puzzle Solved! Try Re-cutting the image to play again."), 100);
+    }
+
+    function checkWin() {
+        const g = state.groups[0];
+        const dist = Math.hypot(g.x, g.y);
+        if (dist < 15) { 
+            g.x = 0;
+            g.y = 0;
+            draw();
+            state.isSolved = true;
+            stopTimer();
+            createConfetti();
+            setTimeout(() => alert(`Puzzle Completed in ${els.timer.innerText}!`), 500);
+        }
+    }
+
+    function updateProgress() {
+        const total = state.rows * state.cols;
+        const currentGroups = state.groups.length;
+        const joined = total - currentGroups + 1;
+        document.getElementById('progress-text').innerText = `Connected: ${joined}/${total}`;
+    }
+
+    function draw() {
+        const ctx = state.ctx;
+        const w = state.width;
+        const h = state.height;
+
+        ctx.clearRect(0, 0, w, h);
+        
+        ctx.globalAlpha = 0.1;
+        ctx.drawImage(state.image, 0, 0, w, h);
+        ctx.globalAlpha = 1.0;
+
+        ctx.strokeStyle = '#9ca3af';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, w, h);
+
+        state.groups.forEach(g => {
+            g.pieces.forEach(p => {
+                ctx.save();
+                const gx = p.correctX + g.x;
+                const gy = p.correctY + g.y;
+                ctx.translate(gx, gy);
+                
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+
+                ctx.beginPath();
+                const p2d = p.path;
+                ctx.stroke(p2d); 
+                ctx.clip(p2d);
+                
+                ctx.shadowColor = 'transparent';
+                
+                ctx.drawImage(state.image, 
+                    0, 0, state.image.width, state.image.height,
+                    -p.correctX * (state.width / state.image.width * (state.image.width/state.width)), 
+                    -p.correctY,
+                    state.width,
+                    state.height
+                );
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke(p2d);
+                
+                ctx.restore();
+            });
+        });
+    }
+
+    function startTimer() {
+        stopTimer();
+        state.startTime = Date.now();
+        els.timer.innerText = "00:00";
+        state.timerInterval = setInterval(() => {
+            const delta = Math.floor((Date.now() - state.startTime) / 1000);
+            const m = Math.floor(delta / 60).toString().padStart(2, '0');
+            const s = (delta % 60).toString().padStart(2, '0');
+            els.timer.innerText = `${m}:${s}`;
+        }, 1000);
+    }
+
+    function stopTimer() {
+        if (state.timerInterval) clearInterval(state.timerInterval);
+    }
+
+    function createConfetti() {
+        for(let i=0; i<60; i++) {
+            const conf = document.createElement('div');
+            conf.className = 'confetti';
+            conf.style.left = Math.random() * 100 + 'vw';
+            conf.style.top = -10 + 'px';
+            conf.style.backgroundColor = `hsl(${Math.random()*360}, 100%, 50%)`;
+            conf.style.animationDuration = Math.random() * 2 + 3 + 's';
+            document.body.appendChild(conf);
+            setTimeout(() => conf.remove(), 5000);
+        }
+    }
+
+    function togglePreview() {
+        els.overlay.classList.toggle('hidden');
+    }
+</script>
+</body>
+</html>
