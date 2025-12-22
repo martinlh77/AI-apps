@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Maze - Find the Gold!</title>
+    <style>
+        body {
+            margin: 0; padding: 0; background-color: #111; color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; touch-action: none;
+        }
+
+        #game-container { position: relative; width: 100vw; height: 100vh; }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UI Elements */
+        #ui {
+            position: absolute; top: 15px; left: 15px; z-index: 10;
+            display: flex; gap: 10px; pointer-events: none;
+        }
+        .btn {
+            background: rgba(0, 0, 0, 0.6); border: 1px solid #fff;
+            color: white; padding: 10px 15px; border-radius: 4px;
+            cursor: pointer; pointer-events: auto; font-size: 14px;
+        }
+
+        /* 2D Map */
+        #map-canvas {
+            position: absolute; top: 70px; left: 15px;
+            border: 2px solid #555; background: rgba(0,0,0,0.8);
+            display: none; z-index: 10;
+        }
+
+        /* Win Overlay */
+        #win-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none;
+            flex-direction: column; justify-content: center;
+            align-items: center; z-index: 20;
+        }
+        #win-screen h1 { color: #ffd700; font-size: 3rem; margin-bottom: 10px; }
+
+        #instructions {
+            position: absolute; bottom: 20px; width: 100%;
+            text-align: center; opacity: 0.6; pointer-events: none; font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="ui">
+            <button class="btn" onclick="toggleMap()">Toggle Map</button>
+            <button class="btn" onclick="initGame()">New Maze</button>
+        </div>
+        
+        <canvas id="view-canvas"></canvas>
+        <canvas id="map-canvas"></canvas>
+
+        <div id="win-screen">
+            <h1>YOU FOUND IT!</h1>
+            <p>You escaped the maze.</p>
+            <button class="btn" style="font-size: 20px; padding: 15px 30px;" onclick="initGame()">Play Again</button>
+        </div>
+
+        <div id="instructions">
+            WASD / Arrows to Move • Swipe Screen to Move & Turn
+        </div>
+    </div>
+
+<script>
+/** CONFIG **/
+const TILE_SIZE = 64;
+const MAP_SIZE = 17; // Must be odd
+const FOV = Math.PI / 3;
+
+/** STATE **/
+let map = [];
+let player = { x: 0, y: 0, dir: 0, rotSpeed: 0, moveSpeed: 0 };
+let isPlaying = true;
+
+const viewCanvas = document.getElementById('view-canvas');
+const vctx = viewCanvas.getContext('2d');
+const mapCanvas = document.getElementById('map-canvas');
+const mctx = mapCanvas.getContext('2d');
+const winScreen = document.getElementById('win-screen');
+
+/** MAZE GENERATION **/
+function generateMaze(size) {
+    let grid = Array(size).fill().map(() => Array(size).fill(1));
+    
+    function walk(x, y) {
+        grid[y][x] = 0;
+        const dirs = [[0, -2], [2, 0], [0, 2], [-2, 0]].sort(() => Math.random() - 0.5);
+        for (let [dx, dy] of dirs) {
+            let nx = x + dx, ny = y + dy;
+            if (nx > 0 && nx < size && ny > 0 && ny < size && grid[ny][nx] === 1) {
+                grid[y + dy/2][x + dx/2] = 0;
+                walk(nx, ny);
+            }
+        }
+    }
+    
+    walk(1, 1);
+    // Place Goal at the bottom right corner
+    grid[size-2][size-2] = 2; 
+    return grid;
+}
+
+function initGame() {
+    map = generateMaze(MAP_SIZE);
+    player.x = TILE_SIZE * 1.5;
+    player.y = TILE_SIZE * 1.5;
+    player.dir = Math.PI / 4;
+    isPlaying = true;
+    winScreen.style.display = 'none';
+}
+
+/** INPUTS **/
+const keys = {};
+window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keyup', e => keys[e.code] = false);
+
+let touchStartX = null, touchStartY = null;
+window.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+});
+window.addEventListener('touchmove', e => {
+    if (!touchStartX || !isPlaying) return;
+    player.rotSpeed = (e.touches[0].clientX - touchStartX) * 0.0008;
+    player.moveSpeed = -(e.touches[0].clientY - touchStartY) * 0.04;
+    e.preventDefault();
+}, {passive: false});
+window.addEventListener('touchend', () => { player.rotSpeed = 0; player.moveSpeed = 0; touchStartX = null; });
+
+function toggleMap() {
+    mapCanvas.style.display = (mapCanvas.style.display === 'block') ? 'none' : 'block';
+}
+
+/** ENGINE **/
+function update() {
+    if (!isPlaying) return;
+
+    if (keys['ArrowUp'] || keys['KeyW']) player.moveSpeed = 3;
+    else if (keys['ArrowDown'] || keys['KeyS']) player.moveSpeed = -3;
+    else if (!touchStartX) player.moveSpeed = 0;
+
+    if (keys['ArrowLeft'] || keys['KeyA']) player.rotSpeed = -0.05;
+    else if (keys['ArrowRight'] || keys['KeyD']) player.rotSpeed = 0.05;
+    else if (!touchStartX) player.rotSpeed = 0;
+
+    player.dir += player.rotSpeed;
+
+    let newX = player.x + Math.cos(player.dir) * player.moveSpeed;
+    let newY = player.y + Math.sin(player.dir) * player.moveSpeed;
+
+    // Grid Check
+    let gridX = Math.floor(newX / TILE_SIZE);
+    let gridY = Math.floor(newY / TILE_SIZE);
+
+    if (map[gridY][gridX] !== 1) {
+        player.x = newX;
+        player.y = newY;
+    }
+
+    // Win Check
+    if (map[gridY][gridX] === 2) {
+        isPlaying = false;
+        winScreen.style.display = 'flex';
+    }
+}
+
+function draw() {
+    const w = viewCanvas.width = window.innerWidth;
+    const h = viewCanvas.height = window.innerHeight;
+
+    // Floor & Ceiling
+    vctx.fillStyle = "#1a1a1a"; vctx.fillRect(0, 0, w, h/2);
+    vctx.fillStyle = "#333"; vctx.fillRect(0, h/2, w, h/2);
+
+    const numRays = w / 2;
+    const rayStep = FOV / numRays;
+
+    for (let i = 0; i < numRays; i++) {
+        let rayAngle = (player.dir - FOV / 2) + (i * rayStep);
+        let distance = 0;
+        let hitWall = 0; // 0: none, 1: wall, 2: goal
+
+        let eyeX = Math.cos(rayAngle);
+        let eyeY = Math.sin(rayAngle);
+
+        while (hitWall === 0 && distance < 15 * TILE_SIZE) {
+            distance += 3;
+            let tx = Math.floor((player.x + eyeX * distance) / TILE_SIZE);
+            let ty = Math.floor((player.y + eyeY * distance) / TILE_SIZE);
+
+            if (tx < 0 || tx >= MAP_SIZE || ty < 0 || ty >= MAP_SIZE) {
+                hitWall = 1; distance = 15 * TILE_SIZE;
+            } else if (map[ty][tx] === 1) {
+                hitWall = 1;
+            } else if (map[ty][tx] === 2) {
+                hitWall = 2;
+            }
+        }
+
+        let actualDist = distance * Math.cos(rayAngle - player.dir);
+        let wallH = (TILE_SIZE * h) / actualDist;
+        
+        // Coloring
+        if (hitWall === 2) {
+            vctx.fillStyle = `rgb(255, 215, 0)`; // Gold Goal
+        } else {
+            let color = 200 - (actualDist / 4); 
+            vctx.fillStyle = `rgb(${color}, ${color}, ${color+20})`;
+        }
+        
+        vctx.fillRect(i * 2, (h/2) - (wallH/2), 2.5, wallH);
+    }
+
+    if (mapCanvas.style.display === 'block') drawMap();
+}
+
+function drawMap() {
+    const mTile = 8;
+    mapCanvas.width = MAP_SIZE * mTile;
+    mapCanvas.height = MAP_SIZE * mTile;
+    for (let y = 0; y < MAP_SIZE; y++) {
+        for (let x = 0; x < MAP_SIZE; x++) {
+            if (map[y][x] === 1) mctx.fillStyle = "#666";
+            else if (map[y][x] === 2) mctx.fillStyle = "#0f0"; // Goal is Green on map
+            else mctx.fillStyle = "#111";
+            mctx.fillRect(x * mTile, y * mTile, mTile-1, mTile-1);
+        }
+    }
+    mctx.fillStyle = "red";
+    mctx.fillRect((player.x/TILE_SIZE)*mTile-2, (player.y/TILE_SIZE)*mTile-2, 4, 4);
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+initGame();
+loop();
+window.addEventListener('resize', () => {
+    viewCanvas.width = window.innerWidth;
+    viewCanvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>
