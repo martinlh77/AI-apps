@@ -290,6 +290,16 @@
                     <option value="arena">The Arena</option>
                     <option value="cross">The Cross</option>
                     <option value="butterfly">Butterfly</option>
+                    <option value="diamond">Diamond</option>
+                    <option value="fortress">The Fortress</option>
+                    <option value="spider">Spider</option>
+                    <option value="temple">Temple</option>
+                    <option value="hourglass">Hourglass</option>
+                    <option value="tower">The Tower</option>
+                    <option value="bridge">Bridge</option>
+                    <option value="crown">The Crown</option>
+                    <option value="spiral">Spiral</option>
+                    <option value="maze">The Maze</option>
                 </select>
             </div>
             
@@ -376,6 +386,140 @@ const LAYOUTS = {
         }
         for(let y=1; y<=8; y++) tiles.push({x:7,y,z:0});
         for(let y=2; y<=7; y++) tiles.push({x:7,y,z:1});
+        return tiles;
+    },
+    // NEW LAYOUTS START HERE
+    diamond: () => {
+        let tiles = [];
+        // Diamond shape - widest in middle, narrows at top and bottom
+        for(let z=0; z<4; z++) {
+            for(let x=7-z; x<=7+z; x++) tiles.push({x,y:1+z,z});
+            for(let x=7-z; x<=7+z; x++) tiles.push({x,y:8-z,z});
+            for(let y=2+z; y<=7-z; y++) {
+                tiles.push({x:7-z,y,z});
+                tiles.push({x:7+z,y,z});
+            }
+        }
+        return tiles;
+    },
+    fortress: () => {
+        let tiles = [];
+        // Four corner towers with connecting walls
+        for(let z=0; z<5; z++) {
+            // Four corner towers
+            for(let x=1; x<=3; x++) for(let y=1; y<=3; y++) tiles.push({x,y,z});
+            for(let x=11; x<=13; x++) for(let y=1; y<=3; y++) tiles.push({x,y,z});
+            for(let x=1; x<=3; x++) for(let y=6; y<=8; y++) tiles.push({x,y,z});
+            for(let x=11; x<=13; x++) for(let y=6; y<=8; y++) tiles.push({x,y,z});
+        }
+        // Walls connecting towers (only bottom layers)
+        for(let x=4; x<=10; x++) tiles.push({x,y:1,z:0});
+        for(let x=4; x<=10; x++) tiles.push({x,y:8,z:0});
+        for(let y=4; y<=5; y++) tiles.push({x:1,y,z:0});
+        for(let y=4; y<=5; y++) tiles.push({x:13,y,z:0});
+        return tiles;
+    },
+    spider: () => {
+        let tiles = [];
+        // Central body
+        for(let z=0; z<3; z++) for(let x=6; x<=8; x++) for(let y=4; y<=5; y++) tiles.push({x,y,z});
+        // Eight legs radiating out
+        for(let i=1; i<=3; i++) {
+            tiles.push({x:6-i,y:3,z:0}); tiles.push({x:8+i,y:3,z:0});
+            tiles.push({x:6-i,y:6,z:0}); tiles.push({x:8+i,y:6,z:0});
+            tiles.push({x:5,y:4-i,z:0}); tiles.push({x:5,y:5+i,z:0});
+            tiles.push({x:9,y:4-i,z:0}); tiles.push({x:9,y:5+i,z:0});
+        }
+        return tiles;
+    },
+    temple: () => {
+        let tiles = [];
+        // Base platform
+        for(let x=2; x<=12; x++) for(let y=2; y<=7; y++) tiles.push({x,y,z:0});
+        // Steps leading up
+        for(let z=1; z<4; z++) for(let x=3+z; x<=11-z; x++) for(let y=2+z; y<=7-z; y++) tiles.push({x,y,z});
+        // Roof peak
+        tiles.push({x:7,y:4.5,z:4});
+        tiles.push({x:7,y:5.5,z:4});
+        return tiles;
+    },
+    hourglass: () => {
+        let tiles = [];
+        // Top wide section
+        for(let z=0; z<2; z++) for(let x=3; x<=11; x++) for(let y=1; y<=3; y++) tiles.push({x,y,z});
+        // Narrow middle
+        for(let z=2; z<3; z++) for(let x=6; x<=8; x++) for(let y=4; y<=5; y++) tiles.push({x,y,z});
+        // Bottom wide section
+        for(let z=0; z<2; z++) for(let x=3; x<=11; x++) for(let y=6; y<=8; y++) tiles.push({x,y,z});
+        return tiles;
+    },
+    tower: () => {
+        let tiles = [];
+        // Tall central tower
+        for(let z=0; z<7; z++) {
+            let offset = Math.floor(z/2);
+            for(let x=5-offset; x<=9+offset; x++) 
+                for(let y=3-offset; y<=6+offset; y++) 
+                    tiles.push({x,y,z});
+        }
+        return tiles;
+    },
+    bridge: () => {
+        let tiles = [];
+        // Two support pillars
+        for(let z=0; z<5; z++) {
+            for(let x=2; x<=4; x++) for(let y=3; y<=6; y++) tiles.push({x,y,z});
+            for(let x=10; x<=12; x++) for(let y=3; y<=6; y++) tiles.push({x,y,z});
+        }
+        // Bridge deck connecting them
+        for(let x=5; x<=9; x++) for(let y=4; y<=5; y++) tiles.push({x,y,z:4});
+        return tiles;
+    },
+    crown: () => {
+        let tiles = [];
+        // Base ring
+        for(let x=3; x<=11; x++) { tiles.push({x,y:2,z:0}); tiles.push({x,y:7,z:0}); }
+        for(let y=3; y<=6; y++) { tiles.push({x:3,y,z:0}); tiles.push({x:11,y,z:0}); }
+        // Points of crown
+        for(let z=1; z<4; z++) {
+            tiles.push({x:4,y:2,z}); tiles.push({x:7,y:2,z}); tiles.push({x:10,y:2,z});
+            tiles.push({x:4,y:7,z}); tiles.push({x:7,y:7,z}); tiles.push({x:10,y:7,z});
+        }
+        // Jewels on top
+        tiles.push({x:4,y:2,z:4}); tiles.push({x:7,y:2,z:4}); tiles.push({x:10,y:2,z:4});
+        return tiles;
+    },
+    spiral: () => {
+        let tiles = [];
+        // Ascending spiral pattern
+        let positions = [
+            {x:7,y:4.5}, {x:8,y:4.5}, {x:9,y:4.5}, {x:9,y:5.5}, {x:9,y:6.5},
+            {x:8,y:6.5}, {x:7,y:6.5}, {x:6,y:6.5}, {x:5,y:6.5}, {x:5,y:5.5},
+            {x:5,y:4.5}, {x:5,y:3.5}, {x:5,y:2.5}, {x:6,y:2.5}, {x:7,y:2.5},
+            {x:8,y:2.5}, {x:9,y:2.5}, {x:10,y:2.5}, {x:10,y:3.5}, {x:10,y:4.5}
+        ];
+        for(let i=0; i<positions.length; i++) {
+            let z = Math.floor(i/4);
+            tiles.push({x:positions[i].x, y:positions[i].y, z});
+        }
+        // Fill in more tiles for playability
+        for(let z=0; z<3; z++) for(let x=4; x<=10; x++) for(let y=2; y<=7; y++) tiles.push({x,y,z});
+        return tiles;
+    },
+    maze: () => {
+        let tiles = [];
+        // Complex maze-like pattern with multiple paths
+        for(let z=0; z<3; z++) {
+            // Outer walls
+            for(let x=1; x<=13; x++) { tiles.push({x,y:1,z}); tiles.push({x,y:8,z}); }
+            for(let y=2; y<=7; y++) { tiles.push({x:1,y,z}); tiles.push({x:13,y,z}); }
+            // Internal walls creating maze
+            for(let y=3; y<=6; y++) tiles.push({x:4,y,z});
+            for(let x=5; x<=7; x++) tiles.push({x,y:3,z});
+            for(let y=4; y<=6; y++) tiles.push({x:7,y,z});
+            for(let x=8; x<=10; x++) tiles.push({x,y:6,z});
+            for(let y=3; y<=5; y++) tiles.push({x:10,y,z});
+        }
         return tiles;
     }
 };
