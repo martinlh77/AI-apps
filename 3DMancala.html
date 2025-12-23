@@ -111,6 +111,8 @@ function init() {
 
         createBoard();
         resetGame();
+        renderer.domElement.addEventListener('pointerdown', onPointerDown);
+        renderer.domElement.addEventListener('pointerup', onPointerUp);
         animate();
 
         // Remove loading screen
@@ -282,29 +284,53 @@ function endGame() {
     document.getElementById('msg').innerText = p1 > p2 ? "P1 Wins!" : p1 < p2 ? "P2 Wins!" : "Tie!";
 }
 
-// TOUCH/MOUSE HANDLING
+// REFINED INPUT HANDLING (WORKS FOR BOTH MOBILE & DESKTOP)
+let startPoint = { x: 0, y: 0 };
 let startTime = 0;
-function onInputStart() { startTime = Date.now(); }
-function onInputEnd(clientX, clientY) {
-    if (Date.now() - startTime > 250) return; // Ignore drags
-    mouse.x = (clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+
+function onPointerDown(e) {
+    startPoint.x = e.clientX;
+    startPoint.y = e.clientY;
+    startTime = Date.now();
+}
+
+function onPointerUp(e) {
+    const duration = Date.now() - startTime;
+    const dist = Math.hypot(e.clientX - startPoint.x, e.clientY - startPoint.y);
+
+    // If held longer than 300ms OR moved more than 5px, treat as camera drag, not click
+    if (duration > 300 || dist > 5) return;
+
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
     raycaster.setFromCamera(mouse, camera);
-    const hits = raycaster.intersectObjects(scene.children);
+    const hits = raycaster.intersectObjects(scene.children, true);
+
     for (let h of hits) {
-        const idx = h.object.userData.index;
+        let idx = h.object.userData.index;
+
+        // Desktop Fix: If player clicks a bead directly, find which pit it belongs to
+        if (idx === undefined && h.object.geometry && h.object.geometry.type === "SphereGeometry") {
+            for (let i = 0; i < 14; i++) {
+                if (boardState[i].includes(h.object)) {
+                    idx = i;
+                    break;
+                }
+            }
+        }
+
         if (idx !== undefined) {
-            if (currentPlayer === 0 && idx <= 5) executeMove(idx);
-            else if (!isAIMode && currentPlayer === 1 && idx >= 7 && idx <= 12) executeMove(idx);
-            break;
+            if (currentPlayer === 0 && idx <= 5) {
+                executeMove(idx);
+                break;
+            } else if (!isAIMode && currentPlayer === 1 && idx >= 7 && idx <= 12) {
+                executeMove(idx);
+                break;
+            }
         }
     }
 }
-
-window.addEventListener('touchstart', onInputStart);
-window.addEventListener('touchend', (e) => onInputEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY));
-window.addEventListener('mousedown', onInputStart);
-window.addEventListener('mouseup', (e) => onInputEnd(e.clientX, e.clientY));
 
 function animate() {
     requestAnimationFrame(animate);
