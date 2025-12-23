@@ -523,10 +523,31 @@
             let startX, startY;
             let initialPinchDistance = 0;
             let initialScale = 0.7;
+            let pinchCenterX = 0, pinchCenterY = 0;
             let hasMoved = false;
 
             // Apply initial transform immediately to sync state and visual representation
             container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+
+            function zoomToPoint(newScale, clientX, clientY) {
+                // Get the viewport bounds
+                const rect = viewport.getBoundingClientRect();
+                
+                // Calculate point relative to viewport
+                const x = clientX - rect.left;
+                const y = clientY - rect.top;
+                
+                // Calculate the point in container space before zoom
+                const pointX = (x - posX) / scale;
+                const pointY = (y - posY) / scale;
+                
+                // Calculate new position to keep the point under cursor
+                posX = x - pointX * newScale;
+                posY = y - pointY * newScale;
+                scale = newScale;
+                
+                container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            }
 
             // Mouse handling
             viewport.onmousedown = e => { 
@@ -545,8 +566,8 @@
             
             viewport.onwheel = e => {
                 e.preventDefault();
-                scale = Math.min(Math.max(0.1, scale + (e.deltaY * -0.001)), 2);
-                container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+                const newScale = Math.min(Math.max(0.1, scale + (e.deltaY * -0.001)), 2);
+                zoomToPoint(newScale, e.clientX, e.clientY);
             };
 
             // Touch handling
@@ -563,11 +584,17 @@
                 } else if (e.touches.length === 2) {
                     e.preventDefault();
                     isDragging = false;
+                    
+                    // Calculate initial pinch distance
                     initialPinchDistance = Math.hypot(
                         e.touches[0].clientX - e.touches[1].clientX,
                         e.touches[0].clientY - e.touches[1].clientY
                     );
                     initialScale = scale;
+                    
+                    // Store the center point of the pinch
+                    pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
                 }
             }, { passive: false });
 
@@ -591,13 +618,19 @@
                     }
                 } else if (e.touches.length === 2) {
                     e.preventDefault();
+                    
+                    // Calculate current pinch distance
                     const currentDistance = Math.hypot(
                         e.touches[0].clientX - e.touches[1].clientX,
                         e.touches[0].clientY - e.touches[1].clientY
                     );
+                    
+                    // Calculate zoom factor
                     const zoomFactor = currentDistance / initialPinchDistance;
-                    scale = Math.min(Math.max(0.1, initialScale * zoomFactor), 2);
-                    container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+                    const newScale = Math.min(Math.max(0.1, initialScale * zoomFactor), 2);
+                    
+                    // Zoom towards the pinch center point
+                    zoomToPoint(newScale, pinchCenterX, pinchCenterY);
                 }
             }, { passive: false });
 
