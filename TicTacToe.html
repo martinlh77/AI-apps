@@ -138,6 +138,7 @@
             align-items: center;
             min-width: 100%;
             min-height: 100%;
+            pointer-events: none;
         }
 
         .game-grid {
@@ -146,6 +147,7 @@
             gap: 20px;
             padding: 100px; /* Extra padding for pan-room */
             justify-content: center;
+            pointer-events: auto;
         }
 
         .ultimate-layout {
@@ -200,6 +202,7 @@
             font-size: 1.5rem;
             font-weight: bold;
             cursor: pointer;
+            touch-action: manipulation;
         }
 
         .cell.x { color: var(--accent-x); }
@@ -336,11 +339,31 @@
                 wrapper.id = `board-${i}`;
                 let cellsHTML = '';
                 for (let j = 0; j < 9; j++) {
-                    cellsHTML += `<div class="cell" onclick="handleCellClick(${i}, ${j})" data-b="${i}" data-c="${j}"></div>`;
+                    cellsHTML += `<div class="cell" data-b="${i}" data-c="${j}"></div>`;
                 }
                 wrapper.innerHTML = `<div style="font-size:0.6rem; opacity:0.4; margin-bottom:4px">BOARD ${i+1}</div><div class="board">${cellsHTML}</div>`;
                 grid.appendChild(wrapper);
             }
+
+            // Attach cell click handlers after rendering
+            document.querySelectorAll('.cell').forEach(cell => {
+                const bIdx = parseInt(cell.getAttribute('data-b'));
+                const cIdx = parseInt(cell.getAttribute('data-c'));
+                
+                cell.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    handleCellClick(bIdx, cIdx);
+                });
+                
+                cell.addEventListener('touchend', (e) => {
+                    if (!cell.dataset.wasDragging) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleCellClick(bIdx, cIdx);
+                    }
+                    delete cell.dataset.wasDragging;
+                });
+            });
         }
 
         function restartSameSetup() {
@@ -497,23 +520,96 @@
             const viewport = document.getElementById('viewport');
             const container = document.getElementById('zoom-container');
             let scale = 0.7, posX = 0, posY = 0, isDragging = false, sx, sy;
+            let startX, startY;
+            let initialPinchDistance = 0;
+            let initialScale = 0.7;
+            let hasMoved = false;
 
-            viewport.onmousedown = e => { isDragging = true; sx = e.clientX - posX; sy = e.clientY - posY; };
+            // Apply initial transform immediately to sync state and visual representation
+            container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+
+            // Mouse handling
+            viewport.onmousedown = e => { 
+                if (e.target.classList.contains('cell')) return;
+                isDragging = true; 
+                sx = e.clientX - posX; 
+                sy = e.clientY - posY; 
+            };
             window.onmousemove = e => {
                 if (!isDragging) return;
-                posX = e.clientX - sx; posY = e.clientY - sy;
+                posX = e.clientX - sx; 
+                posY = e.clientY - sy;
                 container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
             };
             window.onmouseup = () => isDragging = false;
+            
             viewport.onwheel = e => {
                 e.preventDefault();
                 scale = Math.min(Math.max(0.1, scale + (e.deltaY * -0.001)), 2);
                 container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
             };
-            // Touch
-            viewport.ontouchstart = e => { if(e.touches.length===1){ isDragging=true; sx=e.touches[0].clientX-posX; sy=e.touches[0].clientY-posY; }};
-            viewport.ontouchmove = e => { if(isDragging && e.touches.length===1){ posX=e.touches[0].clientX-sx; posY=e.touches[0].clientY-sy; container.style.transform=`translate(${posX}px, ${posY}px) scale(${scale})`; }};
-            viewport.ontouchend = () => isDragging = false;
+
+            // Touch handling
+            viewport.addEventListener('touchstart', e => {
+                if (e.target.classList.contains('cell')) return;
+                
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    hasMoved = false;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    sx = e.touches[0].clientX - posX;
+                    sy = e.touches[0].clientY - posY;
+                } else if (e.touches.length === 2) {
+                    e.preventDefault();
+                    isDragging = false;
+                    initialPinchDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    initialScale = scale;
+                }
+            }, { passive: false });
+
+            viewport.addEventListener('touchmove', e => {
+                if (e.touches.length === 1 && isDragging) {
+                    const moveX = e.touches[0].clientX;
+                    const moveY = e.touches[0].clientY;
+                    const distance = Math.hypot(moveX - startX, moveY - startY);
+                    
+                    // Threshold to distinguish between intended tap and drag
+                    if (distance > 10) {
+                        hasMoved = true;
+                        posX = moveX - sx;
+                        posY = moveY - sy;
+                        container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+                        
+                        // Mark all cells as dragging to prevent tap
+                        document.querySelectorAll('.cell').forEach(cell => {
+                            cell.dataset.wasDragging = 'true';
+                        });
+                    }
+                } else if (e.touches.length === 2) {
+                    e.preventDefault();
+                    const currentDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    const zoomFactor = currentDistance / initialPinchDistance;
+                    scale = Math.min(Math.max(0.1, initialScale * zoomFactor), 2);
+                    container.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+                }
+            }, { passive: false });
+
+            viewport.addEventListener('touchend', () => {
+                isDragging = false;
+                // Clear dragging flags after a short delay
+                setTimeout(() => {
+                    document.querySelectorAll('.cell').forEach(cell => {
+                        delete cell.dataset.wasDragging;
+                    });
+                }, 50);
+            });
         }
     </script>
 </body>
