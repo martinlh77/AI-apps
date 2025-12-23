@@ -197,7 +197,7 @@
         let lives = 3;
         let points = 0;
         let isPlayingSequence = false;
-        let currentSpeed = 600;
+        let currentSpeed = 400;
 
         // Sound Engine
         function playNote(freq, type = 'triangle', duration = 0.5) {
@@ -269,9 +269,9 @@
             updateUI();
             gameSequence.push(Math.floor(Math.random() * buttonCount));
             
-            // Speed up every 10 items
-            if (gameSequence.length % 10 === 0 && currentSpeed > 250) {
-                currentSpeed -= 100;
+            // Speed up every 5 items
+            if (gameSequence.length % 5 === 0 && currentSpeed > 150) {
+                currentSpeed -= 50;
             }
             setTimeout(playPattern, 800);
         }
@@ -281,7 +281,7 @@
             document.getElementById('game-board').style.pointerEvents = 'none';
             for (let id of gameSequence) {
                 await flashButton(id);
-                await new Promise(r => setTimeout(r, currentSpeed / 2));
+                await new Promise(r => setTimeout(r, currentSpeed / 4));
             }
             isPlayingSequence = false;
             document.getElementById('game-board').style.pointerEvents = 'all';
@@ -296,7 +296,7 @@
                 setTimeout(() => {
                     btn.classList.remove('active');
                     resolve();
-                }, currentSpeed);
+                }, currentSpeed * 0.8);
             });
         }
 
