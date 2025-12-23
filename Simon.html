@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Advanced Simon Clone</title>
+    <title>Simon Pro - Advanced Edition</title>
     <style>
         :root {
             --bg-color: #1a1a1a;
-            --panel-color: #333;
             --text-color: #fff;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
@@ -36,21 +35,23 @@
 
         .hidden { display: none !important; }
 
-        /* Setup Screen */
+        /* Setup Buttons */
         .color-option-btn {
             background: #444;
             color: white;
             border: 2px solid #666;
-            padding: 15px 25px;
+            padding: 15px 20px;
             margin: 5px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             cursor: pointer;
             border-radius: 8px;
+            transition: 0.2s;
         }
 
         .color-option-btn.selected {
             background: #2ecc71;
             border-color: #fff;
+            transform: scale(1.1);
         }
 
         /* Game Board */
@@ -58,9 +59,8 @@
             display: grid;
             gap: 15px;
             margin: 20px auto;
-            width: 300px;
-            height: 300px;
-            position: relative;
+            width: 320px;
+            height: 320px;
         }
 
         .simon-btn {
@@ -68,23 +68,26 @@
             height: 100%;
             border-radius: 15px;
             cursor: pointer;
-            opacity: 0.6;
+            opacity: 0.5;
             transition: opacity 0.1s, transform 0.1s;
-            border: 4px solid rgba(0,0,0,0.2);
+            border: 4px solid rgba(0,0,0,0.3);
         }
 
         .simon-btn.active {
             opacity: 1 !important;
-            transform: scale(0.95);
-            box-shadow: 0 0 20px white;
+            transform: scale(0.96);
+            box-shadow: 0 0 25px white;
         }
 
-        /* Stats & Controls */
+        /* UI Elements */
         .stats-bar {
             display: flex;
             justify-content: space-around;
             width: 100%;
             font-weight: bold;
+            background: rgba(255,255,255,0.1);
+            padding: 10px 0;
+            border-radius: 10px;
             margin-bottom: 15px;
         }
 
@@ -99,17 +102,27 @@
         button {
             padding: 12px;
             font-size: 1rem;
-            border-radius: 5px;
+            border-radius: 8px;
             border: none;
             cursor: pointer;
             font-weight: bold;
+            transition: filter 0.2s;
         }
+
+        button:active { filter: brightness(1.2); }
 
         .btn-primary { background: #3498db; color: white; }
         .btn-secondary { background: #9b59b6; color: white; }
         .btn-danger { background: #e74c3c; color: white; }
 
-        /* History Peek */
+        /* Pattern History Dot */
+        .history-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid #000;
+        }
+
         #history-display {
             margin-top: 15px;
             padding: 10px;
@@ -119,44 +132,34 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 5px;
-            max-height: 100px;
-            overflow-y: auto;
         }
 
-        .history-dot {
-            width: 15px;
-            height: 15px;
-            border-radius: 50%;
-        }
-
-        /* Responsive Layouts */
-        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        /* Grids for different button counts */
+        .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
         .grid-4 { grid-template-columns: 1fr 1fr; }
         .grid-5, .grid-6 { grid-template-columns: repeat(3, 1fr); }
         .grid-7, .grid-8, .grid-9 { grid-template-columns: repeat(3, 1fr); }
 
         @media (max-width: 400px) {
-            #game-board { width: 250px; height: 250px; }
+            #game-board { width: 280px; height: 280px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Home Screen -->
+    <!-- HOME SCREEN -->
     <div id="setup-screen">
         <h1>SIMON PRO</h1>
-        <p>Choose how many colors to play with:</p>
-        <div id="option-container">
-            <!-- JS will inject 3-9 buttons -->
-        </div>
+        <p>How many buttons?</p>
+        <div id="option-container"></div>
         <br>
-        <button class="btn-primary" onclick="startGame()" style="width: 200px; font-size: 1.5rem;">START</button>
+        <button class="btn-primary" onclick="startGame()" style="width: 220px; font-size: 1.4rem;">NEW GAME</button>
     </div>
 
-    <!-- Game Screen -->
+    <!-- GAME SCREEN -->
     <div id="game-screen" class="hidden">
         <div class="stats-bar">
-            <span>Round: <span id="score-val">1</span></span>
+            <span>Pattern: <span id="score-val">0</span></span>
             <span>Lives: <span id="lives-val">3</span></span>
             <span>Score: <span id="points-val">0</span></span>
         </div>
@@ -166,43 +169,26 @@
         <div class="controls">
             <button class="btn-secondary" onclick="repeatPattern()">Repeat Pattern</button>
             <button class="btn-secondary" onclick="peekHistory()">Peek (-50 pts)</button>
-            <button class="btn-danger" onclick="confirmQuit()">New Game / Quit</button>
+            <button class="btn-danger" style="grid-column: span 2;" onclick="confirmQuit()">End Game & Show History</button>
         </div>
 
         <div id="history-display" class="hidden"></div>
     </div>
 
-    <!-- End Screen -->
+    <!-- END SCREEN -->
     <div id="end-screen" class="hidden">
-        <h1 id="end-title">Game Over!</h1>
-        <p>You reached Round <span id="final-round">0</span></p>
-        <p>Final Score: <span id="final-score">0</span></p>
-        <h3>Full Pattern History:</h3>
-        <div id="final-history" style="display:flex; flex-wrap:wrap; gap:5px; justify-content:center; margin-bottom: 20px;"></div>
-        <button class="btn-primary" onclick="location.reload()">Back to Home</button>
+        <h1 id="end-title">Game Over</h1>
+        <p>Final Pattern Length: <span id="final-round">0</span></p>
+        <p>Total Score: <span id="final-score">0</span></p>
+        <hr style="width:100%; opacity:0.2">
+        <h3>Full Pattern Sequence:</h3>
+        <div id="final-history" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom: 30px; padding: 10px;"></div>
+        <button class="btn-primary" onclick="returnToHome()" style="width: 200px;">Main Menu</button>
     </div>
 
     <script>
-        // Audio Logic
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playNote(frequency) {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
-        }
-
-        // Game Configuration
-        const colorPalette = [
-            "#ff4d4d", "#4dff4d", "#4d4dff", "#ffff4d", 
-            "#ff4dff", "#4dffff", "#ff944d", "#944dff", "#ffffff"
-        ];
+        let audioCtx;
+        const colorPalette = ["#ff4d4d", "#4dff4d", "#4d4dff", "#ffff4d", "#ff4dff", "#4dffff", "#ff944d", "#944dff", "#ffffff"];
         const frequencies = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33];
 
         let gameSequence = [];
@@ -213,7 +199,26 @@
         let isPlayingSequence = false;
         let currentSpeed = 600;
 
-        // Init Setup Screen
+        // Sound Engine
+        function playNote(freq, type = 'triangle', duration = 0.5) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playBuzzer() {
+            playNote(110, 'sawtooth', 0.4); // Low harsh sound
+        }
+
+        // Setup Options
         const optContainer = document.getElementById('option-container');
         for (let i = 3; i <= 9; i++) {
             const btn = document.createElement('button');
@@ -228,17 +233,25 @@
         }
 
         function startGame() {
+            gameSequence = [];
+            points = 0;
+            currentSpeed = 600;
             document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             initBoard();
             nextRound();
+        }
+
+        function returnToHome() {
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById('setup-screen').classList.remove('hidden');
         }
 
         function initBoard() {
             const board = document.getElementById('game-board');
             board.innerHTML = '';
             board.className = `grid-${buttonCount}`;
-            
             for (let i = 0; i < buttonCount; i++) {
                 const btn = document.createElement('div');
                 btn.className = 'simon-btn';
@@ -252,29 +265,24 @@
 
         function nextRound() {
             playerSequence = [];
-            lives = 3; // Reset lives for the new round
+            lives = 3; 
             updateUI();
-            
-            // Add new random color
             gameSequence.push(Math.floor(Math.random() * buttonCount));
             
-            // Speed up every 10 rounds
-            if (gameSequence.length % 10 === 0 && currentSpeed > 200) {
+            // Speed up every 10 items
+            if (gameSequence.length % 10 === 0 && currentSpeed > 250) {
                 currentSpeed -= 100;
             }
-
             setTimeout(playPattern, 800);
         }
 
         async function playPattern() {
             isPlayingSequence = true;
             document.getElementById('game-board').style.pointerEvents = 'none';
-
-            for (let i = 0; i < gameSequence.length; i++) {
-                await flashButton(gameSequence[i]);
+            for (let id of gameSequence) {
+                await flashButton(id);
                 await new Promise(r => setTimeout(r, currentSpeed / 2));
             }
-
             isPlayingSequence = false;
             document.getElementById('game-board').style.pointerEvents = 'all';
         }
@@ -282,6 +290,7 @@
         function flashButton(id) {
             return new Promise(resolve => {
                 const btn = document.querySelector(`.simon-btn[data-id="${id}"]`);
+                if (!btn) return resolve();
                 playNote(frequencies[id]);
                 btn.classList.add('active');
                 setTimeout(() => {
@@ -294,45 +303,43 @@
         function handleInput(id) {
             if (isPlayingSequence) return;
 
-            playNote(frequencies[id]);
-            const btn = document.querySelector(`.simon-btn[data-id="${id}"]`);
-            btn.classList.add('active');
-            setTimeout(() => btn.classList.remove('active'), 150);
-
             if (id === gameSequence[playerSequence.length]) {
+                playNote(frequencies[id]);
+                const btn = document.querySelector(`.simon-btn[data-id="${id}"]`);
+                btn.classList.add('active');
+                setTimeout(() => btn.classList.remove('active'), 150);
+
                 playerSequence.push(id);
                 points += 10;
                 updateUI();
 
                 if (playerSequence.length === gameSequence.length) {
-                    points += 50; // Bonus for completion
+                    points += 50;
                     nextRound();
                 }
             } else {
+                playBuzzer();
                 lives--;
                 updateUI();
+                document.body.style.backgroundColor = "#500";
+                setTimeout(() => document.body.style.backgroundColor = "#1a1a1a", 200);
+
                 if (lives <= 0) {
-                    gameOver();
+                    gameOver("Game Over");
                 } else {
-                    // Flash red to indicate mistake
-                    document.body.style.backgroundColor = "#500";
-                    setTimeout(() => document.body.style.backgroundColor = varColor('--bg-color'), 200);
-                    // Reset current attempt
                     playerSequence = [];
-                    alert("Wrong! Try the pattern again. Lives left: " + lives);
+                    alert("Wrong! Pattern is being repeated. Lives: " + lives);
+                    playPattern();
                 }
             }
         }
 
-        function repeatPattern() {
-            if (!isPlayingSequence) playPattern();
-        }
+        function repeatPattern() { if (!isPlayingSequence) playPattern(); }
 
         function peekHistory() {
-            if (points < 50) return alert("Not enough points!");
+            if (points < 50) return alert("Need 50 points to peek!");
             points -= 50;
             updateUI();
-            
             const histDiv = document.getElementById('history-display');
             histDiv.innerHTML = '';
             gameSequence.forEach(id => {
@@ -342,7 +349,7 @@
                 histDiv.appendChild(dot);
             });
             histDiv.classList.remove('hidden');
-            setTimeout(() => histDiv.classList.add('hidden'), 3000);
+            setTimeout(() => histDiv.classList.add('hidden'), 2500);
         }
 
         function updateUI() {
@@ -351,9 +358,16 @@
             document.getElementById('points-val').innerText = points;
         }
 
-        function gameOver() {
+        function confirmQuit() {
+            if (confirm("End current game and see results?")) {
+                gameOver("Game Ended");
+            }
+        }
+
+        function gameOver(title) {
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('end-screen').classList.remove('hidden');
+            document.getElementById('end-title').innerText = title;
             document.getElementById('final-round').innerText = gameSequence.length;
             document.getElementById('final-score').innerText = points;
 
@@ -362,19 +376,11 @@
             gameSequence.forEach(id => {
                 const dot = document.createElement('div');
                 dot.className = 'history-dot';
-                dot.style.width = '25px';
-                dot.style.height = '25px';
+                dot.style.width = '24px';
+                dot.style.height = '24px';
                 dot.style.backgroundColor = colorPalette[id];
                 finalHist.appendChild(dot);
             });
-        }
-
-        function confirmQuit() {
-            if (confirm("End current game?")) location.reload();
-        }
-
-        function varColor(name) {
-            return getComputedStyle(document.documentElement).getPropertyValue(name);
         }
     </script>
 </body>
