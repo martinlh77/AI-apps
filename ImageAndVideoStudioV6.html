@@ -298,6 +298,7 @@
                             <option value="seedream-pro">Seedream-Pro👁️ (Editor/Generator)</option>
                             <option value="kontext">Kontex👁️ (Editor/Generator)</option>
                             <option value="gptimage">GPT-Image👁️ (Editor/Generator)</option>
+                            <option value="gptimage-large">GPT-Image Large👁️ (Editor/Generator)</option>
                             <option value="turbo">Turbo (Generator)</option>
                         </optgroup>
                         <optgroup label="Video Models">
@@ -592,7 +593,7 @@
         const DEFAULT_DIMENSION = 1024;
         
         // Model Classifications
-        const EDITOR_MODELS = ['nanobanana', 'nanobanana-pro','seedream', 'seedream-pro', 'kontext', 'gptimage', 'seedance', 'seedance-pro']; 
+        const EDITOR_MODELS = ['nanobanana', 'nanobanana-pro','seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', 'seedance', 'seedance-pro', 'veo']; 
         const VIDEO_MODELS = ['seedance', 'seedance-pro', 'veo'];
         const SEEDREAM_MODEL = ['seedream', 'seedream-pro'];
         
@@ -1038,7 +1039,7 @@
                 refCardContainer.appendChild(card);
             });
             
-            if (askDimensionsCheckbox.checked && !VIDEO_MODELS.includes(modelSelect.value) && referenceImages.length > 0) {
+            if (askDimensionsCheckbox.checked && (!VIDEO_MODELS.includes(modelSelect.value) || modelSelect.value === 'veo') && referenceImages.length > 0) {
                 widthInput.value = referenceImages[0].width;
                 heightInput.value = referenceImages[0].height;
             }
@@ -1258,7 +1259,7 @@
                 videoControlsGroup.style.display = 'none';   
             }
 
-            if (isEditorModel && !isVeo) {
+            if (isEditorModel) {
                 imageInputGroup.style.display = 'block';
                 dimCheckContainer.style.display = (isSeedance || isSeedancePro) ? 'none' : 'flex';
             } else {
@@ -1324,6 +1325,8 @@
                 params.append('duration', durationSelect.value);
                 if (model === 'veo') {
                     params.append('audio', audioCheckbox.checked ? 'true' : 'false');
+                    params.append('width', widthInput.value);
+                    params.append('height', heightInput.value);
                 }
             } else {
                 const width = parseInt(widthInput.value) || DEFAULT_DIMENSION;
@@ -1334,7 +1337,7 @@
                 params.append('transparent', transparentCheckbox.checked ? 'true' : 'false');
             }
 
-            if (isEditorModel && !isVeo && referenceImages.length > 0) {
+            if (isEditorModel && referenceImages.length > 0) {
                 const imageUsageMode = document.querySelector('input[name="imageUsage"]:checked').value;
                 if (imageUsageMode === 'reference') params.append('control', 'reference');
 
