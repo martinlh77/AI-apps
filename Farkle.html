@@ -17,7 +17,57 @@
         button:hover:not(:disabled) { background: rgba(40, 60, 100, 0.9); border-color: rgba(120, 170, 255, 0.6); box-shadow: 0 0 15px rgba(100, 150, 255, 0.3); }
         button:disabled { border-color: rgba(60, 60, 80, 0.4); color: #445; cursor: not-allowed; background: rgba(15, 15, 20, 0.7); }
         #status { position: absolute; bottom: 100px; width: 100%; text-align: center; color: #88bbff; font-weight: bold; font-size: 12px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
-        #settings { position: absolute; top: 10px; right: 10px; width: 260px; pointer-events: none; z-index: 10; }
+        
+        #settings-container { position: absolute; top: 10px; right: 10px; z-index: 10; }
+        
+        #settings-gear {
+            width: 50px;
+            height: 50px;
+            background: rgba(20, 30, 50, 0.9);
+            border: 1px solid rgba(100, 150, 255, 0.4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+        }
+        
+        #settings-gear:hover {
+            background: rgba(40, 60, 100, 0.9);
+            border-color: rgba(120, 170, 255, 0.6);
+            box-shadow: 0 0 15px rgba(100, 150, 255, 0.3);
+        }
+        
+        #settings-gear svg {
+            width: 28px;
+            height: 28px;
+            fill: #88bbff;
+            transition: transform 0.3s;
+        }
+        
+        #settings-gear.open svg {
+            transform: rotate(90deg);
+        }
+        
+        #settings {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            width: 260px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            pointer-events: none;
+        }
+        
+        #settings.open {
+            max-height: 600px;
+            pointer-events: auto;
+        }
+        
         .settings-panel { background: rgba(15, 15, 20, 0.92); padding: 15px; border: 1px solid rgba(100, 150, 255, 0.3); border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); pointer-events: auto; font-size: 12px; backdrop-filter: blur(10px); }
         .setting-group { margin: 10px 0; }
         .setting-group label { display: block; margin-bottom: 5px; color: #aac; font-weight: bold; font-size: 11px; letter-spacing: 0.5px; }
@@ -33,16 +83,73 @@
         .player2-score.show { display: flex; }
         .reset-btn { width: 100% !important; margin-top: 10px; }
         
+        #game-over-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.85); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        #game-over-overlay.show { display: flex; }
+        
+        .game-over-panel {
+            background: rgba(15, 15, 20, 0.95);
+            padding: 40px;
+            border: 2px solid rgba(100, 150, 255, 0.5);
+            border-radius: 12px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            min-width: 300px;
+        }
+        
+        .game-over-title {
+            font-size: 48px;
+            color: #ffdd55;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 221, 85, 0.5);
+        }
+        
+        .game-over-score {
+            font-size: 20px;
+            color: #88bbff;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .game-over-btn {
+            width: 200px !important;
+            padding: 18px !important;
+            font-size: 16px !important;
+            margin: 10px;
+        }
+        
         @media (max-width: 768px) {
-            #settings { top: auto; bottom: 150px; right: 10px; }
             #ui { width: 220px; }
             #settings { width: 220px; }
+            .game-over-title { font-size: 36px; }
+            .game-over-score { font-size: 16px; }
         }
     </style>
 </head>
 <body>
 
 <div id="msg"></div>
+
+<div id="game-over-overlay">
+    <div class="game-over-panel">
+        <div class="game-over-title" id="winner-text">WINNER!</div>
+        <div class="game-over-score" id="final-score-text"></div>
+        <button class="game-over-btn" onclick="startNewGame()">NEW GAME</button>
+    </div>
+</div>
+
 <div id="ui">
     <div class="panel">
         <h2>[ FARKLE_SYS v4.0 ]</h2>
@@ -56,53 +163,61 @@
     </div>
 </div>
 
-<div id="settings">
-    <div class="settings-panel">
-        <h2>[ SETTINGS ]</h2>
-        <div class="setting-group">
-            <label>GAME MODE:</label>
-            <select id="game-mode" onchange="changeGameMode()">
-                <option value="vs-ai">VS AI</option>
-                <option value="solo">Solo Play</option>
-                <option value="multiplayer">Multiplayer (2P)</option>
-            </select>
-        </div>
-        <div class="setting-group">
-            <label>DICE STYLE:</label>
-            <select id="dice-style" onchange="changeDiceStyle()">
-                <option value="clear">Clear Plastic</option>
-                <option value="solid">Solid</option>
-                <option value="matte">Matte</option>
-                <option value="wooden">Wooden</option>
-                <option value="marble" selected>Marble</option>
-            </select>
-        </div>
-        <div class="setting-group">
-            <label>TABLE SURFACE:</label>
-            <select id="table-surface" onchange="changeTableSurface()">
-                <option value="red-felt">Red Felt</option>
-                <option value="blue-felt">Blue Felt</option>
-                <option value="green-felt" selected>Green Felt</option>
-                <option value="wood">Wood</option>
-                <option value="steel">Steel</option>
-                <option value="dirt">Dirt</option>
-            </select>
-        </div>
-        <div class="setting-group">
-            <label>MAX POINTS TO WIN:</label>
-            <input type="number" id="max-points" value="10000" min="1000" max="50000" step="1000" onchange="updateMaxPoints()">
-        </div>
-        <div class="setting-group">
-            <label>SOUND:</label>
-            <div class="toggle-container">
-                <span style="color: #aac; font-size: 11px;">OFF</span>
-                <div class="toggle active" id="sound-toggle" onclick="toggleSound()">
-                    <div class="toggle-slider"></div>
-                </div>
-                <span style="color: #aac; font-size: 11px;">ON</span>
+<div id="settings-container">
+    <div id="settings-gear" onclick="toggleSettings()">
+        <svg viewBox="0 0 24 24">
+            <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+        </svg>
+    </div>
+    <div id="settings">
+        <div class="settings-panel">
+            <h2>[ SETTINGS ]</h2>
+            <div class="setting-group">
+                <label>GAME MODE:</label>
+                <select id="game-mode" onchange="changeGameMode()">
+                    <option value="vs-ai">VS AI</option>
+                    <option value="solo">Solo Play</option>
+                    <option value="multiplayer">Multiplayer (2P)</option>
+                </select>
             </div>
+            <div class="setting-group">
+                <label>DICE STYLE:</label>
+                <select id="dice-style" onchange="changeDiceStyle()">
+                    <option value="clear">Clear Plastic</option>
+                    <option value="solid">Solid</option>
+                    <option value="matte">Matte</option>
+                    <option value="wooden">Wooden</option>
+                    <option value="marble" selected>Marble</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>TABLE SURFACE:</label>
+                <select id="table-surface" onchange="changeTableSurface()">
+                    <option value="red-felt">Red Felt</option>
+                    <option value="blue-felt">Blue Felt</option>
+                    <option value="purple-felt">Purple Felt</option>
+                    <option value="green-felt" selected>Green Felt</option>
+                    <option value="wood">Wood</option>
+                    <option value="steel">Steel</option>
+                    <option value="dirt">Dirt</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>MAX POINTS TO WIN:</label>
+                <input type="number" id="max-points" value="10000" min="1000" max="50000" step="1000" onchange="updateMaxPoints()">
+            </div>
+            <div class="setting-group">
+                <label>SOUND:</label>
+                <div class="toggle-container">
+                    <span style="color: #aac; font-size: 11px;">OFF</span>
+                    <div class="toggle active" id="sound-toggle" onclick="toggleSound()">
+                        <div class="toggle-slider"></div>
+                    </div>
+                    <span style="color: #aac; font-size: 11px;">ON</span>
+                </div>
+            </div>
+            <button class="reset-btn" onclick="resetGame()">RESET GAME</button>
         </div>
-        <button class="reset-btn" onclick="resetGame()">RESET GAME</button>
     </div>
 </div>
 
@@ -130,10 +245,18 @@
         maxPoints: 10000,
         soundEnabled: true,
         hasRolledThisTurn: false,
-        gameMode: 'vs-ai'
+        gameMode: 'vs-ai',
+        gameOver: false
     };
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function toggleSettings() {
+        const gear = document.getElementById('settings-gear');
+        const settings = document.getElementById('settings');
+        gear.classList.toggle('open');
+        settings.classList.toggle('open');
+    }
     
     function playSound(type) {
         if (!state.soundEnabled) return;
@@ -191,6 +314,19 @@
                 oscillator.start(now);
                 oscillator.stop(now + 0.5);
                 break;
+            case 'win':
+                for(let i = 0; i < 5; i++) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.frequency.setValueAtTime(400 + i * 150, now + i * 0.15);
+                    gain.gain.setValueAtTime(0.2, now + i * 0.15);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.3);
+                    osc.start(now + i * 0.15);
+                    osc.stop(now + i * 0.15 + 0.3);
+                }
+                break;
         }
     }
 
@@ -210,6 +346,11 @@
         document.getElementById('max-points').value = state.maxPoints;
     }
 
+    function startNewGame() {
+        document.getElementById('game-over-overlay').classList.remove('show');
+        resetGame();
+    }
+
     function resetGame() {
         state.scores.Player = 0;
         state.scores.Player2 = 0;
@@ -220,6 +361,7 @@
         state.farkled = false;
         state.firstRollOfTurn = true;
         state.hasRolledThisTurn = false;
+        state.gameOver = false;
         resetDice();
         updateUI("NEW GAME");
         showMsg("GAME RESET");
@@ -304,7 +446,10 @@
                 createFeltTexture(ctx, '#3D0000', '#4A0000', '#2F0000');
                 break;
             case 'blue-felt':
-                createFeltTexture(ctx, '#00002F', '#00003D', '#000025');
+                createFeltTexture(ctx, '#1A3A5C', '#2A4A6C', '#0A2A4C');
+                break;
+            case 'purple-felt':
+                createFeltTexture(ctx, '#2D1A3D', '#3D2A4D', '#1D0A2D');
                 break;
             case 'green-felt':
                 createFeltTexture(ctx, '#064420', '#075428', '#053618');
@@ -749,6 +894,17 @@
         playSound('roll');
         
         const finalValues = activeDice.map(() => Math.floor(Math.random() * 6) + 1);
+        const finalRotations = activeDice.map(() => {
+            const rotations = [
+                { x: 0, y: 0, z: 0 },
+                { x: 0, y: Math.PI / 2, z: 0 },
+                { x: 0, y: Math.PI, z: 0 },
+                { x: 0, y: -Math.PI / 2, z: 0 },
+                { x: Math.PI / 2, y: 0, z: 0 },
+                { x: -Math.PI / 2, y: 0, z: 0 }
+            ];
+            return rotations[Math.floor(Math.random() * 6)];
+        });
         
         const promises = activeDice.map((die, i) => {
             return new Promise(resolve => {
@@ -759,6 +915,14 @@
                 const rollDuration = 1000;
                 const colorChangeInterval = 50;
                 let lastColorChange = 0;
+                
+                const startRotation = {
+                    x: die.rotation.x,
+                    y: die.rotation.y,
+                    z: die.rotation.z
+                };
+                
+                const spinSpeed = 3 + Math.random() * 2;
                 
                 function step(now) {
                     const elapsed = now - startT;
@@ -776,14 +940,26 @@
                     
                     die.position.lerpVectors(start, end, t);
                     die.position.y = 0.45 + Math.sin(t * Math.PI) * 4;
-                    die.rotation.x += 0.4; 
-                    die.rotation.y += 0.4;
+                    
+                    if (t < 0.95) {
+                        die.rotation.x = startRotation.x + spinSpeed * elapsed * 0.004;
+                        die.rotation.y = startRotation.y + spinSpeed * elapsed * 0.004;
+                        die.rotation.z = startRotation.z + spinSpeed * elapsed * 0.003;
+                    } else {
+                        const settleT = (t - 0.95) / 0.05;
+                        die.rotation.x = die.rotation.x * (1 - settleT) + finalRotations[i].x * settleT;
+                        die.rotation.y = die.rotation.y * (1 - settleT) + finalRotations[i].y * settleT;
+                        die.rotation.z = die.rotation.z * (1 - settleT) + finalRotations[i].z * settleT;
+                    }
                     
                     if (t < 1) {
                         requestAnimationFrame(step);
                     } else {
                         die.position.copy(end);
                         die.position.y = 0.45;
+                        die.rotation.x = finalRotations[i].x;
+                        die.rotation.y = finalRotations[i].y;
+                        die.rotation.z = finalRotations[i].z;
                         setDieValue(die, finalValues[i]);
                         resolve();
                     }
@@ -810,7 +986,7 @@
     }
 
     function onClick(e) {
-        if (state.isRolling || state.farkled) return;
+        if (state.isRolling || state.farkled || state.gameOver) return;
         if (state.gameMode === 'vs-ai' && state.currentPlayer === 'AI') return;
         
         const mouse = new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
@@ -828,6 +1004,8 @@
     }
 
     function userRoll() {
+        if (state.gameOver) return;
+        
         const selected = dice.filter(d => d.userData.selected);
         if (!state.firstRollOfTurn) {
             const res = getScore(selected);
@@ -851,6 +1029,8 @@
     }
 
     function userBank() {
+        if (state.gameOver) return;
+        
         const selected = dice.filter(d => d.userData.selected);
         const res = getScore(selected);
         if (selected.length > 0 && res.used !== selected.length) return;
@@ -859,11 +1039,12 @@
         state.scores[state.currentPlayer] += finalTurnScore;
         playSound('bank');
         
-        // Update UI to show final score before checking win
         updateUI(`BANKED ${finalTurnScore}!`);
         
         const currentScore = state.scores[state.currentPlayer];
         if (currentScore >= state.maxPoints) {
+            state.gameOver = true;
+            
             let winnerName = state.currentPlayer;
             if (state.gameMode === 'vs-ai') {
                 winnerName = state.currentPlayer === 'Player' ? 'HUMAN' : 'AI';
@@ -873,10 +1054,21 @@
                 winnerName = 'YOU';
             }
             
+            playSound('win');
             showMsg(`${winnerName} WIN${winnerName === 'YOU' ? '' : 'S'}!`);
-            setTimeout(() => {
-                resetGame();
-            }, 3000);
+            
+            let finalScoreHTML = '';
+            if (state.gameMode === 'solo') {
+                finalScoreHTML = `Final Score: ${state.scores.Player} points`;
+            } else if (state.gameMode === 'multiplayer') {
+                finalScoreHTML = `Player 1: ${state.scores.Player} points<br>Player 2: ${state.scores.Player2} points`;
+            } else {
+                finalScoreHTML = `Human: ${state.scores.Player} points<br>AI: ${state.scores.AI} points`;
+            }
+            
+            document.getElementById('winner-text').textContent = `${winnerName} WIN${winnerName === 'YOU' ? '' : 'S'}!`;
+            document.getElementById('final-score-text').innerHTML = finalScoreHTML;
+            document.getElementById('game-over-overlay').classList.add('show');
         } else {
             endTurn();
         }
@@ -901,7 +1093,7 @@
     }
 
     async function aiLogic() {
-        while (state.currentPlayer === 'AI') {
+        while (state.currentPlayer === 'AI' && !state.gameOver) {
             await new Promise(r => setTimeout(r, 1000));
             const active = dice.filter(d => d.userData.active);
             await rollPhysics(active);
@@ -959,7 +1151,7 @@
         const isHumanTurn = state.gameMode === 'solo' || 
                            state.gameMode === 'multiplayer' || 
                            (state.gameMode === 'vs-ai' && state.currentPlayer === 'Player');
-        const canAct = isHumanTurn && !state.isRolling && !state.farkled;
+        const canAct = isHumanTurn && !state.isRolling && !state.farkled && !state.gameOver;
         
         document.getElementById('roll-btn').disabled = !canAct;
         
