@@ -67,6 +67,7 @@
                 <option value="green-felt" selected>Green Felt</option>
                 <option value="wood">Wood</option>
                 <option value="steel">Steel</option>
+                <option value="dirt">Dirt</option>
             </select>
         </div>
         <div class="setting-group">
@@ -108,7 +109,8 @@
         diceStyle: 'marble',
         tableSurface: 'green-felt',
         maxPoints: 10000,
-        soundEnabled: true
+        soundEnabled: true,
+        hasRolledThisTurn: false
     };
 
     // Sound effects using Web Audio API
@@ -254,6 +256,9 @@
             case 'steel':
                 createMetalTexture(ctx);
                 break;
+            case 'dirt':
+                createDirtTexture(ctx);
+                break;
         }
         
         const texture = new THREE.CanvasTexture(canvas);
@@ -262,7 +267,7 @@
         texture.repeat.set(4, 4);
         return new THREE.MeshStandardMaterial({ 
             map: texture, 
-            roughness: surface.includes('felt') ? 0.95 : (surface === 'wood' ? 0.6 : 0.3),
+            roughness: surface.includes('felt') ? 0.95 : (surface === 'wood' ? 0.6 : (surface === 'dirt' ? 0.98 : 0.3)),
             metalness: surface === 'steel' ? 0.8 : 0
         });
     }
@@ -386,6 +391,92 @@
                 ctx.arc(x, y, 8, 0, Math.PI * 2);
                 ctx.fill();
             }
+        }
+        
+        ctx.globalAlpha = 1;
+    }
+
+    function createDirtTexture(ctx) {
+        // Base dirt color with gradient
+        const gradient = ctx.createRadialGradient(512, 512, 0, 512, 512, 700);
+        gradient.addColorStop(0, '#6B4423');
+        gradient.addColorStop(0.5, '#5C3A1F');
+        gradient.addColorStop(1, '#4A2F19');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1024, 1024);
+        
+        // Large dirt clumps and variations
+        for(let i = 0; i < 200; i++) {
+            const x = Math.random() * 1024;
+            const y = Math.random() * 1024;
+            const size = 20 + Math.random() * 60;
+            const shade = 50 + Math.random() * 60;
+            const dirtGradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+            dirtGradient.addColorStop(0, `rgba(${shade + 20}, ${shade}, ${shade - 20}, 0.5)`);
+            dirtGradient.addColorStop(1, `rgba(${shade}, ${shade - 10}, ${shade - 20}, 0)`);
+            ctx.fillStyle = dirtGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Medium dirt particles and texture
+        for(let i = 0; i < 5000; i++) {
+            const x = Math.random() * 1024;
+            const y = Math.random() * 1024;
+            const shade = 40 + Math.random() * 70;
+            const size = 1 + Math.random() * 4;
+            ctx.fillStyle = `rgb(${shade + 20}, ${shade}, ${shade - 15})`;
+            ctx.globalAlpha = 0.3 + Math.random() * 0.4;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Fine dirt grains
+        ctx.globalAlpha = 0.3;
+        for(let i = 0; i < 15000; i++) {
+            const x = Math.random() * 1024;
+            const y = Math.random() * 1024;
+            const shade = 50 + Math.random() * 50;
+            ctx.fillStyle = `rgb(${shade + 15}, ${shade - 5}, ${shade - 20})`;
+            ctx.fillRect(x, y, 1, 1);
+        }
+        
+        // Dirt cracks and imperfections
+        ctx.globalAlpha = 0.4;
+        for(let i = 0; i < 30; i++) {
+            ctx.strokeStyle = `rgba(40, 25, 15, ${0.3 + Math.random() * 0.3})`;
+            ctx.lineWidth = 1 + Math.random() * 2;
+            ctx.beginPath();
+            let x = Math.random() * 1024;
+            let y = Math.random() * 1024;
+            ctx.moveTo(x, y);
+            for(let j = 0; j < 5 + Math.random() * 10; j++) {
+                x += (Math.random() - 0.5) * 40;
+                y += (Math.random() - 0.5) * 40;
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+        
+        // Small rocks/pebbles
+        ctx.globalAlpha = 0.6;
+        for(let i = 0; i < 50; i++) {
+            const x = Math.random() * 1024;
+            const y = Math.random() * 1024;
+            const size = 3 + Math.random() * 8;
+            const rockShade = 80 + Math.random() * 40;
+            ctx.fillStyle = `rgb(${rockShade}, ${rockShade - 10}, ${rockShade - 20})`;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Rock highlight
+            ctx.fillStyle = `rgba(${rockShade + 40}, ${rockShade + 30}, ${rockShade + 20}, 0.5)`;
+            ctx.beginPath();
+            ctx.arc(x - size * 0.3, y - size * 0.3, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
         }
         
         ctx.globalAlpha = 1;
@@ -560,11 +651,13 @@
 
     function createDice() {
         const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+        // Start with non-scoring values so player can't bank before first roll
+        const startValues = [2, 3, 4, 4, 6, 6];
         for(let i=0; i<6; i++) {
-            const mat = createDieMaterial(1, state.diceStyle);
+            const mat = createDieMaterial(startValues[i], state.diceStyle);
             const die = new THREE.Mesh(geo, [mat, mat, mat, mat, mat, mat]);
             die.castShadow = true;
-            die.userData = { id: i, val: 1, active: true, selected: false };
+            die.userData = { id: i, val: startValues[i], active: true, selected: false };
             scene.add(die);
             dice.push(die);
         }
@@ -578,16 +671,19 @@
     }
 
     function resetDice() {
+        // Use non-scoring starting values
+        const startValues = [2, 3, 4, 4, 6, 6];
         dice.forEach((d, i) => {
             d.userData.active = true;
             d.userData.selected = false;
             d.visible = true;
             d.position.set(slots[i].x, 0.45, slots[i].z);
             d.rotation.set(0, 0, 0);
-            setDieValue(d, 1);
+            setDieValue(d, startValues[i]);
         });
         state.farkled = false;
         state.firstRollOfTurn = true;
+        state.hasRolledThisTurn = false;
     }
 
     function getScore(dieMeshes) {
@@ -623,29 +719,47 @@
         updateUI("ROLLING...");
         playSound('roll');
         
-        activeDice.forEach(die => {
-            const val = Math.floor(Math.random() * 6) + 1;
-            setDieValue(die, val);
-        });
+        // Store final values for each die
+        const finalValues = activeDice.map(() => Math.floor(Math.random() * 6) + 1);
         
+        // Animate dice with color cycling
         const promises = activeDice.map((die, i) => {
             return new Promise(resolve => {
                 const start = die.position.clone();
                 const slot = slots[die.userData.id]; 
                 const end = new THREE.Vector3(slot.x + (Math.random()-0.5)*0.4, 0.45, slot.z + (Math.random()-0.5)*0.4);
                 const startT = performance.now();
+                const rollDuration = 1000; // 1 second roll
+                const colorChangeInterval = 50; // Change color every 50ms
+                let lastColorChange = 0;
                 
                 function step(now) {
-                    const t = Math.min((now - startT) / 1000, 1);
+                    const elapsed = now - startT;
+                    const t = Math.min(elapsed / rollDuration, 1);
+                    
+                    // Cycle through random values while rolling
+                    if (elapsed - lastColorChange > colorChangeInterval && t < 0.9) {
+                        const randomVal = Math.floor(Math.random() * 6) + 1;
+                        setDieValue(die, randomVal);
+                        lastColorChange = elapsed;
+                    }
+                    
+                    // Set final value near the end
+                    if (t >= 0.9 && die.userData.val !== finalValues[i]) {
+                        setDieValue(die, finalValues[i]);
+                    }
+                    
                     die.position.lerpVectors(start, end, t);
                     die.position.y = 0.45 + Math.sin(t * Math.PI) * 4;
                     die.rotation.x += 0.4; 
                     die.rotation.y += 0.4;
                     
-                    if (t < 1) requestAnimationFrame(step);
-                    else {
+                    if (t < 1) {
+                        requestAnimationFrame(step);
+                    } else {
                         die.position.copy(end);
                         die.position.y = 0.45;
+                        setDieValue(die, finalValues[i]);
                         resolve();
                     }
                 }
@@ -655,6 +769,7 @@
 
         await Promise.all(promises);
         state.isRolling = false;
+        state.hasRolledThisTurn = true;
 
         const check = getScore(activeDice);
         if (check.points === 0) {
@@ -787,7 +902,8 @@
         
         const total = state.turnScore + res.points;
         const valid = (selected.length === 0 && state.turnScore > 0) || (res.used === selected.length && res.points > 0);
-        document.getElementById('bank-btn').disabled = !isHuman || total === 0 || !valid;
+        // Disable bank button if haven't rolled yet this turn
+        document.getElementById('bank-btn').disabled = !isHuman || total === 0 || !valid || !state.hasRolledThisTurn;
     }
 
     function showMsg(t) {
