@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Farkle: The Working Version</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #0f0; user-select: none; }
+        #ui { position: absolute; top: 10px; left: 10px; width: 260px; pointer-events: none; z-index: 10; }
+        .panel { background: rgba(0, 0, 0, 0.95); padding: 15px; border: 2px solid #0f0; pointer-events: auto; font-size: 13px; }
+        h2 { margin: 0 0 10px 0; font-size: 14px; color: #0f0; text-align: center; }
+        .stat { display: flex; justify-content: space-between; margin: 4px 0; }
+        .val { color: #ff0; font-weight: bold; }
+        #msg { position: absolute; top: 25%; width: 100%; text-align: center; font-size: 60px; font-weight: 900; color: #f00; pointer-events: none; text-shadow: 0 0 20px #000; z-index: 100; }
+        .controls { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: center; gap: 15px; pointer-events: none; }
+        button { pointer-events: auto; width: 130px; padding: 15px; border: 2px solid #0f0; background: #000; color: #0f0; font-weight: bold; font-size: 14px; cursor: pointer; font-family: inherit; }
+        button:disabled { border-color: #030; color: #030; cursor: not-allowed; }
+        #status { position: absolute; bottom: 100px; width: 100%; text-align: center; color: #0f0; font-weight: bold; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+<div id="msg"></div>
+<div id="ui">
+    <div class="panel">
+        <h2>[ FARKLE_SYS v4.0 ]</h2>
+        <div class="stat"><span>HUMAN:</span> <span id="p-score" class="val">0</span></div>
+        <div class="stat"><span>CPU:</span> <span id="ai-score" class="val">0</span></div>
+        <div class="stat"><span>TURN:</span> <span id="current-player" class="val">Human</span></div>
+        <hr style="border:0; border-top:1px solid #0f0; margin:8px 0;">
+        <div class="stat"><span>BANKED:</span> <span id="turn-total" class="val">0</span></div>
+        <div class="stat"><span>SELECTED:</span> <span id="selection-score" class="val">0</span></div>
+    </div>
+</div>
+
+<div id="status">READY</div>
+
+<div class="controls">
+    <button id="roll-btn" onclick="userRoll()">ROLL</button>
+    <button id="bank-btn" onclick="userBank()" disabled>BANK</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+    let scene, camera, renderer, controls, dice = [];
+    const state = {
+        scores: { Player: 0, AI: 0 },
+        turnScore: 0,
+        currentPlayer: 'Player',
+        isRolling: false,
+        farkled: false,
+        firstRollOfTurn: true
+    };
+
+    const slots = [
+        {x: -2.5, z: -1.5}, {x: 0, z: -1.5}, {x: 2.5, z: -1.5},
+        {x: -2.5, z: 1.5},  {x: 0, z: 1.5},  {x: 2.5, z: 1.5}
+    ];
+
+    function init() {
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 14, 10);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        
+        const light = new THREE.DirectionalLight(0xffffff, 1.5);
+        light.position.set(5, 15, 10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+        const grid = new THREE.GridHelper(20, 20, 0x00ff00, 0x003300);
+        scene.add(grid);
+
+        createDice();
+        window.addEventListener('resize', onResize);
+        window.addEventListener('pointerdown', onClick);
+        updateUI();
+        animate();
+    }
+
+    function createUniformDie(value) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128; canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        
+        const colors = {1:'#e74c3c', 2:'#3498db', 3:'#2ecc71', 4:'#f39c12', 5:'#9b59b6', 6:'#1abc9c'};
+        ctx.fillStyle = colors[value] || '#fff';
+        ctx.fillRect(0, 0, 128, 128);
+        
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 80px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(value, 64, 64);
+        
+        return new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(canvas) });
+    }
+
+    function createDice() {
+        const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+        for(let i=0; i<6; i++) {
+            const mat = createUniformDie(1);
+            const die = new THREE.Mesh(geo, [mat, mat, mat, mat, mat, mat]);
+            die.userData = { id: i, val: 1, active: true, selected: false };
+            scene.add(die);
+            dice.push(die);
+        }
+        resetDice();
+    }
+
+    function setDieValue(die, value) {
+        die.userData.val = value;
+        const mat = createUniformDie(value);
+        die.material = [mat, mat, mat, mat, mat, mat];
+    }
+
+    function resetDice() {
+        dice.forEach((d, i) => {
+            d.userData.active = true;
+            d.userData.selected = false;
+            d.visible = true;
+            d.position.set(slots[i].x, 0.45, slots[i].z);
+            d.rotation.set(0, 0, 0);
+            setDieValue(d, 1);
+        });
+        state.farkled = false;
+        state.firstRollOfTurn = true;
+    }
+
+    function getScore(dieMeshes) {
+        if (dieMeshes.length === 0) return { points: 0, used: 0 };
+        const vals = dieMeshes.map(d => d.userData.val).sort();
+        const counts = [0,0,0,0,0,0,0];
+        vals.forEach(v => counts[v]++);
+
+        let p = 0, u = 0;
+
+        if (counts.slice(1).every(c => c === 1)) return { points: 1500, used: 6 };
+        
+        let pairs = 0;
+        for(let i=1; i<=6; i++) if(counts[i] === 2) pairs++;
+        if(pairs === 3) return { points: 1500, used: 6 };
+
+        for(let i=1; i<=6; i++) {
+            let c = counts[i];
+            if (c >= 3) {
+                let base = (i === 1) ? 1000 : i * 100;
+                p += base * Math.pow(2, c - 3);
+                u += c;
+            } else {
+                if (i === 1) { p += c * 100; u += c; }
+                if (i === 5) { p += c * 50; u += c; }
+            }
+        }
+        return { points: p, used: u };
+    }
+
+    async function rollPhysics(activeDice) {
+        state.isRolling = true;
+        updateUI("ROLLING...");
+        
+        activeDice.forEach(die => {
+            const val = Math.floor(Math.random() * 6) + 1;
+            setDieValue(die, val);
+        });
+        
+        const promises = activeDice.map((die, i) => {
+            return new Promise(resolve => {
+                const start = die.position.clone();
+                const slot = slots[die.userData.id]; 
+                const end = new THREE.Vector3(slot.x + (Math.random()-0.5)*0.4, 0.45, slot.z + (Math.random()-0.5)*0.4);
+                const startT = performance.now();
+                
+                function step(now) {
+                    const t = Math.min((now - startT) / 1000, 1);
+                    die.position.lerpVectors(start, end, t);
+                    die.position.y = 0.45 + Math.sin(t * Math.PI) * 4;
+                    die.rotation.x += 0.4; 
+                    die.rotation.y += 0.4;
+                    
+                    if (t < 1) requestAnimationFrame(step);
+                    else {
+                        die.position.copy(end);
+                        die.position.y = 0.45;
+                        resolve();
+                    }
+                }
+                requestAnimationFrame(step);
+            });
+        });
+
+        await Promise.all(promises);
+        state.isRolling = false;
+
+        const check = getScore(activeDice);
+        if (check.points === 0) {
+            state.farkled = true;
+            state.turnScore = 0;
+            showMsg("FARKLE!");
+            setTimeout(endTurn, 2000);
+        } else {
+            updateUI("SELECT DICE");
+        }
+    }
+
+    function onClick(e) {
+        if (state.isRolling || state.currentPlayer === 'AI' || state.farkled) return;
+        const mouse = new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
+        const ray = new THREE.Raycaster();
+        ray.setFromCamera(mouse, camera);
+        const hits = ray.intersectObjects(dice);
+        if (hits.length > 0) {
+            const d = hits[0].object;
+            if (!d.userData.active) return;
+            d.userData.selected = !d.userData.selected;
+            d.position.y = d.userData.selected ? 1.5 : 0.45;
+            updateUI();
+        }
+    }
+
+    function userRoll() {
+        const selected = dice.filter(d => d.userData.selected);
+        if (!state.firstRollOfTurn) {
+            const res = getScore(selected);
+            if (selected.length === 0 || res.used !== selected.length) {
+                updateUI("INVALID - FIX SELECTION");
+                return;
+            }
+            state.turnScore += res.points;
+            selected.forEach(d => { d.userData.active = false; d.visible = false; d.userData.selected = false; });
+        }
+
+        state.firstRollOfTurn = false;
+        let active = dice.filter(d => d.userData.active);
+        if (active.length === 0) {
+            showMsg("HOT DICE!");
+            dice.forEach(d => { d.userData.active = true; d.visible = true; d.userData.selected = false; d.position.y = 0.45; });
+            active = dice;
+        }
+        rollPhysics(active);
+    }
+
+    function userBank() {
+        const selected = dice.filter(d => d.userData.selected);
+        const res = getScore(selected);
+        if (selected.length > 0 && res.used !== selected.length) return;
+        state.scores[state.currentPlayer] += state.turnScore + res.points;
+        endTurn();
+    }
+
+    function endTurn() {
+        state.turnScore = 0;
+        state.currentPlayer = state.currentPlayer === 'Player' ? 'AI' : 'Player';
+        resetDice();
+        updateUI("NEW TURN");
+        if (state.currentPlayer === 'AI') setTimeout(aiLogic, 1000);
+    }
+
+    async function aiLogic() {
+        while (state.currentPlayer === 'AI') {
+            await new Promise(r => setTimeout(r, 1000));
+            const active = dice.filter(d => d.userData.active);
+            await rollPhysics(active);
+            if (state.farkled) break;
+
+            await new Promise(r => setTimeout(r, 1500));
+            const rolled = dice.filter(d => d.userData.active);
+            const vals = rolled.map(d => d.userData.val);
+            const counts = [0,0,0,0,0,0,0];
+            vals.forEach(v => counts[v]++);
+            
+            const toPick = rolled.filter(d => (d.userData.val === 1 || d.userData.val === 5 || counts[d.userData.val] >= 3));
+            const res = getScore(toPick);
+            toPick.forEach(d => { d.userData.selected = true; d.position.y = 1.5; });
+            updateUI("AI SELECTING...");
+            
+            await new Promise(r => setTimeout(r, 1500));
+            if (state.turnScore + res.points >= 400 || (rolled.length - toPick.length) < 3) {
+                userBank(); break;
+            } else {
+                state.turnScore += res.points;
+                state.firstRollOfTurn = false;
+                toPick.forEach(d => { d.userData.active = false; d.visible = false; d.userData.selected = false; });
+                if (dice.filter(d => d.userData.active).length === 0) {
+                    dice.forEach(d => { d.userData.active = true; d.visible = true; d.userData.selected = false; d.position.y = 0.45; });
+                }
+            }
+        }
+    }
+
+    function updateUI(txt) {
+        document.getElementById('p-score').innerText = state.scores.Player;
+        document.getElementById('ai-score').innerText = state.scores.AI;
+        document.getElementById('turn-total').innerText = state.turnScore;
+        document.getElementById('current-player').innerText = state.currentPlayer === 'Player' ? 'Human' : 'AI';
+        
+        const selected = dice.filter(d => d.userData.selected);
+        const res = getScore(selected);
+        document.getElementById('selection-score').innerText = res.points;
+        
+        if (txt) document.getElementById('status').innerText = txt;
+
+        const isHuman = state.currentPlayer === 'Player' && !state.isRolling && !state.farkled;
+        document.getElementById('roll-btn').disabled = !isHuman;
+        
+        const total = state.turnScore + res.points;
+        const valid = (selected.length === 0 && state.turnScore > 0) || (res.used === selected.length && res.points > 0);
+        document.getElementById('bank-btn').disabled = !isHuman || total === 0 || !valid;
+    }
+
+    function showMsg(t) {
+        document.getElementById('msg').innerText = t;
+        setTimeout(() => document.getElementById('msg').innerText = "", 2000);
+    }
+    function onResize() { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }
+    function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+    init();
+</script>
+</body>
+</html>
