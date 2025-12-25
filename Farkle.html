@@ -7,20 +7,28 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #0f0; user-select: none; }
         #ui { position: absolute; top: 10px; left: 10px; width: 260px; pointer-events: none; z-index: 10; }
-        .panel { background: rgba(0, 0, 0, 0.95); padding: 15px; border: 2px solid #0f0; pointer-events: auto; font-size: 13px; }
-        h2 { margin: 0 0 10px 0; font-size: 14px; color: #0f0; text-align: center; }
-        .stat { display: flex; justify-content: space-between; margin: 4px 0; }
-        .val { color: #ff0; font-weight: bold; }
+        .panel { background: rgba(15, 15, 20, 0.92); padding: 15px; border: 1px solid rgba(100, 150, 255, 0.3); border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); pointer-events: auto; font-size: 13px; backdrop-filter: blur(10px); }
+        h2 { margin: 0 0 10px 0; font-size: 14px; color: #88bbff; text-align: center; font-weight: normal; letter-spacing: 1px; }
+        .stat { display: flex; justify-content: space-between; margin: 4px 0; color: #aac; }
+        .val { color: #ffdd55; font-weight: bold; }
         #msg { position: absolute; top: 25%; width: 100%; text-align: center; font-size: 60px; font-weight: 900; color: #f00; pointer-events: none; text-shadow: 0 0 20px #000; z-index: 100; }
         .controls { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: center; gap: 15px; pointer-events: none; }
-        button { pointer-events: auto; width: 130px; padding: 15px; border: 2px solid #0f0; background: #000; color: #0f0; font-weight: bold; font-size: 14px; cursor: pointer; font-family: inherit; }
-        button:disabled { border-color: #030; color: #030; cursor: not-allowed; }
-        #status { position: absolute; bottom: 100px; width: 100%; text-align: center; color: #0f0; font-weight: bold; font-size: 12px; }
+        button { pointer-events: auto; width: 130px; padding: 15px; border: 1px solid rgba(100, 150, 255, 0.4); border-radius: 6px; background: rgba(20, 30, 50, 0.9); color: #88bbff; font-weight: bold; font-size: 14px; cursor: pointer; font-family: inherit; transition: all 0.2s; backdrop-filter: blur(10px); }
+        button:hover:not(:disabled) { background: rgba(40, 60, 100, 0.9); border-color: rgba(120, 170, 255, 0.6); box-shadow: 0 0 15px rgba(100, 150, 255, 0.3); }
+        button:disabled { border-color: rgba(60, 60, 80, 0.4); color: #445; cursor: not-allowed; background: rgba(15, 15, 20, 0.7); }
+        #status { position: absolute; bottom: 100px; width: 100%; text-align: center; color: #88bbff; font-weight: bold; font-size: 12px; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
         #settings { position: absolute; top: 10px; right: 10px; width: 260px; pointer-events: none; z-index: 10; }
-        .settings-panel { background: rgba(0, 0, 0, 0.95); padding: 15px; border: 2px solid #0f0; pointer-events: auto; font-size: 12px; }
+        .settings-panel { background: rgba(15, 15, 20, 0.92); padding: 15px; border: 1px solid rgba(100, 150, 255, 0.3); border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); pointer-events: auto; font-size: 12px; backdrop-filter: blur(10px); }
         .setting-group { margin: 10px 0; }
-        .setting-group label { display: block; margin-bottom: 5px; color: #0f0; font-weight: bold; }
-        .setting-group select { width: 100%; padding: 5px; background: #000; color: #0f0; border: 1px solid #0f0; font-family: inherit; cursor: pointer; }
+        .setting-group label { display: block; margin-bottom: 5px; color: #aac; font-weight: bold; font-size: 11px; letter-spacing: 0.5px; }
+        .setting-group select, .setting-group input { width: 100%; padding: 8px; background: rgba(10, 15, 25, 0.8); color: #88bbff; border: 1px solid rgba(80, 120, 200, 0.3); border-radius: 4px; font-family: inherit; cursor: pointer; font-size: 12px; }
+        .setting-group input[type="number"] { cursor: text; }
+        .toggle-container { display: flex; align-items: center; justify-content: space-between; }
+        .toggle { position: relative; width: 50px; height: 24px; background: rgba(80, 80, 100, 0.5); border-radius: 12px; cursor: pointer; transition: background 0.3s; border: 1px solid rgba(100, 120, 150, 0.3); }
+        .toggle.active { background: rgba(100, 150, 255, 0.6); }
+        .toggle-slider { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .toggle.active .toggle-slider { transform: translateX(26px); }
+        hr { border: 0; border-top: 1px solid rgba(100, 150, 255, 0.2); margin: 8px 0; }
     </style>
 </head>
 <body>
@@ -32,7 +40,7 @@
         <div class="stat"><span>HUMAN:</span> <span id="p-score" class="val">0</span></div>
         <div class="stat"><span>CPU:</span> <span id="ai-score" class="val">0</span></div>
         <div class="stat"><span>TURN:</span> <span id="current-player" class="val">Human</span></div>
-        <hr style="border:0; border-top:1px solid #0f0; margin:8px 0;">
+        <hr>
         <div class="stat"><span>BANKED:</span> <span id="turn-total" class="val">0</span></div>
         <div class="stat"><span>SELECTED:</span> <span id="selection-score" class="val">0</span></div>
     </div>
@@ -59,8 +67,21 @@
                 <option value="green-felt" selected>Green Felt</option>
                 <option value="wood">Wood</option>
                 <option value="steel">Steel</option>
-                <option value="dirt" selected>Dirt</option>
             </select>
+        </div>
+        <div class="setting-group">
+            <label>MAX POINTS TO WIN:</label>
+            <input type="number" id="max-points" value="10000" min="1000" max="50000" step="1000" onchange="updateMaxPoints()">
+        </div>
+        <div class="setting-group">
+            <label>SOUND:</label>
+            <div class="toggle-container">
+                <span style="color: #aac; font-size: 11px;">OFF</span>
+                <div class="toggle active" id="sound-toggle" onclick="toggleSound()">
+                    <div class="toggle-slider"></div>
+                </div>
+                <span style="color: #aac; font-size: 11px;">ON</span>
+            </div>
         </div>
     </div>
 </div>
@@ -84,14 +105,18 @@
         isRolling: false,
         farkled: false,
         firstRollOfTurn: true,
-        diceStyle: 'clear',
-        tableSurface: 'green-felt'
+        diceStyle: 'marble',
+        tableSurface: 'green-felt',
+        maxPoints: 10000,
+        soundEnabled: true
     };
 
     // Sound effects using Web Audio API
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     
     function playSound(type) {
+        if (!state.soundEnabled) return;
+        
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
         oscillator.connect(gainNode);
@@ -148,6 +173,22 @@
         }
     }
 
+    function toggleSound() {
+        state.soundEnabled = !state.soundEnabled;
+        const toggle = document.getElementById('sound-toggle');
+        if (state.soundEnabled) {
+            toggle.classList.add('active');
+        } else {
+            toggle.classList.remove('active');
+        }
+    }
+
+    function updateMaxPoints() {
+        const value = parseInt(document.getElementById('max-points').value);
+        state.maxPoints = Math.max(1000, Math.min(50000, value));
+        document.getElementById('max-points').value = state.maxPoints;
+    }
+
     const slots = [
         {x: -2.5, z: -1.5}, {x: 0, z: -1.5}, {x: 2.5, z: -1.5},
         {x: -2.5, z: 1.5},  {x: 0, z: 1.5},  {x: 2.5, z: 1.5}
@@ -193,40 +234,25 @@
 
     function getTableMaterial(surface) {
         const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 512;
+        canvas.width = 1024;
+        canvas.height = 1024;
         const ctx = canvas.getContext('2d');
         
         switch(surface) {
             case 'red-felt':
-                ctx.fillStyle = '#8B0000';
-                ctx.fillRect(0, 0, 512, 512);
-                addFeltTexture(ctx);
+                createFeltTexture(ctx, '#8B0000', '#A00000', '#700000');
                 break;
             case 'blue-felt':
-                ctx.fillStyle = '#00008B';
-                ctx.fillRect(0, 0, 512, 512);
-                addFeltTexture(ctx);
+                createFeltTexture(ctx, '#00008B', '#0000A0', '#000070');
                 break;
             case 'green-felt':
-                ctx.fillStyle = '#0B6623';
-                ctx.fillRect(0, 0, 512, 512);
-                addFeltTexture(ctx);
+                createFeltTexture(ctx, '#0B6623', '#0D7A2A', '#095520');
                 break;
             case 'wood':
-                ctx.fillStyle = '#8B4513';
-                ctx.fillRect(0, 0, 512, 512);
-                addWoodTexture(ctx);
+                createWoodTexture(ctx);
                 break;
             case 'steel':
-                ctx.fillStyle = '#708090';
-                ctx.fillRect(0, 0, 512, 512);
-                addMetalTexture(ctx);
-                break;
-            case 'dirt':
-                ctx.fillStyle = '#654321';
-                ctx.fillRect(0, 0, 512, 512);
-                addDirtTexture(ctx);
+                createMetalTexture(ctx);
                 break;
         }
         
@@ -234,48 +260,140 @@
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.repeat.set(4, 4);
-        return new THREE.MeshStandardMaterial({ map: texture, roughness: 0.8 });
+        return new THREE.MeshStandardMaterial({ 
+            map: texture, 
+            roughness: surface.includes('felt') ? 0.95 : (surface === 'wood' ? 0.6 : 0.3),
+            metalness: surface === 'steel' ? 0.8 : 0
+        });
     }
 
-    function addFeltTexture(ctx) {
-        ctx.globalAlpha = 0.1;
-        for(let i = 0; i < 5000; i++) {
-            ctx.fillStyle = Math.random() > 0.5 ? '#ffffff' : '#000000';
-            ctx.fillRect(Math.random() * 512, Math.random() * 512, 1, 1);
+    function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
+        // Base color
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(0, 0, 1024, 1024);
+        
+        // Felt fiber texture - much denser
+        for(let i = 0; i < 50000; i++) {
+            const x = Math.random() * 1024;
+            const y = Math.random() * 1024;
+            const brightness = Math.random();
+            ctx.fillStyle = brightness > 0.5 ? lightColor : darkColor;
+            ctx.globalAlpha = 0.15;
+            ctx.fillRect(x, y, Math.random() * 2, Math.random() * 2);
         }
+        
+        // Add subtle fabric weave pattern
+        ctx.globalAlpha = 0.08;
+        for(let i = 0; i < 1024; i += 4) {
+            ctx.strokeStyle = lightColor;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, 1024);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(1024, i);
+            ctx.stroke();
+        }
+        
         ctx.globalAlpha = 1;
     }
 
-    function addWoodTexture(ctx) {
-        for(let i = 0; i < 20; i++) {
-            ctx.strokeStyle = `rgba(101, 67, 33, ${Math.random() * 0.3})`;
-            ctx.lineWidth = Math.random() * 3 + 1;
+    function createWoodTexture(ctx) {
+        // Wood base with gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, 1024);
+        gradient.addColorStop(0, '#8B4513');
+        gradient.addColorStop(0.5, '#A0522D');
+        gradient.addColorStop(1, '#8B4513');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1024, 1024);
+        
+        // Wood grain rings
+        for(let ring = 0; ring < 15; ring++) {
+            const y = ring * 70 + Math.random() * 30;
+            ctx.strokeStyle = `rgba(101, 67, 33, ${0.2 + Math.random() * 0.3})`;
+            ctx.lineWidth = 2 + Math.random() * 3;
             ctx.beginPath();
-            ctx.moveTo(0, Math.random() * 512);
-            ctx.lineTo(512, Math.random() * 512);
+            for(let x = 0; x < 1024; x += 5) {
+                const wave = Math.sin(x * 0.02 + ring) * (10 + Math.random() * 5);
+                ctx.lineTo(x, y + wave);
+            }
             ctx.stroke();
         }
-    }
-
-    function addMetalTexture(ctx) {
-        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
-        gradient.addColorStop(0, '#A9A9A9');
-        gradient.addColorStop(0.5, '#708090');
-        gradient.addColorStop(1, '#556B2F');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 512, 512);
-    }
-
-    function addDirtTexture(ctx) {
-        for(let i = 0; i < 3000; i++) {
-            const shade = Math.random() * 50 + 51;
-            ctx.fillStyle = `rgb(${shade}, ${shade - 20}, ${shade - 40})`;
-            ctx.fillRect(Math.random() * 512, Math.random() * 512, Math.random() * 3, Math.random() * 3);
+        
+        // Wood grain detail lines
+        for(let i = 0; i < 100; i++) {
+            const x = Math.random() * 1024;
+            const y = Math.random() * 1024;
+            ctx.strokeStyle = `rgba(${70 + Math.random() * 30}, ${40 + Math.random() * 20}, 20, ${0.3 + Math.random() * 0.4})`;
+            ctx.lineWidth = 0.5 + Math.random();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + Math.random() * 50 - 25, y + Math.random() * 100 - 50);
+            ctx.stroke();
         }
+        
+        // Wood knots
+        for(let i = 0; i < 8; i++) {
+            const x = Math.random() * 1024;
+            const y = Math.random() * 1024;
+            const radius = 10 + Math.random() * 30;
+            const knotGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            knotGradient.addColorStop(0, 'rgba(60, 40, 20, 0.6)');
+            knotGradient.addColorStop(1, 'rgba(60, 40, 20, 0)');
+            ctx.fillStyle = knotGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    function createMetalTexture(ctx) {
+        // Brushed metal base
+        const gradient = ctx.createLinearGradient(0, 0, 1024, 1024);
+        gradient.addColorStop(0, '#9BA4B4');
+        gradient.addColorStop(0.25, '#B8C5D6');
+        gradient.addColorStop(0.5, '#8A95A5');
+        gradient.addColorStop(0.75, '#B8C5D6');
+        gradient.addColorStop(1, '#9BA4B4');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1024, 1024);
+        
+        // Brushed metal scratches - horizontal
+        ctx.globalAlpha = 0.15;
+        for(let i = 0; i < 1000; i++) {
+            const y = Math.random() * 1024;
+            const brightness = 100 + Math.random() * 100;
+            ctx.strokeStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
+            ctx.lineWidth = 0.5 + Math.random() * 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(1024, y + (Math.random() - 0.5) * 10);
+            ctx.stroke();
+        }
+        
+        // Metal panel rivets/bolts
+        ctx.globalAlpha = 0.4;
+        for(let x = 100; x < 1024; x += 200) {
+            for(let y = 100; y < 1024; y += 200) {
+                const rivetGradient = ctx.createRadialGradient(x, y, 0, x, y, 8);
+                rivetGradient.addColorStop(0, '#556B7D');
+                rivetGradient.addColorStop(0.5, '#778899');
+                rivetGradient.addColorStop(1, '#3A4A5C');
+                ctx.fillStyle = rivetGradient;
+                ctx.beginPath();
+                ctx.arc(x, y, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        ctx.globalAlpha = 1;
     }
 
     function changeTableSurface() {
         state.tableSurface = document.getElementById('table-surface').value;
+        tableMesh.material.dispose();
         tableMesh.material = getTableMaterial(state.tableSurface);
     }
 
@@ -283,14 +401,15 @@
         state.diceStyle = document.getElementById('dice-style').value;
         dice.forEach(die => {
             const val = die.userData.val;
+            die.material.forEach(mat => mat.dispose());
             setDieValue(die, val);
         });
     }
 
     function createDieMaterial(value, style) {
         const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 128;
+        canvas.width = 256;
+        canvas.height = 256;
         const ctx = canvas.getContext('2d');
         
         const colors = {1:'#e74c3c', 2:'#3498db', 3:'#2ecc71', 4:'#f39c12', 5:'#9b59b6', 6:'#1abc9c'};
@@ -300,65 +419,102 @@
             case 'clear':
                 ctx.fillStyle = baseColor;
                 ctx.globalAlpha = 0.6;
-                ctx.fillRect(0, 0, 128, 128);
+                ctx.fillRect(0, 0, 256, 256);
                 ctx.globalAlpha = 1;
                 ctx.strokeStyle = baseColor;
-                ctx.lineWidth = 4;
-                ctx.strokeRect(2, 2, 124, 124);
+                ctx.lineWidth = 6;
+                ctx.strokeRect(3, 3, 250, 250);
                 break;
             case 'solid':
                 ctx.fillStyle = baseColor;
-                ctx.fillRect(0, 0, 128, 128);
+                ctx.fillRect(0, 0, 256, 256);
                 break;
             case 'matte':
                 ctx.fillStyle = baseColor;
-                ctx.fillRect(0, 0, 128, 128);
-                // Add matte texture
-                ctx.globalAlpha = 0.2;
-                for(let i = 0; i < 500; i++) {
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(Math.random() * 128, Math.random() * 128, 1, 1);
+                ctx.fillRect(0, 0, 256, 256);
+                // Dense matte texture
+                for(let i = 0; i < 3000; i++) {
+                    const brightness = Math.random() > 0.5 ? 255 : 0;
+                    ctx.fillStyle = `rgba(${brightness}, ${brightness}, ${brightness}, 0.1)`;
+                    ctx.fillRect(Math.random() * 256, Math.random() * 256, 1, 1);
                 }
-                ctx.globalAlpha = 1;
                 break;
             case 'wooden':
-                ctx.fillStyle = '#D2691E';
-                ctx.fillRect(0, 0, 128, 128);
-                // Add wood grain
-                for(let i = 0; i < 10; i++) {
-                    ctx.strokeStyle = `rgba(101, 67, 33, ${Math.random() * 0.3})`;
-                    ctx.lineWidth = Math.random() * 2 + 1;
+                // Wood grain base
+                const woodGradient = ctx.createLinearGradient(0, 0, 256, 256);
+                woodGradient.addColorStop(0, '#D2691E');
+                woodGradient.addColorStop(0.5, '#CD853F');
+                woodGradient.addColorStop(1, '#D2691E');
+                ctx.fillStyle = woodGradient;
+                ctx.fillRect(0, 0, 256, 256);
+                
+                // Wood grain lines
+                for(let i = 0; i < 30; i++) {
+                    ctx.strokeStyle = `rgba(101, 67, 33, ${0.2 + Math.random() * 0.3})`;
+                    ctx.lineWidth = 1 + Math.random() * 2;
                     ctx.beginPath();
-                    ctx.moveTo(0, Math.random() * 128);
-                    ctx.lineTo(128, Math.random() * 128);
+                    const y = i * 10 + Math.random() * 10;
+                    for(let x = 0; x < 256; x += 5) {
+                        ctx.lineTo(x, y + Math.sin(x * 0.1) * 5);
+                    }
                     ctx.stroke();
                 }
                 break;
             case 'marble':
-                // Marble base
-                const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 90);
-                gradient.addColorStop(0, baseColor);
-                gradient.addColorStop(1, shadeColor(baseColor, -40));
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 128, 128);
-                // Marble veins
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                // Marble base with better gradient
+                const marbleGradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 180);
+                marbleGradient.addColorStop(0, baseColor);
+                marbleGradient.addColorStop(0.5, shadeColor(baseColor, -20));
+                marbleGradient.addColorStop(1, shadeColor(baseColor, -40));
+                ctx.fillStyle = marbleGradient;
+                ctx.fillRect(0, 0, 256, 256);
+                
+                // Realistic marble veins
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
                 ctx.lineWidth = 2;
-                for(let i = 0; i < 5; i++) {
+                for(let i = 0; i < 10; i++) {
                     ctx.beginPath();
-                    ctx.moveTo(Math.random() * 128, Math.random() * 128);
-                    ctx.quadraticCurveTo(Math.random() * 128, Math.random() * 128, Math.random() * 128, Math.random() * 128);
+                    let x = Math.random() * 256;
+                    let y = Math.random() * 256;
+                    ctx.moveTo(x, y);
+                    for(let j = 0; j < 5; j++) {
+                        x += (Math.random() - 0.5) * 80;
+                        y += (Math.random() - 0.5) * 80;
+                        const cpx = x + (Math.random() - 0.5) * 40;
+                        const cpy = y + (Math.random() - 0.5) * 40;
+                        ctx.quadraticCurveTo(cpx, cpy, x, y);
+                    }
+                    ctx.stroke();
+                }
+                
+                // Add darker veins
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.lineWidth = 1;
+                for(let i = 0; i < 8; i++) {
+                    ctx.beginPath();
+                    let x = Math.random() * 256;
+                    let y = Math.random() * 256;
+                    ctx.moveTo(x, y);
+                    for(let j = 0; j < 4; j++) {
+                        x += (Math.random() - 0.5) * 60;
+                        y += (Math.random() - 0.5) * 60;
+                        ctx.lineTo(x, y);
+                    }
                     ctx.stroke();
                 }
                 break;
         }
         
-        // Draw number
+        // Draw number with better styling
         ctx.fillStyle = style === 'wooden' ? '#000000' : (style === 'clear' ? baseColor : '#ffffff');
-        ctx.font = 'bold 80px Arial';
+        ctx.font = 'bold 140px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(value, 64, 64);
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.fillText(value, 128, 128);
         
         const texture = new THREE.CanvasTexture(canvas);
         
@@ -557,7 +713,19 @@
         if (selected.length > 0 && res.used !== selected.length) return;
         state.scores[state.currentPlayer] += state.turnScore + res.points;
         playSound('bank');
-        endTurn();
+        
+        if (state.scores[state.currentPlayer] >= state.maxPoints) {
+            showMsg(`${state.currentPlayer === 'Player' ? 'HUMAN' : 'AI'} WINS!`);
+            setTimeout(() => {
+                state.scores.Player = 0;
+                state.scores.AI = 0;
+                state.currentPlayer = 'Player';
+                resetDice();
+                updateUI("NEW GAME");
+            }, 3000);
+        } else {
+            endTurn();
+        }
     }
 
     function endTurn() {
