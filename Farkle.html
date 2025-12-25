@@ -29,6 +29,15 @@
         .toggle-slider { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .toggle.active .toggle-slider { transform: translateX(26px); }
         hr { border: 0; border-top: 1px solid rgba(100, 150, 255, 0.2); margin: 8px 0; }
+        .player2-score { display: none; }
+        .player2-score.show { display: flex; }
+        .reset-btn { width: 100% !important; margin-top: 10px; }
+        
+        @media (max-width: 768px) {
+            #settings { top: auto; bottom: 150px; right: 10px; }
+            #ui { width: 220px; }
+            #settings { width: 220px; }
+        }
     </style>
 </head>
 <body>
@@ -37,9 +46,10 @@
 <div id="ui">
     <div class="panel">
         <h2>[ FARKLE_SYS v4.0 ]</h2>
-        <div class="stat"><span>HUMAN:</span> <span id="p-score" class="val">0</span></div>
-        <div class="stat"><span>CPU:</span> <span id="ai-score" class="val">0</span></div>
-        <div class="stat"><span>TURN:</span> <span id="current-player" class="val">Human</span></div>
+        <div class="stat"><span id="p1-label">PLAYER 1:</span> <span id="p-score" class="val">0</span></div>
+        <div class="stat player2-score" id="p2-stat"><span>PLAYER 2:</span> <span id="p2-score" class="val">0</span></div>
+        <div class="stat" id="ai-stat"><span>CPU:</span> <span id="ai-score" class="val">0</span></div>
+        <div class="stat"><span>TURN:</span> <span id="current-player" class="val">Player 1</span></div>
         <hr>
         <div class="stat"><span>BANKED:</span> <span id="turn-total" class="val">0</span></div>
         <div class="stat"><span>SELECTED:</span> <span id="selection-score" class="val">0</span></div>
@@ -49,6 +59,14 @@
 <div id="settings">
     <div class="settings-panel">
         <h2>[ SETTINGS ]</h2>
+        <div class="setting-group">
+            <label>GAME MODE:</label>
+            <select id="game-mode" onchange="changeGameMode()">
+                <option value="vs-ai">VS AI</option>
+                <option value="solo">Solo Play</option>
+                <option value="multiplayer">Multiplayer (2P)</option>
+            </select>
+        </div>
         <div class="setting-group">
             <label>DICE STYLE:</label>
             <select id="dice-style" onchange="changeDiceStyle()">
@@ -84,6 +102,7 @@
                 <span style="color: #aac; font-size: 11px;">ON</span>
             </div>
         </div>
+        <button class="reset-btn" onclick="resetGame()">RESET GAME</button>
     </div>
 </div>
 
@@ -100,7 +119,7 @@
 <script>
     let scene, camera, renderer, controls, dice = [], tableMesh;
     const state = {
-        scores: { Player: 0, AI: 0 },
+        scores: { Player: 0, Player2: 0, AI: 0 },
         turnScore: 0,
         currentPlayer: 'Player',
         isRolling: false,
@@ -110,10 +129,10 @@
         tableSurface: 'green-felt',
         maxPoints: 10000,
         soundEnabled: true,
-        hasRolledThisTurn: false
+        hasRolledThisTurn: false,
+        gameMode: 'vs-ai'
     };
 
-    // Sound effects using Web Audio API
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     
     function playSound(type) {
@@ -191,6 +210,46 @@
         document.getElementById('max-points').value = state.maxPoints;
     }
 
+    function resetGame() {
+        state.scores.Player = 0;
+        state.scores.Player2 = 0;
+        state.scores.AI = 0;
+        state.turnScore = 0;
+        state.currentPlayer = 'Player';
+        state.isRolling = false;
+        state.farkled = false;
+        state.firstRollOfTurn = true;
+        state.hasRolledThisTurn = false;
+        resetDice();
+        updateUI("NEW GAME");
+        showMsg("GAME RESET");
+    }
+
+    function changeGameMode() {
+        state.gameMode = document.getElementById('game-mode').value;
+        resetGame();
+        
+        const aiStat = document.getElementById('ai-stat');
+        const p2Stat = document.getElementById('p2-stat');
+        const p1Label = document.getElementById('p1-label');
+        
+        if (state.gameMode === 'solo') {
+            aiStat.style.display = 'none';
+            p2Stat.classList.remove('show');
+            p1Label.textContent = 'SCORE:';
+        } else if (state.gameMode === 'multiplayer') {
+            aiStat.style.display = 'none';
+            p2Stat.classList.add('show');
+            p1Label.textContent = 'PLAYER 1:';
+        } else {
+            aiStat.style.display = 'flex';
+            p2Stat.classList.remove('show');
+            p1Label.textContent = 'HUMAN:';
+        }
+        
+        updateUI("NEW GAME");
+    }
+
     const slots = [
         {x: -2.5, z: -1.5}, {x: 0, z: -1.5}, {x: 2.5, z: -1.5},
         {x: -2.5, z: 1.5},  {x: 0, z: 1.5},  {x: 2.5, z: 1.5}
@@ -236,19 +295,19 @@
 
     function getTableMaterial(surface) {
         const canvas = document.createElement('canvas');
-        canvas.width = 1024;
-        canvas.height = 1024;
+        canvas.width = 512;
+        canvas.height = 512;
         const ctx = canvas.getContext('2d');
         
         switch(surface) {
             case 'red-felt':
-                createFeltTexture(ctx, '#8B0000', '#A00000', '#700000');
+                createFeltTexture(ctx, '#3D0000', '#4A0000', '#2F0000');
                 break;
             case 'blue-felt':
-                createFeltTexture(ctx, '#00008B', '#0000A0', '#000070');
+                createFeltTexture(ctx, '#00002F', '#00003D', '#000025');
                 break;
             case 'green-felt':
-                createFeltTexture(ctx, '#0B6623', '#0D7A2A', '#095520');
+                createFeltTexture(ctx, '#064420', '#075428', '#053618');
                 break;
             case 'wood':
                 createWoodTexture(ctx);
@@ -265,6 +324,7 @@
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.repeat.set(4, 4);
+        
         return new THREE.MeshStandardMaterial({ 
             map: texture, 
             roughness: surface.includes('felt') ? 0.95 : (surface === 'wood' ? 0.6 : (surface === 'dirt' ? 0.98 : 0.3)),
@@ -273,79 +333,83 @@
     }
 
     function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
-        // Base color
         ctx.fillStyle = baseColor;
-        ctx.fillRect(0, 0, 1024, 1024);
+        ctx.fillRect(0, 0, 512, 512);
         
-        // Felt fiber texture - much denser
         for(let i = 0; i < 50000; i++) {
-            const x = Math.random() * 1024;
-            const y = Math.random() * 1024;
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
             const brightness = Math.random();
             ctx.fillStyle = brightness > 0.5 ? lightColor : darkColor;
-            ctx.globalAlpha = 0.15;
+            ctx.globalAlpha = 0.12;
             ctx.fillRect(x, y, Math.random() * 2, Math.random() * 2);
         }
         
-        // Add subtle fabric weave pattern
-        ctx.globalAlpha = 0.08;
-        for(let i = 0; i < 1024; i += 4) {
+        ctx.globalAlpha = 0.06;
+        for(let i = 0; i < 512; i += 4) {
             ctx.strokeStyle = lightColor;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(i, 0);
-            ctx.lineTo(i, 1024);
+            ctx.lineTo(i, 512);
             ctx.stroke();
             ctx.beginPath();
             ctx.moveTo(0, i);
-            ctx.lineTo(1024, i);
+            ctx.lineTo(512, i);
             ctx.stroke();
+        }
+        
+        ctx.globalAlpha = 0.15;
+        for(let i = 0; i < 25; i++) {
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const radius = 20 + Math.random() * 50;
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            grad.addColorStop(0, darkColor);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
         }
         
         ctx.globalAlpha = 1;
     }
 
     function createWoodTexture(ctx) {
-        // Wood base with gradient
-        const gradient = ctx.createLinearGradient(0, 0, 0, 1024);
-        gradient.addColorStop(0, '#8B4513');
-        gradient.addColorStop(0.5, '#A0522D');
-        gradient.addColorStop(1, '#8B4513');
+        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+        gradient.addColorStop(0, '#7A3E1A');
+        gradient.addColorStop(0.5, '#8B4513');
+        gradient.addColorStop(1, '#7A3E1A');
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 1024, 1024);
+        ctx.fillRect(0, 0, 512, 512);
         
-        // Wood grain rings
         for(let ring = 0; ring < 15; ring++) {
-            const y = ring * 70 + Math.random() * 30;
-            ctx.strokeStyle = `rgba(101, 67, 33, ${0.2 + Math.random() * 0.3})`;
+            const baseY = ring * 40 + Math.random() * 30;
+            const amplitude = 10 + Math.random() * 20;
+            const frequency = 0.02 + Math.random() * 0.03;
+            const phase = Math.random() * Math.PI * 2;
+            
+            ctx.strokeStyle = `rgba(${60 + Math.random() * 40}, ${35 + Math.random() * 30}, 20, ${0.2 + Math.random() * 0.3})`;
             ctx.lineWidth = 2 + Math.random() * 3;
             ctx.beginPath();
-            for(let x = 0; x < 1024; x += 5) {
-                const wave = Math.sin(x * 0.02 + ring) * (10 + Math.random() * 5);
-                ctx.lineTo(x, y + wave);
+            
+            for(let x = 0; x < 512; x += 2) {
+                const wave = Math.sin(x * frequency + phase) * amplitude;
+                const noise = (Math.random() - 0.5) * 6;
+                ctx.lineTo(x, baseY + wave + noise);
             }
             ctx.stroke();
         }
         
-        // Wood grain detail lines
-        for(let i = 0; i < 100; i++) {
-            const x = Math.random() * 1024;
-            const y = Math.random() * 1024;
-            ctx.strokeStyle = `rgba(${70 + Math.random() * 30}, ${40 + Math.random() * 20}, 20, ${0.3 + Math.random() * 0.4})`;
-            ctx.lineWidth = 0.5 + Math.random();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + Math.random() * 50 - 25, y + Math.random() * 100 - 50);
-            ctx.stroke();
-        }
-        
-        // Wood knots
         for(let i = 0; i < 8; i++) {
-            const x = Math.random() * 1024;
-            const y = Math.random() * 1024;
-            const radius = 10 + Math.random() * 30;
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const radius = 15 + Math.random() * 30;
+            
             const knotGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
-            knotGradient.addColorStop(0, 'rgba(60, 40, 20, 0.6)');
+            knotGradient.addColorStop(0, 'rgba(50, 30, 15, 0.7)');
+            knotGradient.addColorStop(0.5, 'rgba(60, 40, 20, 0.4)');
             knotGradient.addColorStop(1, 'rgba(60, 40, 20, 0)');
             ctx.fillStyle = knotGradient;
             ctx.beginPath();
@@ -355,64 +419,64 @@
     }
 
     function createMetalTexture(ctx) {
-        // Brushed metal base
-        const gradient = ctx.createLinearGradient(0, 0, 1024, 1024);
-        gradient.addColorStop(0, '#9BA4B4');
-        gradient.addColorStop(0.25, '#B8C5D6');
-        gradient.addColorStop(0.5, '#8A95A5');
-        gradient.addColorStop(0.75, '#B8C5D6');
-        gradient.addColorStop(1, '#9BA4B4');
+        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+        gradient.addColorStop(0, '#8A95A5');
+        gradient.addColorStop(0.5, '#B8C5D6');
+        gradient.addColorStop(1, '#8A95A5');
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 1024, 1024);
+        ctx.fillRect(0, 0, 512, 512);
         
-        // Brushed metal scratches - horizontal
-        ctx.globalAlpha = 0.15;
+        ctx.globalAlpha = 0.12;
         for(let i = 0; i < 1000; i++) {
-            const y = Math.random() * 1024;
-            const brightness = 100 + Math.random() * 100;
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const length = 50 + Math.random() * 200;
+            const angle = (Math.random() - 0.5) * 0.3;
+            const brightness = 80 + Math.random() * 120;
+            
             ctx.strokeStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
-            ctx.lineWidth = 0.5 + Math.random() * 1.5;
+            ctx.lineWidth = 0.5 + Math.random();
             ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(1024, y + (Math.random() - 0.5) * 10);
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
             ctx.stroke();
         }
         
-        // Metal panel rivets/bolts
-        ctx.globalAlpha = 0.4;
-        for(let x = 100; x < 1024; x += 200) {
-            for(let y = 100; y < 1024; y += 200) {
-                const rivetGradient = ctx.createRadialGradient(x, y, 0, x, y, 8);
-                rivetGradient.addColorStop(0, '#556B7D');
-                rivetGradient.addColorStop(0.5, '#778899');
-                rivetGradient.addColorStop(1, '#3A4A5C');
-                ctx.fillStyle = rivetGradient;
-                ctx.beginPath();
-                ctx.arc(x, y, 8, 0, Math.PI * 2);
-                ctx.fill();
-            }
+        ctx.globalAlpha = 0.5;
+        for(let i = 0; i < 9; i++) {
+            const x = 80 + (i % 3) * 180;
+            const y = 80 + Math.floor(i / 3) * 180;
+            const size = 6;
+            
+            const rivetGradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+            rivetGradient.addColorStop(0, '#5A6A7D');
+            rivetGradient.addColorStop(0.5, '#778899');
+            rivetGradient.addColorStop(1, '#3A4A5C');
+            ctx.fillStyle = rivetGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
         }
         
         ctx.globalAlpha = 1;
     }
 
     function createDirtTexture(ctx) {
-        // Base dirt color with gradient
-        const gradient = ctx.createRadialGradient(512, 512, 0, 512, 512, 700);
+        const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 350);
         gradient.addColorStop(0, '#6B4423');
         gradient.addColorStop(0.5, '#5C3A1F');
         gradient.addColorStop(1, '#4A2F19');
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 1024, 1024);
+        ctx.fillRect(0, 0, 512, 512);
         
-        // Large dirt clumps and variations
-        for(let i = 0; i < 200; i++) {
-            const x = Math.random() * 1024;
-            const y = Math.random() * 1024;
-            const size = 20 + Math.random() * 60;
-            const shade = 50 + Math.random() * 60;
+        for(let i = 0; i < 100; i++) {
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const size = 15 + Math.random() * 50;
+            const shade = 45 + Math.random() * 50;
+            
             const dirtGradient = ctx.createRadialGradient(x, y, 0, x, y, size);
-            dirtGradient.addColorStop(0, `rgba(${shade + 20}, ${shade}, ${shade - 20}, 0.5)`);
+            dirtGradient.addColorStop(0, `rgba(${shade + 20}, ${shade}, ${shade - 15}, 0.5)`);
             dirtGradient.addColorStop(1, `rgba(${shade}, ${shade - 10}, ${shade - 20}, 0)`);
             ctx.fillStyle = dirtGradient;
             ctx.beginPath();
@@ -420,66 +484,40 @@
             ctx.fill();
         }
         
-        // Medium dirt particles and texture
         for(let i = 0; i < 5000; i++) {
-            const x = Math.random() * 1024;
-            const y = Math.random() * 1024;
-            const shade = 40 + Math.random() * 70;
-            const size = 1 + Math.random() * 4;
-            ctx.fillStyle = `rgb(${shade + 20}, ${shade}, ${shade - 15})`;
-            ctx.globalAlpha = 0.3 + Math.random() * 0.4;
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const shade = 40 + Math.random() * 60;
+            const size = 1 + Math.random() * 3;
+            ctx.fillStyle = `rgba(${shade + 20}, ${shade}, ${shade - 15}, ${0.3 + Math.random() * 0.3})`;
             ctx.beginPath();
             ctx.arc(x, y, size, 0, Math.PI * 2);
             ctx.fill();
         }
         
-        // Fine dirt grains
-        ctx.globalAlpha = 0.3;
-        for(let i = 0; i < 15000; i++) {
-            const x = Math.random() * 1024;
-            const y = Math.random() * 1024;
-            const shade = 50 + Math.random() * 50;
-            ctx.fillStyle = `rgb(${shade + 15}, ${shade - 5}, ${shade - 20})`;
-            ctx.fillRect(x, y, 1, 1);
-        }
-        
-        // Dirt cracks and imperfections
-        ctx.globalAlpha = 0.4;
-        for(let i = 0; i < 30; i++) {
-            ctx.strokeStyle = `rgba(40, 25, 15, ${0.3 + Math.random() * 0.3})`;
+        for(let i = 0; i < 20; i++) {
+            const startX = Math.random() * 512;
+            const startY = Math.random() * 512;
+            const angle = Math.random() * Math.PI * 2;
+            
+            ctx.strokeStyle = `rgba(35, 22, 12, ${0.3 + Math.random() * 0.3})`;
             ctx.lineWidth = 1 + Math.random() * 2;
             ctx.beginPath();
-            let x = Math.random() * 1024;
-            let y = Math.random() * 1024;
+            
+            let x = startX;
+            let y = startY;
             ctx.moveTo(x, y);
-            for(let j = 0; j < 5 + Math.random() * 10; j++) {
-                x += (Math.random() - 0.5) * 40;
-                y += (Math.random() - 0.5) * 40;
+            
+            const segments = 3 + Math.floor(Math.random() * 6);
+            for(let j = 0; j < segments; j++) {
+                const segmentAngle = angle + (Math.random() - 0.5) * 0.8;
+                const segmentLength = 10 + Math.random() * 30;
+                x += Math.cos(segmentAngle) * segmentLength;
+                y += Math.sin(segmentAngle) * segmentLength;
                 ctx.lineTo(x, y);
             }
             ctx.stroke();
         }
-        
-        // Small rocks/pebbles
-        ctx.globalAlpha = 0.6;
-        for(let i = 0; i < 50; i++) {
-            const x = Math.random() * 1024;
-            const y = Math.random() * 1024;
-            const size = 3 + Math.random() * 8;
-            const rockShade = 80 + Math.random() * 40;
-            ctx.fillStyle = `rgb(${rockShade}, ${rockShade - 10}, ${rockShade - 20})`;
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Rock highlight
-            ctx.fillStyle = `rgba(${rockShade + 40}, ${rockShade + 30}, ${rockShade + 20}, 0.5)`;
-            ctx.beginPath();
-            ctx.arc(x - size * 0.3, y - size * 0.3, size * 0.4, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        ctx.globalAlpha = 1;
     }
 
     function changeTableSurface() {
@@ -523,7 +561,6 @@
             case 'matte':
                 ctx.fillStyle = baseColor;
                 ctx.fillRect(0, 0, 256, 256);
-                // Dense matte texture
                 for(let i = 0; i < 3000; i++) {
                     const brightness = Math.random() > 0.5 ? 255 : 0;
                     ctx.fillStyle = `rgba(${brightness}, ${brightness}, ${brightness}, 0.1)`;
@@ -531,7 +568,6 @@
                 }
                 break;
             case 'wooden':
-                // Wood grain base
                 const woodGradient = ctx.createLinearGradient(0, 0, 256, 256);
                 woodGradient.addColorStop(0, '#D2691E');
                 woodGradient.addColorStop(0.5, '#CD853F');
@@ -539,7 +575,6 @@
                 ctx.fillStyle = woodGradient;
                 ctx.fillRect(0, 0, 256, 256);
                 
-                // Wood grain lines
                 for(let i = 0; i < 30; i++) {
                     ctx.strokeStyle = `rgba(101, 67, 33, ${0.2 + Math.random() * 0.3})`;
                     ctx.lineWidth = 1 + Math.random() * 2;
@@ -552,7 +587,6 @@
                 }
                 break;
             case 'marble':
-                // Marble base with better gradient
                 const marbleGradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 180);
                 marbleGradient.addColorStop(0, baseColor);
                 marbleGradient.addColorStop(0.5, shadeColor(baseColor, -20));
@@ -560,7 +594,6 @@
                 ctx.fillStyle = marbleGradient;
                 ctx.fillRect(0, 0, 256, 256);
                 
-                // Realistic marble veins
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
                 ctx.lineWidth = 2;
                 for(let i = 0; i < 10; i++) {
@@ -578,7 +611,6 @@
                     ctx.stroke();
                 }
                 
-                // Add darker veins
                 ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
                 ctx.lineWidth = 1;
                 for(let i = 0; i < 8; i++) {
@@ -596,7 +628,6 @@
                 break;
         }
         
-        // Draw number with better styling
         ctx.fillStyle = style === 'wooden' ? '#000000' : (style === 'clear' ? baseColor : '#ffffff');
         ctx.font = 'bold 140px Arial';
         ctx.textAlign = 'center';
@@ -651,7 +682,6 @@
 
     function createDice() {
         const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
-        // Start with non-scoring values so player can't bank before first roll
         const startValues = [2, 3, 4, 4, 6, 6];
         for(let i=0; i<6; i++) {
             const mat = createDieMaterial(startValues[i], state.diceStyle);
@@ -671,7 +701,6 @@
     }
 
     function resetDice() {
-        // Use non-scoring starting values
         const startValues = [2, 3, 4, 4, 6, 6];
         dice.forEach((d, i) => {
             d.userData.active = true;
@@ -719,32 +748,28 @@
         updateUI("ROLLING...");
         playSound('roll');
         
-        // Store final values for each die
         const finalValues = activeDice.map(() => Math.floor(Math.random() * 6) + 1);
         
-        // Animate dice with color cycling
         const promises = activeDice.map((die, i) => {
             return new Promise(resolve => {
                 const start = die.position.clone();
                 const slot = slots[die.userData.id]; 
                 const end = new THREE.Vector3(slot.x + (Math.random()-0.5)*0.4, 0.45, slot.z + (Math.random()-0.5)*0.4);
                 const startT = performance.now();
-                const rollDuration = 1000; // 1 second roll
-                const colorChangeInterval = 50; // Change color every 50ms
+                const rollDuration = 1000;
+                const colorChangeInterval = 50;
                 let lastColorChange = 0;
                 
                 function step(now) {
                     const elapsed = now - startT;
                     const t = Math.min(elapsed / rollDuration, 1);
                     
-                    // Cycle through random values while rolling
                     if (elapsed - lastColorChange > colorChangeInterval && t < 0.9) {
                         const randomVal = Math.floor(Math.random() * 6) + 1;
                         setDieValue(die, randomVal);
                         lastColorChange = elapsed;
                     }
                     
-                    // Set final value near the end
                     if (t >= 0.9 && die.userData.val !== finalValues[i]) {
                         setDieValue(die, finalValues[i]);
                     }
@@ -777,6 +802,7 @@
             state.turnScore = 0;
             playSound('farkle');
             showMsg("FARKLE!");
+            updateUI("FARKLE!");
             setTimeout(endTurn, 2000);
         } else {
             updateUI("SELECT DICE");
@@ -784,7 +810,9 @@
     }
 
     function onClick(e) {
-        if (state.isRolling || state.currentPlayer === 'AI' || state.farkled) return;
+        if (state.isRolling || state.farkled) return;
+        if (state.gameMode === 'vs-ai' && state.currentPlayer === 'AI') return;
+        
         const mouse = new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
         const ray = new THREE.Raycaster();
         ray.setFromCamera(mouse, camera);
@@ -826,17 +854,28 @@
         const selected = dice.filter(d => d.userData.selected);
         const res = getScore(selected);
         if (selected.length > 0 && res.used !== selected.length) return;
-        state.scores[state.currentPlayer] += state.turnScore + res.points;
+        
+        const finalTurnScore = state.turnScore + res.points;
+        state.scores[state.currentPlayer] += finalTurnScore;
         playSound('bank');
         
-        if (state.scores[state.currentPlayer] >= state.maxPoints) {
-            showMsg(`${state.currentPlayer === 'Player' ? 'HUMAN' : 'AI'} WINS!`);
+        // Update UI to show final score before checking win
+        updateUI(`BANKED ${finalTurnScore}!`);
+        
+        const currentScore = state.scores[state.currentPlayer];
+        if (currentScore >= state.maxPoints) {
+            let winnerName = state.currentPlayer;
+            if (state.gameMode === 'vs-ai') {
+                winnerName = state.currentPlayer === 'Player' ? 'HUMAN' : 'AI';
+            } else if (state.gameMode === 'multiplayer') {
+                winnerName = state.currentPlayer === 'Player' ? 'PLAYER 1' : 'PLAYER 2';
+            } else {
+                winnerName = 'YOU';
+            }
+            
+            showMsg(`${winnerName} WIN${winnerName === 'YOU' ? '' : 'S'}!`);
             setTimeout(() => {
-                state.scores.Player = 0;
-                state.scores.AI = 0;
-                state.currentPlayer = 'Player';
-                resetDice();
-                updateUI("NEW GAME");
+                resetGame();
             }, 3000);
         } else {
             endTurn();
@@ -845,10 +884,20 @@
 
     function endTurn() {
         state.turnScore = 0;
-        state.currentPlayer = state.currentPlayer === 'Player' ? 'AI' : 'Player';
-        resetDice();
-        updateUI("NEW TURN");
-        if (state.currentPlayer === 'AI') setTimeout(aiLogic, 1000);
+        
+        if (state.gameMode === 'solo') {
+            resetDice();
+            updateUI("NEXT ROLL");
+        } else if (state.gameMode === 'multiplayer') {
+            state.currentPlayer = state.currentPlayer === 'Player' ? 'Player2' : 'Player';
+            resetDice();
+            updateUI("NEW TURN");
+        } else {
+            state.currentPlayer = state.currentPlayer === 'Player' ? 'AI' : 'Player';
+            resetDice();
+            updateUI("NEW TURN");
+            if (state.currentPlayer === 'AI') setTimeout(aiLogic, 1000);
+        }
     }
 
     async function aiLogic() {
@@ -887,9 +936,19 @@
 
     function updateUI(txt) {
         document.getElementById('p-score').innerText = state.scores.Player;
+        document.getElementById('p2-score').innerText = state.scores.Player2;
         document.getElementById('ai-score').innerText = state.scores.AI;
         document.getElementById('turn-total').innerText = state.turnScore;
-        document.getElementById('current-player').innerText = state.currentPlayer === 'Player' ? 'Human' : 'AI';
+        
+        let playerName = 'Player 1';
+        if (state.gameMode === 'solo') {
+            playerName = 'You';
+        } else if (state.gameMode === 'multiplayer') {
+            playerName = state.currentPlayer === 'Player' ? 'Player 1' : 'Player 2';
+        } else {
+            playerName = state.currentPlayer === 'Player' ? 'Human' : 'AI';
+        }
+        document.getElementById('current-player').innerText = playerName;
         
         const selected = dice.filter(d => d.userData.selected);
         const res = getScore(selected);
@@ -897,13 +956,16 @@
         
         if (txt) document.getElementById('status').innerText = txt;
 
-        const isHuman = state.currentPlayer === 'Player' && !state.isRolling && !state.farkled;
-        document.getElementById('roll-btn').disabled = !isHuman;
+        const isHumanTurn = state.gameMode === 'solo' || 
+                           state.gameMode === 'multiplayer' || 
+                           (state.gameMode === 'vs-ai' && state.currentPlayer === 'Player');
+        const canAct = isHumanTurn && !state.isRolling && !state.farkled;
+        
+        document.getElementById('roll-btn').disabled = !canAct;
         
         const total = state.turnScore + res.points;
         const valid = (selected.length === 0 && state.turnScore > 0) || (res.used === selected.length && res.points > 0);
-        // Disable bank button if haven't rolled yet this turn
-        document.getElementById('bank-btn').disabled = !isHuman || total === 0 || !valid || !state.hasRolledThisTurn;
+        document.getElementById('bank-btn').disabled = !canAct || total === 0 || !valid || !state.hasRolledThisTurn;
     }
 
     function showMsg(t) {
