@@ -191,6 +191,27 @@
                 </select>
             </div>
             <div class="setting-group">
+                <label>DICE FACE:</label>
+                <select id="dice-face" onchange="changeDiceVisuals()">
+                    <option value="numbers">Numbers</option>
+                    <option value="dots" selected>Dots</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>DICE COLORS:</label>
+                <select id="dice-color-mode" onchange="changeDiceVisuals()">
+                    <option value="multi" selected>Multi-Colored</option>
+                    <option value="single">Single Color (White)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>FACE MAPPING:</label>
+                <select id="dice-face-mode" onchange="changeDiceVisuals()">
+                    <option value="all-sides">All Sides Same</option>
+                    <option value="standard" selected>Standard (1-6)</option>
+                </select>
+            </div>
+            <div class="setting-group">
                 <label>TABLE SURFACE:</label>
                 <select id="table-surface" onchange="changeTableSurface()">
                     <option value="red-felt">Red Felt</option>
@@ -241,6 +262,9 @@
         farkled: false,
         firstRollOfTurn: true,
         diceStyle: 'marble',
+        diceFace: 'dots',
+        diceColorMode: 'multi',
+        diceFaceMode: 'standard',
         tableSurface: 'green-felt',
         maxPoints: 10000,
         soundEnabled: true,
@@ -673,10 +697,38 @@
 
     function changeDiceStyle() {
         state.diceStyle = document.getElementById('dice-style').value;
+        refreshDiceVisuals();
+    }
+
+    function changeDiceVisuals() {
+        state.diceFace = document.getElementById('dice-face').value;
+        state.diceColorMode = document.getElementById('dice-color-mode').value;
+        state.diceFaceMode = document.getElementById('dice-face-mode').value;
+        refreshDiceVisuals();
+    }
+
+    function refreshDiceVisuals() {
         dice.forEach(die => {
             const val = die.userData.val;
             die.material.forEach(mat => mat.dispose());
             setDieValue(die, val);
+        });
+    }
+
+    function drawPips(ctx, value, color) {
+        ctx.fillStyle = color;
+        const pips = {
+            1: [[128, 128]],
+            2: [[64, 64], [192, 192]],
+            3: [[64, 64], [128, 128], [192, 192]],
+            4: [[64, 64], [192, 64], [64, 192], [192, 192]],
+            5: [[64, 64], [192, 64], [128, 128], [64, 192], [192, 192]],
+            6: [[64, 64], [192, 64], [64, 128], [192, 128], [64, 192], [192, 192]]
+        };
+        pips[value].forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p[0], p[1], 25, 0, Math.PI * 2);
+            ctx.fill();
         });
     }
 
@@ -687,7 +739,7 @@
         const ctx = canvas.getContext('2d');
         
         const colors = {1:'#e74c3c', 2:'#3498db', 3:'#2ecc71', 4:'#f39c12', 5:'#9b59b6', 6:'#1abc9c'};
-        const baseColor = colors[value] || '#fff';
+        let baseColor = state.diceColorMode === 'single' ? '#ffffff' : (colors[value] || '#fff');
         
         switch(style) {
             case 'clear':
@@ -773,15 +825,21 @@
                 break;
         }
         
-        ctx.fillStyle = style === 'wooden' ? '#000000' : (style === 'clear' ? baseColor : '#ffffff');
-        ctx.font = 'bold 140px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 2;
-        ctx.shadowOffsetY = 2;
-        ctx.fillText(value, 128, 128);
+        let fgColor = style === 'wooden' ? '#000000' : (style === 'clear' ? baseColor : (state.diceColorMode === 'single' ? '#333' : '#ffffff'));
+        
+        if (state.diceFace === 'dots') {
+            drawPips(ctx, value, fgColor);
+        } else {
+            ctx.fillStyle = fgColor;
+            ctx.font = 'bold 140px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillText(value, 128, 128);
+        }
         
         const texture = new THREE.CanvasTexture(canvas);
         
@@ -827,7 +885,7 @@
 
     function createDice() {
         const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
-        const startValues = [2, 3, 4, 4, 6, 6];
+        const startValues = [1, 2, 3, 4, 5, 6];
         for(let i=0; i<6; i++) {
             const mat = createDieMaterial(startValues[i], state.diceStyle);
             const die = new THREE.Mesh(geo, [mat, mat, mat, mat, mat, mat]);
@@ -841,19 +899,43 @@
 
     function setDieValue(die, value) {
         die.userData.val = value;
-        const mat = createDieMaterial(value, state.diceStyle);
-        die.material = [mat, mat, mat, mat, mat, mat];
+        if (state.diceFaceMode === 'all-sides') {
+            const mat = createDieMaterial(value, state.diceStyle);
+            die.material = [mat, mat, mat, mat, mat, mat];
+        } else {
+            // Standard mapping (Opposite sides sum to 7): 
+            // Indices: 0(+X), 1(-X), 2(+Y), 3(-Y), 4(+Z), 5(-Z)
+            // Values:  2,     5,     1,     6,     3,     4
+            const values = [2, 5, 1, 6, 3, 4];
+            die.material = values.map(v => createDieMaterial(v, state.diceStyle));
+        }
     }
 
     function resetDice() {
-        const startValues = [2, 3, 4, 4, 6, 6];
+        const startValues = [1, 2, 3, 4, 5, 6];
+        const rotations = {
+            1: { x: 0, y: 0, z: 0 },
+            6: { x: Math.PI, y: 0, z: 0 },
+            2: { x: 0, y: 0, z: Math.PI / 2 },
+            5: { x: 0, y: 0, z: -Math.PI / 2 },
+            3: { x: -Math.PI / 2, y: 0, z: 0 },
+            4: { x: Math.PI / 2, y: 0, z: 0 }
+        };
         dice.forEach((d, i) => {
+            const val = startValues[i];
             d.userData.active = true;
             d.userData.selected = false;
             d.visible = true;
             d.position.set(slots[i].x, 0.45, slots[i].z);
-            d.rotation.set(0, 0, 0);
-            setDieValue(d, startValues[i]);
+            
+            if (state.diceFaceMode === 'standard') {
+                const rot = rotations[val];
+                d.rotation.set(rot.x, rot.y, rot.z);
+            } else {
+                d.rotation.set(0, 0, 0);
+            }
+            
+            setDieValue(d, val);
         });
         state.farkled = false;
         state.firstRollOfTurn = true;
@@ -894,16 +976,29 @@
         playSound('roll');
         
         const finalValues = activeDice.map(() => Math.floor(Math.random() * 6) + 1);
-        const finalRotations = activeDice.map(() => {
-            const rotations = [
-                { x: 0, y: 0, z: 0 },
-                { x: 0, y: Math.PI / 2, z: 0 },
-                { x: 0, y: Math.PI, z: 0 },
-                { x: 0, y: -Math.PI / 2, z: 0 },
-                { x: Math.PI / 2, y: 0, z: 0 },
-                { x: -Math.PI / 2, y: 0, z: 0 }
-            ];
-            return rotations[Math.floor(Math.random() * 6)];
+        const finalRotations = finalValues.map((val) => {
+            if (state.diceFaceMode === 'all-sides') {
+                const rotations = [
+                    { x: 0, y: 0, z: 0 },
+                    { x: 0, y: Math.PI / 2, z: 0 },
+                    { x: 0, y: Math.PI, z: 0 },
+                    { x: 0, y: -Math.PI / 2, z: 0 },
+                    { x: Math.PI / 2, y: 0, z: 0 },
+                    { x: -Math.PI / 2, y: 0, z: 0 }
+                ];
+                return rotations[Math.floor(Math.random() * 6)];
+            } else {
+                // Rotations to bring target face to Top (+Y)
+                const rotations = {
+                    1: { x: 0, y: 0, z: 0 },
+                    6: { x: Math.PI, y: 0, z: 0 },
+                    2: { x: 0, y: 0, z: Math.PI / 2 },
+                    5: { x: 0, y: 0, z: -Math.PI / 2 },
+                    3: { x: -Math.PI / 2, y: 0, z: 0 },
+                    4: { x: Math.PI / 2, y: 0, z: 0 }
+                };
+                return rotations[val];
+            }
         });
         
         const promises = activeDice.map((die, i) => {
@@ -928,7 +1023,7 @@
                     const elapsed = now - startT;
                     const t = Math.min(elapsed / rollDuration, 1);
                     
-                    if (elapsed - lastColorChange > colorChangeInterval && t < 0.9) {
+                    if (state.diceFaceMode === 'all-sides' && elapsed - lastColorChange > colorChangeInterval && t < 0.9) {
                         const randomVal = Math.floor(Math.random() * 6) + 1;
                         setDieValue(die, randomVal);
                         lastColorChange = elapsed;
