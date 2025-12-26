@@ -872,15 +872,13 @@ const systemMsg = {
         const seed = regenerateSeed !== null ? regenerateSeed : Math.floor(Math.random() * 10000);
 
         const requestBody = {
-            messages: finalMessages,
-            model: model,
-            modalities: useAudio ? ['text', 'audio'] : ['text'],
-            audio: useAudio ? { voice: voice, format: 'pcm16' } : undefined,
-            stream: true,
-            seed: seed,
-            temperature: 1,
-            max_tokens: 64000
-        };
+    messages: finalMessages,
+    model: model,
+    stream: true,
+    seed: seed,
+    temperature: 1,
+    max_tokens: ['mistral', 'nova-micro'].includes(model) ? 4096 : 64000
+};
 
         isGenerating = true;
         sendBtn.style.display = 'none';
@@ -1439,5 +1437,6 @@ const systemMsg = {
 </script>
 </body>
 </html>
+
 
 
