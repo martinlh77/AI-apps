@@ -94,7 +94,7 @@
         const SLALOM_SPACING = 50;
         const SLALOM_OFFSET = 8;
         const SLALOM_FINISH = 1500;
-        const FREESTYLE_FINISH = 1500;
+        const FREESTYLE_FINISH = 3000;
         
         let scene, camera, renderer, player;
         let yetis = [];
@@ -110,6 +110,8 @@
         let gameStartTime = 0;
         let lastYetiSpawnDist = YETI_SPAWN;
         let slalomCompleted = false;
+        let lastObstacleZ = 0;
+        let freestyleCompleted = false;
 
         const keys = {};
 
@@ -162,11 +164,15 @@
             floor.receiveShadow = true;
             scene.add(floor);
 
-            // Boundaries
+            // Boundaries with ropes
             for(let z=0; z<15000; z+=50) {
                 createBoundaryPole(-MOUNTAIN_WIDTH/2, z, 0xff0000);
                 createBoundaryPole(MOUNTAIN_WIDTH/2, z, 0x0000ff);
             }
+            
+            // Add ropes between poles
+            createBoundaryRopes(-MOUNTAIN_WIDTH/2, 15000);
+            createBoundaryRopes(MOUNTAIN_WIDTH/2, 15000);
 
             player = createSkier(0x0078d7);
             player.position.y = 0;
@@ -182,6 +188,30 @@
             pole.position.set(x, 4, z);
             pole.castShadow = true;
             scene.add(pole);
+        }
+
+        function createBoundaryRopes(x, length) {
+            const segmentLength = 50;
+            const numSegments = Math.floor(length / segmentLength);
+            
+            for(let i = 0; i < numSegments; i++) {
+                const curve = new THREE.CatmullRomCurve3([
+                    new THREE.Vector3(x, 3, i * segmentLength),
+                    new THREE.Vector3(x, 2.7, i * segmentLength + segmentLength * 0.25),
+                    new THREE.Vector3(x, 2.5, i * segmentLength + segmentLength * 0.5),
+                    new THREE.Vector3(x, 2.7, i * segmentLength + segmentLength * 0.75),
+                    new THREE.Vector3(x, 3, (i + 1) * segmentLength)
+                ]);
+                
+                const points = curve.getPoints(50);
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({ 
+                    color: 0x333333,
+                    linewidth: 2
+                });
+                const rope = new THREE.Line(geometry, material);
+                scene.add(rope);
+            }
         }
 
         function createBanner(text, z, color) {
@@ -289,69 +319,64 @@
                 new THREE.CylinderGeometry(0.08, 0.08, 0.4, 12),
                 new THREE.MeshStandardMaterial({color: bodyColor})
             );
-            upperArm.position.set(side * 0.15, -0.2, -0.1);
-            upperArm.rotation.z = side * 0.5;
+            upperArm.position.set(0, -0.2, 0);
             upperArm.castShadow = true;
             armGroup.add(upperArm);
+            
+            const elbowGroup = new THREE.Group();
+            elbowGroup.position.set(0, -0.4, 0);
+            elbowGroup.rotation.x = Math.PI / 3; // Bend elbow forward at rest
             
             const elbow = new THREE.Mesh(
                 new THREE.SphereGeometry(0.09, 12, 12),
                 new THREE.MeshStandardMaterial({color: bodyColor})
             );
-            elbow.position.set(side * 0.3, -0.4, -0.2);
             elbow.castShadow = true;
-            armGroup.add(elbow);
-            armGroup.userData.elbow = elbow;
-            
-            const lowerArmGroup = new THREE.Group();
-            lowerArmGroup.position.set(side * 0.3, -0.4, -0.2);
+            elbowGroup.add(elbow);
             
             const lowerArm = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.07, 0.06, 0.5, 12),
                 new THREE.MeshStandardMaterial({color: 0xffdbac})
             );
-            lowerArm.position.set(side * 0.15, -0.25, 0.1);
-            lowerArm.rotation.z = side * -0.3;
+            lowerArm.position.set(0, -0.25, 0);
             lowerArm.castShadow = true;
-            lowerArmGroup.add(lowerArm);
+            elbowGroup.add(lowerArm);
             
             const hand = new THREE.Mesh(
                 new THREE.SphereGeometry(0.08, 12, 12),
                 new THREE.MeshStandardMaterial({color: 0xffdbac})
             );
-            hand.position.set(side * 0.3, -0.5, 0.2);
+            hand.position.set(0, -0.5, 0);
             hand.castShadow = true;
-            lowerArmGroup.add(hand);
+            elbowGroup.add(hand);
             
             const pole = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.02, 0.02, 1.4, 8),
                 new THREE.MeshStandardMaterial({color: 0x444444})
             );
-            pole.position.set(side * 0.3, -1.2, 0.2);
+            pole.position.set(0, -1.2, 0);
             pole.castShadow = true;
-            lowerArmGroup.add(pole);
+            elbowGroup.add(pole);
             
             const basket = new THREE.Mesh(
                 new THREE.TorusGeometry(0.08, 0.015, 8, 12),
                 new THREE.MeshStandardMaterial({color: 0xff6600})
             );
             basket.rotation.x = Math.PI / 2;
-            basket.position.set(side * 0.3, -1.85, 0.2);
-            lowerArmGroup.add(basket);
+            basket.position.set(0, -1.85, 0);
+            elbowGroup.add(basket);
             
             const tip = new THREE.Mesh(
                 new THREE.ConeGeometry(0.02, 0.15, 8),
                 new THREE.MeshStandardMaterial({color: 0x333333})
             );
-            tip.position.set(side * 0.3, -2.0, 0.2);
+            tip.position.set(0, -2.0, 0);
             tip.rotation.x = Math.PI;
-            lowerArmGroup.add(tip);
+            elbowGroup.add(tip);
             
-            armGroup.add(lowerArmGroup);
-            armGroup.userData.lowerArmGroup = lowerArmGroup;
-            armGroup.userData.pole = pole;
-            armGroup.userData.basket = basket;
-            armGroup.userData.tip = tip;
+            armGroup.add(elbowGroup);
+            armGroup.userData.elbowGroup = elbowGroup;
+            armGroup.userData.restElbowRotation = Math.PI / 3;
             
             return armGroup;
         }
@@ -524,13 +549,14 @@
                     new THREE.DodecahedronGeometry(1.2, 1), 
                     new THREE.MeshStandardMaterial({color: 0x555555})
                 );
-                rock.position.y = -0.3;
+                rock.position.y = 0;
                 rock.rotation.x = Math.random() * Math.PI;
                 rock.rotation.y = Math.random() * Math.PI;
                 rock.rotation.z = Math.random() * Math.PI;
                 rock.castShadow = true;
                 group.add(rock);
                 group.position.x = (Math.random() - 0.5) * (MOUNTAIN_WIDTH - 10);
+                group.position.y = -0.6; // Lower rocks into ground
             } else {
                 const drift = new THREE.Mesh(
                     new THREE.SphereGeometry(3, 16, 16, 0, Math.PI*2, 0, Math.PI/2), 
@@ -546,37 +572,40 @@
             group.userData.type = type;
             scene.add(group);
             obstacles.push(group);
+            lastObstacleZ = group.position.z;
         }
 
         function updateArmSwing(character, speed) {
             if (character.userData.leftArm && character.userData.rightArm) {
                 const speedFactor = Math.min(speed / MAX_SPEED, 1.0);
+                const restRotation = character.userData.leftArm.userData.restElbowRotation || 0;
                 
                 if (speedFactor < 0.1) {
-                    // Standing still - arms at rest
                     character.userData.leftArm.rotation.x = 0;
                     character.userData.rightArm.rotation.x = 0;
+                    if (character.userData.leftArm.userData.elbowGroup) {
+                        character.userData.leftArm.userData.elbowGroup.rotation.x = restRotation;
+                        character.userData.rightArm.userData.elbowGroup.rotation.x = restRotation;
+                    }
                 } else if (speedFactor > 0.8) {
-                    // Tucking at high speed - minimal movement, poles tucked
                     const tuckAngle = -0.3;
                     character.userData.leftArm.rotation.x = tuckAngle;
                     character.userData.rightArm.rotation.x = tuckAngle;
                     
-                    if (character.userData.leftArm.userData.lowerArmGroup) {
-                        character.userData.leftArm.userData.lowerArmGroup.rotation.x = -0.5;
-                        character.userData.rightArm.userData.lowerArmGroup.rotation.x = -0.5;
+                    if (character.userData.leftArm.userData.elbowGroup) {
+                        character.userData.leftArm.userData.elbowGroup.rotation.x = restRotation - 0.8;
+                        character.userData.rightArm.userData.elbowGroup.rotation.x = restRotation - 0.8;
                     }
                 } else {
-                    // Normal skiing - arm swing proportional to speed
                     const swingSpeed = speedFactor * 0.008;
                     const swingAngle = Math.sin(Date.now() * swingSpeed) * speedFactor * 0.6;
                     character.userData.leftArm.rotation.x = swingAngle;
                     character.userData.rightArm.rotation.x = -swingAngle;
                     
-                    // Reset lower arm position for normal skiing
-                    if (character.userData.leftArm.userData.lowerArmGroup) {
-                        character.userData.leftArm.userData.lowerArmGroup.rotation.x = 0;
-                        character.userData.rightArm.userData.lowerArmGroup.rotation.x = 0;
+                    if (character.userData.leftArm.userData.elbowGroup) {
+                        const elbowSwing = Math.sin(Date.now() * swingSpeed) * speedFactor * 0.3;
+                        character.userData.leftArm.userData.elbowGroup.rotation.x = restRotation + elbowSwing;
+                        character.userData.rightArm.userData.elbowGroup.rotation.x = restRotation - elbowSwing;
                     }
                 }
             }
@@ -618,12 +647,19 @@
             const elapsed = ((Date.now() - gameStartTime) / 1000).toFixed(1);
             document.getElementById('timer-val').innerText = elapsed;
 
-            // Arm swinging animation based on speed
             updateArmSwing(player, playerVel.z);
 
             if (gameMode === 'slalom' && dist >= SLALOM_FINISH && !slalomCompleted) {
                 slalomCompleted = true;
                 gameRunning = false;
+                document.getElementById('slalom-time').innerText = `Your Time: ${elapsed}s`;
+                document.getElementById('slalom-complete').classList.remove('hidden');
+            }
+
+            if (gameMode === 'freestyle' && dist >= FREESTYLE_FINISH && !freestyleCompleted) {
+                freestyleCompleted = true;
+                gameRunning = false;
+                document.getElementById('slalom-complete').querySelector('h1').innerText = 'FREESTYLE COMPLETE!';
                 document.getElementById('slalom-time').innerText = `Your Time: ${elapsed}s`;
                 document.getElementById('slalom-complete').classList.remove('hidden');
             }
@@ -682,11 +718,14 @@
                 if (obj.position.z < player.position.z - 50) {
                     scene.remove(obj);
                     obstacles.splice(i, 1);
-                    if (gameMode !== 'slalom' || player.position.z < SLALOM_FINISH - 100) {
-                        spawnObstacle(player.position.z + 350, gameMode === 'slalom');
-                    }
                 }
             });
+
+            // Spawn new obstacles dynamically
+            if (lastObstacleZ < player.position.z + 300) {
+                const isSlalomMode = (gameMode === 'slalom' && player.position.z < SLALOM_FINISH - 100);
+                spawnObstacle(lastObstacleZ + (isSlalomMode ? SLALOM_SPACING : 25), isSlalomMode);
+            }
 
             updateCamera();
         }
@@ -738,12 +777,15 @@
             gameMode = mode;
             document.getElementById('menu').classList.add('hidden');
             slalomCompleted = false;
+            freestyleCompleted = false;
+            slalomSign = 1;
+            lastObstacleZ = 100;
             
             if (mode === 'slalom') {
                 document.getElementById('slalom-msg').classList.remove('hidden');
                 createBanner("STARTING LINE", 50, 0x00ff00);
                 createBanner("FINISH LINE", SLALOM_FINISH, 0xff0000);
-                for(let i=0; i<Math.floor(SLALOM_FINISH/SLALOM_SPACING); i++) {
+                for(let i=0; i<Math.floor((SLALOM_FINISH - 100)/SLALOM_SPACING); i++) {
                     spawnObstacle(100 + i * SLALOM_SPACING, true);
                 }
             } else {
@@ -763,6 +805,7 @@
 
         window.continueAfterSlalom = () => {
             document.getElementById('slalom-complete').classList.add('hidden');
+            document.getElementById('slalom-complete').querySelector('h1').innerText = 'SLALOM COMPLETE!';
             gameRunning = true;
             for(let i=0; i<20; i++) {
                 spawnObstacle(player.position.z + 50 + i * 25, false);
