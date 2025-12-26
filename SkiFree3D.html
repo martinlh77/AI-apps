@@ -1003,25 +1003,28 @@
         });
         
         window.addEventListener('touchmove', (e) => {
-            // Ignore if touching speed buttons
-            if (e.target.classList.contains('speed-btn')) return;
-            
-            const dx = e.touches[0].clientX - touchStart.x;
-            touchMoved = true;
-            
-            // Only handle left/right steering
-            if (dx > 25) { 
-                playerVel.x = -0.45; 
-                player.rotation.z = -0.4; 
-            } else if (dx < -25) { 
-                playerVel.x = 0.45; 
-                player.rotation.z = 0.4; 
-            } else { 
-                playerVel.x = 0; 
-            }
-            
-            e.preventDefault();
-        }, {passive: false});
+    if (e.target.classList.contains('speed-btn')) return;
+    
+    const dx = e.touches[0].clientX - touchStart.x;
+    touchMoved = true;
+    
+    // SENSITIVITY SETTING: 
+    // Lower number = less responsive (try 0.002 to 0.005)
+    const sensitivity = 0.004; 
+    const maxSteer = 0.45;
+
+    // Calculate steering based on distance moved
+    let steerPower = dx * sensitivity;
+    
+    // Clamp the power so it doesn't go faster than the keyboard controls
+    if (steerPower > maxSteer) steerPower = maxSteer;
+    if (steerPower < -maxSteer) steerPower = -maxSteer;
+
+    playerVel.x = -steerPower;
+    player.rotation.z = -steerPower * 0.8; // Tilts based on turn strength
+    
+    e.preventDefault();
+}, {passive: false});
 
         window.addEventListener('touchend', (e) => {
             // Ignore if touching speed buttons
