@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Multi-Coin Flip - Statistics Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background-color: #0f0f0f; color: white; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
+        #canvas-container { width: 100%; height: 380px; background: radial-gradient(#2c3e50, #000); touch-action: none; border-bottom: 3px solid #d4af37; position: relative; }
+        
+        /* Settings Gear */
+        #settingsBtn { position: absolute; top: 15px; right: 15px; font-size: 28px; cursor: pointer; z-index: 100; transition: transform 0.3s; color: #d4af37; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        #settingsBtn:hover { transform: rotate(90deg); }
+
+        /* Modal / Menu */
+        #settingsMenu { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .menu-content { max-width: 600px; margin: 0 auto; background: #1a1a1a; padding: 25px; border-radius: 15px; border: 1px solid #d4af37; }
+        .close-menu { float: right; font-size: 30px; cursor: pointer; color: #888; }
+        
+        .section-title { color: #d4af37; border-bottom: 1px solid #333; margin: 20px 0 10px 0; padding-bottom: 5px; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; font-size: 0.8rem; margin-bottom: 5px; color: #bbb; }
+        .input-group input[type="text"], .input-group select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #000; color: #fff; box-sizing: border-box; }
+        
+        /* Preset Coin List */
+        .preset-list { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .preset-item { display: flex; align-items: center; background: #222; padding: 10px; border-radius: 8px; cursor: pointer; transition: background 0.2s; border: 1px solid transparent; }
+        .preset-item:hover { background: #333; border-color: #d4af37; }
+        .preset-imgs { display: flex; gap: 5px; margin-right: 15px; }
+        .preset-imgs img { width: 50px; height: 50px; border-radius: 50%; border: 1px solid #444; object-fit: cover; }
+        .preset-name { font-weight: bold; font-size: 0.9rem; }
+
+        /* UI Elements */
+        .ui { width: 95%; max-width: 850px; padding: 15px; box-sizing: border-box; }
+        .controls-card { background: #1a1a1a; border-radius: 15px; padding: 20px; border: 1px solid #333; box-shadow: 0 15px 35px rgba(0,0,0,0.7); text-align: center; }
+        h2 { margin: 0 0 10px 0; color: #d4af37; letter-spacing: 1px; font-size: 1.5rem; }
+        label { color:#bbb; font-size: 0.9rem; font-weight: bold; }
+        input[type="number"] { padding: 10px; width: 90px; border-radius: 8px; border: 1px solid #d4af37; background: #000; color: #d4af37; font-size: 18px; text-align: center; outline: none; margin: 5px; }
+        .btn-group { margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; text-transform: uppercase; font-size: 0.85rem; }
+        .flip-btn { background: #d4af37; color: #000; }
+        .flip-btn:hover:not(:disabled) { background: #f1c40f; transform: translateY(-2px); }
+        .flip-btn:disabled { background: #555; color: #888; cursor: not-allowed; }
+        .secondary-btn { background: #34495e; color: white; }
+        
+        .table-container { width: 100%; overflow-x: auto; margin-top: 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: collapse; background: #fff; color: #000; min-width: 380px; }
+        th { background: #d4af37; color: #000; padding: 12px 5px; font-size: 11px; text-transform: uppercase; }
+        td { padding: 10px 5px; border-bottom: 1px solid #eee; text-align: center; font-size: 16px; font-weight: 600; vertical-align: middle; }
+        .pct { font-size: 0.7em; color: #777; display: block; font-weight: normal; margin-top: 2px; }
+        .total-row { background: #f9f1d7; font-weight: bold; border-top: 3px solid #d4af37; }
+        .instruction { color: #888; font-size: 11px; margin-top: 10px; font-style: italic; }
+
+        @media (max-width: 480px) {
+            td { font-size: 14px; padding: 8px 4px; }
+            h2 { font-size: 1.2rem; }
+            button { padding: 10px 15px; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container">
+    <div id="settingsBtn">⚙️</div>
+</div>
+
+<!-- SETTINGS MENU -->
+<div id="settingsMenu">
+    <div class="menu-content">
+        <span class="close-menu" id="closeSettings">&times;</span>
+        <h3 style="margin-top:0; color:#d4af37">COIN SETTINGS</h3>
+        
+        <div class="section-title">Table Surface</div>
+        <div class="input-group">
+            <label>Surface Type:</label>
+            <select id="tableSurfaceSelect">
+                <option value="standard">Standard Dark</option>
+                <option value="red-felt">Red Felt</option>
+                <option value="blue-felt">Blue Felt</option>
+                <option value="purple-felt">Purple Felt</option>
+                <option value="green-felt">Green Felt</option>
+                <option value="wood">Wood</option>
+                <option value="steel">Steel</option>
+                <option value="dirt">Dirt</option>
+            </select>
+        </div>
+
+        <div class="section-title">Upload / URL</div>
+        <div class="input-group">
+            <label>Heads Image URL:</label>
+            <input type="text" id="headsUrlInput" placeholder="Paste image link here...">
+        </div>
+        <div class="input-group">
+            <label>Tails Image URL:</label>
+            <input type="text" id="tailsUrlInput" placeholder="Paste image link here...">
+        </div>
+        <div class="input-group">
+            <label>Or Upload Files:</label>
+            <input type="file" id="headsFile" accept="image/*" style="margin-bottom:5px">
+            <input type="file" id="tailsFile" accept="image/*">
+        </div>
+        <button id="applyCustom" class="flip-btn" style="width:100%; margin-top:10px">Apply Custom Images</button>
+
+        <div class="section-title">Choose a Coin Preset</div>
+        <div class="preset-list" id="presetList">
+            <!-- Items injected via JS -->
+        </div>
+    </div>
+</div>
+
+<div class="ui">
+    <div class="controls-card">
+        <h2>SANTA COIN TOSS</h2>
+        <label>NUMBER OF FLIPS: </label>
+        <input type="number" id="flipCount" value="1" min="1">
+        
+        <div class="btn-group">
+            <button id="flipBtn" class="flip-btn">Throw Coin</button>
+            <button id="nextRoundBtn" class="secondary-btn">New Round</button>
+            <button id="resetBtn" class="secondary-btn">Reset Board</button>
+        </div>
+        <p class="instruction">Drag: Rotate | Scroll/Pinch: Zoom | Percentage tracks per round.</p>
+    </div>
+
+    <div class="table-container">
+        <table id="tallyTable">
+            <thead>
+                <tr>
+                    <th>Round</th>
+                    <th>Heads (Face)</th>
+                    <th>Tails (Back)</th>
+                    <th>Round Total</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td>GRAND</td>
+                    <td><span id="gh">0</span><span id="ghp" class="pct">0.0%</span></td>
+                    <td><span id="gt">0</span><span id="gtp" class="pct">0.0%</span></td>
+                    <td id="gall">0</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<script>
+    /** PRESET DATA **/
+    const COIN_PRESETS = [
+        {
+            name: "Santa Claus",
+            front: "https://enter.pollinations.ai/api/generate/image/Closeup%20of%20Santa%20Claus's%20face?model=zimage&seed=561617747&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false",
+            back: "https://enter.pollinations.ai/api/generate/image/Flip%20the%20view%20to%20see%20him%20from%20the%20back%20of%20his%20head%20in%20the%20same%20position%20and%20posture%2C%20make%20sure%20the%20top%20of%20the%20hat%20still%20falls%20on%20the%20right%20shoulder?model=seedream-pro&seed=159230471&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false&image=https%3A%2F%2Fenter.pollinations.ai%2Fapi%2Fgenerate%2Fimage%2FCloseup%2520of%2520Santa%2520Claus%27s%2520face%3Fmodel%3Dzimage%26seed%3D561617747%26private%3Dtrue%26nologo%3Dtrue%26enhance%3Dtrue%26safe%3Dtrue%26nofeed%3Dtrue%26guidance_scale%3D7%26width%3D1024%26height%3D1024%26quality%3Dhd%26transparent%3Dfalse"
+        },
+        {
+            name: "Chicken",
+            front: "https://enter.pollinations.ai/api/generate/image/Closeup%20of%20a%20chicken%20staring%20straight%20ahead?model=zimage&seed=638554716&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false",
+            back: "https://enter.pollinations.ai/api/generate/image/turn%20the%20chicken%20around%20for%20a%20view%20from%20the%20back%20at%20the%20same%20height.%20Be%20sure%20it%20is%20a%20perfect%20180%20degree%20view%20from%20the%20back%20behind%20its%20tail.?model=nanobanana-pro&seed=634314711&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1920&height=1920&quality=hd&transparent=false&image=https%3A%2F%2Fenter.pollinations.ai%2Fapi%2Fgenerate%2Fimage%2FCloseup%2520of%2520a%2520chicken%2520staring%2520straight%2520ahead%3Fmodel%3Dzimage%26seed%3D638554716%26private%3Dtrue%26nologo%3Dtrue%26enhance%3Dtrue%26safe%3Dtrue%26nofeed%3Dtrue%26guidance_scale%3D7%26width%3D1024%26height%3D1024%26quality%3Dhd%26transparent%3Dfalse"
+        },
+        {
+            name: "Zebra",
+            front: "https://enter.pollinations.ai/api/generate/image/A%20zebra%20looking%20straight%20at%20the%20camera?model=zimage&seed=610049763&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false",
+            back: "https://enter.pollinations.ai/api/generate/image/the%20camera%20looking%20directly%20at%20the%20butt%20of%20a%20zebra?model=zimage&seed=478641423&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false"
+        },
+        {
+            name: "Elephant",
+            front: "https://enter.pollinations.ai/api/generate/image/the%20camera%20looking%20directly%20at%20the%20rear%20of%20an%20elephant?model=zimage&seed=478641423&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false",
+            back: "https://enter.pollinations.ai/api/generate/image/the%20camera%20looking%20directly%20at%20the%20tail%20of%20an%20elephant?model=zimage&seed=478641423&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false"
+        },
+        {
+            name: "Bull",
+            front: "https://enter.pollinations.ai/api/generate/image/a%20brown%20bull%20with%20white%20horns%20directly%20facing%20the%20camera?model=zimage&seed=734579346&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false",
+            back: "https://enter.pollinations.ai/api/generate/image/the%20camera%20looking%20directly%20at%20the%20tail%20and%20rear%20of%20a%20bull%20facing%20away%20from%20the%20camera?model=zimage&seed=734579346&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false"
+        },
+        {
+            name: "Girl",
+            front: "https://enter.pollinations.ai/api/generate/image/a%20closeup%20of%20a%2014-year-old%20Scandinavian%20teen%20girl%20looking%20directly%20at%20the%20camera%2C%20wearing%20a%20purple%20scarf%20around%20her%20neck?model=flux&seed=679119800&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false",
+            back: "https://enter.pollinations.ai/api/generate/image/a%20closeup%20of%20the%20back%20of%20the%20head%20of%20a%2014-year-old%20Scandinavian%20teen%20girl%20wearing%20a%20purple%20scarf%20around%20her%20neck?model=flux&seed=565108732&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false"
+        },
+        {
+            name: "Boy",
+            front: "https://enter.pollinations.ai/api/generate/image/a%20closeup%20of%20a%2014-year-old%20Hispanic%20teen%20boy%20looking%20directly%20at%20the%20camera%2C%20wearing%20a%20purple%20scarf%20around%20her%20neck?model=flux&seed=570629320&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false",
+            back: "https://enter.pollinations.ai/api/generate/image/a%20closeup%20of%20the%20back%20of%20the%20head%20of%20a%2014-year-old%20Hispanic%20teen%20boy%20wearing%20a%20purple%20scarf%20around%20her%20neck?model=flux&seed=565108732&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false"
+        },
+        {
+            name: "Rubber Duck",
+            front: "https://enter.pollinations.ai/api/generate/image/a%20closeup%20of%20a%20yellow%20rubber%20duck%20directly%20facing%20the%20camera?model=flux&seed=565108732&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false",
+            back: "https://enter.pollinations.ai/api/generate/image/a%20closeup%20of%20a%20yellow%20rubber%20duck%20directly%20facing%20away%20from%20the%20camera?model=flux&seed=427232980&private=true&nologo=true&enhance=true&safe=false&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false"
+        }
+    ];
+
+    /** 1. THREE.JS SCENE SETUP **/
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    camera.position.set(0, 5, 8);
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const mainLight = new THREE.SpotLight(0xffffff, 1.2);
+    mainLight.position.set(5, 12, 5);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+
+    /** 2. FLOOR & ENVIRONMENT (TEXTURED) **/
+    function getTableMaterial(surface) {
+        if (surface === 'standard') {
+            return new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+        }
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        switch(surface) {
+            case 'red-felt': createFeltTexture(ctx, '#3D0000', '#4A0000', '#2F0000'); break;
+            case 'blue-felt': createFeltTexture(ctx, '#1A3A5C', '#2A4A6C', '#0A2A4C'); break;
+            case 'purple-felt': createFeltTexture(ctx, '#2D1A3D', '#3D2A4D', '#1D0A2D'); break;
+            case 'green-felt': createFeltTexture(ctx, '#064420', '#075428', '#053618'); break;
+            case 'wood': createWoodTexture(ctx); break;
+            case 'steel': createMetalTexture(ctx); break;
+            case 'dirt': createDirtTexture(ctx); break;
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(20, 20); 
+        
+        return new THREE.MeshStandardMaterial({ 
+            map: texture, 
+            roughness: surface.includes('felt') ? 0.95 : (surface === 'wood' ? 0.6 : (surface === 'dirt' ? 0.98 : 0.3)),
+            metalness: surface === 'steel' ? 0.8 : 0
+        });
+    }
+
+    function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(0, 0, 512, 512);
+        for(let i = 0; i < 50000; i++) {
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const brightness = Math.random();
+            ctx.fillStyle = brightness > 0.5 ? lightColor : darkColor;
+            ctx.globalAlpha = 0.12;
+            ctx.fillRect(x, y, Math.random() * 2, Math.random() * 2);
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    function createWoodTexture(ctx) {
+        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+        gradient.addColorStop(0, '#7A3E1A'); gradient.addColorStop(0.5, '#8B4513'); gradient.addColorStop(1, '#7A3E1A');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 512, 512);
+        for(let ring = 0; ring < 15; ring++) {
+            const baseY = ring * 40 + Math.random() * 30;
+            ctx.strokeStyle = `rgba(100, 60, 30, 0.3)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for(let x = 0; x < 512; x += 2) {
+                ctx.lineTo(x, baseY + Math.sin(x * 0.02) * 10);
+            }
+            ctx.stroke();
+        }
+    }
+
+    function createMetalTexture(ctx) {
+        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+        gradient.addColorStop(0, '#8A95A5'); gradient.addColorStop(0.5, '#B8C5D6'); gradient.addColorStop(1, '#8A95A5');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.globalAlpha = 0.12;
+        for(let i = 0; i < 1000; i++) {
+            ctx.strokeStyle = '#fff'; ctx.beginPath();
+            const x = Math.random() * 512; const y = Math.random() * 512;
+            ctx.moveTo(x, y); ctx.lineTo(x + 100, y + 10); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+    }
+
+    function createDirtTexture(ctx) {
+        ctx.fillStyle = '#5C3A1F';
+        ctx.fillRect(0, 0, 512, 512);
+        for(let i = 0; i < 5000; i++) {
+            const x = Math.random() * 512; const y = Math.random() * 512;
+            const shade = 40 + Math.random() * 40;
+            ctx.fillStyle = `rgb(${shade+20}, ${shade}, ${shade-10})`;
+            ctx.fillRect(x, y, 2, 2);
+        }
+    }
+
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(100, 100),
+        getTableMaterial('standard')
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    /** 3. THE COIN **/
+    const COIN_RADIUS = 1.5;
+    const COIN_THICK = 0.28;
+    const coinGroup = new THREE.Group();
+    scene.add(coinGroup);
+
+    const loader = new THREE.TextureLoader();
+    let currentHeadTex = loader.load(COIN_PRESETS[0].front);
+    let currentTailTex = loader.load(COIN_PRESETS[0].back);
+
+    const bodyMats = [
+        new THREE.MeshStandardMaterial({ color: 0x95a5a6, metalness: 0.8 }), 
+        new THREE.MeshStandardMaterial({ map: currentHeadTex }), 
+        new THREE.MeshStandardMaterial({ map: currentTailTex })
+    ];
+    const coinBody = new THREE.Mesh(new THREE.CylinderGeometry(COIN_RADIUS, COIN_RADIUS, COIN_THICK, 72), bodyMats);
+    coinBody.castShadow = true;
+    coinGroup.add(coinBody);
+
+    const lipMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 1.0, roughness: 0.1 });
+    const torusGeom = new THREE.TorusGeometry(COIN_RADIUS - 0.01, 0.06, 16, 100);
+    const topLip = new THREE.Mesh(torusGeom, lipMat);
+    topLip.rotation.x = Math.PI/2; topLip.position.y = COIN_THICK/2;
+    const bottomLip = new THREE.Mesh(torusGeom, lipMat);
+    bottomLip.rotation.x = Math.PI/2; bottomLip.position.y = -COIN_THICK/2;
+    coinGroup.add(topLip, bottomLip);
+
+    coinGroup.position.y = COIN_THICK/2;
+
+    /** 4. LOGIC & ANIMATION **/
+    let roundNum = 1;
+    let isFlipping = false;
+
+    function addRow() {
+        const tr = document.createElement('tr');
+        tr.id = 'r-' + roundNum;
+        tr.innerHTML = `
+            <td>${roundNum}</td>
+            <td><span class="h-val">0</span><span class="h-pct pct">0.0%</span></td>
+            <td><span class="t-val">0</span><span class="t-pct pct">0.0%</span></td>
+            <td class="rt">0</td>
+        `;
+        document.getElementById('tableBody').appendChild(tr);
+    }
+    addRow();
+
+    async function handleFlipSequence() {
+        if (isFlipping) return;
+        const countInput = document.getElementById('flipCount').value;
+        const count = Math.max(parseInt(countInput) || 1, 1);
+        isFlipping = true;
+        document.getElementById('flipBtn').disabled = true;
+
+        for (let i = 0; i < count; i++) {
+            const result = Math.random() < 0.5 ? 'heads' : 'tails';
+            await animateCoin(result);
+            updateTable(result);
+        }
+        isFlipping = false;
+        document.getElementById('flipBtn').disabled = false;
+    }
+
+    function animateCoin(result) {
+        return new Promise(resolve => {
+            const jumpHeight = 5.2; 
+            const minTumbles = 6;
+            const extraTumbles = Math.floor(Math.random() * 4);
+            
+            const finalX = (result === 'heads') ? (Math.PI * (minTumbles + extraTumbles) * 2) : (Math.PI * ((minTumbles + extraTumbles) * 2 + 1));
+            const finalY = coinGroup.rotation.y + (Math.PI * 1.5) + (Math.random() * Math.PI * 3);
+            const finalZ = (Math.random() - 0.5) * 1.1; 
+
+            const tl = gsap.timeline({ onComplete: resolve });
+            coinGroup.rotation.x %= (Math.PI * 2);
+            
+            tl.to(coinGroup.position, { y: jumpHeight, duration: 0.6, ease: "power2.out" });
+            tl.to(coinGroup.rotation, { x: finalX, y: finalY, z: finalZ, duration: 1.1, ease: "none" }, 0);
+            tl.to(coinGroup.position, { y: COIN_THICK/2, duration: 0.5, ease: "bounce.out" }, "-=0.2");
+            tl.to(coinGroup.rotation, { x: finalX, z: 0, duration: 0.3 }, "-=0.4");
+        });
+    }
+
+    function updateTable(result) {
+        const row = document.getElementById('r-' + roundNum);
+        const hVal = row.querySelector('.h-val');
+        const tVal = row.querySelector('.t-val');
+        
+        if (result === 'heads') hVal.innerText = parseInt(hVal.innerText) + 1;
+        else tVal.innerText = parseInt(tVal.innerText) + 1;
+        
+        const rh = parseInt(hVal.innerText);
+        const rt = parseInt(tVal.innerText);
+        const rTotal = rh + rt;
+        row.querySelector('.rt').innerText = rTotal;
+
+        row.querySelector('.h-pct').innerText = ((rh / rTotal) * 100).toFixed(1) + "%";
+        row.querySelector('.t-pct').innerText = ((rt / rTotal) * 100).toFixed(1) + "%";
+
+        let gh = 0, gt = 0;
+        document.querySelectorAll('.h-val').forEach(c => gh += parseInt(c.innerText));
+        document.querySelectorAll('.t-val').forEach(c => gt += parseInt(c.innerText));
+        const grandTotal = gh + gt;
+        
+        document.getElementById('gh').innerText = gh;
+        document.getElementById('gt').innerText = gt;
+        document.getElementById('gall').innerText = grandTotal;
+
+        if (grandTotal > 0) {
+            document.getElementById('ghp').innerText = ((gh / grandTotal) * 100).toFixed(1) + "%";
+            document.getElementById('gtp').innerText = ((gt / grandTotal) * 100).toFixed(1) + "%";
+        }
+    }
+
+    /** 5. SETTINGS UI LOGIC **/
+    const menu = document.getElementById('settingsMenu');
+    document.getElementById('settingsBtn').onclick = () => menu.style.display = 'block';
+    document.getElementById('closeSettings').onclick = () => menu.style.display = 'none';
+
+    document.getElementById('tableSurfaceSelect').onchange = (e) => {
+        floor.material.dispose();
+        floor.material = getTableMaterial(e.target.value);
+    };
+
+    function updateCoin(headSrc, tailSrc) {
+        loader.load(headSrc, (tex) => {
+            bodyMats[1].map = tex;
+            bodyMats[1].needsUpdate = true;
+        });
+        loader.load(tailSrc, (tex) => {
+            bodyMats[2].map = tex;
+            bodyMats[2].needsUpdate = true;
+        });
+        menu.style.display = 'none';
+    }
+
+    // Populate Presets
+    const presetContainer = document.getElementById('presetList');
+    COIN_PRESETS.forEach(coin => {
+        const item = document.createElement('div');
+        item.className = 'preset-item';
+        item.innerHTML = `
+            <div class="preset-imgs">
+                <img src="${coin.front}">
+                <img src="${coin.back}">
+            </div>
+            <div class="preset-name">${coin.name}</div>
+        `;
+        item.onclick = () => updateCoin(coin.front, coin.back);
+        presetContainer.appendChild(item);
+    });
+
+    // Custom Apply
+    document.getElementById('applyCustom').onclick = async () => {
+        const hUrl = document.getElementById('headsUrlInput').value;
+        const tUrl = document.getElementById('tailsUrlInput').value;
+        const hFile = document.getElementById('headsFile').files[0];
+        const tFile = document.getElementById('tailsFile').files[0];
+
+        let finalH = hUrl;
+        let finalT = tUrl;
+
+        if (hFile) finalH = await toBase64(hFile);
+        if (tFile) finalT = await toBase64(tFile);
+
+        if (finalH && finalT) updateCoin(finalH, finalT);
+        else alert("Please provide both Heads and Tails (via URL or Upload)");
+    };
+
+    const toBase64 = file => new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => res(reader.result);
+        reader.onerror = e => rej(e);
+    });
+
+    /** 6. UI EVENTS **/
+    document.getElementById('flipBtn').onclick = handleFlipSequence;
+    document.getElementById('nextRoundBtn').onclick = () => { if(!isFlipping){ roundNum++; addRow(); }};
+    document.getElementById('resetBtn').onclick = () => {
+        if(isFlipping) return;
+        document.getElementById('tableBody').innerHTML = '';
+        roundNum = 1; addRow();
+        document.getElementById('gh').innerText = '0';
+        document.getElementById('gt').innerText = '0';
+        document.getElementById('gall').innerText = '0';
+        document.getElementById('ghp').innerText = '0.0%';
+        document.getElementById('gtp').innerText = '0.0%';
+        gsap.to(coinGroup.rotation, { x: 0, y: 0, z: 0, duration: 0.5 });
+    };
+
+    window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+</script>
+</body>
+</html>
