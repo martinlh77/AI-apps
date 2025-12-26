@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SkiFree 3D - Ultimate Pro</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #e0f0ff; font-family: 'Segoe UI', sans-serif; touch-action: none; }
+        #ui { position: absolute; top: 20px; left: 20px; color: #222; pointer-events: none; z-index: 10; }
+        .stat { font-size: 22px; font-weight: bold; background: rgba(255,255,255,0.8); padding: 5px 15px; border-radius: 20px; margin-bottom: 5px; border: 2px solid #333; }
+        #menu, #game-over {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: white; padding: 40px; border-radius: 20px; text-align: center; border: 6px solid #333; z-index: 100;
+        }
+        button { 
+            padding: 15px 30px; font-size: 20px; cursor: pointer; background: #0078d7; color: white; 
+            border: none; border-radius: 8px; margin: 10px; font-weight: bold; box-shadow: 0 4px #004e8c;
+        }
+        button:active { transform: translateY(2px); box-shadow: 0 2px #004e8c; }
+        .hidden { display: none !important; }
+        #top-controls { position: absolute; top: 20px; right: 20px; z-index: 100; display: flex; gap: 10px; }
+        .util-btn { padding: 10px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div class="stat">Distance: <span id="dist-val">0</span>m</div>
+        <div class="stat">Speed: <span id="speed-val">0</span> km/h</div>
+    </div>
+
+    <div id="top-controls">
+        <button class="util-btn" onclick="toggleCamera()">VIEW (C)</button>
+        <button class="util-btn" style="background: #d32f2f;" onclick="location.reload()">QUIT</button>
+    </div>
+
+    <div id="menu">
+        <h1 style="font-size: 48px; margin: 0;">SKI FREE 3D</h1>
+        <p><b>Up:</b> Slow Accel | <b>Down:</b> Brake<br><b>Left/Right:</b> Steer | <b>Space/Tap:</b> Jump</p>
+        <button onclick="startGame('freestyle')">FREESTYLE</button>
+        <button onclick="startGame('slalom')">SLALOM</button>
+    </div>
+
+    <div id="game-over" class="hidden">
+        <h1 id="death-reason" style="color:red">THE YETI GOT YOU!</h1>
+        <p id="final-stats" style="font-size: 20px;"></p>
+        <button onclick="location.reload()">MAIN MENU</button>
+    </div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- Sound Logic ---
+        const AudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(freq, type, duration, vol=0.1) {
+            try {
+                const osc = AudioCtx.createOscillator();
+                const gain = AudioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, AudioCtx.currentTime);
+                osc.connect(gain); gain.connect(AudioCtx.destination);
+                gain.gain.setValueAtTime(vol, AudioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, AudioCtx.currentTime + duration);
+                osc.start(); osc.stop(AudioCtx.currentTime + duration);
+            } catch(e) {}
+        }
+
+        // --- Config ---
+        const MOUNTAIN_WIDTH = 60;
+        const YETI_SPAWN = 5000;
+        const GRAVITY = 0.015;
+        const MAX_SPEED = 4.0;
+        const ACCEL_RATE = 0.004; // Gradual speed increase
+        
+        let scene, camera, renderer, player, yeti;
+        let obstacles = [];
+        let isFirstPerson = false;
+        let isCrashed = false;
+        let isInvincible = false;
+        let gameRunning = false;
+        let gameMode = 'freestyle';
+        let playerVel = { x: 0, y: 0, z: 0 };
+        let isJumping = false;
+        let slalomSign = 1;
+
+        const keys = {};
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xe0f0ff);
+            scene.fog = new THREE.Fog(0xe0f0ff, 50, 300);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambient);
+            const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+            sun.position.set(50, 100, 50);
+            sun.castShadow = true;
+            scene.add(sun);
+
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(2000, 100000),
+                new THREE.MeshStandardMaterial({ color: 0xffffff })
+            );
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Boundaries
+            for(let z=0; z<15000; z+=50) {
+                createBoundaryPole(-MOUNTAIN_WIDTH/2, z, 0xff0000);
+                createBoundaryPole(MOUNTAIN_WIDTH/2, z, 0x0000ff);
+            }
+
+            player = createCharacter(0x0078d7);
+            scene.add(player);
+            createYeti();
+            animate();
+        }
+
+        function createBoundaryPole(x, z, color) {
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 8), new THREE.MeshStandardMaterial({color}));
+            pole.position.set(x, 4, z);
+            scene.add(pole);
+        }
+
+        // Shared model for player and NPCs
+        function createCharacter(color) {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.4), new THREE.MeshStandardMaterial({color}));
+            body.position.y = 0.7;
+            group.add(body);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), new THREE.MeshStandardMaterial({color: 0xffdbac}));
+            head.position.y = 1.3;
+            group.add(head);
+            const skiMat = new THREE.MeshStandardMaterial({color: 0x333333});
+            const ski1 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.05, 2.0), skiMat);
+            ski1.position.set(-0.25, 0.05, 0);
+            const ski2 = ski1.clone(); ski2.position.set(0.25, 0.05, 0);
+            group.add(ski1, ski2);
+            return group;
+        }
+
+        function createYeti() {
+            yeti = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({color: 0xeeeeee});
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(2.5, 3.5, 2), mat);
+            torso.position.y = 1.75;
+            const outline = new THREE.Mesh(new THREE.BoxGeometry(2.7, 3.7, 2.2), new THREE.MeshBasicMaterial({color: 0x000000, side: THREE.BackSide}));
+            outline.position.y = 1.75;
+            yeti.add(torso, outline);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), mat);
+            head.position.y = 4;
+            const eye = new THREE.Mesh(new THREE.SphereGeometry(0.15), new THREE.MeshBasicMaterial({color: 0xff0000}));
+            eye.position.set(0.4, 0.2, 0.7);
+            const eye2 = eye.clone(); eye2.position.x = -0.4;
+            head.add(eye, eye2);
+            yeti.add(head);
+            const arm = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3, 0.8), mat);
+            arm.position.set(1.7, 2.5, 0);
+            const arm2 = arm.clone(); arm2.position.x = -1.7;
+            yeti.add(arm, arm2);
+            yeti.position.z = -100;
+            yeti.visible = false;
+            scene.add(yeti);
+        }
+
+        function spawnObstacle(zPos, isSlalom = false) {
+            const types = isSlalom ? ['flag'] : ['tree', 'rock', 'drift', 'npc'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const group = new THREE.Group();
+
+            if (type === 'flag') {
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 4), new THREE.MeshStandardMaterial({color: 0x222222}));
+                const flag = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.1), new THREE.MeshStandardMaterial({color: slalomSign > 0 ? 0xff0000 : 0x0000ff}));
+                flag.position.set(0.6, 1.5, 0);
+                group.add(pole, flag);
+                group.position.x = (MOUNTAIN_WIDTH * 0.3) * slalomSign;
+                slalomSign *= -1;
+            } else if (type === 'npc') {
+                const npcCol = [0xffff00, 0xff00ff, 0x00ff00][Math.floor(Math.random()*3)];
+                const npc = createCharacter(npcCol);
+                group.add(npc);
+                group.userData.npcSpeed = 0.4 + Math.random() * 0.5;
+                group.position.x = (Math.random() - 0.5) * (MOUNTAIN_WIDTH - 10);
+            } else if (type === 'tree') {
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.5), new THREE.MeshStandardMaterial({color: 0x5C4033}));
+                const leaves = new THREE.Mesh(new THREE.ConeGeometry(2.5, 6, 8), new THREE.MeshStandardMaterial({color: 0x0b5345}));
+                leaves.position.y = 3.5; group.add(trunk, leaves);
+                group.position.x = (Math.random() - 0.5) * (MOUNTAIN_WIDTH - 10);
+            } else if (type === 'rock') {
+                const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(1.2), new THREE.MeshStandardMaterial({color: 0x555555}));
+                rock.position.y = 0.5; group.add(rock);
+                group.position.x = (Math.random() - 0.5) * (MOUNTAIN_WIDTH - 10);
+            } else {
+                const drift = new THREE.Mesh(new THREE.SphereGeometry(3, 8, 8, 0, Math.PI*2, 0, Math.PI/2), new THREE.MeshStandardMaterial({color: 0xffffff}));
+                drift.scale.y = 0.2; group.add(drift);
+                group.position.x = (Math.random() - 0.5) * (MOUNTAIN_WIDTH - 10);
+            }
+
+            group.position.z = zPos || player.position.z + 350;
+            group.userData.type = type;
+            scene.add(group);
+            obstacles.push(group);
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            // --- Corrected Key Mappings ---
+            if (!isCrashed) {
+    // Left Arrow -> Move Left (positive X in this camera setup)
+    if (keys['ArrowLeft']) { playerVel.x = 0.45; player.rotation.z = 0.4; } 
+    // Right Arrow -> Move Right (negative X in this camera setup)
+    else if (keys['ArrowRight']) { playerVel.x = -0.45; player.rotation.z = -0.4; } 
+    else { playerVel.x *= 0.85; player.rotation.z *= 0.85; }
+
+                // Speed (Gradual)
+                if (keys['ArrowUp']) playerVel.z += ACCEL_RATE;
+                if (keys['ArrowDown']) playerVel.z -= 0.1;
+            }
+
+            playerVel.z = Math.max(0, Math.min(MAX_SPEED, playerVel.z));
+            player.position.x += playerVel.x;
+            player.position.z += playerVel.z;
+
+            // Boundary Lock
+            const halfW = MOUNTAIN_WIDTH / 2 - 2;
+            if (player.position.x < -halfW) player.position.x = -halfW;
+            if (player.position.x > halfW) player.position.x = halfW;
+
+            // Jump Physics
+            if (isJumping) {
+                playerVel.y -= GRAVITY;
+                player.position.y += playerVel.y;
+                if (player.position.y <= 0) { player.position.y = 0; isJumping = false; }
+            }
+
+            // Invincibility Blinking
+            if (isInvincible) player.visible = Math.sin(Date.now() * 0.05) > 0;
+            else player.visible = true;
+
+            const dist = Math.floor(player.position.z);
+            document.getElementById('dist-val').innerText = dist;
+            document.getElementById('speed-val').innerText = Math.floor(playerVel.z * 40);
+
+            // Yeti
+            if (dist > YETI_SPAWN) {
+                if (!yeti.visible) { yeti.visible = true; yeti.position.z = player.position.z - 150; playSfx(80, 'sawtooth', 1.5, 0.3); }
+                yeti.position.z += playerVel.z + 0.2;
+                yeti.position.x += (player.position.x - yeti.position.x) * 0.05;
+                yeti.children[3].rotation.x = Math.sin(Date.now() * 0.01) * 1.5;
+                yeti.children[4].rotation.x = Math.cos(Date.now() * 0.01) * 1.5;
+                if (yeti.position.distanceTo(player.position) < 4) endGame("THE YETI CAUGHT YOU!");
+            }
+
+            // Obstacles
+            obstacles.forEach((obj, i) => {
+                if (obj.userData.type === 'npc') obj.position.z += obj.userData.npcSpeed;
+
+                const dX = Math.abs(player.position.x - obj.position.x);
+                const dZ = Math.abs(player.position.z - obj.position.z);
+
+                if (!isInvincible && dX < 1.8 && dZ < 1.5 && player.position.y < 1) {
+                    const type = obj.userData.type;
+                    if (type === 'drift') {
+                        if (!isJumping) { isJumping = true; playerVel.y = 0.4; playSfx(300, 'sine', 0.2); }
+                    } else if (type === 'rock') {
+                        if (isJumping) { playerVel.z = Math.min(MAX_SPEED, playerVel.z + 0.5); playSfx(600, 'triangle', 0.1); }
+                        else crash();
+                    } else if (type === 'tree' || type === 'npc') {
+                        crash();
+                    }
+                }
+
+                if (obj.position.z < player.position.z - 50) {
+                    scene.remove(obj);
+                    obstacles.splice(i, 1);
+                    spawnObstacle(player.position.z + 350, gameMode === 'slalom');
+                }
+            });
+
+            updateCamera();
+        }
+
+        function crash() {
+            if (isCrashed || isInvincible) return;
+            isCrashed = true;
+            isInvincible = true;
+            playerVel.z = 0;
+            playerVel.x = 0;
+            playSfx(50, 'square', 0.5, 0.3);
+            player.rotation.x = -Math.PI / 2;
+
+            setTimeout(() => {
+                isCrashed = false;
+                player.rotation.x = 0;
+                // Keep invincible for a bit longer so they can move away
+                setTimeout(() => { isInvincible = false; }, 1500);
+            }, 1000);
+        }
+
+        function updateCamera() {
+            const fp = (isFirstPerson && !isCrashed);
+            if (fp) {
+                camera.position.set(player.position.x, player.position.y + 1.2, player.position.z + 0.5);
+                camera.lookAt(player.position.x, player.position.y + 1, player.position.z + 20);
+            } else {
+                camera.position.set(player.position.x * 0.3, player.position.y + 12, player.position.z - 22);
+                camera.lookAt(player.position.x, player.position.y + 2, player.position.z + 10);
+            }
+        }
+
+        function endGame(msg) {
+            gameRunning = false;
+            document.getElementById('game-over').classList.remove('hidden');
+            document.getElementById('death-reason').innerText = msg;
+            document.getElementById('final-stats').innerText = `Total Distance: ${Math.floor(player.position.z)}m`;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            update();
+            renderer.render(scene, camera);
+        }
+
+        window.startGame = (mode) => {
+            gameMode = mode;
+            document.getElementById('menu').classList.add('hidden');
+            if (AudioCtx.state === 'suspended') AudioCtx.resume();
+            for(let i=0; i<30; i++) spawnObstacle(i * (mode === 'slalom' ? 60 : 25) + 100, mode === 'slalom');
+            gameRunning = true;
+        };
+
+        window.toggleCamera = () => { isFirstPerson = !isFirstPerson; };
+
+        // --- Event Listeners ---
+        window.addEventListener('keydown', e => {
+            keys[e.code] = true;
+            if (e.code === 'Space') { if (!isJumping) { isJumping = true; playerVel.y = 0.42; playSfx(400, 'triangle', 0.2); } }
+            if (e.code === 'KeyC') toggleCamera();
+        });
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        // Mobile Logic (Flipped Left/Right)
+        let touchStart = { x: 0, y: 0 };
+        window.addEventListener('touchstart', (e) => {
+            touchStart.x = e.touches[0].clientX;
+            touchStart.y = e.touches[0].clientY;
+            if (!isJumping) { isJumping = true; playerVel.y = 0.42; }
+        });
+        window.addEventListener('touchmove', (e) => {
+            const dx = e.touches[0].clientX - touchStart.x;
+            const dy = e.touches[0].clientY - touchStart.y;
+            
+            // Swipe Right -> Move Right (negative X)
+if (dx > 25) { playerVel.x = -0.45; player.rotation.z = -0.4; }
+// Swipe Left -> Move Left (positive X)
+else if (dx < -25) { playerVel.x = 0.45; player.rotation.z = 0.4; }
+            else { playerVel.x = 0; }
+
+            if (dy < -20) playerVel.z += ACCEL_RATE;
+            if (dy > 20) playerVel.z -= 0.1;
+            
+            e.preventDefault();
+        }, {passive: false});
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init();
+    </script>
+</body>
+</html>
