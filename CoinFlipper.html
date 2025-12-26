@@ -246,6 +246,36 @@
 <script>
     /** PRESET DATA **/
     const COIN_PRESETS = [
+{
+    name: "Jazz Animals Coin",
+    front: "https://enter.pollinations.ai/api/generate/image/%22A%20whimsical%20coin%20relief%20showcases%20a%20doodle-style%20sun%20serenading%20a%20jazz%20band%20of%20friendly%20animals.%22?model=flux&seed=918171424&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false",
+    back: "https://enter.pollinations.ai/api/generate/image/%22A%20whimsical%20coin%20relief%20showcases%20a%20doodle-style%20sun%20serenading%20a%20jazz%20band%20of%20friendly%20animals.%22?model=flux&seed=289078645&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false"
+},
+{
+    name: "Peacock Coin",
+    front: "https://enter.pollinations.ai/api/generate/image/%22Imagine%20a%20coin%20featuring%20an%20abstracted%2C%20swirling%20pattern%20of%20intertwining%20peacock%20feathers%2C%20it's%20head%20showing%20through%20the%20feathers%2C%2C%20a%20fusion%20of%20abstract%20art%20with%20rich%2C%20iridescent%20details.%22?model=flux&seed=264105919&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false",
+    back: "https://enter.pollinations.ai/api/generate/image/%22Imagine%20a%20coin%20featuring%20an%20abstracted%2C%20swirling%20pattern%20of%20intertwining%20peacock%20feathers%2C%20a%20fusion%20of%20abstract%20art%20with%20rich%2C%20iridescent%20details.%22?model=flux&seed=738515044&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false"
+},
+{
+    name: "Whimsical",
+    front: "https://enter.pollinations.ai/api/generate/image/%22A%20whimsical%20coin%20relief%20features%20an%20abstract%20fusion%20of%20spiraled%20floral%20patterns%20and%20delicate%20celestial%20motifs.%22?model=flux&seed=267479303&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false",
+    back: "https://enter.pollinations.ai/api/generate/image/%22Imagine%20swirling%2C%20abstract%20patterns%20reminiscent%20of%20ancient%20sea%20shells%2C%20masterfully%20rendered%20in%20high-relief%20on%20your%20coin.%22?model=flux&seed=350072678&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false"
+},
+{
+    name: "Hatsune Miku Coin",
+    front: "https://enter.pollinations.ai/api/generate/image/%22Imagine%20a%20coin%20featuring%20Hatsune%20Miku%20Dancing%20on%20stage.%20Do%20not%20include%20any%20words%22?model=flux&seed=760957183&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false",
+    back: "https://enter.pollinations.ai/api/generate/image/%22Imagine%20a%20coin%20featuring%20Hatsune%20Miku%20from%20behind%20dancing%20on%20stage.%20Do%20not%20include%20any%20words%22?model=flux&seed=313833201&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false"
+},
+{
+    name: "Girl Coin",
+    front: "https://enter.pollinations.ai/api/generate/image/%22Imagine%20a%20closeup%20of%20a%20coin%20featuring%20the%20relief%20of%20a%2014-year-old%20girl%20brunette%20teen%20girl%20seated%20at%20a%20picnic.%22?model=flux&seed=403264547&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false",
+    back: "https://enter.pollinations.ai/api/generate/image/%22Imagine%20a%20closeup%20of%20a%20coin%20featuring%20the%20relief%20of%20a%20wheat%20field%22?model=flux&seed=447521017&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false"
+},
+{
+    name: "Boy Coin",
+    front: "https://enter.pollinations.ai/api/generate/image/%22Imagine%20a%20closeup%20of%20a%20coin%20featuring%20the%20face%20and%20shoulders%20of%20a%2014-year-old%20boy%20brunette%20teen%20boy%22?model=flux&seed=647377990&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false",
+    back: "https://enter.pollinations.ai/api/generate/image/%22Imagine%20a%20closeup%20of%20a%20coin%20featuring%20the%20relief%20of%20a%20fishing%20pole%20leaning%20on%20a%20log%20by%20a%20lake%22?model=flux&seed=480966644&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=high&transparent=false"
+},
         {
             name: "Santa Claus",
             front: "https://enter.pollinations.ai/api/generate/image/Closeup%20of%20Santa%20Claus's%20face?model=zimage&seed=561617747&private=true&nologo=true&enhance=true&safe=true&nofeed=true&guidance_scale=7&width=1024&height=1024&quality=hd&transparent=false",
@@ -407,8 +437,8 @@
 
     /** 3. THE COIN CREATION **/
     const COIN_RADIUS = 1.5; const COIN_THICK = 0.28; const loader = new THREE.TextureLoader();
-    let currentHeadTex = loader.load(COIN_PRESETS[7].front);
-    let currentTailTex = loader.load(COIN_PRESETS[7].back);
+    let currentHeadTex = loader.load(COIN_PRESETS[1].front);
+    let currentTailTex = loader.load(COIN_PRESETS[1].back);
     let coins = [];
 
     function createCoin() {
@@ -545,7 +575,7 @@
         const textSpinner = document.getElementById(side === 'heads' ? 'spinTextHeads' : 'spinTextTails');
         textSpinner.style.visibility = 'visible';
         const seed = Math.floor(Math.random() * 1000000);
-        const textUrl = `https://gen.pollinations.ai/text/${encodeURIComponent("Give me a random short sentence describing a unique art style for a circular coin relief.")}?model=openai&seed=${seed}&key=${AI_API_KEY}`;
+        const textUrl = `https://gen.pollinations.ai/text/${encodeURIComponent("Give me a random short sentence describing a unique art style for a circular coin relief.")}?model=nova-micro&seed=${seed}&key=${AI_API_KEY}`;
         try {
             const response = await fetch(textUrl); const text = await response.text();
             promptInput.value = text.trim(); textSpinner.style.visibility = 'hidden';
