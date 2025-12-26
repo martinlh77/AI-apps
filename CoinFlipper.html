@@ -82,7 +82,7 @@
                 <option value="blue-felt">Blue Felt</option>
                 <option value="purple-felt">Purple Felt</option>
                 <option value="green-felt">Green Felt</option>
-                <option value="wood">Wood</option>
+                <option value="wood" Selected>Wood</option>
                 <option value="steel">Steel</option>
                 <option value="dirt">Dirt</option>
             </select>
@@ -113,12 +113,12 @@
 
 <div class="ui">
     <div class="controls-card">
-        <h2>SANTA COIN TOSS</h2>
-        <label>NUMBER OF FLIPS: </label>
+        <h2>COIN TOSS</h2>
+        <label>NUMBER OF TOSSES: </label>
         <input type="number" id="flipCount" value="1" min="1">
         
         <div class="btn-group">
-            <button id="flipBtn" class="flip-btn">Throw Coin</button>
+            <button id="flipBtn" class="flip-btn">Toss Coin</button>
             <button id="nextRoundBtn" class="secondary-btn">New Round</button>
             <button id="resetBtn" class="secondary-btn">Reset Board</button>
         </div>
@@ -303,7 +303,7 @@
 
     const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(100, 100),
-        getTableMaterial('standard')
+        getTableMaterial('wood')
     );
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
@@ -316,8 +316,8 @@
     scene.add(coinGroup);
 
     const loader = new THREE.TextureLoader();
-    let currentHeadTex = loader.load(COIN_PRESETS[0].front);
-    let currentTailTex = loader.load(COIN_PRESETS[0].back);
+    let currentHeadTex = loader.load(COIN_PRESETS[7].front);
+    let currentTailTex = loader.load(COIN_PRESETS[7].back);
 
     const bodyMats = [
         new THREE.MeshStandardMaterial({ color: 0x95a5a6, metalness: 0.8 }), 
