@@ -112,7 +112,7 @@
     <div id="slalom-msg" class="hidden">
         <h2>SLALOM MODE</h2>
         <p>Weave between the red and blue flags!<br>Pass red flags on the LEFT, blue flags on the RIGHT.</p>
-        <button onclick="document.getElementById('slalom-msg').classList.add('hidden')">START!</button>
+    <button onclick="startActualGame()">START!</button>
     </div>
 
     <div id="slalom-complete" class="hidden">
@@ -180,6 +180,7 @@
         let lastObstacleZ = 0;
         let freestyleCompleted = false;
         let slalomPattern = [];
+        let touchSteer = 0; 
 
         const keys = {};
         let mobileSpeedUp = false;
@@ -738,17 +739,30 @@
             if (!gameRunning) return;
 
             if (!isCrashed) {
-                if (keys['ArrowLeft']) { playerVel.x = 0.45; player.rotation.z = 0.4; } 
-                else if (keys['ArrowRight']) { playerVel.x = -0.45; player.rotation.z = -0.4; } 
-                else { playerVel.x *= 0.85; player.rotation.z *= 0.85; }
+                // Determine direction (Heading)
+                if (keys['ArrowLeft'] || touchSteer === 1) { 
+                    player.rotation.y = 0.5; 
+                    player.rotation.z = 0.4; 
+                } 
+                else if (keys['ArrowRight'] || touchSteer === -1) { 
+                    player.rotation.y = -0.5; 
+                    player.rotation.z = -0.4; 
+                } 
+                else { 
+                    player.rotation.y *= 0.9; 
+                    player.rotation.z *= 0.9; 
+                }
 
                 if (keys['ArrowUp'] || mobileSpeedUp) playerVel.z += ACCEL_RATE;
                 if (keys['ArrowDown'] || mobileSpeedDown) playerVel.z -= 0.1;
             }
 
             playerVel.z = Math.max(0, Math.min(MAX_SPEED, playerVel.z));
-            player.position.x += playerVel.x;
-            player.position.z += playerVel.z;
+            
+            // Calculate movement based on the direction the skier is facing
+            // This ensures total speed is always the same as playerVel.z
+            player.position.z += Math.cos(player.rotation.y) * playerVel.z;
+            player.position.x += Math.sin(player.rotation.y) * playerVel.z;
 
             const halfW = MOUNTAIN_WIDTH / 2 - 2;
             if (player.position.x < -halfW) player.position.x = -halfW;
@@ -925,9 +939,18 @@
             }
             
             document.getElementById('timer-display').style.display = 'block';
-            gameStartTime = Date.now();
             
+            // If Freestyle, start immediately. If Slalom, wait for the message button.
+            if (mode === 'freestyle') {
+                startActualGame();
+            }
+        };
+            
+        window.startActualGame = () => {
+            document.getElementById('slalom-msg').classList.add('hidden');
             if (AudioCtx.state === 'suspended') AudioCtx.resume();
+            
+            gameStartTime = Date.now();
             gameRunning = true;
         };
 
@@ -1003,43 +1026,26 @@
         });
         
         window.addEventListener('touchmove', (e) => {
-    if (e.target.classList.contains('speed-btn')) return;
-    
-    const dx = e.touches[0].clientX - touchStart.x;
-    touchMoved = true;
-    
-    // SENSITIVITY SETTING: 
-    // Lower number = less responsive (try 0.002 to 0.005)
-    const sensitivity = 0.004; 
-    const maxSteer = 0.45;
-
-    // Calculate steering based on distance moved
-    let steerPower = dx * sensitivity;
-    
-    // Clamp the power so it doesn't go faster than the keyboard controls
-    if (steerPower > maxSteer) steerPower = maxSteer;
-    if (steerPower < -maxSteer) steerPower = -maxSteer;
-
-    playerVel.x = -steerPower;
-    player.rotation.z = -steerPower * 0.8; // Tilts based on turn strength
-    
-    e.preventDefault();
-}, {passive: false});
+            if (e.target.classList.contains('speed-btn')) return;
+            const dx = e.touches[0].clientX - touchStart.x;
+            touchMoved = true;
+            
+            if (dx > 25) touchSteer = -1;      // Steering Right
+            else if (dx < -25) touchSteer = 1; // Steering Left
+            else touchSteer = 0;
+            
+            e.preventDefault();
+        }, {passive: false});
 
         window.addEventListener('touchend', (e) => {
-            // Ignore if touching speed buttons
             if (e.target.classList.contains('speed-btn')) return;
-            
-            // If didn't move much, treat as tap to jump
             if (!touchMoved && !isJumping) {
                 isJumping = true;
                 playerVel.y = 0.42;
                 playSfx(400, 'triangle', 0.2);
             }
-            
-            playerVel.x = 0;
+            touchSteer = 0; // Reset steering when finger is lifted
         });
-
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
