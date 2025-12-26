@@ -181,6 +181,7 @@
         let freestyleCompleted = false;
         let slalomPattern = [];
         let touchSteer = 0; 
+        const clock = new THREE.Clock();
 
         const keys = {};
         let mobileSpeedUp = false;
@@ -735,7 +736,7 @@
             }
         }
 
-        function update() {
+        function update(deltaScale) {
             if (!gameRunning) return;
 
             if (!isCrashed) {
@@ -749,28 +750,29 @@
                     player.rotation.z = -0.4; 
                 } 
                 else { 
-                    player.rotation.y *= 0.9; 
-                    player.rotation.z *= 0.9; 
+                    // Use Math.pow for smooth decay across different frame rates
+                    player.rotation.y *= Math.pow(0.9, deltaScale); 
+                    player.rotation.z *= Math.pow(0.9, deltaScale); 
                 }
 
-                if (keys['ArrowUp'] || mobileSpeedUp) playerVel.z += ACCEL_RATE;
-                if (keys['ArrowDown'] || mobileSpeedDown) playerVel.z -= 0.1;
+                // Acceleration and Braking scaled by time
+                if (keys['ArrowUp'] || mobileSpeedUp) playerVel.z += ACCEL_RATE * deltaScale;
+                if (keys['ArrowDown'] || mobileSpeedDown) playerVel.z -= 0.1 * deltaScale;
             }
 
             playerVel.z = Math.max(0, Math.min(MAX_SPEED, playerVel.z));
             
-            // Calculate movement based on the direction the skier is facing
-            // This ensures total speed is always the same as playerVel.z
-            player.position.z += Math.cos(player.rotation.y) * playerVel.z;
-            player.position.x += Math.sin(player.rotation.y) * playerVel.z;
+            // Movement scaled by time
+            player.position.z += Math.cos(player.rotation.y) * playerVel.z * deltaScale;
+            player.position.x += Math.sin(player.rotation.y) * playerVel.z * deltaScale;
 
             const halfW = MOUNTAIN_WIDTH / 2 - 2;
             if (player.position.x < -halfW) player.position.x = -halfW;
             if (player.position.x > halfW) player.position.x = halfW;
 
             if (isJumping) {
-                playerVel.y -= GRAVITY;
-                player.position.y += playerVel.y;
+                playerVel.y -= GRAVITY * deltaScale;
+                player.position.y += playerVel.y * deltaScale;
                 if (player.position.y <= 0) { player.position.y = 0; isJumping = false; }
             }
 
@@ -812,7 +814,7 @@
 
             yetis.forEach((yeti, idx) => {
                 const yetiSpeed = playerVel.z + 0.2;
-                yeti.position.z += yetiSpeed;
+                yeti.position.z += yetiSpeed * deltaScale;
                 
                 const dx = player.position.x - yeti.position.x;
                 const targetAngle = Math.atan2(dx, 20);
@@ -836,7 +838,7 @@
 
             obstacles.forEach((obj, i) => {
                 if (obj.userData.type === 'npc') {
-                    obj.position.z += obj.userData.npcSpeed;
+                    obj.position.z += obj.userData.npcSpeed * deltaScale;
                     updateArmSwing(obj.children[0], obj.userData.npcSpeed);
                 }
 
@@ -909,7 +911,9 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            update();
+            const delta = clock.getDelta();
+            const deltaScale = delta * 60; // Scales logic to a target of 60fps
+            update(deltaScale);
             renderer.render(scene, camera);
         }
 
