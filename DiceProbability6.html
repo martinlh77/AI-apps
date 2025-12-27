@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Dice Probability</title>
+    <style>
+        body { margin: 0; overflow-x: hidden; overflow-y: auto; background: #1a1a1a; font-family: 'Segoe UI', system-ui, sans-serif; color: white; display: flex; flex-direction: column; align-items: center; }
+        #canvas-container { width: 100%; height: 60vh; background: #87CEEB; touch-action: none; border-bottom: 3px solid #d4af37; position: relative; }
+        
+        /* Settings Gear */
+        #settingsBtn { position: absolute; top: 15px; right: 15px; font-size: 28px; cursor: pointer; z-index: 100; transition: transform 0.3s; color: #d4af37; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        #settingsBtn:hover { transform: rotate(90deg); }
+
+        /* Modal / Menu */
+        #settingsMenu { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .menu-content { max-width: 600px; margin: 0 auto; background: #1a1a1a; padding: 25px; border-radius: 15px; border: 1px solid #d4af37; }
+        .close-menu { float: right; font-size: 30px; cursor: pointer; color: #888; }
+        
+        /* Collapsible Sections */
+        .collapsible {
+            background-color: #222;
+            color: #d4af37;
+            cursor: pointer;
+            padding: 12px 15px;
+            width: 100%;
+            border: 1px solid #333;
+            text-align: left;
+            outline: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .collapsible:after { content: '\002B'; font-size: 1.2rem; }
+        .collapsible.active:after { content: "\2212"; }
+        .collapsible-content {
+            padding: 0 15px;
+            display: none;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 10px;
+        }
+
+        .section-title { color: #d4af37; border-bottom: 1px solid #333; margin: 20px 0 10px 0; padding-bottom: 5px; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 1px; }
+        .input-group { margin-bottom: 15px; text-align: left; margin-top: 15px; }
+        .input-group label { display: block; font-size: 0.8rem; margin-bottom: 5px; color: #bbb; }
+        .input-group select, .input-group input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #444; background: #000; color: #fff; box-sizing: border-box; }
+        
+        /* Toggle Switch */
+        .toggle-container { display: flex; align-items: center; gap: 10px; }
+        .toggle { width: 50px; height: 24px; background: #555; border-radius: 12px; position: relative; cursor: pointer; transition: background 0.3s; }
+        .toggle.active { background: #d4af37; }
+        .toggle-slider { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.3s; }
+        .toggle.active .toggle-slider { transform: translateX(26px); }
+        
+        /* UI Elements */
+        #controls-container { width: 95%; max-width: 850px; padding: 15px; box-sizing: border-box; margin-top: 15px; }
+        .controls-card { background: #1a1a1a; border-radius: 15px; padding: 20px; border: 1px solid #333; box-shadow: 0 15px 35px rgba(0,0,0,0.7); text-align: center; }
+        h3 { margin: 0 0 10px 0; color: #d4af37; letter-spacing: 1px; font-size: 1.5rem; }
+        label { color:#bbb; font-size: 0.9rem; font-weight: bold; }
+        input[type="number"] { padding: 10px; width: 80px; border-radius: 8px; border: 1px solid #d4af37; background: #000; color: #d4af37; font-size: 18px; text-align: center; outline: none; margin: 5px; }
+        .btn-group { margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        button { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; text-transform: uppercase; font-size: 0.85rem; }
+        .primary-btn { background: #d4af37; color: #000; }
+        .primary-btn:hover:not(:disabled) { background: #f1c40f; transform: translateY(-2px); }
+        .primary-btn:disabled { background: #555; color: #888; cursor: not-allowed; }
+        .secondary-btn { background: #34495e; color: white; }
+        .secondary-btn:hover:not(:disabled) { background: #46627f; }
+
+        /* Table for detailed results */
+        .results-table-container {
+            width: 95%;
+            max-width: 850px;
+            margin: 30px auto;
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            color: #000;
+        }
+        th {
+            background: #d4af37;
+            color: #000;
+            padding: 12px 5px;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            text-align: center;
+            white-space: nowrap;
+        }
+        td {
+            padding: 10px 5px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+            font-size: 0.9em;
+            font-weight: 600;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .pct { font-size: 0.7em; color: #777; display: block; font-weight: normal; margin-top: 2px; }
+        .total-row td { background: #f9f1d7; font-weight: bold; border-top: 3px solid #d4af37; }
+        .instruction { color: #888; font-size: 11px; margin-top: 10px; font-style: italic; }
+
+        @media (max-width: 768px) {
+            #canvas-container { height: 50vh; }
+            .controls-card { padding: 15px; }
+            h3 { font-size: 1.3rem; }
+            button { padding: 10px 15px; font-size: 0.75rem; }
+            input[type="number"] { width: 60px; font-size: 16px; }
+            table, th, td { font-size: 0.75em; }
+            .total-row td { font-size: 0.8em; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container">
+    <div id="settingsBtn">⚙️</div>
+</div>
+
+<!-- SETTINGS MENU -->
+<div id="settingsMenu">
+    <div class="menu-content">
+        <span class="close-menu" id="closeSettings">&times;</span>
+        <h3 style="margin-top:0;">SETTINGS</h3>
+        
+        <button class="collapsible">Dice Appearance</button>
+        <div class="collapsible-content">
+            <div class="input-group">
+                <label>Dice Style:</label>
+                <select id="dice-style">
+                    <option value="clear">Clear Plastic</option>
+                    <option value="solid">Solid</option>
+                    <option value="matte">Matte</option>
+                    <option value="wooden">Wooden</option>
+                    <option value="marble" selected>Marble</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Dice Face:</label>
+                <select id="dice-face">
+                    <option value="numbers">Numbers</option>
+                    <option value="dots" selected>Dots</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Dice Colors:</label>
+                <select id="dice-color-mode">
+                    <option value="multi" selected>Multi-Colored</option>
+                    <option value="white">White</option>
+                    <option value="red">Red</option>
+                    <option value="blue">Blue</option>
+                    <option value="green">Green</option>
+                    <option value="yellow">Yellow</option>
+                    <option value="purple">Purple</option>
+                    <option value="teal">Teal</option>
+                    <option value="black">Black</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Face Mapping:</label>
+                <select id="dice-face-mode">
+                    <option value="all-sides">All Sides Same</option>
+                    <option value="standard" selected>Standard (1-6)</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="collapsible">Table Surface</button>
+        <div class="collapsible-content">
+            <div class="input-group">
+                <label>Surface Type:</label>
+                <select id="tableSurfaceSelect">
+                    <option value="standard">Standard Dark</option>
+                    <option value="red-felt">Red Felt</option>
+                    <option value="blue-felt">Blue Felt</option>
+                    <option value="purple-felt">Purple Felt</option>
+                    <option value="green-felt">Green Felt</option>
+                    <option value="wood" Selected>Wood</option>
+                    <option value="steel">Steel</option>
+                    <option value="dirt">Dirt</option>
+                </select>
+                <canvas id="surfacePreviewCanvas" style="width: 100%; height: 50px; border-radius: 4px; border: 1px solid #444; margin-top: 10px; display: block;"></canvas>
+            </div>
+        </div>
+
+        <button class="collapsible">Sound Settings</button>
+        <div class="collapsible-content">
+            <div class="input-group">
+                <label>Sound Effects:</label>
+                <div class="toggle-container" style="margin-top: 5px;">
+                    <span style="color: #bbb; font-size: 0.9em;">OFF</span>
+                    <div class="toggle active" id="sound-toggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                    <span style="color: #bbb; font-size: 0.9em;">ON</span>
+                </div>
+            </div>
+            <button id="resetCameraBtn" class="secondary-btn" style="width:100%; margin-top:10px;">Reset Camera</button>
+        </div>
+    </div>
+</div>
+
+<div id="controls-container">
+    <div class="controls-card">
+        <h3>3D DICE PROBABILITY SIMULATOR</h3>
+        <label>Dice per simulation:</label>
+        <input type="number" id="diceCountInputSim" value="1" min="1" max="25">
+        <label>Total Rolls:</label>
+        <input type="number" id="totalRollsInput" value="1" min="1" max="100000">
+        <div class="btn-group">
+            <button id="rollDiceBtn" class="primary-btn">Simulate Rolls</button>
+            <button id="addRowBtn" class="primary-btn">Add Row</button>
+            <button id="clearResultsBtn" class="secondary-btn">Clear Results</button>
+            <button id="stopSimBtn" class="secondary-btn">Stop</button>
+            <button id="resetSceneBtn" class="secondary-btn">Reset View</button>
+        </div>
+        <p class="instruction">Drag: Rotate | Scroll/Pinch: Zoom</p>
+    </div>
+</div>
+
+<div class="results-table-container">
+    <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>Round #</th>
+                <th>1</th>
+                <th>2</th>
+                <th>3</th>
+                <th>4</th>
+                <th>5</th>
+                <th>6</th>
+                <th>Total Rolls</th>
+            </tr>
+        </thead>
+        <tbody id="resultsTableBody"></tbody>
+        <tfoot class="total-row">
+            <tr>
+                <td>GRAND TOTAL</td>
+                <td id="grandTotal1s">0<span class="pct">0.0%</span></td>
+                <td id="grandTotal2s">0<span class="pct">0.0%</span></td>
+                <td id="grandTotal3s">0<span class="pct">0.0%</span></td>
+                <td id="grandTotal4s">0<span class="pct">0.0%</span></td>
+                <td id="grandTotal5s">0<span class="pct">0.0%</span></td>
+                <td id="grandTotal6s">0<span class="pct">0.0%</span></td>
+                <td id="grandTotalRolls">0</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<script>
+    /** GLOBAL VARIABLES & STATE **/
+    let scene, camera, renderer, controls, dice = [];
+    let tableMesh;
+    let currentDiceCount = 1;
+    let totalSimRolls = 1;
+    let soundEnabled = true;
+    let simulationRunning = false;
+    let stopSimulation = false;
+    let currentRound = 1;
+    let currentRoundResults = Array(6).fill(0);
+
+    const state = {
+        diceStyle: 'marble',
+        diceFace: 'dots',
+        diceColorMode: 'multi',
+        diceFaceMode: 'standard',
+        tableSurface: 'wood',
+    };
+
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    /** UI & SETTINGS LOGIC **/
+    const settingsMenu = document.getElementById('settingsMenu');
+    document.getElementById('settingsBtn').onclick = () => settingsMenu.style.display = 'block';
+    document.getElementById('closeSettings').onclick = () => settingsMenu.style.display = 'none';
+
+    const soundToggle = document.getElementById('sound-toggle');
+    soundToggle.onclick = () => {
+        soundEnabled = !soundEnabled;
+        soundToggle.classList.toggle('active');
+    };
+
+    document.getElementById('dice-style').onchange = (e) => { state.diceStyle = e.target.value; refreshDiceVisuals(); };
+    document.getElementById('dice-face').onchange = (e) => { state.diceFace = e.target.value; refreshDiceVisuals(); };
+    document.getElementById('dice-color-mode').onchange = (e) => { state.diceColorMode = e.target.value; refreshDiceVisuals(); };
+    document.getElementById('dice-face-mode').onchange = (e) => { state.diceFaceMode = e.target.value; refreshDiceVisuals(); };
+    document.getElementById('tableSurfaceSelect').onchange = (e) => { state.tableSurface = e.target.value; updateTableSurface(); };
+    
+    document.getElementById('diceCountInputSim').oninput = (e) => { currentDiceCount = Math.max(1, Math.min(25, parseInt(e.target.value) || 1)); updateDiceInScene(); };
+    document.getElementById('totalRollsInput').oninput = (e) => { totalSimRolls = Math.max(1, Math.min(100000, parseInt(e.target.value) || 1)); };
+
+    document.getElementById('resetCameraBtn').onclick = () => { camera.position.set(0, 14, 10); controls.target.set(0, 0, 0); controls.update(); };
+    document.getElementById('resetSceneBtn').onclick = () => { camera.position.set(0, 14, 10); controls.target.set(0, 0, 0); controls.update(); resetDicePositions(); };
+    document.getElementById('stopSimBtn').onclick = () => { if (simulationRunning) stopSimulation = true; };
+    document.getElementById('addRowBtn').onclick = () => { addNewRow(); };
+    document.getElementById('clearResultsBtn').onclick = () => { clearResults(); };
+
+    const coll = document.getElementsByClassName("collapsible");
+    for (let i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            const content = this.nextElementSibling;
+            content.style.display = (content.style.display === "block") ? "none" : "block";
+        });
+    }
+
+    /** 3D SETUP AND RENDERING **/
+    function init() {
+        const canvasContainer = document.getElementById('canvas-container');
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+        camera = new THREE.PerspectiveCamera(45, canvasContainer.clientWidth / canvasContainer.clientHeight, 0.1, 1000);
+        camera.position.set(0, 14, 10);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+        renderer.shadowMap.enabled = true;
+        canvasContainer.appendChild(renderer.domElement);
+
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        
+        const light = new THREE.DirectionalLight(0xffffff, 1.5);
+        light.position.set(5, 15, 10);
+        light.castShadow = true;
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+        createTable();
+        createDicePlaceholder();
+        updateDiceInScene();
+
+        window.addEventListener('resize', onResize);
+        animate();
+    }
+
+    function createTable() {
+        const geometry = new THREE.PlaneGeometry(20, 20);
+        geometry.rotateX(-Math.PI / 2);
+        const material = getTableMaterial(state.tableSurface);
+        tableMesh = new THREE.Mesh(geometry, material);
+        tableMesh.receiveShadow = true;
+        scene.add(tableMesh);
+    }
+
+    function updateTableSurface() {
+        if (tableMesh) {
+            tableMesh.material.dispose();
+            tableMesh.material = getTableMaterial(state.tableSurface);
+        }
+    }
+
+    function getTableMaterial(surface) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        switch(surface) {
+            case 'red-felt': createFeltTexture(ctx, '#3D0000', '#4A0000', '#2F0000'); break;
+            case 'blue-felt': createFeltTexture(ctx, '#1A3A5C', '#2A4A6C', '#0A2A4C'); break;
+            case 'purple-felt': createFeltTexture(ctx, '#2D1A3D', '#3D2A4D', '#1D0A2D'); break;
+            case 'green-felt': createFeltTexture(ctx, '#064420', '#075428', '#053618'); break;
+            case 'wood': createWoodTexture(ctx); break;
+            case 'steel': createMetalTexture(ctx); break;
+            case 'dirt': createDirtTexture(ctx); break;
+            case 'standard': 
+                const defaultMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+                const previewCanvas = document.getElementById('surfacePreviewCanvas');
+                if(previewCanvas) {
+                    const pCtx = previewCanvas.getContext('2d');
+                    pCtx.fillStyle = '#111111'; pCtx.fillRect(0,0, previewCanvas.width, previewCanvas.height);
+                }
+                return defaultMat;
+        }
+        
+        const previewCanvas = document.getElementById('surfacePreviewCanvas');
+        if(previewCanvas) {
+            const pCtx = previewCanvas.getContext('2d');
+            pCtx.clearRect(0,0, previewCanvas.width, previewCanvas.height);
+            pCtx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping; texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(4, 4);
+        
+        return new THREE.MeshStandardMaterial({ 
+            map: texture, 
+            roughness: surface.includes('felt') ? 0.95 : (surface === 'wood' ? 0.6 : (surface === 'dirt' ? 0.98 : 0.3)),
+            metalness: surface === 'steel' ? 0.8 : 0
+        });
+    }
+function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, 512, 512);
+    
+    for(let i = 0; i < 50000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const brightness = Math.random();
+        ctx.fillStyle = brightness > 0.5 ? lightColor : darkColor;
+        ctx.globalAlpha = 0.12;
+        ctx.fillRect(x, y, Math.random() * 2, Math.random() * 2);
+    }
+    
+    ctx.globalAlpha = 0.06;
+    for(let i = 0; i < 512; i += 4) {
+        ctx.strokeStyle = lightColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, 512);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(512, i);
+        ctx.stroke();
+    }
+    
+    ctx.globalAlpha = 0.15;
+    for(let i = 0; i < 25; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const radius = 20 + Math.random() * 50;
+        const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        grad.addColorStop(0, darkColor);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    ctx.globalAlpha = 1;
+}
+    function createWoodTexture(ctx) {
+        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+        gradient.addColorStop(0, '#7A3E1A'); gradient.addColorStop(0.5, '#8B4513'); gradient.addColorStop(1, '#7A3E1A');
+        ctx.fillStyle = gradient; ctx.fillRect(0, 0, 512, 512);
+        for(let ring = 0; ring < 15; ring++) {
+            const baseY = ring * 40 + Math.random() * 30;
+            ctx.strokeStyle = `rgba(101, 67, 33, ${0.2 + Math.random() * 0.3})`;
+            ctx.lineWidth = 2 + Math.random() * 3;
+            ctx.beginPath();
+            for(let x = 0; x < 512; x += 2) { ctx.lineTo(x, baseY + Math.sin(x * 0.1) * 5); }
+            ctx.stroke();
+        }
+        for(let i = 0; i < 8; i++) {
+            const x = Math.random() * 512; const y = Math.random() * 512;
+            const radius = 15 + Math.random() * 30;
+            const knotGradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            knotGradient.addColorStop(0, 'rgba(50, 30, 15, 0.7)'); knotGradient.addColorStop(0.5, 'rgba(60, 40, 20, 0.4)'); knotGradient.addColorStop(1, 'rgba(60, 40, 20, 0)');
+            ctx.fillStyle = knotGradient; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+        }
+    }
+    function createMetalTexture(ctx) {
+        const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+        gradient.addColorStop(0, '#8A95A5'); gradient.addColorStop(0.5, '#B8C5D6'); gradient.addColorStop(1, '#8A95A5');
+        ctx.fillStyle = gradient; ctx.fillRect(0, 0, 512, 512);
+        ctx.globalAlpha = 0.12;
+        for(let i = 0; i < 1000; i++) {
+            const x = Math.random() * 512; const y = Math.random() * 512;
+            const length = 50 + Math.random() * 200;
+            const angle = (Math.random() - 0.5) * 0.3;
+            const brightness = 80 + Math.random() * 120;
+            ctx.strokeStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
+            ctx.lineWidth = 0.5 + Math.random(); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length); ctx.stroke();
+        }
+        ctx.globalAlpha = 0.5;
+        for(let i = 0; i < 9; i++) {
+            const x = 80 + (i % 3) * 180; const y = 80 + Math.floor(i / 3) * 180; const size = 6;
+            const rivetGradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+            rivetGradient.addColorStop(0, '#5A6A7D'); rivetGradient.addColorStop(0.5, '#778899'); rivetGradient.addColorStop(1, '#3A4A5C');
+            ctx.fillStyle = rivetGradient; ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+    }
+    function createDirtTexture(ctx) {
+        const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 350);
+        gradient.addColorStop(0, '#6B4423'); gradient.addColorStop(0.5, '#5C3A1F'); gradient.addColorStop(1, '#4A2F19');
+        ctx.fillStyle = gradient; ctx.fillRect(0, 0, 512, 512);
+        for(let i = 0; i < 100; i++) {
+            const x = Math.random() * 512; const y = Math.random() * 512;
+            const size = 15 + Math.random() * 50;
+            const shade = 45 + Math.random() * 50;
+            const dirtGradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+            dirtGradient.addColorStop(0, `rgba(${shade + 20}, ${shade}, ${shade - 15}, 0.5)`); dirtGradient.addColorStop(1, `rgba(${shade}, ${shade - 10}, ${shade - 20}, 0)`);
+            ctx.fillStyle = dirtGradient; ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+        }
+        for(let i = 0; i < 5000; i++) {
+            const x = Math.random() * 512; const y = Math.random() * 512;
+            const shade = 40 + Math.random() * 60;
+            const size = 1 + Math.random() * 3;
+            ctx.fillStyle = `rgba(${shade + 20}, ${shade}, ${shade - 15}, ${0.3 + Math.random() * 0.3})`; ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
+        }
+        for(let i = 0; i < 20; i++) {
+            const startX = Math.random() * 512; const startY = Math.random() * 512;
+            const angle = Math.random() * Math.PI * 2;
+            ctx.strokeStyle = `rgba(35, 22, 12, ${0.3 + Math.random() * 0.3})`;
+            ctx.lineWidth = 1 + Math.random() * 2;
+            ctx.beginPath();
+            let x = startX; let y = startY; ctx.moveTo(x, y);
+            const segments = 3 + Math.floor(Math.random() * 6);
+            for(let j = 0; j < segments; j++) {
+                const segmentAngle = angle + (Math.random() - 0.5) * 0.8;
+                const segmentLength = 10 + Math.random() * 30;
+                x += Math.cos(segmentAngle) * segmentLength; y += Math.sin(segmentAngle) * segmentLength;
+                ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+    }
+
+    function createDicePlaceholder() {
+        const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+        for(let i=0; i<25; i++) {
+            const mat = createDieMaterial(1, state.diceStyle);
+            const die = new THREE.Mesh(geo, [mat, mat, mat, mat, mat, mat]);
+            die.castShadow = true;
+            die.visible = false;
+            die.userData = { id: i, val: 1, active: false };
+            scene.add(die);
+            dice.push(die);
+        }
+    }
+
+    function updateDiceInScene() {
+        dice.forEach(d => scene.remove(d));
+        dice = [];
+        
+        const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
+        const startValues = [1, 2, 3, 4, 5, 6];
+        
+        const numDiceToShow = Math.min(currentDiceCount, 25);
+        const maxRows = Math.ceil(numDiceToShow / 5);
+        const maxCols = 5;
+
+        for(let i=0; i < numDiceToShow; i++) {
+            const row = Math.floor(i / maxCols);
+            const col = i % maxCols;
+            
+            const rowSpacing = 2.5;
+            const colSpacing = 2.5;
+
+            const xOffset = (col - (maxCols - 1) / 2) * colSpacing;
+            const zOffset = (row - (maxRows - 1) / 2) * rowSpacing;
+
+            const val = startValues[i % 6];
+            let materials;
+            if (state.diceFaceMode === 'standard') {
+                 materials = [
+         createDieMaterial(2, state.diceStyle),
+         createDieMaterial(5, state.diceStyle),
+         createDieMaterial(1, state.diceStyle),
+         createDieMaterial(6, state.diceStyle),
+         createDieMaterial(3, state.diceStyle),
+         createDieMaterial(4, state.diceStyle)
+                 ];
+            } else {
+                 materials = Array(6).fill(createDieMaterial(val, state.diceStyle));
+            }
+
+            const die = new THREE.Mesh(geo, materials);
+            die.castShadow = true;
+            die.position.set(xOffset, 0.45, zOffset);
+            
+            if (state.diceFaceMode === 'standard') {
+                const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
+                const rot = rotations[val]; die.rotation.set(rot.x, rot.y, rot.z);
+            } else {
+                die.rotation.set(0, 0, 0);
+            }
+            
+            die.userData = { id: i, val: val, active: true };
+            scene.add(die);
+            dice.push(die);
+        }
+        for(let i = numDiceToShow; i < 25; i++) {
+            dice.push({ userData: { id: i, active: false, val: 1 } });
+        }
+        resetDicePositions();
+    }
+
+    function resetDicePositions() {
+        dice.forEach((die, i) => {
+            if (!die.userData.active) return;
+            const row = Math.floor(i / 5);
+            const col = i % 5;
+            const numDiceToShow = Math.min(currentDiceCount, 25);
+            const maxRows = Math.ceil(numDiceToShow / 5);
+            const maxCols = 5;
+
+            const rowSpacing = 2.5;
+            const colSpacing = 2.5;
+
+            const xOffset = (col - (maxCols - 1) / 2) * colSpacing;
+            const zOffset = (row - (maxRows - 1) / 2) * rowSpacing;
+            
+            gsap.to(die.position, { x: xOffset, y: 0.45, z: zOffset, duration: 0.5, ease: "power2.out" });
+            if (state.diceFaceMode === 'standard') {
+                const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
+                const rot = rotations[die.userData.val];
+                gsap.to(die.rotation, { x: rot.x, y: rot.y, z: rot.z, duration: 0.5, ease: "power2.out" });
+            } else {
+                 gsap.to(die.rotation, { x: 0, y: 0, z: 0, duration: 0.5, ease: "power2.out" });
+            }
+        });
+    }
+
+    function setDieValue(die, value) {
+        die.userData.val = value;
+        let materials;
+        if (state.diceFaceMode === 'standard') {
+            materials = [
+         createDieMaterial(2, state.diceStyle),
+         createDieMaterial(5, state.diceStyle),
+         createDieMaterial(1, state.diceStyle),
+         createDieMaterial(6, state.diceStyle),
+         createDieMaterial(3, state.diceStyle),
+         createDieMaterial(4, state.diceStyle)
+            ];
+        } else {
+            materials = Array(6).fill(createDieMaterial(value, state.diceStyle));
+        }
+        die.material = materials;
+    }
+    
+    function createDieMaterial(value, style) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256; canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        
+        const colors = {1:'#e74c3c', 2:'#3498db', 3:'#2ecc71', 4:'#f39c12', 5:'#9b59b6', 6:'#1abc9c'};
+        const singleColorMap = { 'white': '#ffffff', 'red': '#e74c3c', 'blue': '#3498db', 'green': '#2ecc71', 'yellow': '#f39c12', 'purple': '#9b59b6', 'teal': '#1abc9c', 'black': '#000000' };
+        let baseColor = state.diceColorMode === 'multi' ? (colors[value] || '#fff') : (singleColorMap[state.diceColorMode] || '#ffffff');
+        
+        switch(style) {
+            case 'clear': ctx.fillStyle = baseColor; ctx.globalAlpha = 0.6; ctx.fillRect(0, 0, 256, 256); ctx.globalAlpha = 1; ctx.strokeStyle = baseColor; ctx.lineWidth = 6; ctx.strokeRect(3, 3, 250, 250); break;
+            case 'solid': ctx.fillStyle = baseColor; ctx.fillRect(0, 0, 256, 256); break;
+            case 'matte': ctx.fillStyle = baseColor; ctx.fillRect(0, 0, 256, 256); for(let i = 0; i < 3000; i++) { const brightness = Math.random() > 0.5 ? 255 : 0; ctx.fillStyle = `rgba(${brightness}, ${brightness}, ${brightness}, 0.1)`; ctx.fillRect(Math.random() * 256, Math.random() * 256, 1, 1); } break;
+            case 'wooden':
+                const woodGradient = ctx.createLinearGradient(0, 0, 256, 256); woodGradient.addColorStop(0, '#D2691E'); woodGradient.addColorStop(0.5, '#CD853F'); woodGradient.addColorStop(1, '#D2691E');
+                ctx.fillStyle = woodGradient; ctx.fillRect(0, 0, 256, 256);
+                for(let i = 0; i < 30; i++) {
+                    ctx.strokeStyle = `rgba(101, 67, 33, ${0.2 + Math.random() * 0.3})`; ctx.lineWidth = 1 + Math.random() * 2;
+                    ctx.beginPath(); const y = i * 10 + Math.random() * 10;
+                    for(let x = 0; x < 256; x += 5) { ctx.lineTo(x, y + Math.sin(x * 0.1) * 5); }
+                    ctx.stroke();
+                }
+                break;
+            case 'marble':
+                const marbleGradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 180);
+                marbleGradient.addColorStop(0, baseColor); marbleGradient.addColorStop(0.5, shadeColor(baseColor, -20)); marbleGradient.addColorStop(1, shadeColor(baseColor, -40));
+                ctx.fillStyle = marbleGradient; ctx.fillRect(0, 0, 256, 256);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 2;
+                for(let i = 0; i < 10; i++) {
+                    ctx.beginPath(); let x = Math.random() * 256; let y = Math.random() * 256; ctx.moveTo(x, y);
+                    for(let j = 0; j < 5; j++) { x += (Math.random() - 0.5) * 80; y += (Math.random() - 0.5) * 80; const cpx = x + (Math.random() - 0.5) * 40; const cpy = y + (Math.random() - 0.5) * 40; ctx.quadraticCurveTo(cpx, cpy, x, y); }
+                    ctx.stroke();
+                }
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)'; ctx.lineWidth = 1;
+                for(let i = 0; i < 8; i++) {
+                    ctx.beginPath(); let x = Math.random() * 256; let y = Math.random() * 256; ctx.moveTo(x, y);
+                    for(let j = 0; j < 4; j++) { x += (Math.random() - 0.5) * 60; y += (Math.random() - 0.5) * 60; ctx.lineTo(x, y); }
+                    ctx.stroke();
+                }
+                break;
+        }
+        
+        let fgColor = style === 'wooden' ? '#000000' : (style === 'clear' ? baseColor : (baseColor === '#000000' ? '#ffffff' : (baseColor === '#ffffff' ? '#333' : '#ffffff')));
+        
+        if (state.diceFace === 'dots') {
+            drawPips(ctx, value, fgColor);
+        } else {
+            ctx.fillStyle = fgColor;
+            ctx.font = 'bold 140px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 4; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
+            ctx.fillText(value, 128, 128);
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        
+        let materialProps = { map: texture };
+        switch(style) {
+            case 'clear': materialProps.transparent = true; materialProps.opacity = 0.7; materialProps.metalness = 0.1; materialProps.roughness = 0.2; break;
+            case 'solid': materialProps.metalness = 0.2; materialProps.roughness = 0.5; break;
+            case 'matte': materialProps.metalness = 0; materialProps.roughness = 1; break;
+            case 'wooden': materialProps.metalness = 0; materialProps.roughness = 0.9; break;
+            case 'marble': materialProps.metalness = 0.3; materialProps.roughness = 0.3; break;
+        }
+        
+        return new THREE.MeshStandardMaterial(materialProps);
+    }
+
+    function shadeColor(color, percent) {
+        const num = parseInt(color.replace("#",""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) + amt; const G = (num >> 8 & 0x00FF) + amt; const B = (num & 0x0000FF) + amt;
+        return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 + (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255)).toString(16).slice(1);
+    }
+
+    function drawPips(ctx, value, color) {
+        ctx.fillStyle = color;
+        const pips = {
+            1: [[128, 128]],
+            2: [[64, 64], [192, 192]],
+            3: [[64, 64], [128, 128], [192, 192]],
+            4: [[64, 64], [192, 64], [64, 192], [192, 192]],
+            5: [[64, 64], [192, 64], [128, 128], [64, 192], [192, 192]],
+            6: [[64, 64], [192, 64], [64, 128], [192, 128], [64, 192], [192, 192]]
+        };
+        pips[value].forEach(p => {
+            ctx.beginPath(); ctx.arc(p[0], p[1], 25, 0, Math.PI * 2); ctx.fill();
+        });
+    }
+
+    function refreshDiceVisuals() {
+        dice.forEach(die => {
+            if (!die.userData.active) return;
+            const val = die.userData.val;
+            die.material.forEach(mat => mat.dispose());
+            setDieValue(die, val);
+        });
+    }
+
+    function playSound(type) {
+        if (!soundEnabled) return;
+        if (audioContext.state === 'suspended') audioContext.resume();
+        const now = audioContext.currentTime;
+        switch(type) {
+            case 'toss':
+                const tOsc = audioContext.createOscillator();
+                const tGain = audioContext.createGain();
+                tOsc.type = 'sine';
+                tOsc.frequency.setValueAtTime(200, now);
+                tOsc.frequency.exponentialRampToValueAtTime(500, now + 0.2);
+                tGain.gain.setValueAtTime(0, now);
+                tGain.gain.linearRampToValueAtTime(0.5, now + 0.05);
+                tGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                tOsc.connect(tGain);
+                tGain.connect(audioContext.destination);
+                tOsc.start(now);
+                tOsc.stop(now + 0.2);
+                break;
+            case 'roll':
+                for (let i = 0; i < 4; i++) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    const startTime = now + (i * 0.05);
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(250 + (Math.random() * 200), startTime); osc.frequency.exponentialRampToValueAtTime(40, startTime + 0.1);
+                    gain.gain.setValueAtTime(0.5, startTime); gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+                    osc.connect(gain); gain.connect(audioContext.destination); osc.start(startTime); osc.stop(startTime + 0.12);
+                }
+                break;
+        }
+    }
+
+    /** DICE ROLLING AND ANIMATION FOR SIMULATION **/
+    async function simulateRolls() {
+        if (simulationRunning) return;
+        simulationRunning = true;
+        stopSimulation = false;
+        document.getElementById('rollDiceBtn').disabled = true;
+        document.getElementById('stopSimBtn').disabled = false;
+
+        const numRolls = totalSimRolls;
+
+        controls.enabled = false;
+
+        dice.forEach(d => d.visible = true);
+
+        const activeDiceInstances = dice.filter(d => d.userData.active);
+        const diePositions = [];
+        const numActiveDice = activeDiceInstances.length;
+        const maxRows = Math.ceil(numActiveDice / 5);
+        const maxCols = 5;
+        const rowSpacing = 2.5; const colSpacing = 2.5;
+        for(let i = 0; i < numActiveDice; i++) {
+            const row = Math.floor(i / maxCols); const col = i % maxCols;
+            const xOffset = (col - (maxCols - 1) / 2) * colSpacing;
+            const zOffset = (row - (maxRows - 1) / 2) * rowSpacing;
+            diePositions.push(new THREE.Vector3(xOffset, 0.45, zOffset));
+        }
+
+        for (let r = 0; r < numRolls; r++) {
+            if (stopSimulation) {
+                console.log("Simulation stopped.");
+                break;
+            }
+
+            playSound('toss');
+
+            const rollPromises = [];
+            const currentRollValues = [];
+
+            for (let i = 0; i < numActiveDice; i++) {
+                const die = activeDiceInstances[i];
+                const targetValue = Math.floor(Math.random() * 6) + 1;
+                currentRoundResults[targetValue - 1]++;
+                currentRollValues.push(targetValue);
+
+                rollPromises.push(new Promise(resolve => {
+                    const start = die.position.clone();
+                    const end = diePositions[i];
+                    const startT = performance.now();
+                    const rollDuration = 800 + Math.random() * 400;
+                    const startRotation = { x: die.rotation.x, y: die.rotation.y, z: die.rotation.z };
+                    const spinSpeed = 3 + Math.random() * 3;
+                    
+                    let finalRotation;
+                    if (state.diceFaceMode === 'standard') {
+                        const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
+                        finalRotation = rotations[targetValue];
+                    } else {
+                        finalRotation = { x: Math.random() * Math.PI * 2, y: Math.random() * Math.PI * 2, z: Math.random() * Math.PI * 2 };
+                    }
+
+                    function step(now) {
+                        if (stopSimulation) {
+                             gsap.to(die.position, { y: 0.45, duration: 0.3, ease: "power2.out" });
+                             gsap.to(die.rotation, { x: finalRotation.x, y: finalRotation.y, z: finalRotation.z, duration: 0.3, ease: "power2.out" });
+                             resolve();
+                             return;
+                        }
+
+                        const elapsed = now - startT;
+                        const t = Math.min(elapsed / rollDuration, 1);
+                        
+                        die.position.lerpVectors(start, end, t);
+                        die.position.y = 0.45 + Math.sin(t * Math.PI) * 3;
+
+                        if (t < 0.95) {
+                            die.rotation.x = startRotation.x + spinSpeed * elapsed * 0.004;
+                            die.rotation.y = startRotation.y + spinSpeed * elapsed * 0.004;
+                            die.rotation.z = startRotation.z + spinSpeed * elapsed * 0.003;
+                        } else {
+                            const settleT = (t - 0.95) / 0.05;
+                            die.rotation.x = die.rotation.x * (1 - settleT) + finalRotation.x * settleT;
+                            die.rotation.y = die.rotation.y * (1 - settleT) + finalRotation.y * settleT;
+                            die.rotation.z = die.rotation.z * (1 - settleT) + finalRotation.z * settleT;
+                        }
+
+                        if (t < 1) requestAnimationFrame(step);
+                        else {
+                            die.position.copy(end); die.position.y = 0.45;
+                            die.rotation.x = finalRotation.x; die.rotation.y = finalRotation.y; die.rotation.z = finalRotation.z;
+                            setDieValue(die, targetValue);
+                            resolve();
+                        }
+                    }
+                    requestAnimationFrame(step);
+                }));
+            }
+            await Promise.all(rollPromises);
+            if (soundEnabled) playSound('roll');
+            updateCurrentRow();
+        }
+
+        controls.enabled = true;
+        document.getElementById('rollDiceBtn').disabled = false;
+        document.getElementById('stopSimBtn').disabled = true;
+        simulationRunning = false;
+    }
+
+    function updateCurrentRow() {
+        const tableBody = document.getElementById('resultsTableBody');
+        let currentRow = tableBody.rows[currentRound - 1];
+        
+        if (!currentRow) {
+            currentRow = tableBody.insertRow();
+            currentRow.insertCell(0).textContent = currentRound;
+            for (let i = 0; i < 6; i++) {
+                currentRow.insertCell(i + 1);
+            }
+            currentRow.insertCell(7);
+        }
+
+        const totalRolls = currentRoundResults.reduce((sum, count) => sum + count, 0);
+        
+        for (let i = 0; i < 6; i++) {
+            const count = currentRoundResults[i];
+            const pct = totalRolls > 0 ? ((count / totalRolls) * 100).toFixed(1) : '0.0';
+            currentRow.cells[i + 1].innerHTML = `${count}<span class="pct">${pct}%</span>`;
+        }
+        
+        currentRow.cells[7].textContent = totalRolls;
+        
+        updateGrandTotals();
+    }
+
+function addNewRow() {
+    if (currentRoundResults.some(count => count > 0)) {
+        updateCurrentRow();
+    }
+    currentRound++;
+    currentRoundResults = Array(6).fill(0);
+    
+    const tableBody = document.getElementById('resultsTableBody');
+    const newRow = tableBody.insertRow();
+    newRow.insertCell(0).textContent = currentRound;
+    for (let i = 0; i < 6; i++) {
+        newRow.insertCell(i + 1).innerHTML = `0<span class="pct">0.0%</span>`;
+    }
+    newRow.insertCell(7).textContent = '0';
+}
+
+    function clearResults() {
+        const tableBody = document.getElementById('resultsTableBody');
+        tableBody.innerHTML = '';
+        currentRound = 1;
+        currentRoundResults = Array(6).fill(0);
+        for (let i = 0; i < 6; i++) {
+            document.getElementById(`grandTotal${i+1}s`).innerHTML = `0<span class="pct">0.0%</span>`;
+        }
+        document.getElementById('grandTotalRolls').textContent = '0';
+    }
+
+function updateGrandTotals() {
+    const tableBody = document.getElementById('resultsTableBody');
+    const grandTotals = Array(6).fill(0);
+    let grandTotalRolls = 0;
+    
+    for (let i = 0; i < tableBody.rows.length; i++) {
+        const row = tableBody.rows[i];
+        
+        for (let j = 0; j < 6; j++) {
+            const cell = row.cells[j + 1];
+            const countText = cell.childNodes[0].textContent;
+            const count = parseInt(countText) || 0;
+            grandTotals[j] += count;
+        }
+    }
+    
+    grandTotalRolls = grandTotals.reduce((sum, count) => sum + count, 0);
+    
+    for (let i = 0; i < 6; i++) {
+        const pct = grandTotalRolls > 0 ? ((grandTotals[i] / grandTotalRolls) * 100).toFixed(1) : '0.0';
+        document.getElementById(`grandTotal${i+1}s`).innerHTML = `${grandTotals[i]}<span class="pct">${pct}%</span>`;
+    }
+    
+    document.getElementById('grandTotalRolls').textContent = grandTotalRolls;
+}
+
+    /** EVENT LISTENERS AND INITIALIZATION **/
+    function onResize() {
+        const canvasContainer = document.getElementById('canvas-container');
+        camera.aspect = canvasContainer.clientWidth / canvasContainer.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
+    }
+
+    function onClick(e) { }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    init();
+    updateTableSurface();
+    document.getElementById('rollDiceBtn').onclick = simulateRolls;
+    document.getElementById('stopSimBtn').disabled = true;
+</script>
+</body>
+</html>
