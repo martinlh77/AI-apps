@@ -303,7 +303,7 @@
             case 'roll':
                 oscillator.frequency.setValueAtTime(200, now);
                 oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.3);
-                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.setValueAtTime(0.7, now);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
                 oscillator.start(now);
                 oscillator.stop(now + 0.3);
@@ -340,7 +340,7 @@
                 oscillator.type = 'sawtooth';
                 oscillator.frequency.setValueAtTime(400, now);
                 oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.5);
-                gainNode.gain.setValueAtTime(0.4, now);
+                gainNode.gain.setValueAtTime(0.15, now);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
                 oscillator.start(now);
                 oscillator.stop(now + 0.5);
