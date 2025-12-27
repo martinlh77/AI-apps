@@ -828,12 +828,12 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
                     const spinSpeed = 3 + Math.random() * 3;
                     
                     let finalRotation;
-                    if (state.diceFaceMode === 'standard') {
-                        const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
-                        finalRotation = rotations[targetValue];
-                    } else {
-                        finalRotation = { x: Math.random() * Math.PI * 2, y: Math.random() * Math.PI * 2, z: Math.random() * Math.PI * 2 };
-                    }
+if (state.diceFaceMode === 'standard') {
+    const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
+    finalRotation = rotations[targetValue];
+} else {
+    finalRotation = { x: 0, y: 0, z: 0 };
+}
 
                     function step(now) {
                         if (stopSimulation) {
