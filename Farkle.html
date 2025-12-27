@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Farkle: The Working Version</title>
+    <title>3D Farkle</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #0f0; user-select: none; }
         #ui { position: absolute; top: 10px; left: 10px; width: 260px; pointer-events: none; z-index: 10; }
@@ -292,73 +292,109 @@
     function playSound(type) {
         if (!state.soundEnabled) return;
         
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
         
         const now = audioContext.currentTime;
-        
+
         switch(type) {
             case 'roll':
-                oscillator.frequency.setValueAtTime(200, now);
-                oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.3);
-                gainNode.gain.setValueAtTime(0.7, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                oscillator.start(now);
-                oscillator.stop(now + 0.3);
-                break;
-            case 'select':
-                oscillator.frequency.setValueAtTime(400, now);
-                gainNode.gain.setValueAtTime(0.2, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                oscillator.start(now);
-                oscillator.stop(now + 0.1);
-                break;
-            case 'bank':
-                oscillator.frequency.setValueAtTime(600, now);
-                oscillator.frequency.setValueAtTime(800, now + 0.1);
-                gainNode.gain.setValueAtTime(0.3, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                oscillator.start(now);
-                oscillator.stop(now + 0.2);
-                break;
-            case 'hotdice':
-                for(let i = 0; i < 3; i++) {
+                // NEW ROLL SOUND: A "Rattle" effect using 4 rapid, random-pitched impacts
+                for (let i = 0; i < 4; i++) {
                     const osc = audioContext.createOscillator();
                     const gain = audioContext.createGain();
+                    const startTime = now + (i * 0.07); // Stagger the "clacks"
+                    
+                    osc.type = 'triangle';
+                    // Randomize frequency slightly to sound like different dice hitting
+                    osc.frequency.setValueAtTime(200 + (Math.random() * 300), startTime);
+                    osc.frequency.exponentialRampToValueAtTime(40, startTime + 0.1);
+                    
+                    gain.gain.setValueAtTime(0.6, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
+                    
                     osc.connect(gain);
                     gain.connect(audioContext.destination);
-                    osc.frequency.setValueAtTime(800 + i * 200, now + i * 0.1);
-                    gain.gain.setValueAtTime(0.2, now + i * 0.1);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.15);
-                    osc.start(now + i * 0.1);
-                    osc.stop(now + i * 0.1 + 0.15);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.12);
                 }
                 break;
+
             case 'farkle':
-                oscillator.type = 'sawtooth';
-                oscillator.frequency.setValueAtTime(400, now);
-                oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.5);
-                gainNode.gain.setValueAtTime(0.15, now);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
-                oscillator.start(now);
-                oscillator.stop(now + 0.5);
+                const fOsc = audioContext.createOscillator();
+                const fGain = audioContext.createGain();
+                fOsc.connect(fGain);
+                fGain.connect(audioContext.destination);
+                
+                fOsc.frequency.setValueAtTime(180, now);
+                fOsc.frequency.exponentialRampToValueAtTime(60, now + 0.4);
+                
+                fGain.gain.setValueAtTime(2.5, now);
+                fGain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                
+                fOsc.start(now);
+                fOsc.stop(now + 0.4);
                 break;
+
+            case 'select':
+                const sOsc = audioContext.createOscillator();
+                const sGain = audioContext.createGain();
+                sOsc.connect(sGain);
+                sGain.connect(audioContext.destination);
+                sOsc.frequency.setValueAtTime(400, now);
+                sGain.gain.setValueAtTime(0.1, now);
+                gained(sOsc, sGain, 0.1);
+                break;
+
+            case 'bank':
+                const bOsc = audioContext.createOscillator();
+                const bGain = audioContext.createGain();
+                bOsc.connect(bGain);
+                bGain.connect(audioContext.destination);
+                bOsc.frequency.setValueAtTime(600, now);
+                bOsc.frequency.setValueAtTime(800, now + 0.1);
+                bGain.gain.setValueAtTime(0.2, now);
+                bGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                bOsc.start(now);
+                bOsc.stop(now + 0.2);
+                break;
+
+            case 'hotdice':
+                for(let i = 0; i < 3; i++) {
+                    const hOsc = audioContext.createOscillator();
+                    const hGain = audioContext.createGain();
+                    hOsc.connect(hGain);
+                    hGain.connect(audioContext.destination);
+                    hOsc.frequency.setValueAtTime(800 + i * 200, now + i * 0.1);
+                    hGain.gain.setValueAtTime(0.1, now + i * 0.1);
+                    hGain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.1 + 0.15);
+                    hOsc.start(now + i * 0.1);
+                    hOsc.stop(now + i * 0.1 + 0.15);
+                }
+                break;
+
             case 'win':
                 for(let i = 0; i < 5; i++) {
-                    const osc = audioContext.createOscillator();
-                    const gain = audioContext.createGain();
-                    osc.connect(gain);
-                    gain.connect(audioContext.destination);
-                    osc.frequency.setValueAtTime(400 + i * 150, now + i * 0.15);
-                    gain.gain.setValueAtTime(0.2, now + i * 0.15);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.3);
-                    osc.start(now + i * 0.15);
-                    osc.stop(now + i * 0.15 + 0.3);
+                    const wOsc = audioContext.createOscillator();
+                    const wGain = audioContext.createGain();
+                    wOsc.connect(wGain);
+                    wGain.connect(audioContext.destination);
+                    wOsc.frequency.setValueAtTime(400 + i * 150, now + i * 0.15);
+                    wGain.gain.setValueAtTime(0.1, now + i * 0.15);
+                    wGain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.15 + 0.3);
+                    wOsc.start(now + i * 0.15);
+                    wOsc.stop(now + i * 0.15 + 0.3);
                 }
                 break;
         }
+    }
+
+    // Helper to keep code clean
+    function gained(osc, gain, duration) {
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        osc.start(audioContext.currentTime);
+        osc.stop(audioContext.currentTime + duration);
     }
 
     function toggleSound() {
