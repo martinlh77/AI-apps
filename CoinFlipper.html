@@ -121,6 +121,17 @@
     <div class="menu-content">
         <span class="close-menu" id="closeSettings">&times;</span>
         <h3 style="margin-top:0; color:#d4af37">COIN SETTINGS</h3>
+
+        <button class="collapsible">Sound Settings</button>
+        <div class="collapsible-content">
+            <div class="input-group">
+                <label>
+                    <input type="checkbox" id="soundToggle" checked style="width: auto; margin-right: 8px;">
+                    Enable Sound Effects
+                </label>
+            </div>
+        </div>
+
         
         <button class="collapsible">Table Surface</button>
         <div class="collapsible-content">
@@ -386,19 +397,49 @@
         });
     }
 
-    function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
-        ctx.fillStyle = baseColor;
-        ctx.fillRect(0, 0, 512, 512);
-        for(let i = 0; i < 50000; i++) {
-            const x = Math.random() * 512;
-            const y = Math.random() * 512;
-            const brightness = Math.random();
-            ctx.fillStyle = brightness > 0.5 ? lightColor : darkColor;
-            ctx.globalAlpha = 0.12;
-            ctx.fillRect(x, y, Math.random() * 2, Math.random() * 2);
-        }
-        ctx.globalAlpha = 1;
+function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, 512, 512);
+    
+    for(let i = 0; i < 50000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const brightness = Math.random();
+        ctx.fillStyle = brightness > 0.5 ? lightColor : darkColor;
+        ctx.globalAlpha = 0.12;
+        ctx.fillRect(x, y, Math.random() * 2, Math.random() * 2);
     }
+    
+    ctx.globalAlpha = 0.06;
+    for(let i = 0; i < 512; i += 4) {
+        ctx.strokeStyle = lightColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, 512);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(512, i);
+        ctx.stroke();
+    }
+    
+    ctx.globalAlpha = 0.15;
+    for(let i = 0; i < 25; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const radius = 20 + Math.random() * 50;
+        const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        grad.addColorStop(0, darkColor);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    ctx.globalAlpha = 1;
+}
 
     function createWoodTexture(ctx) {
         const gradient = ctx.createLinearGradient(0, 0, 512, 512);
@@ -478,6 +519,65 @@
     }
     updateCoinCount();
 
+    /** 3B. AUDIO SYSTEM **/
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    let soundEnabled = true;
+
+    function playSound(type) {
+        if (!soundEnabled) return;
+        if (audioContext.state === 'suspended') audioContext.resume();
+        const now = audioContext.currentTime;
+        switch(type) {
+            case 'toss':
+                const tOsc = audioContext.createOscillator();
+                const tGain = audioContext.createGain();
+                tOsc.type = 'sine';
+                tOsc.frequency.setValueAtTime(200, now);
+                tOsc.frequency.exponentialRampToValueAtTime(500, now + 0.2);
+                tGain.gain.setValueAtTime(0, now);
+                tGain.gain.linearRampToValueAtTime(0.5, now + 0.05);
+                tGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                tOsc.connect(tGain);
+                tGain.connect(audioContext.destination);
+                tOsc.start(now);
+                tOsc.stop(now + 0.2);
+                break;
+            case 'land':
+                // Low metallic thud
+                const thudOsc = audioContext.createOscillator();
+                const thudGain = audioContext.createGain();
+                thudOsc.type = 'triangle';
+                thudOsc.frequency.setValueAtTime(150, now);
+                thudOsc.frequency.exponentialRampToValueAtTime(80, now + 0.08);
+                thudGain.gain.setValueAtTime(0.4, now);
+                thudGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                thudOsc.connect(thudGain);
+                thudGain.connect(audioContext.destination);
+                thudOsc.start(now);
+                thudOsc.stop(now + 0.08);
+                
+                // Metallic rattle
+                const rattle1 = audioContext.createOscillator();
+                const rattle2 = audioContext.createOscillator();
+                const rattleGain = audioContext.createGain();
+                rattle1.type = 'square';
+                rattle2.type = 'square';
+                rattle1.frequency.setValueAtTime(800, now + 0.02);
+                rattle2.frequency.setValueAtTime(1100, now + 0.02);
+                rattleGain.gain.setValueAtTime(0.15, now + 0.02);
+                rattleGain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                rattle1.connect(rattleGain);
+                rattle2.connect(rattleGain);
+                rattleGain.connect(audioContext.destination);
+                rattle1.start(now + 0.02);
+                rattle2.start(now + 0.025);
+                rattle1.stop(now + 0.12);
+                rattle2.stop(now + 0.12);
+                break;
+        }
+    }
+
+
     /** 4. LOGIC & ANIMATION **/
     let roundNum = 1; let isFlipping = false; let stopRequested = false;
     function addRow() {
@@ -515,10 +615,11 @@
             const finalY = coinGrp.rotation.y + (Math.PI * 1.5) + (Math.random() * Math.PI * 3);
             const finalZ = (Math.random() - 0.5) * 1.1; 
             const tl = gsap.timeline({ onComplete: resolve });
+            playSound('toss');
             coinGrp.rotation.x %= (Math.PI * 2);
             tl.to(coinGrp.position, { x: xPos, z: zPos, y: jumpHeight, duration: 0.6, ease: "power2.out" });
             tl.to(coinGrp.rotation, { x: finalX, y: finalY, z: finalZ, duration: 1.1, ease: "none" }, 0);
-            tl.to(coinGrp.position, { y: COIN_THICK/2, duration: 0.5, ease: "bounce.out" }, "-=0.2");
+            tl.to(coinGrp.position, { y: COIN_THICK/2, duration: 0.5, ease: "bounce.out", onComplete: () => playSound('land') }, "-=0.2");
             tl.to(coinGrp.rotation, { x: finalX, z: 0, duration: 0.3 }, "-=0.4");
         });
     }
@@ -542,6 +643,7 @@
     document.getElementById('settingsBtn').onclick = () => menu.style.display = 'block';
     document.getElementById('closeSettings').onclick = () => menu.style.display = 'none';
     document.getElementById('tableSurfaceSelect').onchange = (e) => { floor.material.dispose(); floor.material = getTableMaterial(e.target.value); };
+    document.getElementById('soundToggle').onchange = (e) => { soundEnabled = e.target.checked; };
 
     function updateCoin(headSrc, tailSrc) {
         currentHeadTex = loader.load(headSrc); currentTailTex = loader.load(tailSrc);
@@ -555,7 +657,7 @@
     }
 
     /** AI GENERATION LOGIC **/
-    const AI_API_KEY = "pk_WlWG5xAS9Wm060JP";
+    const AI_API_KEY = "plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL";
 
     async function handleAIGenerate(side) {
         const promptInput = document.getElementById(side === 'heads' ? 'aiHeadsPrompt' : 'aiTailsPrompt');
@@ -653,4 +755,3 @@
 </script>
 </body>
 </html>
-
