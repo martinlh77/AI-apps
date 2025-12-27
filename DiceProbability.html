@@ -114,6 +114,10 @@
         .total-row td { background: #f9f1d7; font-weight: bold; border-top: 3px solid #d4af37; }
         .instruction { color: #888; font-size: 11px; margin-top: 10px; font-style: italic; }
 
+        .sub-input-group { margin-left: 15px; margin-top: 10px; padding: 10px; background: #111; border-radius: 5px; }
+        .sub-input-group label { font-size: 0.75rem; }
+        .sub-input-group input, .sub-input-group select { width: auto; padding: 5px; font-size: 0.85rem; }
+
         @media (max-width: 768px) {
             #canvas-container { height: 50vh; }
             .controls-card { padding: 15px; }
@@ -211,6 +215,56 @@
             </div>
             <button id="resetCameraBtn" class="secondary-btn" style="width:100%; margin-top:10px;">Reset Camera</button>
         </div>
+
+        <button class="collapsible">Probability Mode</button>
+        <div class="collapsible-content">
+            <div class="input-group">
+                <label>Chart Display Mode:</label>
+                <select id="probability-mode">
+                    <option value="basic" selected>Basic Numerical Outcomes (1-6)</option>
+                    <option value="even-odd">Even vs Odd</option>
+                    <option value="prime-composite">Prime vs Composite</option>
+                    <option value="less-than">Less Than N</option>
+                    <option value="greater-than">Greater Than N</option>
+                    <option value="sum">Sum of Rolls</option>
+                    <option value="both-even-odd">Both Even or Both Odd</option>
+                    <option value="same-number">Same Number on Multiple Rolls</option>
+                    <option value="different-parity">Different Parity</option>
+                    <option value="increasing">Increasing Sequence</option>
+                    <option value="between">Between Two Numbers</option>
+                    <option value="at-least">At Least N</option>
+                    <option value="at-most">At Most N</option>
+                    <option value="low-high">Low Half vs High Half</option>
+                    <option value="multiples">Multiples of N</option>
+                </select>
+            </div>
+            <div class="sub-input-group" id="less-than-options" style="display:none;">
+                <label>Less than: </label>
+                <input type="number" id="less-than-value" value="4" min="2" max="6">
+            </div>
+            <div class="sub-input-group" id="greater-than-options" style="display:none;">
+                <label>Greater than: </label>
+                <input type="number" id="greater-than-value" value="3" min="1" max="5">
+            </div>
+            <div class="sub-input-group" id="between-options" style="display:none;">
+                <label>Between: </label>
+                <input type="number" id="between-min-value" value="2" min="1" max="5" style="width:50px;">
+                <label> and </label>
+                <input type="number" id="between-max-value" value="5" min="2" max="6" style="width:50px;">
+            </div>
+            <div class="sub-input-group" id="at-least-options" style="display:none;">
+                <label>At least: </label>
+                <input type="number" id="at-least-value" value="4" min="1" max="6">
+            </div>
+            <div class="sub-input-group" id="at-most-options" style="display:none;">
+                <label>At most: </label>
+                <input type="number" id="at-most-value" value="2" min="1" max="6">
+            </div>
+            <div class="sub-input-group" id="multiples-options" style="display:none;">
+                <label>Multiples of: </label>
+                <input type="number" id="multiples-value" value="3" min="2" max="6">
+            </div>
+        </div>
     </div>
 </div>
 
@@ -234,7 +288,7 @@
 
 <div class="results-table-container">
     <table id="resultsTable">
-        <thead>
+        <thead id="resultsTableHead">
             <tr>
                 <th>Round #</th>
                 <th>1</th>
@@ -247,7 +301,7 @@
             </tr>
         </thead>
         <tbody id="resultsTableBody"></tbody>
-        <tfoot class="total-row">
+        <tfoot class="total-row" id="resultsTableFoot">
             <tr>
                 <td>GRAND TOTAL</td>
                 <td id="grandTotal1s">0<span class="pct">0.0%</span></td>
@@ -277,6 +331,8 @@
     let stopSimulation = false;
     let currentRound = 1;
     let currentRoundResults = Array(6).fill(0);
+    let currentProbabilityMode = 'basic';
+    let currentModeResults = {};
 
     const state = {
         diceStyle: 'marble',
@@ -305,7 +361,7 @@
     document.getElementById('dice-face-mode').onchange = (e) => { state.diceFaceMode = e.target.value; refreshDiceVisuals(); };
     document.getElementById('tableSurfaceSelect').onchange = (e) => { state.tableSurface = e.target.value; updateTableSurface(); };
     
-    document.getElementById('diceCountInputSim').oninput = (e) => { currentDiceCount = Math.max(1, Math.min(25, parseInt(e.target.value) || 1)); updateDiceInScene(); };
+    document.getElementById('diceCountInputSim').oninput = (e) => { currentDiceCount = Math.max(1, Math.min(25, parseInt(e.target.value) || 1)); updateDiceInScene(); updateTableHeaders(); };
     document.getElementById('totalRollsInput').oninput = (e) => { totalSimRolls = Math.max(1, Math.min(100000, parseInt(e.target.value) || 1)); };
 
     document.getElementById('resetCameraBtn').onclick = () => { camera.position.set(0, 14, 10); controls.target.set(0, 0, 0); controls.update(); };
@@ -313,6 +369,294 @@
     document.getElementById('stopSimBtn').onclick = () => { if (simulationRunning) stopSimulation = true; };
     document.getElementById('addRowBtn').onclick = () => { addNewRow(); };
     document.getElementById('clearResultsBtn').onclick = () => { clearResults(); };
+
+    document.getElementById('probability-mode').onchange = (e) => {
+        currentProbabilityMode = e.target.value;
+        updateProbabilityOptions();
+        updateTableHeaders();
+        clearResults();
+    };
+
+    document.getElementById('less-than-value').onchange = () => { updateTableHeaders(); clearResults(); };
+    document.getElementById('greater-than-value').onchange = () => { updateTableHeaders(); clearResults(); };
+    document.getElementById('between-min-value').onchange = () => { updateTableHeaders(); clearResults(); };
+    document.getElementById('between-max-value').onchange = () => { updateTableHeaders(); clearResults(); };
+    document.getElementById('at-least-value').onchange = () => { updateTableHeaders(); clearResults(); };
+    document.getElementById('at-most-value').onchange = () => { updateTableHeaders(); clearResults(); };
+    document.getElementById('multiples-value').onchange = () => { updateTableHeaders(); clearResults(); };
+
+    function updateProbabilityOptions() {
+        document.getElementById('less-than-options').style.display = 'none';
+        document.getElementById('greater-than-options').style.display = 'none';
+        document.getElementById('between-options').style.display = 'none';
+        document.getElementById('at-least-options').style.display = 'none';
+        document.getElementById('at-most-options').style.display = 'none';
+        document.getElementById('multiples-options').style.display = 'none';
+
+        switch(currentProbabilityMode) {
+            case 'less-than':
+                document.getElementById('less-than-options').style.display = 'block';
+                break;
+            case 'greater-than':
+                document.getElementById('greater-than-options').style.display = 'block';
+                break;
+            case 'between':
+                document.getElementById('between-options').style.display = 'block';
+                break;
+            case 'at-least':
+                document.getElementById('at-least-options').style.display = 'block';
+                break;
+            case 'at-most':
+                document.getElementById('at-most-options').style.display = 'block';
+                break;
+            case 'multiples':
+                document.getElementById('multiples-options').style.display = 'block';
+                break;
+        }
+    }
+
+    function getTableColumns() {
+        const numDice = currentDiceCount;
+        switch(currentProbabilityMode) {
+            case 'basic':
+                return ['1', '2', '3', '4', '5', '6'];
+            case 'even-odd':
+                return ['Even', 'Odd'];
+            case 'prime-composite':
+                return ['Prime', 'Composite', 'Neither (1)'];
+            case 'less-than': {
+                const n = parseInt(document.getElementById('less-than-value').value) || 4;
+                return [`<${n}`, `≥${n}`];
+            }
+            case 'greater-than': {
+                const n = parseInt(document.getElementById('greater-than-value').value) || 3;
+                return [`>${n}`, `≤${n}`];
+            }
+            case 'sum': {
+                const minSum = numDice;
+                const maxSum = numDice * 6;
+                const cols = [];
+                for (let i = minSum; i <= maxSum; i++) {
+                    cols.push(`Sum=${i}`);
+                }
+                return cols;
+            }
+            case 'both-even-odd':
+                if (numDice >= 2) {
+                    return ['All Even', 'All Odd', 'Mixed'];
+                }
+                return ['Even', 'Odd'];
+            case 'same-number':
+                if (numDice >= 2) {
+                    return ['All Same', 'Not All Same'];
+                }
+                return ['1', '2', '3', '4', '5', '6'];
+            case 'different-parity':
+                if (numDice >= 2) {
+                    return ['Different Parity', 'Same Parity'];
+                }
+                return ['Even', 'Odd'];
+            case 'increasing':
+                if (numDice >= 2) {
+                    return ['Increasing', 'Not Increasing'];
+                }
+                return ['1', '2', '3', '4', '5', '6'];
+            case 'between': {
+                const min = parseInt(document.getElementById('between-min-value').value) || 2;
+                const max = parseInt(document.getElementById('between-max-value').value) || 5;
+                return [`${min}≤x≤${max}`, `Outside`];
+            }
+            case 'at-least': {
+                const n = parseInt(document.getElementById('at-least-value').value) || 4;
+                return [`≥${n}`, `<${n}`];
+            }
+            case 'at-most': {
+                const n = parseInt(document.getElementById('at-most-value').value) || 2;
+                return [`≤${n}`, `>${n}`];
+            }
+            case 'low-high':
+                return ['Low (1-3)', 'High (4-6)'];
+            case 'multiples': {
+                const n = parseInt(document.getElementById('multiples-value').value) || 3;
+                return [`Multiple of ${n}`, `Not Multiple`];
+            }
+            default:
+                return ['1', '2', '3', '4', '5', '6'];
+        }
+    }
+
+    function updateTableHeaders() {
+        const columns = getTableColumns();
+        const thead = document.getElementById('resultsTableHead');
+        const tfoot = document.getElementById('resultsTableFoot');
+        
+        let headerHTML = '<tr><th>Round #</th>';
+        columns.forEach((col, i) => {
+            headerHTML += `<th>${col}</th>`;
+        });
+        headerHTML += '<th>Total Rolls</th></tr>';
+        thead.innerHTML = headerHTML;
+
+        let footerHTML = '<tr><td>GRAND TOTAL</td>';
+        columns.forEach((col, i) => {
+            footerHTML += `<td id="grandTotal${i}">0<span class="pct">0.0%</span></td>`;
+        });
+        footerHTML += '<td id="grandTotalRolls">0</td></tr>';
+        tfoot.innerHTML = footerHTML;
+
+        currentModeResults = {};
+        columns.forEach((col, i) => {
+            currentModeResults[i] = 0;
+        });
+    }
+
+    function categorizeRoll(values) {
+        const numDice = values.length;
+        const columns = getTableColumns();
+        const results = {};
+        columns.forEach((col, i) => {
+            results[i] = 0;
+        });
+
+        switch(currentProbabilityMode) {
+            case 'basic':
+                values.forEach(val => {
+                    results[val - 1]++;
+                });
+                break;
+            case 'even-odd':
+                values.forEach(val => {
+                    if (val % 2 === 0) results[0]++;
+                    else results[1]++;
+                });
+                break;
+            case 'prime-composite':
+                values.forEach(val => {
+                    if ([2, 3, 5].includes(val)) results[0]++;
+                    else if ([4, 6].includes(val)) results[1]++;
+                    else results[2]++;
+                });
+                break;
+            case 'less-than': {
+                const n = parseInt(document.getElementById('less-than-value').value) || 4;
+                values.forEach(val => {
+                    if (val < n) results[0]++;
+                    else results[1]++;
+                });
+                break;
+            }
+            case 'greater-than': {
+                const n = parseInt(document.getElementById('greater-than-value').value) || 3;
+                values.forEach(val => {
+                    if (val > n) results[0]++;
+                    else results[1]++;
+                });
+                break;
+            }
+            case 'sum': {
+                const sum = values.reduce((a, b) => a + b, 0);
+                const minSum = numDice;
+                const index = sum - minSum;
+                results[index]++;
+                break;
+            }
+            case 'both-even-odd':
+                if (numDice >= 2) {
+                    const allEven = values.every(v => v % 2 === 0);
+                    const allOdd = values.every(v => v % 2 !== 0);
+                    if (allEven) results[0]++;
+                    else if (allOdd) results[1]++;
+                    else results[2]++;
+                } else {
+                    values.forEach(val => {
+                        if (val % 2 === 0) results[0]++;
+                        else results[1]++;
+                    });
+                }
+                break;
+            case 'same-number':
+                if (numDice >= 2) {
+                    const allSame = values.every(v => v === values[0]);
+                    if (allSame) results[0]++;
+                    else results[1]++;
+                } else {
+                    values.forEach(val => {
+                        results[val - 1]++;
+                    });
+                }
+                break;
+            case 'different-parity':
+                if (numDice >= 2) {
+                    const parities = values.map(v => v % 2);
+                    const allSameParity = parities.every(p => p === parities[0]);
+                    if (!allSameParity) results[0]++;
+                    else results[1]++;
+                } else {
+                    values.forEach(val => {
+                        if (val % 2 === 0) results[0]++;
+                        else results[1]++;
+                    });
+                }
+                break;
+            case 'increasing':
+                if (numDice >= 2) {
+                    let isIncreasing = true;
+                    for (let i = 1; i < values.length; i++) {
+                        if (values[i] <= values[i-1]) {
+                            isIncreasing = false;
+                            break;
+                        }
+                    }
+                    if (isIncreasing) results[0]++;
+                    else results[1]++;
+                } else {
+                    values.forEach(val => {
+                        results[val - 1]++;
+                    });
+                }
+                break;
+            case 'between': {
+                const min = parseInt(document.getElementById('between-min-value').value) || 2;
+                const max = parseInt(document.getElementById('between-max-value').value) || 5;
+                values.forEach(val => {
+                    if (val >= min && val <= max) results[0]++;
+                    else results[1]++;
+                });
+                break;
+            }
+            case 'at-least': {
+                const n = parseInt(document.getElementById('at-least-value').value) || 4;
+                values.forEach(val => {
+                    if (val >= n) results[0]++;
+                    else results[1]++;
+                });
+                break;
+            }
+            case 'at-most': {
+                const n = parseInt(document.getElementById('at-most-value').value) || 2;
+                values.forEach(val => {
+                    if (val <= n) results[0]++;
+                    else results[1]++;
+                });
+                break;
+            }
+            case 'low-high':
+                values.forEach(val => {
+                    if (val <= 3) results[0]++;
+                    else results[1]++;
+                });
+                break;
+            case 'multiples': {
+                const n = parseInt(document.getElementById('multiples-value').value) || 3;
+                values.forEach(val => {
+                    if (val % n === 0) results[0]++;
+                    else results[1]++;
+                });
+                break;
+            }
+        }
+        return results;
+    }
 
     const coll = document.getElementsByClassName("collapsible");
     for (let i = 0; i < coll.length; i++) {
@@ -349,6 +693,7 @@
         createTable();
         createDicePlaceholder();
         updateDiceInScene();
+        updateTableHeaders();
 
         window.addEventListener('resize', onResize);
         animate();
@@ -816,7 +1161,6 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
             for (let i = 0; i < numActiveDice; i++) {
                 const die = activeDiceInstances[i];
                 const targetValue = Math.floor(Math.random() * 6) + 1;
-                currentRoundResults[targetValue - 1]++;
                 currentRollValues.push(targetValue);
 
                 rollPromises.push(new Promise(resolve => {
@@ -873,6 +1217,15 @@ if (state.diceFaceMode === 'standard') {
             }
             await Promise.all(rollPromises);
             if (soundEnabled) playSound('roll');
+            
+            const categorized = categorizeRoll(currentRollValues);
+            for (let key in categorized) {
+                if (currentModeResults[key] === undefined) {
+                    currentModeResults[key] = 0;
+                }
+                currentModeResults[key] += categorized[key];
+            }
+            
             updateCurrentRow();
         }
 
@@ -884,78 +1237,107 @@ if (state.diceFaceMode === 'standard') {
 
     function updateCurrentRow() {
         const tableBody = document.getElementById('resultsTableBody');
+        const columns = getTableColumns();
         let currentRow = tableBody.rows[currentRound - 1];
         
         if (!currentRow) {
             currentRow = tableBody.insertRow();
             currentRow.insertCell(0).textContent = currentRound;
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < columns.length; i++) {
                 currentRow.insertCell(i + 1);
             }
-            currentRow.insertCell(7);
+            currentRow.insertCell(columns.length + 1);
         }
 
-        const totalRolls = currentRoundResults.reduce((sum, count) => sum + count, 0);
+        let totalRolls = 0;
+        for (let key in currentModeResults) {
+            totalRolls += currentModeResults[key];
+        }
         
-        for (let i = 0; i < 6; i++) {
-            const count = currentRoundResults[i];
+        for (let i = 0; i < columns.length; i++) {
+            const count = currentModeResults[i] || 0;
             const pct = totalRolls > 0 ? ((count / totalRolls) * 100).toFixed(1) : '0.0';
             currentRow.cells[i + 1].innerHTML = `${count}<span class="pct">${pct}%</span>`;
         }
         
-        currentRow.cells[7].textContent = totalRolls;
+        currentRow.cells[columns.length + 1].textContent = totalRolls;
         
         updateGrandTotals();
     }
 
 function addNewRow() {
-    if (currentRoundResults.some(count => count > 0)) {
+    const columns = getTableColumns();
+    let hasData = false;
+    for (let key in currentModeResults) {
+        if (currentModeResults[key] > 0) {
+            hasData = true;
+            break;
+        }
+    }
+    if (hasData) {
         updateCurrentRow();
     }
     currentRound++;
-    currentRoundResults = Array(6).fill(0);
+    currentModeResults = {};
+    columns.forEach((col, i) => {
+        currentModeResults[i] = 0;
+    });
     
     const tableBody = document.getElementById('resultsTableBody');
     const newRow = tableBody.insertRow();
     newRow.insertCell(0).textContent = currentRound;
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < columns.length; i++) {
         newRow.insertCell(i + 1).innerHTML = `0<span class="pct">0.0%</span>`;
     }
-    newRow.insertCell(7).textContent = '0';
+    newRow.insertCell(columns.length + 1).textContent = '0';
 }
 
     function clearResults() {
         const tableBody = document.getElementById('resultsTableBody');
         tableBody.innerHTML = '';
         currentRound = 1;
-        currentRoundResults = Array(6).fill(0);
-        for (let i = 0; i < 6; i++) {
-            document.getElementById(`grandTotal${i+1}s`).innerHTML = `0<span class="pct">0.0%</span>`;
+        const columns = getTableColumns();
+        currentModeResults = {};
+        columns.forEach((col, i) => {
+            currentModeResults[i] = 0;
+        });
+        for (let i = 0; i < columns.length; i++) {
+            const el = document.getElementById(`grandTotal${i}`);
+            if (el) el.innerHTML = `0<span class="pct">0.0%</span>`;
         }
         document.getElementById('grandTotalRolls').textContent = '0';
     }
 
 function updateGrandTotals() {
     const tableBody = document.getElementById('resultsTableBody');
-    const grandTotals = Array(6).fill(0);
+    const columns = getTableColumns();
+    const grandTotals = {};
+    columns.forEach((col, i) => {
+        grandTotals[i] = 0;
+    });
     let grandTotalRolls = 0;
     
     for (let i = 0; i < tableBody.rows.length; i++) {
         const row = tableBody.rows[i];
         
-        for (let j = 0; j < 6; j++) {
+        for (let j = 0; j < columns.length; j++) {
             const cell = row.cells[j + 1];
-            const countText = cell.childNodes[0].textContent;
-            const count = parseInt(countText) || 0;
-            grandTotals[j] += count;
+            if (cell && cell.childNodes[0]) {
+                const countText = cell.childNodes[0].textContent;
+                const count = parseInt(countText) || 0;
+                grandTotals[j] += count;
+            }
         }
     }
     
-    grandTotalRolls = grandTotals.reduce((sum, count) => sum + count, 0);
+    for (let key in grandTotals) {
+        grandTotalRolls += grandTotals[key];
+    }
     
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < columns.length; i++) {
         const pct = grandTotalRolls > 0 ? ((grandTotals[i] / grandTotalRolls) * 100).toFixed(1) : '0.0';
-        document.getElementById(`grandTotal${i+1}s`).innerHTML = `${grandTotals[i]}<span class="pct">${pct}%</span>`;
+        const el = document.getElementById(`grandTotal${i}`);
+        if (el) el.innerHTML = `${grandTotals[i]}<span class="pct">${pct}%</span>`;
     }
     
     document.getElementById('grandTotalRolls').textContent = grandTotalRolls;
