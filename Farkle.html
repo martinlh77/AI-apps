@@ -299,19 +299,38 @@
         const now = audioContext.currentTime;
 
         switch(type) {
+
+            case 'toss':
+                // Smooth Rising Whoosh
+                const tOsc = audioContext.createOscillator();
+                const tGain = audioContext.createGain();
+                
+                tOsc.type = 'sine'; // Purest sound
+                tOsc.frequency.setValueAtTime(200, now); // Start low
+                tOsc.frequency.exponentialRampToValueAtTime(500, now + 0.2); // Slide UP to high
+                
+                tGain.gain.setValueAtTime(0, now);
+                tGain.gain.linearRampToValueAtTime(0.5, now + 0.05); // Fade in
+                tGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2); // Fade out
+                
+                tOsc.connect(tGain);
+                tGain.connect(audioContext.destination);
+                tOsc.start(now);
+                tOsc.stop(now + 0.2);
+                break;
+
             case 'roll':
-                // NEW ROLL SOUND: A "Rattle" effect using 4 rapid, random-pitched impacts
+                // The "Landing" Clatter (rattle sound)
                 for (let i = 0; i < 4; i++) {
                     const osc = audioContext.createOscillator();
                     const gain = audioContext.createGain();
-                    const startTime = now + (i * 0.07); // Stagger the "clacks"
+                    const startTime = now + (i * 0.05); // Rapid staccato hits
                     
-                    osc.type = 'triangle';
-                    // Randomize frequency slightly to sound like different dice hitting
-                    osc.frequency.setValueAtTime(200 + (Math.random() * 300), startTime);
+                    osc.type = 'triangle'; 
+                    osc.frequency.setValueAtTime(250 + (Math.random() * 200), startTime);
                     osc.frequency.exponentialRampToValueAtTime(40, startTime + 0.1);
                     
-                    gain.gain.setValueAtTime(0.6, startTime);
+                    gain.gain.setValueAtTime(0.5, startTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.1);
                     
                     osc.connect(gain);
@@ -1017,7 +1036,8 @@
     async function rollPhysics(activeDice) {
         state.isRolling = true;
         updateUI("ROLLING...");
-        playSound('roll');
+
+        playSound('toss');
         
         const finalValues = activeDice.map(() => Math.floor(Math.random() * 6) + 1);
         const finalRotations = finalValues.map((val) => {
@@ -1108,25 +1128,41 @@
         });
 
         await Promise.all(promises);
-        state.isRolling = false;
-        state.hasRolledThisTurn = true;
 
-        const check = getScore(activeDice);
-        if (check.points === 0) {
-            state.farkled = true;
-            state.turnScore = 0;
-            playSound('farkle');
-            showMsg("FARKLE!");
-            updateUI("FARKLE!");
-            setTimeout(endTurn, 2000);
-        } else {
-            updateUI("SELECT DICE");
-        }
+    // This creates a 0.6 second pause so the player can see the dice before the message pops up
+    await Promise.all(promises);
+    playSound('roll');
+
+    // Calculate the score immediately after landing
+    const check = getScore(activeDice);
+    state.hasRolledThisTurn = true;
+
+    if (check.points === 0) {
+        // --- DRAMATIC PAUSE ONLY FOR FARKLE ---
+        // We stay in the "isRolling" state so the user can't click dice yet
+        await new Promise(resolve => setTimeout(resolve, 800)); 
+        
+        state.isRolling = false;
+        state.farkled = true;
+        state.turnScore = 0;
+        playSound('farkle');
+        showMsg("FARKLE!");
+        updateUI("FARKLE!");
+        setTimeout(endTurn, 2000);
+    } else {
+        // --- NO DELAY FOR GOOD ROLLS ---
+        // Proceed immediately so the game feels snappy
+        state.isRolling = false;
+        updateUI("SELECT DICE");
     }
+}
 
     function onClick(e) {
         if (state.isRolling || state.farkled || state.gameOver) return;
         if (state.gameMode === 'vs-ai' && state.currentPlayer === 'AI') return;
+
+        // Prevent selection before the first roll of the turn
+        if (!state.hasRolledThisTurn) return; 
         
         const mouse = new THREE.Vector2((e.clientX/window.innerWidth)*2-1, -(e.clientY/window.innerHeight)*2+1);
         const ray = new THREE.Raycaster();
@@ -1158,6 +1194,7 @@
 
         state.firstRollOfTurn = false;
         let active = dice.filter(d => d.userData.active);
+        active.forEach(d => { d.userData.selected = false; });
         if (active.length === 0) {
             playSound('hotdice');
             showMsg("HOT DICE!");
@@ -1232,35 +1269,123 @@
     }
 
     async function aiLogic() {
+        let hotDiceCount = 0; // Track board clears within this turn
+
         while (state.currentPlayer === 'AI' && !state.gameOver) {
             await new Promise(r => setTimeout(r, 1000));
-            const active = dice.filter(d => d.userData.active);
-            await rollPhysics(active);
+            let activeDice = dice.filter(d => d.userData.active);
+            await rollPhysics(activeDice);
+            
             if (state.farkled) break;
 
             await new Promise(r => setTimeout(r, 1500));
             const rolled = dice.filter(d => d.userData.active);
-            const vals = rolled.map(d => d.userData.val);
-            const counts = [0,0,0,0,0,0,0];
-            vals.forEach(v => counts[v]++);
+            let toPick = [];
             
-            const toPick = rolled.filter(d => (d.userData.val === 1 || d.userData.val === 5 || counts[d.userData.val] >= 3));
-            const res = getScore(toPick);
-            toPick.forEach(d => { d.userData.selected = true; d.position.y = 1.5; });
+            // 1. ANALYZE FULL HAND (Straights, 3-Pair, 6-of-a-kind)
+            // This ensures AI recognizes 1500+ point hands and gets "Hot Dice"
+            const fullScore = getScore(rolled);
+            if (fullScore.used === rolled.length && fullScore.points > 0) {
+                toPick = [...rolled];
+            } else {
+                // 2. ANALYZE SUB-SETS (3, 4, 5 of a kind)
+                const counts = [0,0,0,0,0,0,0];
+                rolled.forEach(d => counts[d.userData.val]++);
+                
+                for (let i = 1; i <= 6; i++) {
+                    if (counts[i] >= 3) {
+                        toPick.push(...rolled.filter(d => d.userData.val === i));
+                    }
+                }
+                
+                // 3. STRATEGIC 1s and 5s SELECTION
+                const ones = rolled.filter(d => d.userData.val === 1 && !toPick.includes(d));
+                const fives = rolled.filter(d => d.userData.val === 5 && !toPick.includes(d));
+                
+                // If turn score is low, don't take a "5" if it leaves you with only 1 or 2 dice.
+                // It's better to roll 5 dice again than to take 50 points and roll 3.
+                const potentialRemaining = rolled.length - (toPick.length + ones.length + fives.length);
+                
+                if (state.turnScore < 1000 && potentialRemaining < 3 && rolled.length > 2) {
+                    // Just take one scoring die (preferring 1 over 5) to stay in the game
+                    if (toPick.length === 0) {
+                        if (ones.length > 0) toPick.push(ones[0]);
+                        else if (fives.length > 0) toPick.push(fives[0]);
+                    }
+                } else {
+                    // Take all available 1s and 5s
+                    toPick.push(...ones);
+                    toPick.push(...fives);
+                }
+            }
+
+            // Move selected dice to the selection area visually
+            toPick.forEach(d => { 
+                d.userData.selected = true; 
+                d.position.y = 1.5; 
+            });
             playSound('select');
             updateUI("AI SELECTING...");
             
-            await new Promise(r => setTimeout(r, 1500));
-            if (state.turnScore + res.points >= 400 || (rolled.length - toPick.length) < 3) {
-                userBank(); break;
-            } else {
-                state.turnScore += res.points;
+            await new Promise(r => setTimeout(r, 1200));
+            
+            const currentRollPoints = getScore(toPick).points;
+            const potentialTurnTotal = state.turnScore + currentRollPoints;
+            const diceRemaining = rolled.length - toPick.length;
+            
+            // 4. RISK ASSESSMENT LOGIC
+            let shouldRollAgain = false;
+            
+            // If this roll wins the game, definitely bank.
+            if (state.scores.AI + potentialTurnTotal >= state.maxPoints) {
+                shouldRollAgain = false;
+            } 
+            else if (diceRemaining === 0) {
+                // HOT DICE: 6 dice available. High probability of success.
+                // Risk up to 3000 points on Hot Dice.
+                shouldRollAgain = potentialTurnTotal < 3000;
+            } 
+            else if (diceRemaining >= 3) {
+                // 3+ dice: Good odds. Risk up to 2000 points.
+                shouldRollAgain = potentialTurnTotal < 2000;
+            } 
+            else if (diceRemaining === 2) {
+                // 2 dice: Risky. Only roll if turn score is very low (under 500).
+                shouldRollAgain = potentialTurnTotal < 500;
+            } 
+            else if (diceRemaining === 1) {
+                // 1 die: Very risky (1 in 3 chance). Only roll if turn score is under 300.
+                shouldRollAgain = potentialTurnTotal < 300;
+            }
+
+            if (shouldRollAgain) {
+                state.turnScore += currentRollPoints;
                 state.firstRollOfTurn = false;
-                toPick.forEach(d => { d.userData.active = false; d.visible = false; d.userData.selected = false; });
+                
+                // Clear selected dice from the table
+                toPick.forEach(d => { 
+                    d.userData.active = false; 
+                    d.visible = false; 
+                    d.userData.selected = false; 
+                });
+                
+                // If we used all dice, trigger Hot Dice reset
                 if (dice.filter(d => d.userData.active).length === 0) {
+                    hotDiceCount++;
                     playSound('hotdice');
-                    dice.forEach(d => { d.userData.active = true; d.visible = true; d.userData.selected = false; d.position.y = 0.45; });
+                    showMsg("HOT DICE!");
+                    dice.forEach(d => { 
+                        d.userData.active = true; 
+                        d.visible = true; 
+                        d.userData.selected = false; 
+                        d.position.y = 0.45; 
+                    });
                 }
+                updateUI("AI ROLLING AGAIN...");
+            } else {
+                // No more rolling, bank the current selection
+                userBank();
+                break;
             }
         }
     }
