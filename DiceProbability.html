@@ -118,6 +118,11 @@
         .sub-input-group label { font-size: 0.75rem; }
         .sub-input-group input, .sub-input-group select { width: auto; padding: 5px; font-size: 0.85rem; }
 
+        .dice-type-row { display: flex; align-items: center; gap: 10px; margin: 5px 0; flex-wrap: wrap; }
+        .dice-type-row label { min-width: 50px; }
+        .dice-type-row input { width: 60px; }
+        .multi-dice-container { max-height: 300px; overflow-y: auto; padding: 10px; background: #111; border-radius: 5px; margin-top: 10px; }
+
         @media (max-width: 768px) {
             #canvas-container { height: 50vh; }
             .controls-card { padding: 15px; }
@@ -178,8 +183,50 @@
                 <label>Face Mapping:</label>
                 <select id="dice-face-mode">
                     <option value="all-sides">All Sides Same</option>
-                    <option value="standard" selected>Standard (1-6)</option>
+                    <option value="standard" selected>Standard (1-N)</option>
                 </select>
+            </div>
+        </div>
+
+        <button class="collapsible">Dice Type</button>
+        <div class="collapsible-content">
+            <div class="input-group">
+                <label>Dice Mode:</label>
+                <div class="toggle-container" style="margin-top: 5px;">
+                    <span style="color: #bbb; font-size: 0.9em;">Single Type</span>
+                    <div class="toggle" id="multi-dice-toggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                    <span style="color: #bbb; font-size: 0.9em;">Multiple Types</span>
+                </div>
+            </div>
+            <div class="input-group" id="single-dice-type-group">
+                <label>Dice Type (D-3 to D-20):</label>
+                <select id="dice-type-select">
+                    <option value="3">D-3</option>
+                    <option value="4">D-4</option>
+                    <option value="5">D-5</option>
+                    <option value="6" selected>D-6</option>
+                    <option value="7">D-7</option>
+                    <option value="8">D-8</option>
+                    <option value="9">D-9</option>
+                    <option value="10">D-10</option>
+                    <option value="11">D-11</option>
+                    <option value="12">D-12</option>
+                    <option value="13">D-13</option>
+                    <option value="14">D-14</option>
+                    <option value="15">D-15</option>
+                    <option value="16">D-16</option>
+                    <option value="17">D-17</option>
+                    <option value="18">D-18</option>
+                    <option value="19">D-19</option>
+                    <option value="20">D-20</option>
+                </select>
+            </div>
+            <div id="multi-dice-type-group" style="display: none;">
+                <label style="color: #bbb; font-size: 0.8rem;">Select dice counts (max 25 total):</label>
+                <div class="multi-dice-container" id="multi-dice-container"></div>
+                <p style="color: #888; font-size: 0.75rem; margin-top: 5px;">Total: <span id="multi-dice-total">0</span>/25</p>
             </div>
         </div>
 
@@ -221,7 +268,7 @@
             <div class="input-group">
                 <label>Chart Display Mode:</label>
                 <select id="probability-mode">
-                    <option value="basic" selected>Basic Numerical Outcomes (1-6)</option>
+                    <option value="basic" selected>Basic Numerical Outcomes</option>
                     <option value="even-odd">Even vs Odd</option>
                     <option value="prime-composite">Prime vs Composite</option>
                     <option value="less-than">Less Than N</option>
@@ -231,6 +278,8 @@
                     <option value="same-number">Same Number on Multiple Rolls</option>
                     <option value="different-parity">Different Parity</option>
                     <option value="increasing">Increasing Sequence</option>
+                    <option value="descending">Descending Sequence</option>
+                    <option value="from-to">From One Number to Another</option>
                     <option value="between">Between Two Numbers</option>
                     <option value="at-least">At Least N</option>
                     <option value="at-most">At Most N</option>
@@ -240,29 +289,37 @@
             </div>
             <div class="sub-input-group" id="less-than-options" style="display:none;">
                 <label>Less than: </label>
-                <input type="number" id="less-than-value" value="4" min="2" max="6">
+                <input type="number" id="less-than-value" value="4" min="2" max="20">
             </div>
             <div class="sub-input-group" id="greater-than-options" style="display:none;">
                 <label>Greater than: </label>
-                <input type="number" id="greater-than-value" value="3" min="1" max="5">
+                <input type="number" id="greater-than-value" value="3" min="1" max="19">
+            </div>
+            <div class="sub-input-group" id="from-to-options" style="display:none;">
+                <label>From: </label>
+                <input type="number" id="from-to-min-value" value="2" min="1" max="19" style="width:50px;">
+                <label> to </label>
+                <input type="number" id="from-to-max-value" value="5" min="2" max="20" style="width:50px;">
+                <span style="color: #888; font-size: 0.7rem; display: block; margin-top: 5px;">(inclusive: min ≤ x ≤ max)</span>
             </div>
             <div class="sub-input-group" id="between-options" style="display:none;">
                 <label>Between: </label>
-                <input type="number" id="between-min-value" value="2" min="1" max="5" style="width:50px;">
+                <input type="number" id="between-min-value" value="2" min="1" max="19" style="width:50px;">
                 <label> and </label>
-                <input type="number" id="between-max-value" value="5" min="2" max="6" style="width:50px;">
+                <input type="number" id="between-max-value" value="5" min="2" max="20" style="width:50px;">
+                <span style="color: #888; font-size: 0.7rem; display: block; margin-top: 5px;">(exclusive: min < x < max)</span>
             </div>
             <div class="sub-input-group" id="at-least-options" style="display:none;">
                 <label>At least: </label>
-                <input type="number" id="at-least-value" value="4" min="1" max="6">
+                <input type="number" id="at-least-value" value="4" min="1" max="20">
             </div>
             <div class="sub-input-group" id="at-most-options" style="display:none;">
                 <label>At most: </label>
-                <input type="number" id="at-most-value" value="2" min="1" max="6">
+                <input type="number" id="at-most-value" value="2" min="1" max="20">
             </div>
             <div class="sub-input-group" id="multiples-options" style="display:none;">
                 <label>Multiples of: </label>
-                <input type="number" id="multiples-value" value="3" min="2" max="6">
+                <input type="number" id="multiples-value" value="3" min="2" max="20">
             </div>
         </div>
     </div>
@@ -271,8 +328,10 @@
 <div id="controls-container">
     <div class="controls-card">
         <h3>3D DICE PROBABILITY SIMULATOR</h3>
-        <label>Dice per simulation:</label>
-        <input type="number" id="diceCountInputSim" value="1" min="1" max="25">
+        <div id="single-dice-count-group">
+            <label>Dice per simulation:</label>
+            <input type="number" id="diceCountInputSim" value="1" min="1" max="25">
+        </div>
         <label>Total Rolls:</label>
         <input type="number" id="totalRollsInput" value="1" min="1" max="100000">
         <div class="btn-group">
@@ -333,6 +392,9 @@
     let currentRoundResults = Array(6).fill(0);
     let currentProbabilityMode = 'basic';
     let currentModeResults = {};
+    let multiDiceMode = false;
+    let currentDiceType = 6;
+    let multiDiceConfig = {};
 
     const state = {
         diceStyle: 'marble',
@@ -355,14 +417,118 @@
         soundToggle.classList.toggle('active');
     };
 
+    const multiDiceToggle = document.getElementById('multi-dice-toggle');
+    multiDiceToggle.onclick = () => {
+        multiDiceMode = !multiDiceMode;
+        multiDiceToggle.classList.toggle('active');
+        document.getElementById('single-dice-type-group').style.display = multiDiceMode ? 'none' : 'block';
+        document.getElementById('multi-dice-type-group').style.display = multiDiceMode ? 'block' : 'none';
+        document.getElementById('single-dice-count-group').style.display = multiDiceMode ? 'none' : 'block';
+        if (multiDiceMode) {
+            buildMultiDiceUI();
+        }
+        updateDiceInScene();
+        updateTableHeaders();
+        updateProbabilityModeOptions();
+    };
+
+    function buildMultiDiceUI() {
+        const container = document.getElementById('multi-dice-container');
+        container.innerHTML = '';
+        for (let sides = 3; sides <= 20; sides++) {
+            const row = document.createElement('div');
+            row.className = 'dice-type-row';
+            row.innerHTML = `
+                <label style="color: #bbb;">D-${sides}:</label>
+                <input type="number" id="multi-dice-${sides}" value="${multiDiceConfig[sides] || 0}" min="0" max="25" data-sides="${sides}">
+            `;
+            container.appendChild(row);
+            row.querySelector('input').oninput = (e) => {
+                const sides = parseInt(e.target.dataset.sides);
+                multiDiceConfig[sides] = Math.max(0, parseInt(e.target.value) || 0);
+                updateMultiDiceTotal();
+                updateDiceInScene();
+                updateTableHeaders();
+            };
+        }
+        updateMultiDiceTotal();
+    }
+
+    function updateMultiDiceTotal() {
+        let total = 0;
+        for (let sides = 3; sides <= 20; sides++) {
+            total += multiDiceConfig[sides] || 0;
+        }
+        if (total > 25) {
+            for (let sides = 20; sides >= 3 && total > 25; sides--) {
+                if (multiDiceConfig[sides] > 0) {
+                    const reduce = Math.min(multiDiceConfig[sides], total - 25);
+                    multiDiceConfig[sides] -= reduce;
+                    total -= reduce;
+                    const input = document.getElementById(`multi-dice-${sides}`);
+                    if (input) input.value = multiDiceConfig[sides];
+                }
+            }
+        }
+        document.getElementById('multi-dice-total').textContent = total;
+    }
+
+    function getActiveDiceConfig() {
+        if (multiDiceMode) {
+            const config = [];
+            for (let sides = 3; sides <= 20; sides++) {
+                const count = multiDiceConfig[sides] || 0;
+                for (let i = 0; i < count; i++) {
+                    config.push(sides);
+                }
+            }
+            return config;
+        } else {
+            const config = [];
+            for (let i = 0; i < currentDiceCount; i++) {
+                config.push(currentDiceType);
+            }
+            return config;
+        }
+    }
+
+    function getMaxDiceSides() {
+        const config = getActiveDiceConfig();
+        if (config.length === 0) return 6;
+        return Math.max(...config);
+    }
+
+    function getMinDiceSides() {
+        const config = getActiveDiceConfig();
+        if (config.length === 0) return 6;
+        return Math.min(...config);
+    }
+
+    function hasEvenSidedDice() {
+        const config = getActiveDiceConfig();
+        return config.some(sides => sides % 2 === 0);
+    }
+
     document.getElementById('dice-style').onchange = (e) => { state.diceStyle = e.target.value; refreshDiceVisuals(); };
     document.getElementById('dice-face').onchange = (e) => { state.diceFace = e.target.value; refreshDiceVisuals(); };
     document.getElementById('dice-color-mode').onchange = (e) => { state.diceColorMode = e.target.value; refreshDiceVisuals(); };
     document.getElementById('dice-face-mode').onchange = (e) => { state.diceFaceMode = e.target.value; refreshDiceVisuals(); };
     document.getElementById('tableSurfaceSelect').onchange = (e) => { state.tableSurface = e.target.value; updateTableSurface(); };
     
-    document.getElementById('diceCountInputSim').oninput = (e) => { currentDiceCount = Math.max(1, Math.min(25, parseInt(e.target.value) || 1)); updateDiceInScene(); updateTableHeaders(); };
+    document.getElementById('diceCountInputSim').oninput = (e) => { 
+        currentDiceCount = Math.max(1, Math.min(25, parseInt(e.target.value) || 1)); 
+        updateDiceInScene(); 
+        updateTableHeaders(); 
+        updateProbabilityModeOptions();
+    };
     document.getElementById('totalRollsInput').oninput = (e) => { totalSimRolls = Math.max(1, Math.min(100000, parseInt(e.target.value) || 1)); };
+
+    document.getElementById('dice-type-select').onchange = (e) => {
+        currentDiceType = parseInt(e.target.value);
+        updateDiceInScene();
+        updateTableHeaders();
+        updateProbabilityModeOptions();
+    };
 
     document.getElementById('resetCameraBtn').onclick = () => { camera.position.set(0, 14, 10); controls.target.set(0, 0, 0); controls.update(); };
     document.getElementById('resetSceneBtn').onclick = () => { camera.position.set(0, 14, 10); controls.target.set(0, 0, 0); controls.update(); resetDicePositions(); };
@@ -379,15 +545,63 @@
 
     document.getElementById('less-than-value').onchange = () => { updateTableHeaders(); clearResults(); };
     document.getElementById('greater-than-value').onchange = () => { updateTableHeaders(); clearResults(); };
+    document.getElementById('from-to-min-value').onchange = () => { updateTableHeaders(); clearResults(); };
+    document.getElementById('from-to-max-value').onchange = () => { updateTableHeaders(); clearResults(); };
     document.getElementById('between-min-value').onchange = () => { updateTableHeaders(); clearResults(); };
     document.getElementById('between-max-value').onchange = () => { updateTableHeaders(); clearResults(); };
     document.getElementById('at-least-value').onchange = () => { updateTableHeaders(); clearResults(); };
     document.getElementById('at-most-value').onchange = () => { updateTableHeaders(); clearResults(); };
     document.getElementById('multiples-value').onchange = () => { updateTableHeaders(); clearResults(); };
 
+    function updateProbabilityModeOptions() {
+        const select = document.getElementById('probability-mode');
+        const maxSides = getMaxDiceSides();
+        const minSides = getMinDiceSides();
+        const config = getActiveDiceConfig();
+        const numDice = config.length;
+        
+        const lowHighOption = select.querySelector('option[value="low-high"]');
+        if (lowHighOption) {
+            const allEven = config.every(sides => sides % 2 === 0);
+            if (!allEven) {
+                lowHighOption.disabled = true;
+                lowHighOption.title = "Requires all dice to have even number of sides";
+                if (currentProbabilityMode === 'low-high') {
+                    currentProbabilityMode = 'basic';
+                    select.value = 'basic';
+                    updateTableHeaders();
+                }
+            } else {
+                lowHighOption.disabled = false;
+                lowHighOption.title = "";
+            }
+        }
+
+        const lessThanInput = document.getElementById('less-than-value');
+        const greaterThanInput = document.getElementById('greater-than-value');
+        const fromToMinInput = document.getElementById('from-to-min-value');
+        const fromToMaxInput = document.getElementById('from-to-max-value');
+        const betweenMinInput = document.getElementById('between-min-value');
+        const betweenMaxInput = document.getElementById('between-max-value');
+        const atLeastInput = document.getElementById('at-least-value');
+        const atMostInput = document.getElementById('at-most-value');
+        const multiplesInput = document.getElementById('multiples-value');
+
+        lessThanInput.max = maxSides;
+        greaterThanInput.max = maxSides - 1;
+        fromToMinInput.max = maxSides - 1;
+        fromToMaxInput.max = maxSides;
+        betweenMinInput.max = maxSides - 1;
+        betweenMaxInput.max = maxSides;
+        atLeastInput.max = maxSides;
+        atMostInput.max = maxSides;
+        multiplesInput.max = maxSides;
+    }
+
     function updateProbabilityOptions() {
         document.getElementById('less-than-options').style.display = 'none';
         document.getElementById('greater-than-options').style.display = 'none';
+        document.getElementById('from-to-options').style.display = 'none';
         document.getElementById('between-options').style.display = 'none';
         document.getElementById('at-least-options').style.display = 'none';
         document.getElementById('at-most-options').style.display = 'none';
@@ -399,6 +613,9 @@
                 break;
             case 'greater-than':
                 document.getElementById('greater-than-options').style.display = 'block';
+                break;
+            case 'from-to':
+                document.getElementById('from-to-options').style.display = 'block';
                 break;
             case 'between':
                 document.getElementById('between-options').style.display = 'block';
@@ -416,10 +633,18 @@
     }
 
     function getTableColumns() {
-        const numDice = currentDiceCount;
+        const config = getActiveDiceConfig();
+        const numDice = config.length;
+        const maxSides = getMaxDiceSides();
+        
         switch(currentProbabilityMode) {
-            case 'basic':
-                return ['1', '2', '3', '4', '5', '6'];
+            case 'basic': {
+                const cols = [];
+                for (let i = 1; i <= maxSides; i++) {
+                    cols.push(String(i));
+                }
+                return cols;
+            }
             case 'even-odd':
                 return ['Even', 'Odd'];
             case 'prime-composite':
@@ -433,8 +658,9 @@
                 return [`>${n}`, `≤${n}`];
             }
             case 'sum': {
+                if (numDice === 0) return ['Sum=0'];
                 const minSum = numDice;
-                const maxSum = numDice * 6;
+                const maxSum = config.reduce((a, b) => a + b, 0);
                 const cols = [];
                 for (let i = minSum; i <= maxSum; i++) {
                     cols.push(`Sum=${i}`);
@@ -450,7 +676,7 @@
                 if (numDice >= 2) {
                     return ['All Same', 'Not All Same'];
                 }
-                return ['1', '2', '3', '4', '5', '6'];
+                return getBasicColumns();
             case 'different-parity':
                 if (numDice >= 2) {
                     return ['Different Parity', 'Same Parity'];
@@ -460,11 +686,21 @@
                 if (numDice >= 2) {
                     return ['Increasing', 'Not Increasing'];
                 }
-                return ['1', '2', '3', '4', '5', '6'];
+                return getBasicColumns();
+            case 'descending':
+                if (numDice >= 2) {
+                    return ['Descending', 'Not Descending'];
+                }
+                return getBasicColumns();
+            case 'from-to': {
+                const min = parseInt(document.getElementById('from-to-min-value').value) || 2;
+                const max = parseInt(document.getElementById('from-to-max-value').value) || 5;
+                return [`${min}≤x≤${max}`, `Outside`];
+            }
             case 'between': {
                 const min = parseInt(document.getElementById('between-min-value').value) || 2;
                 const max = parseInt(document.getElementById('between-max-value').value) || 5;
-                return [`${min}≤x≤${max}`, `Outside`];
+                return [`${min}<x<${max}`, `Outside`];
             }
             case 'at-least': {
                 const n = parseInt(document.getElementById('at-least-value').value) || 4;
@@ -474,15 +710,27 @@
                 const n = parseInt(document.getElementById('at-most-value').value) || 2;
                 return [`≤${n}`, `>${n}`];
             }
-            case 'low-high':
-                return ['Low (1-3)', 'High (4-6)'];
+            case 'low-high': {
+                const minSides = getMinDiceSides();
+                const half = Math.floor(minSides / 2);
+                return [`Low (1-${half})`, `High (${half+1}-${minSides})`];
+            }
             case 'multiples': {
                 const n = parseInt(document.getElementById('multiples-value').value) || 3;
                 return [`Multiple of ${n}`, `Not Multiple`];
             }
             default:
-                return ['1', '2', '3', '4', '5', '6'];
+                return getBasicColumns();
         }
+    }
+
+    function getBasicColumns() {
+        const maxSides = getMaxDiceSides();
+        const cols = [];
+        for (let i = 1; i <= maxSides; i++) {
+            cols.push(String(i));
+        }
+        return cols;
     }
 
     function updateTableHeaders() {
@@ -510,7 +758,17 @@
         });
     }
 
-    function categorizeRoll(values) {
+    function isPrime(n) {
+        if (n < 2) return false;
+        if (n === 2) return true;
+        if (n % 2 === 0) return false;
+        for (let i = 3; i <= Math.sqrt(n); i += 2) {
+            if (n % i === 0) return false;
+        }
+        return true;
+    }
+
+    function categorizeRoll(values, diceConfig) {
         const numDice = values.length;
         const columns = getTableColumns();
         const results = {};
@@ -521,7 +779,8 @@
         switch(currentProbabilityMode) {
             case 'basic':
                 values.forEach(val => {
-                    results[val - 1]++;
+                    const idx = val - 1;
+                    if (results[idx] !== undefined) results[idx]++;
                 });
                 break;
             case 'even-odd':
@@ -532,9 +791,9 @@
                 break;
             case 'prime-composite':
                 values.forEach(val => {
-                    if ([2, 3, 5].includes(val)) results[0]++;
-                    else if ([4, 6].includes(val)) results[1]++;
-                    else results[2]++;
+                    if (isPrime(val)) results[0]++;
+                    else if (val === 1) results[2]++;
+                    else results[1]++;
                 });
                 break;
             case 'less-than': {
@@ -557,7 +816,7 @@
                 const sum = values.reduce((a, b) => a + b, 0);
                 const minSum = numDice;
                 const index = sum - minSum;
-                results[index]++;
+                if (results[index] !== undefined) results[index]++;
                 break;
             }
             case 'both-even-odd':
@@ -581,7 +840,8 @@
                     else results[1]++;
                 } else {
                     values.forEach(val => {
-                        results[val - 1]++;
+                        const idx = val - 1;
+                        if (results[idx] !== undefined) results[idx]++;
                     });
                 }
                 break;
@@ -611,15 +871,43 @@
                     else results[1]++;
                 } else {
                     values.forEach(val => {
-                        results[val - 1]++;
+                        const idx = val - 1;
+                        if (results[idx] !== undefined) results[idx]++;
                     });
                 }
                 break;
+            case 'descending':
+                if (numDice >= 2) {
+                    let isDescending = true;
+                    for (let i = 1; i < values.length; i++) {
+                        if (values[i] >= values[i-1]) {
+                            isDescending = false;
+                            break;
+                        }
+                    }
+                    if (isDescending) results[0]++;
+                    else results[1]++;
+                } else {
+                    values.forEach(val => {
+                        const idx = val - 1;
+                        if (results[idx] !== undefined) results[idx]++;
+                    });
+                }
+                break;
+            case 'from-to': {
+                const min = parseInt(document.getElementById('from-to-min-value').value) || 2;
+                const max = parseInt(document.getElementById('from-to-max-value').value) || 5;
+                values.forEach(val => {
+                    if (val >= min && val <= max) results[0]++;
+                    else results[1]++;
+                });
+                break;
+            }
             case 'between': {
                 const min = parseInt(document.getElementById('between-min-value').value) || 2;
                 const max = parseInt(document.getElementById('between-max-value').value) || 5;
                 values.forEach(val => {
-                    if (val >= min && val <= max) results[0]++;
+                    if (val > min && val < max) results[0]++;
                     else results[1]++;
                 });
                 break;
@@ -640,12 +928,15 @@
                 });
                 break;
             }
-            case 'low-high':
-                values.forEach(val => {
-                    if (val <= 3) results[0]++;
+            case 'low-high': {
+                values.forEach((val, idx) => {
+                    const sides = diceConfig[idx] || 6;
+                    const half = Math.floor(sides / 2);
+                    if (val <= half) results[0]++;
                     else results[1]++;
                 });
                 break;
+            }
             case 'multiples': {
                 const n = parseInt(document.getElementById('multiples-value').value) || 3;
                 values.forEach(val => {
@@ -694,6 +985,7 @@
         createDicePlaceholder();
         updateDiceInScene();
         updateTableHeaders();
+        buildMultiDiceUI();
 
         window.addEventListener('resize', onResize);
         animate();
@@ -755,49 +1047,51 @@
             metalness: surface === 'steel' ? 0.8 : 0
         });
     }
-function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
-    ctx.fillStyle = baseColor;
-    ctx.fillRect(0, 0, 512, 512);
-    
-    for(let i = 0; i < 50000; i++) {
-        const x = Math.random() * 512;
-        const y = Math.random() * 512;
-        const brightness = Math.random();
-        ctx.fillStyle = brightness > 0.5 ? lightColor : darkColor;
-        ctx.globalAlpha = 0.12;
-        ctx.fillRect(x, y, Math.random() * 2, Math.random() * 2);
+
+    function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(0, 0, 512, 512);
+        
+        for(let i = 0; i < 50000; i++) {
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const brightness = Math.random();
+            ctx.fillStyle = brightness > 0.5 ? lightColor : darkColor;
+            ctx.globalAlpha = 0.12;
+            ctx.fillRect(x, y, Math.random() * 2, Math.random() * 2);
+        }
+        
+        ctx.globalAlpha = 0.06;
+        for(let i = 0; i < 512; i += 4) {
+            ctx.strokeStyle = lightColor;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, 512);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, i);
+            ctx.lineTo(512, i);
+            ctx.stroke();
+        }
+        
+        ctx.globalAlpha = 0.15;
+        for(let i = 0; i < 25; i++) {
+            const x = Math.random() * 512;
+            const y = Math.random() * 512;
+            const radius = 20 + Math.random() * 50;
+            const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+            grad.addColorStop(0, darkColor);
+            grad.addColorStop(1, 'rgba(0,0,0,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.globalAlpha = 1;
     }
-    
-    ctx.globalAlpha = 0.06;
-    for(let i = 0; i < 512; i += 4) {
-        ctx.strokeStyle = lightColor;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, 512);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(0, i);
-        ctx.lineTo(512, i);
-        ctx.stroke();
-    }
-    
-    ctx.globalAlpha = 0.15;
-    for(let i = 0; i < 25; i++) {
-        const x = Math.random() * 512;
-        const y = Math.random() * 512;
-        const radius = 20 + Math.random() * 50;
-        const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
-        grad.addColorStop(0, darkColor);
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    
-    ctx.globalAlpha = 1;
-}
+
     function createWoodTexture(ctx) {
         const gradient = ctx.createLinearGradient(0, 0, 512, 512);
         gradient.addColorStop(0, '#7A3E1A'); gradient.addColorStop(0.5, '#8B4513'); gradient.addColorStop(1, '#7A3E1A');
@@ -818,6 +1112,7 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
             ctx.fillStyle = knotGradient; ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
         }
     }
+
     function createMetalTexture(ctx) {
         const gradient = ctx.createLinearGradient(0, 0, 512, 512);
         gradient.addColorStop(0, '#8A95A5'); gradient.addColorStop(0.5, '#B8C5D6'); gradient.addColorStop(1, '#8A95A5');
@@ -840,6 +1135,7 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
         }
         ctx.globalAlpha = 1;
     }
+
     function createDirtTexture(ctx) {
         const gradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 350);
         gradient.addColorStop(0, '#6B4423'); gradient.addColorStop(0.5, '#5C3A1F'); gradient.addColorStop(1, '#4A2F19');
@@ -877,30 +1173,144 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
     }
 
     function createDicePlaceholder() {
-        const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
         for(let i=0; i<25; i++) {
-            const mat = createDieMaterial(1, state.diceStyle);
-            const die = new THREE.Mesh(geo, [mat, mat, mat, mat, mat, mat]);
-            die.castShadow = true;
-            die.visible = false;
-            die.userData = { id: i, val: 1, active: false };
-            scene.add(die);
-            dice.push(die);
+            dice.push({ userData: { id: i, active: false, val: 1, sides: 6 } });
         }
     }
 
+    function getDiceGeometry(sides) {
+        const baseSize = 0.9;
+        const scaleFactor = Math.max(0.6, 1 - (sides - 6) * 0.02);
+        const size = baseSize * scaleFactor;
+        
+        switch(sides) {
+            case 3:
+                return createTetrahedronGeometry(size * 0.8);
+            case 4:
+                return new THREE.TetrahedronGeometry(size * 0.7);
+            case 5:
+                return createPentagonalPrismGeometry(size * 0.5);
+            case 6:
+                return new THREE.BoxGeometry(size, size, size);
+            case 7:
+                return createPentagonalPrismGeometry(size * 0.5);
+            case 8:
+                return new THREE.OctahedronGeometry(size * 0.6);
+            case 9:
+                return createPrismGeometry(9, size * 0.4);
+            case 10:
+                return createPentagonalBipyramidGeometry(size * 0.5);
+            case 11:
+                return createPrismGeometry(11, size * 0.4);
+            case 12:
+                return new THREE.DodecahedronGeometry(size * 0.55);
+            case 13:
+                return createPrismGeometry(13, size * 0.35);
+            case 14:
+                return createPrismGeometry(7, size * 0.4);
+            case 15:
+                return createPrismGeometry(15, size * 0.35);
+            case 16:
+                return createPrismGeometry(8, size * 0.4);
+            case 17:
+                return createPrismGeometry(17, size * 0.3);
+            case 18:
+                return createPrismGeometry(9, size * 0.35);
+            case 19:
+                return createPrismGeometry(19, size * 0.3);
+            case 20:
+                return new THREE.IcosahedronGeometry(size * 0.55);
+            default:
+                return new THREE.BoxGeometry(size, size, size);
+        }
+    }
+
+    function createTetrahedronGeometry(size) {
+        const geometry = new THREE.TetrahedronGeometry(size);
+        return geometry;
+    }
+
+    function createPentagonalPrismGeometry(radius) {
+        const shape = new THREE.Shape();
+        const sides = 5;
+        for (let i = 0; i < sides; i++) {
+            const angle = (i / sides) * Math.PI * 2 - Math.PI / 2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            if (i === 0) shape.moveTo(x, y);
+            else shape.lineTo(x, y);
+        }
+        shape.closePath();
+        
+        const extrudeSettings = { depth: radius * 1.2, bevelEnabled: false };
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        geometry.rotateX(Math.PI / 2);
+        geometry.translate(0, radius * 0.6, 0);
+        return geometry;
+    }
+
+    function createPrismGeometry(sides, radius) {
+        const shape = new THREE.Shape();
+        for (let i = 0; i < sides; i++) {
+            const angle = (i / sides) * Math.PI * 2 - Math.PI / 2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            if (i === 0) shape.moveTo(x, y);
+            else shape.lineTo(x, y);
+        }
+        shape.closePath();
+        
+        const extrudeSettings = { depth: radius * 1.0, bevelEnabled: false };
+        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        geometry.rotateX(Math.PI / 2);
+        geometry.translate(0, radius * 0.5, 0);
+        return geometry;
+    }
+
+    function createPentagonalBipyramidGeometry(size) {
+        const vertices = [];
+        const indices = [];
+        
+        vertices.push(0, size, 0);
+        for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 2;
+            vertices.push(Math.cos(angle) * size * 0.8, 0, Math.sin(angle) * size * 0.8);
+        }
+        vertices.push(0, -size, 0);
+        
+        for (let i = 0; i < 5; i++) {
+            indices.push(0, i + 1, ((i + 1) % 5) + 1);
+            indices.push(6, ((i + 1) % 5) + 1, i + 1);
+        }
+        
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setIndex(indices);
+        geometry.computeVertexNormals();
+        return geometry;
+    }
+
     function updateDiceInScene() {
-        dice.forEach(d => scene.remove(d));
+        dice.forEach(d => {
+            if (d.geometry) {
+                scene.remove(d);
+                d.geometry.dispose();
+                if (Array.isArray(d.material)) {
+                    d.material.forEach(m => m.dispose());
+                } else if (d.material) {
+                    d.material.dispose();
+                }
+            }
+        });
         dice = [];
         
-        const geo = new THREE.BoxGeometry(0.9, 0.9, 0.9);
-        const startValues = [1, 2, 3, 4, 5, 6];
-        
-        const numDiceToShow = Math.min(currentDiceCount, 25);
+        const diceConfig = getActiveDiceConfig();
+        const numDiceToShow = Math.min(diceConfig.length, 25);
         const maxRows = Math.ceil(numDiceToShow / 5);
         const maxCols = 5;
 
         for(let i=0; i < numDiceToShow; i++) {
+            const sides = diceConfig[i];
             const row = Math.floor(i / maxCols);
             const col = i % maxCols;
             
@@ -910,48 +1320,60 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
             const xOffset = (col - (maxCols - 1) / 2) * colSpacing;
             const zOffset = (row - (maxRows - 1) / 2) * rowSpacing;
 
-            const val = startValues[i % 6];
+            const val = ((i % sides) + 1);
+            const geo = getDiceGeometry(sides);
+            
             let materials;
-            if (state.diceFaceMode === 'standard') {
-                 materials = [
-         createDieMaterial(2, state.diceStyle),
-         createDieMaterial(5, state.diceStyle),
-         createDieMaterial(1, state.diceStyle),
-         createDieMaterial(6, state.diceStyle),
-         createDieMaterial(3, state.diceStyle),
-         createDieMaterial(4, state.diceStyle)
-                 ];
+            if (sides === 6 && state.diceFaceMode === 'standard') {
+                materials = [
+                    createDieMaterial(2, state.diceStyle, sides),
+                    createDieMaterial(5, state.diceStyle, sides),
+                    createDieMaterial(1, state.diceStyle, sides),
+                    createDieMaterial(6, state.diceStyle, sides),
+                    createDieMaterial(3, state.diceStyle, sides),
+                    createDieMaterial(4, state.diceStyle, sides)
+                ];
             } else {
-                 materials = Array(6).fill(createDieMaterial(val, state.diceStyle));
+                const mat = createDieMaterial(val, state.diceStyle, sides);
+                if (geo.groups && geo.groups.length > 0) {
+                    materials = [];
+                    for (let g = 0; g < geo.groups.length; g++) {
+                        materials.push(createDieMaterial((g % sides) + 1, state.diceStyle, sides));
+                    }
+                } else {
+                    materials = mat;
+                }
             }
 
             const die = new THREE.Mesh(geo, materials);
             die.castShadow = true;
             die.position.set(xOffset, 0.45, zOffset);
             
-            if (state.diceFaceMode === 'standard') {
+            if (sides === 6 && state.diceFaceMode === 'standard') {
                 const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
                 const rot = rotations[val]; die.rotation.set(rot.x, rot.y, rot.z);
             } else {
                 die.rotation.set(0, 0, 0);
             }
             
-            die.userData = { id: i, val: val, active: true };
+            die.userData = { id: i, val: val, active: true, sides: sides };
             scene.add(die);
             dice.push(die);
         }
         for(let i = numDiceToShow; i < 25; i++) {
-            dice.push({ userData: { id: i, active: false, val: 1 } });
+            dice.push({ userData: { id: i, active: false, val: 1, sides: 6 } });
         }
         resetDicePositions();
     }
 
     function resetDicePositions() {
+        const diceConfig = getActiveDiceConfig();
+        const numDiceToShow = Math.min(diceConfig.length, 25);
+        
         dice.forEach((die, i) => {
-            if (!die.userData.active) return;
+            if (!die.userData.active || !die.position) return;
             const row = Math.floor(i / 5);
             const col = i % 5;
-            const numDiceToShow = Math.min(currentDiceCount, 25);
             const maxRows = Math.ceil(numDiceToShow / 5);
             const maxCols = 5;
 
@@ -962,42 +1384,50 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
             const zOffset = (row - (maxRows - 1) / 2) * rowSpacing;
             
             gsap.to(die.position, { x: xOffset, y: 0.45, z: zOffset, duration: 0.5, ease: "power2.out" });
-            if (state.diceFaceMode === 'standard') {
+            
+            const sides = die.userData.sides;
+            if (sides === 6 && state.diceFaceMode === 'standard') {
                 const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
                 const rot = rotations[die.userData.val];
                 gsap.to(die.rotation, { x: rot.x, y: rot.y, z: rot.z, duration: 0.5, ease: "power2.out" });
             } else {
-                 gsap.to(die.rotation, { x: 0, y: 0, z: 0, duration: 0.5, ease: "power2.out" });
+                gsap.to(die.rotation, { x: 0, y: 0, z: 0, duration: 0.5, ease: "power2.out" });
             }
         });
     }
 
     function setDieValue(die, value) {
         die.userData.val = value;
+        const sides = die.userData.sides;
         let materials;
-        if (state.diceFaceMode === 'standard') {
+        if (sides === 6 && state.diceFaceMode === 'standard') {
             materials = [
-         createDieMaterial(2, state.diceStyle),
-         createDieMaterial(5, state.diceStyle),
-         createDieMaterial(1, state.diceStyle),
-         createDieMaterial(6, state.diceStyle),
-         createDieMaterial(3, state.diceStyle),
-         createDieMaterial(4, state.diceStyle)
+                createDieMaterial(2, state.diceStyle, sides),
+                createDieMaterial(5, state.diceStyle, sides),
+                createDieMaterial(1, state.diceStyle, sides),
+                createDieMaterial(6, state.diceStyle, sides),
+                createDieMaterial(3, state.diceStyle, sides),
+                createDieMaterial(4, state.diceStyle, sides)
             ];
         } else {
-            materials = Array(6).fill(createDieMaterial(value, state.diceStyle));
+            materials = createDieMaterial(value, state.diceStyle, sides);
+        }
+        if (Array.isArray(die.material)) {
+            die.material.forEach(m => m.dispose());
+        } else if (die.material) {
+            die.material.dispose();
         }
         die.material = materials;
     }
     
-    function createDieMaterial(value, style) {
+    function createDieMaterial(value, style, sides = 6) {
         const canvas = document.createElement('canvas');
         canvas.width = 256; canvas.height = 256;
         const ctx = canvas.getContext('2d');
         
-        const colors = {1:'#e74c3c', 2:'#3498db', 3:'#2ecc71', 4:'#f39c12', 5:'#9b59b6', 6:'#1abc9c'};
+        const colors = {1:'#e74c3c', 2:'#3498db', 3:'#2ecc71', 4:'#f39c12', 5:'#9b59b6', 6:'#1abc9c', 7:'#e67e22', 8:'#16a085', 9:'#c0392b', 10:'#2980b9', 11:'#27ae60', 12:'#d35400', 13:'#8e44ad', 14:'#f1c40f', 15:'#1abc9c', 16:'#e74c3c', 17:'#3498db', 18:'#2ecc71', 19:'#f39c12', 20:'#9b59b6'};
         const singleColorMap = { 'white': '#ffffff', 'red': '#e74c3c', 'blue': '#3498db', 'green': '#2ecc71', 'yellow': '#f39c12', 'purple': '#9b59b6', 'teal': '#1abc9c', 'black': '#000000' };
-        let baseColor = state.diceColorMode === 'multi' ? (colors[value] || '#fff') : (singleColorMap[state.diceColorMode] || '#ffffff');
+        let baseColor = state.diceColorMode === 'multi' ? (colors[value] || colors[(value % 20) + 1] || '#fff') : (singleColorMap[state.diceColorMode] || '#ffffff');
         
         switch(style) {
             case 'clear': ctx.fillStyle = baseColor; ctx.globalAlpha = 0.6; ctx.fillRect(0, 0, 256, 256); ctx.globalAlpha = 1; ctx.strokeStyle = baseColor; ctx.lineWidth = 6; ctx.strokeRect(3, 3, 250, 250); break;
@@ -1034,11 +1464,12 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
         
         let fgColor = style === 'wooden' ? '#000000' : (style === 'clear' ? baseColor : (baseColor === '#000000' ? '#ffffff' : (baseColor === '#ffffff' ? '#333' : '#ffffff')));
         
-        if (state.diceFace === 'dots') {
+        if (state.diceFace === 'dots' && sides === 6 && value <= 6) {
             drawPips(ctx, value, fgColor);
         } else {
             ctx.fillStyle = fgColor;
-            ctx.font = 'bold 140px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            const fontSize = value >= 10 ? 100 : 140;
+            ctx.font = `bold ${fontSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; ctx.shadowBlur = 4; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
             ctx.fillText(value, 128, 128);
         }
@@ -1074,16 +1505,22 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
             5: [[64, 64], [192, 64], [128, 128], [64, 192], [192, 192]],
             6: [[64, 64], [192, 64], [64, 128], [192, 128], [64, 192], [192, 192]]
         };
-        pips[value].forEach(p => {
-            ctx.beginPath(); ctx.arc(p[0], p[1], 25, 0, Math.PI * 2); ctx.fill();
-        });
+        if (pips[value]) {
+            pips[value].forEach(p => {
+                ctx.beginPath(); ctx.arc(p[0], p[1], 25, 0, Math.PI * 2); ctx.fill();
+            });
+        }
     }
 
     function refreshDiceVisuals() {
         dice.forEach(die => {
-            if (!die.userData.active) return;
+            if (!die.userData.active || !die.material) return;
             const val = die.userData.val;
-            die.material.forEach(mat => mat.dispose());
+            if (Array.isArray(die.material)) {
+                die.material.forEach(mat => mat.dispose());
+            } else {
+                die.material.dispose();
+            }
             setDieValue(die, val);
         });
     }
@@ -1129,12 +1566,13 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
         document.getElementById('stopSimBtn').disabled = false;
 
         const numRolls = totalSimRolls;
+        const diceConfig = getActiveDiceConfig();
 
         controls.enabled = false;
 
-        dice.forEach(d => d.visible = true);
+        dice.forEach(d => { if (d.visible !== undefined) d.visible = true; });
 
-        const activeDiceInstances = dice.filter(d => d.userData.active);
+        const activeDiceInstances = dice.filter(d => d.userData.active && d.position);
         const diePositions = [];
         const numActiveDice = activeDiceInstances.length;
         const maxRows = Math.ceil(numActiveDice / 5);
@@ -1160,7 +1598,8 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
 
             for (let i = 0; i < numActiveDice; i++) {
                 const die = activeDiceInstances[i];
-                const targetValue = Math.floor(Math.random() * 6) + 1;
+                const sides = die.userData.sides;
+                const targetValue = Math.floor(Math.random() * sides) + 1;
                 currentRollValues.push(targetValue);
 
                 rollPromises.push(new Promise(resolve => {
@@ -1172,19 +1611,19 @@ function createFeltTexture(ctx, baseColor, lightColor, darkColor) {
                     const spinSpeed = 3 + Math.random() * 3;
                     
                     let finalRotation;
-if (state.diceFaceMode === 'standard') {
-    const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
-    finalRotation = rotations[targetValue];
-} else {
-    finalRotation = { x: 0, y: 0, z: 0 };
-}
+                    if (sides === 6 && state.diceFaceMode === 'standard') {
+                        const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
+                        finalRotation = rotations[targetValue];
+                    } else {
+                        finalRotation = { x: 0, y: 0, z: 0 };
+                    }
 
                     function step(now) {
                         if (stopSimulation) {
-                             gsap.to(die.position, { y: 0.45, duration: 0.3, ease: "power2.out" });
-                             gsap.to(die.rotation, { x: finalRotation.x, y: finalRotation.y, z: finalRotation.z, duration: 0.3, ease: "power2.out" });
-                             resolve();
-                             return;
+                            gsap.to(die.position, { y: 0.45, duration: 0.3, ease: "power2.out" });
+                            gsap.to(die.rotation, { x: finalRotation.x, y: finalRotation.y, z: finalRotation.z, duration: 0.3, ease: "power2.out" });
+                            resolve();
+                            return;
                         }
 
                         const elapsed = now - startT;
@@ -1218,7 +1657,7 @@ if (state.diceFaceMode === 'standard') {
             await Promise.all(rollPromises);
             if (soundEnabled) playSound('roll');
             
-            const categorized = categorizeRoll(currentRollValues);
+            const categorized = categorizeRoll(currentRollValues, diceConfig);
             for (let key in categorized) {
                 if (currentModeResults[key] === undefined) {
                     currentModeResults[key] = 0;
@@ -1265,32 +1704,32 @@ if (state.diceFaceMode === 'standard') {
         updateGrandTotals();
     }
 
-function addNewRow() {
-    const columns = getTableColumns();
-    let hasData = false;
-    for (let key in currentModeResults) {
-        if (currentModeResults[key] > 0) {
-            hasData = true;
-            break;
+    function addNewRow() {
+        const columns = getTableColumns();
+        let hasData = false;
+        for (let key in currentModeResults) {
+            if (currentModeResults[key] > 0) {
+                hasData = true;
+                break;
+            }
         }
+        if (hasData) {
+            updateCurrentRow();
+        }
+        currentRound++;
+        currentModeResults = {};
+        columns.forEach((col, i) => {
+            currentModeResults[i] = 0;
+        });
+        
+        const tableBody = document.getElementById('resultsTableBody');
+        const newRow = tableBody.insertRow();
+        newRow.insertCell(0).textContent = currentRound;
+        for (let i = 0; i < columns.length; i++) {
+            newRow.insertCell(i + 1).innerHTML = `0<span class="pct">0.0%</span>`;
+        }
+        newRow.insertCell(columns.length + 1).textContent = '0';
     }
-    if (hasData) {
-        updateCurrentRow();
-    }
-    currentRound++;
-    currentModeResults = {};
-    columns.forEach((col, i) => {
-        currentModeResults[i] = 0;
-    });
-    
-    const tableBody = document.getElementById('resultsTableBody');
-    const newRow = tableBody.insertRow();
-    newRow.insertCell(0).textContent = currentRound;
-    for (let i = 0; i < columns.length; i++) {
-        newRow.insertCell(i + 1).innerHTML = `0<span class="pct">0.0%</span>`;
-    }
-    newRow.insertCell(columns.length + 1).textContent = '0';
-}
 
     function clearResults() {
         const tableBody = document.getElementById('resultsTableBody');
@@ -1308,40 +1747,40 @@ function addNewRow() {
         document.getElementById('grandTotalRolls').textContent = '0';
     }
 
-function updateGrandTotals() {
-    const tableBody = document.getElementById('resultsTableBody');
-    const columns = getTableColumns();
-    const grandTotals = {};
-    columns.forEach((col, i) => {
-        grandTotals[i] = 0;
-    });
-    let grandTotalRolls = 0;
-    
-    for (let i = 0; i < tableBody.rows.length; i++) {
-        const row = tableBody.rows[i];
+    function updateGrandTotals() {
+        const tableBody = document.getElementById('resultsTableBody');
+        const columns = getTableColumns();
+        const grandTotals = {};
+        columns.forEach((col, i) => {
+            grandTotals[i] = 0;
+        });
+        let grandTotalRolls = 0;
         
-        for (let j = 0; j < columns.length; j++) {
-            const cell = row.cells[j + 1];
-            if (cell && cell.childNodes[0]) {
-                const countText = cell.childNodes[0].textContent;
-                const count = parseInt(countText) || 0;
-                grandTotals[j] += count;
+        for (let i = 0; i < tableBody.rows.length; i++) {
+            const row = tableBody.rows[i];
+            
+            for (let j = 0; j < columns.length; j++) {
+                const cell = row.cells[j + 1];
+                if (cell && cell.childNodes[0]) {
+                    const countText = cell.childNodes[0].textContent;
+                    const count = parseInt(countText) || 0;
+                    grandTotals[j] += count;
+                }
             }
         }
+        
+        for (let key in grandTotals) {
+            grandTotalRolls += grandTotals[key];
+        }
+        
+        for (let i = 0; i < columns.length; i++) {
+            const pct = grandTotalRolls > 0 ? ((grandTotals[i] / grandTotalRolls) * 100).toFixed(1) : '0.0';
+            const el = document.getElementById(`grandTotal${i}`);
+            if (el) el.innerHTML = `${grandTotals[i]}<span class="pct">${pct}%</span>`;
+        }
+        
+        document.getElementById('grandTotalRolls').textContent = grandTotalRolls;
     }
-    
-    for (let key in grandTotals) {
-        grandTotalRolls += grandTotals[key];
-    }
-    
-    for (let i = 0; i < columns.length; i++) {
-        const pct = grandTotalRolls > 0 ? ((grandTotals[i] / grandTotalRolls) * 100).toFixed(1) : '0.0';
-        const el = document.getElementById(`grandTotal${i}`);
-        if (el) el.innerHTML = `${grandTotals[i]}<span class="pct">${pct}%</span>`;
-    }
-    
-    document.getElementById('grandTotalRolls').textContent = grandTotalRolls;
-}
 
     /** EVENT LISTENERS AND INITIALIZATION **/
     function onResize() {
