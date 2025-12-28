@@ -2317,30 +2317,43 @@ function getFaceUpRotation(sides, targetValue) {
         simulationRunning = false;
     }
 
-    function animateCrystalDieRoll(die, targetValue, endPosition) {
-        return new Promise(resolve => {
-            const sides = die.userData.sides;
-            const rotationMap = CRYSTAL_ROTATION_MAPS[sides];
-            const physicalFaceIndex = rotationMap[targetValue];
-            
-            const duration = 800;
-            const totalSpinFactor = 4;
-            const orbitSpeed = 15;
+function animateCrystalDieRoll(die, targetValue, endPosition) {
+    return new Promise(resolve => {
+        const sides = die.userData.sides;
+        const rotationMap = CRYSTAL_ROTATION_MAPS[sides];
+        const physicalFaceIndex = rotationMap[targetValue];
+        
+        const duration = 800;
+        const totalSpinFactor = 4;
+        const orbitSpeed = 15;
 
-            const startTime = performance.now();
-            const step = (Math.PI * 2) / sides;
-            const HEIGHT = die.userData.HEIGHT;
-            const RADIUS = die.userData.RADIUS;
-            const tiltAngle = -Math.atan2(HEIGHT, RADIUS * Math.cos(step / 2)) - 0.065;
+        const startTime = performance.now();
+        const step = (Math.PI * 2) / sides;
+        const HEIGHT = die.userData.HEIGHT;
+        const RADIUS = die.userData.RADIUS;
+        const tiltAngle = -Math.atan2(HEIGHT, RADIUS * Math.cos(step / 2)) - 0.065;
 
-            const finalVisualY = -(physicalFaceIndex - 1) * step;
-            const startVisualY = die.rotation.y;
-            const targetVisualY = finalVisualY - (Math.PI * 2 * totalSpinFactor);
-            
-            const startPos = die.position.clone();
-            const startPivotY = 0;
+        const finalVisualY = -(physicalFaceIndex - 1) * step;
+        const startVisualY = die.rotation.y;
+        const targetVisualY = finalVisualY - (Math.PI * 2 * totalSpinFactor);
+        
+        // Create pivot group at current die position
+        const pivot = new THREE.Group();
+        const dieWorldPos = new THREE.Vector3();
+        die.getWorldPosition(dieWorldPos);
+        pivot.position.set(dieWorldPos.x, die.userData.groundOffset, dieWorldPos.z + 0.5);
+        scene.add(pivot);
+        
+        // Move die into pivot at offset position
+        const dieParent = die.parent;
+        dieParent.remove(die);
+        die.position.set(0, 0, - 0.5);
+        pivot.add(die);
+        
+        // Store original die rotation
+        const originalDieRotation = { x: die.rotation.x, y: die.rotation.y, z: die.rotation.z };
 
-            function animateStep(now) {
+        function animateStep(now) {
                 if (stopSimulation) {
                     die.position.copy(endPosition);
                     die.position.y = die.userData.groundOffset;
@@ -2355,17 +2368,23 @@ function getFaceUpRotation(sides, targetValue) {
                 const ease = 1 - Math.pow(1 - t, 3);
                 
                 const currentOrbit = (1 - ease) * orbitSpeed;
+                
+                // Rotate the pivot (orbital motion around apex)
+                pivot.rotation.y = currentOrbit;
+                
+                // Rotate the die around its own axis
                 die.rotation.y = startVisualY + (targetVisualY - startVisualY) * ease;
                 die.rotation.x = tiltAngle;
 
-                const spiralRadius = (1 - ease) * 2;
-                die.position.x = endPosition.x + Math.sin(currentOrbit) * spiralRadius;
-                die.position.z = endPosition.z + Math.cos(currentOrbit) * spiralRadius;
-                die.position.y = die.userData.groundOffset;
-
+                // Move pivot in spiral
                 if (t < 1) {
                     requestAnimationFrame(animateStep);
                 } else {
+                    // Restore die to scene
+                    pivot.remove(die);
+                    scene.add(die);
+                    scene.remove(pivot);
+                    
                     die.position.x = endPosition.x;
                     die.position.z = endPosition.z;
                     die.position.y = die.userData.groundOffset;
