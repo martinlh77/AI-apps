@@ -406,6 +406,58 @@
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
+    const CRYSTAL_DICE = [3, 4, 5, 7, 9, 11, 13, 15, 17, 19];
+
+    const CRYSTAL_ROTATION_MAPS = {
+        3: {1:1, 2:3, 3:2},
+        4: {1:1, 2:4, 3:3, 4:2},
+        5: {1:2, 2:1, 3:5, 4:4, 5:3},
+        7: {1:2, 2:1, 3:7, 4:6, 5:5, 6:4, 7:3},
+        9: {1:3, 2:2, 3:1, 4:9, 5:8, 6:7, 7:6, 8:5, 9:4},
+        11: {1:3, 2:2, 3:1, 4:11, 5:10, 6:9, 7:8, 8:7, 9:6, 10:5, 11:4},
+        13: {1:4, 2:3, 3:2, 4:1, 5:13, 6:12, 7:11, 8:10, 9:9, 10:8, 11:7, 12:6, 13:5},
+        15: {1:4, 2:3, 3:2, 4:1, 5:15, 6:14, 7:13, 8:12, 9:11, 10:10, 11:9, 12:8, 13:7, 14:6, 15:5},
+        17: {1:5, 2:4, 3:3, 4:2, 5:1, 6:17, 7:16, 8:15, 9:14, 10:13, 11:12, 12:11, 13:10, 14:9, 15:8, 16:7, 17:6},
+        19: {1:5, 2:4, 3:3, 4:2, 5:1, 6:19, 7:18, 8:17, 9:16, 10:15, 11:14, 12:13, 13:12, 14:11, 15:10, 16:9, 17:8, 18:7, 19:6}
+    };
+
+    const D6_FACE_MAP = {
+        1: { materialIndex: 2, rotation: { x: 0, y: 0, z: 0 } },
+        2: { materialIndex: 0, rotation: { x: 0, y: 0, z: Math.PI / 2 } },
+        3: { materialIndex: 4, rotation: { x: -Math.PI / 2, y: 0, z: 0 } },
+        4: { materialIndex: 5, rotation: { x: Math.PI / 2, y: 0, z: 0 } },
+        5: { materialIndex: 1, rotation: { x: 0, y: 0, z: -Math.PI / 2 } },
+        6: { materialIndex: 3, rotation: { x: Math.PI, y: 0, z: 0 } }
+    };
+
+    const D8_FACE_MAP = {
+        1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7
+    };
+
+    const D10_FACE_MAP = {
+        1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9
+    };
+
+    const D12_FACE_MAP = {
+        1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9, 11: 10, 12: 11
+    };
+
+    const D14_FACE_MAP = {
+        1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9, 11: 10, 12: 11, 13: 12, 14: 13
+    };
+
+    const D16_FACE_MAP = {
+        1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9, 11: 10, 12: 11, 13: 12, 14: 13, 15: 14, 16: 15
+    };
+
+    const D18_FACE_MAP = {
+        1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9, 11: 10, 12: 11, 13: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 17
+    };
+
+    const D20_FACE_MAP = {
+        1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9, 11: 10, 12: 11, 13: 12, 14: 13, 15: 14, 16: 15, 17: 16, 18: 17, 19: 18, 20: 19
+    };
+
     /** UI & SETTINGS LOGIC **/
     const settingsMenu = document.getElementById('settingsMenu');
     document.getElementById('settingsBtn').onclick = () => settingsMenu.style.display = 'block';
@@ -1178,116 +1230,374 @@
         }
     }
 
+    function isCrystalDie(sides) {
+        return CRYSTAL_DICE.includes(sides);
+    }
+
+    function createCrystalDieGeometry(sides) {
+        const RADIUS = 0.8;
+        const HEIGHT = 2.75;
+        const CROWN_OUTER_RADIUS = 0.225;
+        const CROWN_INNER_RADIUS = 0.125;
+        const CROWN_HEIGHT = 0.05;
+        
+        const group = new THREE.Group();
+        const step = (Math.PI * 2) / sides;
+        
+        for (let i = 0; i < sides; i++) {
+            const faceGroup = new THREE.Group();
+            const a1 = i * step;
+            const a2 = (i + 1) * step;
+
+            const sideGeo = new THREE.BufferGeometry();
+            const sideVerts = new Float32Array([
+                0, -HEIGHT/2, 0,  
+                Math.cos(a1) * RADIUS, HEIGHT/2, Math.sin(a1) * RADIUS,
+                Math.cos(a2) * RADIUS, HEIGHT/2, Math.sin(a2) * RADIUS
+            ]);
+            sideGeo.setAttribute('position', new THREE.BufferAttribute(sideVerts, 3));
+            sideGeo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0.5, 1, 0, 0, 1, 0]), 2));
+            sideGeo.computeVertexNormals();
+            
+            const sideMesh = new THREE.Mesh(sideGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }));
+            sideMesh.castShadow = true;
+            sideMesh.receiveShadow = true;
+            sideMesh.userData.faceIndex = i;
+            sideMesh.userData.faceType = 'side';
+
+            const baseGeo = new THREE.BufferGeometry();
+            const baseVerts = new Float32Array([
+                0, HEIGHT/2, 0,
+                Math.cos(a2) * RADIUS, HEIGHT/2, Math.sin(a2) * RADIUS,
+                Math.cos(a1) * RADIUS, HEIGHT/2, Math.sin(a1) * RADIUS 
+            ]);
+            baseGeo.setAttribute('position', new THREE.BufferAttribute(baseVerts, 3));
+            baseGeo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0.5, 0, 1, 1, 0, 1]), 2));
+            baseGeo.computeVertexNormals();
+
+            const baseMesh = new THREE.Mesh(baseGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }));
+            baseMesh.castShadow = true;
+            baseMesh.userData.faceIndex = i;
+            baseMesh.userData.faceType = 'base';
+
+            faceGroup.add(sideMesh, baseMesh);
+            
+            const edgeMat = new THREE.LineBasicMaterial({ color: 0x000000 });
+            faceGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(sideGeo), edgeMat));
+            faceGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(baseGeo), edgeMat));
+
+            group.add(faceGroup);
+        }
+
+        const crownGroup = new THREE.Group();
+        crownGroup.rotation.y = step / 2;
+        crownGroup.position.y = -HEIGHT/2 - 0.01;
+
+        const crownMat = new THREE.MeshLambertMaterial({ 
+            color: 0xeeeeee, 
+            side: THREE.DoubleSide 
+        });
+
+        for (let i = 0; i < sides; i++) {
+            const a1 = i * step, a2 = (i + 1) * step, aMid = (a1 + a2) / 2;
+            const makeTri = (v) => {
+                const g = new THREE.BufferGeometry();
+                g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(v), 3));
+                g.computeVertexNormals();
+                const m = new THREE.Mesh(g, crownMat);
+                m.castShadow = true;
+                crownGroup.add(m);
+            };
+            
+            makeTri([0, CROWN_HEIGHT, 0, Math.cos(aMid)*CROWN_OUTER_RADIUS, CROWN_HEIGHT, Math.sin(aMid)*CROWN_OUTER_RADIUS, Math.cos(a1)*CROWN_INNER_RADIUS, CROWN_HEIGHT, Math.sin(a1)*CROWN_INNER_RADIUS]);
+            makeTri([0, CROWN_HEIGHT, 0, Math.cos(a2)*CROWN_INNER_RADIUS, CROWN_HEIGHT, Math.sin(a2)*CROWN_INNER_RADIUS, Math.cos(aMid)*CROWN_OUTER_RADIUS, CROWN_HEIGHT, Math.sin(aMid)*CROWN_OUTER_RADIUS]);
+            makeTri([Math.cos(aMid)*CROWN_OUTER_RADIUS, CROWN_HEIGHT, Math.sin(aMid)*CROWN_OUTER_RADIUS, Math.cos(aMid)*CROWN_OUTER_RADIUS, 0, Math.sin(aMid)*CROWN_OUTER_RADIUS, Math.cos(a1)*CROWN_INNER_RADIUS, 0, Math.sin(a1)*CROWN_INNER_RADIUS]);
+            makeTri([Math.cos(aMid)*CROWN_OUTER_RADIUS, CROWN_HEIGHT, Math.sin(aMid)*CROWN_OUTER_RADIUS, Math.cos(a1)*CROWN_INNER_RADIUS, 0, Math.sin(a1)*CROWN_INNER_RADIUS, Math.cos(a1)*CROWN_INNER_RADIUS, CROWN_HEIGHT, Math.sin(a1)*CROWN_INNER_RADIUS]);
+        }
+        group.add(crownGroup);
+        
+        group.userData.isCrystal = true;
+        group.userData.sides = sides;
+        group.userData.HEIGHT = HEIGHT;
+        group.userData.RADIUS = RADIUS;
+        
+        return group;
+    }
+
+    function createOctahedronGeometryWithFaces(size) {
+        const geometry = new THREE.BufferGeometry();
+        const s = size;
+        
+        const vertices = [
+            0, s, 0,
+            s, 0, 0,
+            0, 0, s,
+            -s, 0, 0,
+            0, 0, -s,
+            0, -s, 0
+        ];
+        
+        const faces = [
+            [0, 1, 2],
+            [0, 2, 3],
+            [0, 3, 4],
+            [0, 4, 1],
+            [5, 2, 1],
+            [5, 3, 2],
+            [5, 4, 3],
+            [5, 1, 4]
+        ];
+        
+        const positions = [];
+        const uvs = [];
+        const groups = [];
+        
+        faces.forEach((face, faceIndex) => {
+            const v0 = [vertices[face[0]*3], vertices[face[0]*3+1], vertices[face[0]*3+2]];
+            const v1 = [vertices[face[1]*3], vertices[face[1]*3+1], vertices[face[1]*3+2]];
+            const v2 = [vertices[face[2]*3], vertices[face[2]*3+1], vertices[face[2]*3+2]];
+            
+            positions.push(...v0, ...v1, ...v2);
+            uvs.push(0.5, 1, 0, 0, 1, 0);
+            
+            groups.push({ start: faceIndex * 3, count: 3, materialIndex: faceIndex });
+        });
+        
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geometry.computeVertexNormals();
+        
+        groups.forEach(g => geometry.addGroup(g.start, g.count, g.materialIndex));
+        
+        return geometry;
+    }
+
+    function createTrapezohedronGeometryWithFaces(n, radius, height) {
+        const geometry = new THREE.BufferGeometry();
+        const positions = [];
+        const uvs = [];
+        const groups = [];
+        
+        const topApex = [0, height / 2, 0];
+        const bottomApex = [0, -height / 2, 0];
+        
+        const upperRing = [];
+        const lowerRing = [];
+        
+        for (let i = 0; i < n; i++) {
+            const a1 = (i * 2 * Math.PI) / n;
+            upperRing.push([Math.cos(a1) * radius, height / 6, Math.sin(a1) * radius]);
+            const a2 = ((i + 0.5) * 2 * Math.PI) / n;
+            lowerRing.push([Math.cos(a2) * radius, -height / 6, Math.sin(a2) * radius]);
+        }
+        
+        let faceIndex = 0;
+        
+        for (let i = 0; i < n; i++) {
+            const u1 = upperRing[i];
+            const l1 = lowerRing[i];
+            const u2 = upperRing[(i + 1) % n];
+            const l0 = lowerRing[(i - 1 + n) % n];
+            
+            positions.push(...topApex, ...u1, ...l1);
+            uvs.push(0.5, 1, 0, 0.5, 0.5, 0);
+            groups.push({ start: faceIndex * 3, count: 3, materialIndex: faceIndex });
+            faceIndex++;
+            
+            positions.push(...topApex, ...l1, ...u2);
+            uvs.push(0.5, 1, 0.5, 0, 1, 0.5);
+            groups.push({ start: faceIndex * 3, count: 3, materialIndex: faceIndex });
+            faceIndex++;
+            
+            positions.push(...bottomApex, ...l1, ...u1);
+            uvs.push(0.5, 0, 0.5, 1, 0, 0.5);
+            groups.push({ start: faceIndex * 3, count: 3, materialIndex: faceIndex });
+            faceIndex++;
+            
+            positions.push(...bottomApex, ...l0, ...l1);
+            uvs.push(0.5, 0, 0, 0.5, 1, 0.5);
+            groups.push({ start: faceIndex * 3, count: 3, materialIndex: faceIndex });
+            faceIndex++;
+        }
+        
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geometry.computeVertexNormals();
+        
+        groups.forEach(g => geometry.addGroup(g.start, g.count, g.materialIndex));
+        
+        return geometry;
+    }
+
+    function createDipyramidGeometryWithFaces(n, radius, height) {
+        const geometry = new THREE.BufferGeometry();
+        const positions = [];
+        const uvs = [];
+        const groups = [];
+        
+        const topApex = [0, height / 2, 0];
+        const bottomApex = [0, -height / 2, 0];
+        
+        const midRing = [];
+        for (let i = 0; i < n; i++) {
+            const a = (i / n) * Math.PI * 2;
+            midRing.push([Math.cos(a) * radius, 0, Math.sin(a) * radius]);
+        }
+        
+        let faceIndex = 0;
+        
+        for (let i = 0; i < n; i++) {
+            const v1 = midRing[i];
+            const v2 = midRing[(i + 1) % n];
+            
+            positions.push(...topApex, ...v1, ...v2);
+            uvs.push(0.5, 1, 0, 0, 1, 0);
+            groups.push({ start: faceIndex * 3, count: 3, materialIndex: faceIndex });
+            faceIndex++;
+            
+            positions.push(...bottomApex, ...v2, ...v1);
+            uvs.push(0.5, 0, 1, 1, 0, 1);
+            groups.push({ start: faceIndex * 3, count: 3, materialIndex: faceIndex });
+            faceIndex++;
+        }
+        
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geometry.computeVertexNormals();
+        
+        groups.forEach(g => geometry.addGroup(g.start, g.count, g.materialIndex));
+        
+        return geometry;
+    }
+
+    function createDodecahedronGeometryWithFaces(size) {
+        const phi = (1 + Math.sqrt(5)) / 2;
+        const a = size / Math.sqrt(3);
+        const b = a / phi;
+        const c = a * phi;
+        
+        const vertices = [
+            [a, a, a], [a, a, -a], [a, -a, a], [a, -a, -a],
+            [-a, a, a], [-a, a, -a], [-a, -a, a], [-a, -a, -a],
+            [0, b, c], [0, b, -c], [0, -b, c], [0, -b, -c],
+            [b, c, 0], [b, -c, 0], [-b, c, 0], [-b, -c, 0],
+            [c, 0, b], [c, 0, -b], [-c, 0, b], [-c, 0, -b]
+        ];
+        
+        const faces = [
+            [0, 8, 4, 14, 12],
+            [0, 12, 1, 17, 16],
+            [0, 16, 2, 10, 8],
+            [1, 12, 14, 5, 9],
+            [1, 9, 11, 3, 17],
+            [2, 16, 17, 3, 13],
+            [2, 13, 15, 6, 10],
+            [4, 8, 10, 6, 18],
+            [4, 18, 19, 5, 14],
+            [5, 19, 7, 11, 9],
+            [6, 15, 7, 19, 18],
+            [3, 11, 7, 15, 13]
+        ];
+        
+        const geometry = new THREE.BufferGeometry();
+        const positions = [];
+        const uvs = [];
+        const groups = [];
+        
+        let vertexIndex = 0;
+        
+        faces.forEach((face, faceIndex) => {
+            const center = [0, 0, 0];
+            face.forEach(vi => {
+                center[0] += vertices[vi][0];
+                center[1] += vertices[vi][1];
+                center[2] += vertices[vi][2];
+            });
+            center[0] /= 5;
+            center[1] /= 5;
+            center[2] /= 5;
+            
+            for (let i = 0; i < 3; i++) {
+                positions.push(...vertices[face[0]], ...vertices[face[i + 1]], ...vertices[face[i + 2]]);
+                uvs.push(0.5, 0.5, 0, 0, 1, 0);
+            }
+            
+            groups.push({ start: vertexIndex, count: 9, materialIndex: faceIndex });
+            vertexIndex += 9;
+        });
+        
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geometry.computeVertexNormals();
+        
+        groups.forEach(g => geometry.addGroup(g.start, g.count, g.materialIndex));
+        
+        return geometry;
+    }
+
+    function createIcosahedronGeometryWithFaces(size) {
+        const phi = (1 + Math.sqrt(5)) / 2;
+        const a = size;
+        const b = size / phi;
+        
+        const vertices = [
+            [-b, a, 0], [b, a, 0], [-b, -a, 0], [b, -a, 0],
+            [0, -b, a], [0, b, a], [0, -b, -a], [0, b, -a],
+            [a, 0, -b], [a, 0, b], [-a, 0, -b], [-a, 0, b]
+        ];
+        
+        const faces = [
+            [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
+            [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
+            [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
+            [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1]
+        ];
+        
+        const geometry = new THREE.BufferGeometry();
+        const positions = [];
+        const uvs = [];
+        const groups = [];
+        
+        faces.forEach((face, faceIndex) => {
+            positions.push(
+                ...vertices[face[0]],
+                ...vertices[face[1]],
+                ...vertices[face[2]]
+            );
+            uvs.push(0.5, 1, 0, 0, 1, 0);
+            groups.push({ start: faceIndex * 3, count: 3, materialIndex: faceIndex });
+        });
+        
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geometry.computeVertexNormals();
+        
+        groups.forEach(g => geometry.addGroup(g.start, g.count, g.materialIndex));
+        
+        return geometry;
+    }
+
     function getDiceGeometry(sides) {
         const baseSize = 0.9;
         const scaleFactor = Math.max(0.6, 1 - (sides - 6) * 0.02);
         const size = baseSize * scaleFactor;
-        
+        let geo;
+
         switch(sides) {
-            case 3:
-                return createTetrahedronGeometry(size * 0.8);
-            case 4:
-                return new THREE.TetrahedronGeometry(size * 0.7);
-            case 5:
-                return createPentagonalPrismGeometry(size * 0.5);
-            case 6:
-                return new THREE.BoxGeometry(size, size, size);
-            case 7:
-                return createPentagonalPrismGeometry(size * 0.5);
-            case 8:
-                return new THREE.OctahedronGeometry(size * 0.6);
-            case 9:
-                return createPrismGeometry(9, size * 0.4);
-            case 10:
-                return createPentagonalBipyramidGeometry(size * 0.5);
-            case 11:
-                return createPrismGeometry(11, size * 0.4);
-            case 12:
-                return new THREE.DodecahedronGeometry(size * 0.55);
-            case 13:
-                return createPrismGeometry(13, size * 0.35);
-            case 14:
-                return createPrismGeometry(7, size * 0.4);
-            case 15:
-                return createPrismGeometry(15, size * 0.35);
-            case 16:
-                return createPrismGeometry(8, size * 0.4);
-            case 17:
-                return createPrismGeometry(17, size * 0.3);
-            case 18:
-                return createPrismGeometry(9, size * 0.35);
-            case 19:
-                return createPrismGeometry(19, size * 0.3);
-            case 20:
-                return new THREE.IcosahedronGeometry(size * 0.55);
+            case 4: geo = new THREE.TetrahedronGeometry(size); break;
+            case 6: geo = new THREE.BoxGeometry(size, size, size); break;
+            case 8: geo = createOctahedronGeometryWithFaces(size); break;
+            case 10: geo = createTrapezohedronGeometryWithFaces(5, size * 0.7, size * 1.5); break;
+            case 12: geo = createDodecahedronGeometryWithFaces(size); break;
+            case 14: geo = createDipyramidGeometryWithFaces(7, size * 0.7, size * 1.6); break;
+            case 16: geo = createDipyramidGeometryWithFaces(8, size * 0.7, size * 1.6); break;
+            case 18: geo = createDipyramidGeometryWithFaces(9, size * 0.7, size * 1.6); break;
+            case 20: geo = createIcosahedronGeometryWithFaces(size); break;
             default:
-                return new THREE.BoxGeometry(size, size, size);
+                geo = new THREE.BoxGeometry(size, size, size);
         }
-    }
-
-    function createTetrahedronGeometry(size) {
-        const geometry = new THREE.TetrahedronGeometry(size);
-        return geometry;
-    }
-
-    function createPentagonalPrismGeometry(radius) {
-        const shape = new THREE.Shape();
-        const sides = 5;
-        for (let i = 0; i < sides; i++) {
-            const angle = (i / sides) * Math.PI * 2 - Math.PI / 2;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            if (i === 0) shape.moveTo(x, y);
-            else shape.lineTo(x, y);
-        }
-        shape.closePath();
-        
-        const extrudeSettings = { depth: radius * 1.2, bevelEnabled: false };
-        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-        geometry.rotateX(Math.PI / 2);
-        geometry.translate(0, radius * 0.6, 0);
-        return geometry;
-    }
-
-    function createPrismGeometry(sides, radius) {
-        const shape = new THREE.Shape();
-        for (let i = 0; i < sides; i++) {
-            const angle = (i / sides) * Math.PI * 2 - Math.PI / 2;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-            if (i === 0) shape.moveTo(x, y);
-            else shape.lineTo(x, y);
-        }
-        shape.closePath();
-        
-        const extrudeSettings = { depth: radius * 1.0, bevelEnabled: false };
-        const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-        geometry.rotateX(Math.PI / 2);
-        geometry.translate(0, radius * 0.5, 0);
-        return geometry;
-    }
-
-    function createPentagonalBipyramidGeometry(size) {
-        const vertices = [];
-        const indices = [];
-        
-        vertices.push(0, size, 0);
-        for (let i = 0; i < 5; i++) {
-            const angle = (i / 5) * Math.PI * 2;
-            vertices.push(Math.cos(angle) * size * 0.8, 0, Math.sin(angle) * size * 0.8);
-        }
-        vertices.push(0, -size, 0);
-        
-        for (let i = 0; i < 5; i++) {
-            indices.push(0, i + 1, ((i + 1) % 5) + 1);
-            indices.push(6, ((i + 1) % 5) + 1, i + 1);
-        }
-        
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        geometry.setIndex(indices);
-        geometry.computeVertexNormals();
-        return geometry;
+        geo.computeBoundingBox();
+        return geo;
     }
 
     function updateDiceInScene() {
@@ -1300,6 +1610,8 @@
                 } else if (d.material) {
                     d.material.dispose();
                 }
+            } else if (d.userData && d.userData.isCrystal) {
+                scene.remove(d);
             }
         });
         dice = [];
@@ -1321,49 +1633,171 @@
             const zOffset = (row - (maxRows - 1) / 2) * rowSpacing;
 
             const val = ((i % sides) + 1);
-            const geo = getDiceGeometry(sides);
             
-            let materials;
-            if (sides === 6 && state.diceFaceMode === 'standard') {
-                materials = [
-                    createDieMaterial(2, state.diceStyle, sides),
-                    createDieMaterial(5, state.diceStyle, sides),
-                    createDieMaterial(1, state.diceStyle, sides),
-                    createDieMaterial(6, state.diceStyle, sides),
-                    createDieMaterial(3, state.diceStyle, sides),
-                    createDieMaterial(4, state.diceStyle, sides)
-                ];
+            let die;
+            
+            if (isCrystalDie(sides)) {
+                die = createCrystalDieGeometry(sides);
+                die.castShadow = true;
+                
+                const HEIGHT = die.userData.HEIGHT;
+                const RADIUS = die.userData.RADIUS;
+                const step = (Math.PI * 2) / sides;
+                const tiltAngle = -Math.atan2(HEIGHT, RADIUS * Math.cos(step / 2)) - 0.065;
+                
+                die.children.forEach((child, idx) => {
+                    if (child.children) {
+                        child.children.forEach(mesh => {
+                            if (mesh.isMesh && mesh.userData.faceType) {
+                                const faceNum = mesh.userData.faceIndex + 1;
+                                mesh.material = createDieMaterial(faceNum, state.diceStyle, sides);
+                                mesh.material.map = createCrystalTextTexture(faceNum, mesh.userData.faceType === 'base');
+                            }
+                        });
+                    }
+                });
+                
+                die.userData.groundOffset = HEIGHT / 2 + 0.02;
+                die.userData.tiltAngle = tiltAngle;
+                die.userData.val = val;
+                die.userData.active = true;
+                die.userData.id = i;
+                die.userData.sides = sides;
+                
+                die.position.set(xOffset, die.userData.groundOffset, zOffset);
+                die.rotation.x = tiltAngle;
+                
             } else {
-                const mat = createDieMaterial(val, state.diceStyle, sides);
-                if (geo.groups && geo.groups.length > 0) {
+                const geo = getDiceGeometry(sides);
+                
+                let materials;
+                if (sides === 6 && state.diceFaceMode === 'standard') {
+                    materials = [
+                        createDieMaterial(2, state.diceStyle, sides),
+                        createDieMaterial(5, state.diceStyle, sides),
+                        createDieMaterial(1, state.diceStyle, sides),
+                        createDieMaterial(6, state.diceStyle, sides),
+                        createDieMaterial(3, state.diceStyle, sides),
+                        createDieMaterial(4, state.diceStyle, sides)
+                    ];
+                } else if (geo.groups && geo.groups.length > 0) {
                     materials = [];
                     for (let g = 0; g < geo.groups.length; g++) {
                         materials.push(createDieMaterial((g % sides) + 1, state.diceStyle, sides));
                     }
                 } else {
+                    const mat = createDieMaterial(val, state.diceStyle, sides);
                     materials = mat;
                 }
-            }
 
-            const die = new THREE.Mesh(geo, materials);
-            die.castShadow = true;
-            die.position.set(xOffset, 0.45, zOffset);
-            
-            if (sides === 6 && state.diceFaceMode === 'standard') {
-                const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
-                const rot = rotations[val]; die.rotation.set(rot.x, rot.y, rot.z);
-            } else {
-                die.rotation.set(0, 0, 0);
+                die = new THREE.Mesh(geo, materials);
+                die.castShadow = true;
+                
+                const bottomY = geo.boundingBox.min.y;
+                die.userData.groundOffset = -bottomY; 
+                die.position.set(xOffset, -bottomY, zOffset);
+                
+                if (sides === 6 && state.diceFaceMode === 'standard') {
+                    const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
+                    const rot = rotations[val]; 
+                    die.rotation.set(rot.x, rot.y, rot.z);
+                } else {
+                    die.rotation.set(0, 0, 0);
+                }
+                
+                die.userData.val = val;
+                die.userData.active = true;
+                die.userData.id = i;
+                die.userData.sides = sides;
             }
             
-            die.userData = { id: i, val: val, active: true, sides: sides };
             scene.add(die);
             dice.push(die);
         }
+        
         for(let i = numDiceToShow; i < 25; i++) {
             dice.push({ userData: { id: i, active: false, val: 1, sides: 6 } });
         }
+        
         resetDicePositions();
+    }
+
+    function createCrystalTextTexture(num, isBase) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        const colors = {
+            1:'#e74c3c', 2:'#3498db', 3:'#2ecc71', 4:'#f39c12', 5:'#9b59b6', 
+            6:'#1abc9c', 7:'#e67e22', 8:'#16a085', 9:'#c0392b', 10:'#2980b9', 
+            11:'#27ae60', 12:'#d35400', 13:'#8e44ad', 14:'#f1c40f', 
+            15:'#7f8c8d', 16:'#2c3e50', 17:'#ff00ff', 18:'#6a5acd', 19:'#20b2aa', 20:'#db7093'
+        };
+        const singleColorMap = { 'white': '#ffffff', 'red': '#e74c3c', 'blue': '#3498db', 'green': '#2ecc71', 'yellow': '#f39c12', 'purple': '#9b59b6', 'teal': '#1abc9c', 'black': '#000000' };
+        let baseColor = state.diceColorMode === 'multi' ? (colors[num] || colors[(num % 20) + 1] || '#fff') : (singleColorMap[state.diceColorMode] || '#ffffff');
+        
+        switch(state.diceStyle) {
+            case 'clear': 
+                ctx.fillStyle = baseColor; 
+                ctx.globalAlpha = 0.6; 
+                ctx.fillRect(0, 0, 512, 512); 
+                ctx.globalAlpha = 1; 
+                break;
+            case 'solid': 
+                ctx.fillStyle = baseColor; 
+                ctx.fillRect(0, 0, 512, 512); 
+                break;
+            case 'matte': 
+                ctx.fillStyle = baseColor; 
+                ctx.fillRect(0, 0, 512, 512); 
+                for(let i = 0; i < 3000; i++) { 
+                    const brightness = Math.random() > 0.5 ? 255 : 0; 
+                    ctx.fillStyle = `rgba(${brightness}, ${brightness}, ${brightness}, 0.1)`; 
+                    ctx.fillRect(Math.random() * 512, Math.random() * 512, 1, 1); 
+                } 
+                break;
+            case 'wooden':
+                const woodGradient = ctx.createLinearGradient(0, 0, 512, 512); 
+                woodGradient.addColorStop(0, '#D2691E'); 
+                woodGradient.addColorStop(0.5, '#CD853F'); 
+                woodGradient.addColorStop(1, '#D2691E');
+                ctx.fillStyle = woodGradient; 
+                ctx.fillRect(0, 0, 512, 512);
+                break;
+            case 'marble':
+                const marbleGradient = ctx.createRadialGradient(256, 256, 0, 256, 256, 360);
+                marbleGradient.addColorStop(0, baseColor); 
+                marbleGradient.addColorStop(0.5, shadeColor(baseColor, -20)); 
+                marbleGradient.addColorStop(1, shadeColor(baseColor, -40));
+                ctx.fillStyle = marbleGradient; 
+                ctx.fillRect(0, 0, 512, 512);
+                break;
+            default:
+                ctx.fillStyle = '#ffffff'; 
+                ctx.fillRect(0, 0, 512, 512);
+        }
+        
+        let fgColor = state.diceStyle === 'wooden' ? '#000000' : (state.diceStyle === 'clear' ? baseColor : (baseColor === '#000000' ? '#ffffff' : (baseColor === '#ffffff' ? '#333' : '#ffffff')));
+        
+        ctx.fillStyle = fgColor;
+        ctx.textAlign = 'center'; 
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; 
+        ctx.shadowBlur = 4; 
+        ctx.shadowOffsetX = 2; 
+        ctx.shadowOffsetY = 2;
+        
+        if (isBase) { 
+            ctx.font = 'bold 110px Arial'; 
+            ctx.fillText(num, 256, 380); 
+        } else { 
+            ctx.font = 'bold 160px Arial'; 
+            ctx.fillText(num, 256, 350); 
+        }
+        
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.anisotropy = 16;
+        return tex;
     }
 
     function resetDicePositions() {
@@ -1383,10 +1817,15 @@
             const xOffset = (col - (maxCols - 1) / 2) * colSpacing;
             const zOffset = (row - (maxRows - 1) / 2) * rowSpacing;
             
-            gsap.to(die.position, { x: xOffset, y: 0.45, z: zOffset, duration: 0.5, ease: "power2.out" });
+            const yPos = die.userData.groundOffset || 0.45;
+            gsap.to(die.position, { x: xOffset, y: yPos, z: zOffset, duration: 0.5, ease: "power2.out" });
             
             const sides = die.userData.sides;
-            if (sides === 6 && state.diceFaceMode === 'standard') {
+            
+            if (isCrystalDie(sides)) {
+                const tiltAngle = die.userData.tiltAngle || 0;
+                gsap.to(die.rotation, { x: tiltAngle, y: 0, z: 0, duration: 0.5, ease: "power2.out" });
+            } else if (sides === 6 && state.diceFaceMode === 'standard') {
                 const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
                 const rot = rotations[die.userData.val];
                 gsap.to(die.rotation, { x: rot.x, y: rot.y, z: rot.z, duration: 0.5, ease: "power2.out" });
@@ -1399,25 +1838,46 @@
     function setDieValue(die, value) {
         die.userData.val = value;
         const sides = die.userData.sides;
-        let materials;
-        if (sides === 6 && state.diceFaceMode === 'standard') {
-            materials = [
-                createDieMaterial(2, state.diceStyle, sides),
-                createDieMaterial(5, state.diceStyle, sides),
-                createDieMaterial(1, state.diceStyle, sides),
-                createDieMaterial(6, state.diceStyle, sides),
-                createDieMaterial(3, state.diceStyle, sides),
-                createDieMaterial(4, state.diceStyle, sides)
-            ];
+        
+        if (isCrystalDie(sides)) {
+            die.children.forEach((child, idx) => {
+                if (child.children) {
+                    child.children.forEach(mesh => {
+                        if (mesh.isMesh && mesh.userData.faceType) {
+                            const faceNum = mesh.userData.faceIndex + 1;
+                            if (mesh.material) mesh.material.dispose();
+                            mesh.material = createDieMaterial(faceNum, state.diceStyle, sides);
+                            mesh.material.map = createCrystalTextTexture(faceNum, mesh.userData.faceType === 'base');
+                        }
+                    });
+                }
+            });
         } else {
-            materials = createDieMaterial(value, state.diceStyle, sides);
+            let materials;
+            if (sides === 6 && state.diceFaceMode === 'standard') {
+                materials = [
+                    createDieMaterial(2, state.diceStyle, sides),
+                    createDieMaterial(5, state.diceStyle, sides),
+                    createDieMaterial(1, state.diceStyle, sides),
+                    createDieMaterial(6, state.diceStyle, sides),
+                    createDieMaterial(3, state.diceStyle, sides),
+                    createDieMaterial(4, state.diceStyle, sides)
+                ];
+            } else if (die.geometry && die.geometry.groups && die.geometry.groups.length > 0) {
+                materials = [];
+                for (let g = 0; g < die.geometry.groups.length; g++) {
+                    materials.push(createDieMaterial((g % sides) + 1, state.diceStyle, sides));
+                }
+            } else {
+                materials = createDieMaterial(value, state.diceStyle, sides);
+            }
+            if (Array.isArray(die.material)) {
+                die.material.forEach(m => m.dispose());
+            } else if (die.material) {
+                die.material.dispose();
+            }
+            die.material = materials;
         }
-        if (Array.isArray(die.material)) {
-            die.material.forEach(m => m.dispose());
-        } else if (die.material) {
-            die.material.dispose();
-        }
-        die.material = materials;
     }
     
     function createDieMaterial(value, style, sides = 6) {
@@ -1425,7 +1885,12 @@
         canvas.width = 256; canvas.height = 256;
         const ctx = canvas.getContext('2d');
         
-        const colors = {1:'#e74c3c', 2:'#3498db', 3:'#2ecc71', 4:'#f39c12', 5:'#9b59b6', 6:'#1abc9c', 7:'#e67e22', 8:'#16a085', 9:'#c0392b', 10:'#2980b9', 11:'#27ae60', 12:'#d35400', 13:'#8e44ad', 14:'#f1c40f', 15:'#1abc9c', 16:'#e74c3c', 17:'#3498db', 18:'#2ecc71', 19:'#f39c12', 20:'#9b59b6'};
+        const colors = {
+            1:'#e74c3c', 2:'#3498db', 3:'#2ecc71', 4:'#f39c12', 5:'#9b59b6', 
+            6:'#1abc9c', 7:'#e67e22', 8:'#16a085', 9:'#c0392b', 10:'#2980b9', 
+            11:'#27ae60', 12:'#d35400', 13:'#8e44ad', 14:'#f1c40f', 
+            15:'#7f8c8d', 16:'#2c3e50', 17:'#ff00ff', 18:'#6a5acd', 19:'#20b2aa', 20:'#db7093' 
+        };
         const singleColorMap = { 'white': '#ffffff', 'red': '#e74c3c', 'blue': '#3498db', 'green': '#2ecc71', 'yellow': '#f39c12', 'purple': '#9b59b6', 'teal': '#1abc9c', 'black': '#000000' };
         let baseColor = state.diceColorMode === 'multi' ? (colors[value] || colors[(value % 20) + 1] || '#fff') : (singleColorMap[state.diceColorMode] || '#ffffff');
         
@@ -1476,7 +1941,7 @@
         
         const texture = new THREE.CanvasTexture(canvas);
         
-        let materialProps = { map: texture };
+        let materialProps = { map: texture, side: THREE.FrontSide };
         switch(style) {
             case 'clear': materialProps.transparent = true; materialProps.opacity = 0.7; materialProps.metalness = 0.1; materialProps.roughness = 0.2; break;
             case 'solid': materialProps.metalness = 0.2; materialProps.roughness = 0.5; break;
@@ -1514,14 +1979,20 @@
 
     function refreshDiceVisuals() {
         dice.forEach(die => {
-            if (!die.userData.active || !die.material) return;
-            const val = die.userData.val;
-            if (Array.isArray(die.material)) {
-                die.material.forEach(mat => mat.dispose());
-            } else {
-                die.material.dispose();
+            if (!die.userData.active) return;
+            
+            if (isCrystalDie(die.userData.sides)) {
+                const val = die.userData.val;
+                setDieValue(die, val);
+            } else if (die.material) {
+                const val = die.userData.val;
+                if (Array.isArray(die.material)) {
+                    die.material.forEach(mat => mat.dispose());
+                } else {
+                    die.material.dispose();
+                }
+                setDieValue(die, val);
             }
-            setDieValue(die, val);
         });
     }
 
@@ -1555,6 +2026,129 @@
                 }
                 break;
         }
+    }
+
+    function getFaceUpRotation(sides, targetValue) {
+        if (sides === 6) {
+            const rotations = { 
+                1: { x: 0, y: 0, z: 0 }, 
+                2: { x: 0, y: 0, z: Math.PI / 2 }, 
+                3: { x: -Math.PI / 2, y: 0, z: 0 }, 
+                4: { x: Math.PI / 2, y: 0, z: 0 }, 
+                5: { x: 0, y: 0, z: -Math.PI / 2 }, 
+                6: { x: Math.PI, y: 0, z: 0 } 
+            };
+            return rotations[targetValue] || { x: 0, y: 0, z: 0 };
+        }
+        
+        if (sides === 8) {
+            const faceRotations = {
+                1: { x: 0.6155, y: 0, z: 0 },
+                2: { x: 0.6155, y: Math.PI / 2, z: 0 },
+                3: { x: 0.6155, y: Math.PI, z: 0 },
+                4: { x: 0.6155, y: -Math.PI / 2, z: 0 },
+                5: { x: -0.6155 + Math.PI, y: 0, z: 0 },
+                6: { x: -0.6155 + Math.PI, y: Math.PI / 2, z: 0 },
+                7: { x: -0.6155 + Math.PI, y: Math.PI, z: 0 },
+                8: { x: -0.6155 + Math.PI, y: -Math.PI / 2, z: 0 }
+            };
+            return faceRotations[targetValue] || { x: 0, y: 0, z: 0 };
+        }
+        
+        if (sides === 10) {
+            const angleStep = (Math.PI * 2) / 5;
+            const faceRotations = {};
+            for (let i = 1; i <= 10; i++) {
+                const faceIdx = i - 1;
+                const isTop = faceIdx < 5;
+                const yRot = (faceIdx % 5) * angleStep;
+                faceRotations[i] = { 
+                    x: isTop ? 0.3 : Math.PI - 0.3, 
+                    y: yRot, 
+                    z: 0 
+                };
+            }
+            return faceRotations[targetValue] || { x: 0, y: 0, z: 0 };
+        }
+        
+        if (sides === 12) {
+            const faceRotations = {};
+            for (let i = 1; i <= 12; i++) {
+                const angle = ((i - 1) / 12) * Math.PI * 2;
+                faceRotations[i] = { 
+                    x: (i <= 6) ? 0.5 : Math.PI - 0.5, 
+                    y: angle, 
+                    z: 0 
+                };
+            }
+            return faceRotations[targetValue] || { x: 0, y: 0, z: 0 };
+        }
+        
+        if (sides === 14) {
+            const n = 7;
+            const angleStep = (Math.PI * 2) / n;
+            const faceRotations = {};
+            for (let i = 1; i <= 14; i++) {
+                const faceIdx = i - 1;
+                const isTop = faceIdx < n;
+                const yRot = (faceIdx % n) * angleStep;
+                faceRotations[i] = { 
+                    x: isTop ? 0.4 : Math.PI - 0.4, 
+                    y: yRot, 
+                    z: 0 
+                };
+            }
+            return faceRotations[targetValue] || { x: 0, y: 0, z: 0 };
+        }
+        
+        if (sides === 16) {
+            const n = 8;
+            const angleStep = (Math.PI * 2) / n;
+            const faceRotations = {};
+            for (let i = 1; i <= 16; i++) {
+                const faceIdx = i - 1;
+                const isTop = faceIdx < n;
+                const yRot = (faceIdx % n) * angleStep;
+                faceRotations[i] = { 
+                    x: isTop ? 0.35 : Math.PI - 0.35, 
+                    y: yRot, 
+                    z: 0 
+                };
+            }
+            return faceRotations[targetValue] || { x: 0, y: 0, z: 0 };
+        }
+        
+        if (sides === 18) {
+            const n = 9;
+            const angleStep = (Math.PI * 2) / n;
+            const faceRotations = {};
+            for (let i = 1; i <= 18; i++) {
+                const faceIdx = i - 1;
+                const isTop = faceIdx < n;
+                const yRot = (faceIdx % n) * angleStep;
+                faceRotations[i] = { 
+                    x: isTop ? 0.32 : Math.PI - 0.32, 
+                    y: yRot, 
+                    z: 0 
+                };
+            }
+            return faceRotations[targetValue] || { x: 0, y: 0, z: 0 };
+        }
+        
+        if (sides === 20) {
+            const faceRotations = {};
+            for (let i = 1; i <= 20; i++) {
+                const angle = ((i - 1) / 20) * Math.PI * 2;
+                faceRotations[i] = { 
+                    x: (i <= 10) ? 0.55 : Math.PI - 0.55, 
+                    y: angle, 
+                    z: 0 
+                };
+            }
+            return faceRotations[targetValue] || { x: 0, y: 0, z: 0 };
+        }
+        
+        return { x: 0, y: 0, z: 0 };
     }
 
     /** DICE ROLLING AND ANIMATION FOR SIMULATION **/
@@ -1602,57 +2196,11 @@
                 const targetValue = Math.floor(Math.random() * sides) + 1;
                 currentRollValues.push(targetValue);
 
-                rollPromises.push(new Promise(resolve => {
-                    const start = die.position.clone();
-                    const end = diePositions[i];
-                    const startT = performance.now();
-                    const rollDuration = 800 + Math.random() * 400;
-                    const startRotation = { x: die.rotation.x, y: die.rotation.y, z: die.rotation.z };
-                    const spinSpeed = 3 + Math.random() * 3;
-                    
-                    let finalRotation;
-                    if (sides === 6 && state.diceFaceMode === 'standard') {
-                        const rotations = { 1: { x: 0, y: 0, z: 0 }, 6: { x: Math.PI, y: 0, z: 0 }, 2: { x: 0, y: 0, z: Math.PI / 2 }, 5: { x: 0, y: 0, z: -Math.PI / 2 }, 3: { x: -Math.PI / 2, y: 0, z: 0 }, 4: { x: Math.PI / 2, y: 0, z: 0 } };
-                        finalRotation = rotations[targetValue];
-                    } else {
-                        finalRotation = { x: 0, y: 0, z: 0 };
-                    }
-
-                    function step(now) {
-                        if (stopSimulation) {
-                            gsap.to(die.position, { y: 0.45, duration: 0.3, ease: "power2.out" });
-                            gsap.to(die.rotation, { x: finalRotation.x, y: finalRotation.y, z: finalRotation.z, duration: 0.3, ease: "power2.out" });
-                            resolve();
-                            return;
-                        }
-
-                        const elapsed = now - startT;
-                        const t = Math.min(elapsed / rollDuration, 1);
-                        
-                        die.position.lerpVectors(start, end, t);
-                        die.position.y = 0.45 + Math.sin(t * Math.PI) * 3;
-
-                        if (t < 0.95) {
-                            die.rotation.x = startRotation.x + spinSpeed * elapsed * 0.004;
-                            die.rotation.y = startRotation.y + spinSpeed * elapsed * 0.004;
-                            die.rotation.z = startRotation.z + spinSpeed * elapsed * 0.003;
-                        } else {
-                            const settleT = (t - 0.95) / 0.05;
-                            die.rotation.x = die.rotation.x * (1 - settleT) + finalRotation.x * settleT;
-                            die.rotation.y = die.rotation.y * (1 - settleT) + finalRotation.y * settleT;
-                            die.rotation.z = die.rotation.z * (1 - settleT) + finalRotation.z * settleT;
-                        }
-
-                        if (t < 1) requestAnimationFrame(step);
-                        else {
-                            die.position.copy(end); die.position.y = 0.45;
-                            die.rotation.x = finalRotation.x; die.rotation.y = finalRotation.y; die.rotation.z = finalRotation.z;
-                            setDieValue(die, targetValue);
-                            resolve();
-                        }
-                    }
-                    requestAnimationFrame(step);
-                }));
+                if (isCrystalDie(sides)) {
+                    rollPromises.push(animateCrystalDieRoll(die, targetValue, diePositions[i]));
+                } else {
+                    rollPromises.push(animateRegularDieRoll(die, targetValue, diePositions[i]));
+                }
             }
             await Promise.all(rollPromises);
             if (soundEnabled) playSound('roll');
@@ -1674,18 +2222,137 @@
         simulationRunning = false;
     }
 
+    function animateCrystalDieRoll(die, targetValue, endPosition) {
+        return new Promise(resolve => {
+            const sides = die.userData.sides;
+            const rotationMap = CRYSTAL_ROTATION_MAPS[sides];
+            const physicalFaceIndex = rotationMap[targetValue];
+            
+            const duration = 800;
+            const totalSpinFactor = 4;
+            const orbitSpeed = 15;
+
+            const startTime = performance.now();
+            const step = (Math.PI * 2) / sides;
+            const HEIGHT = die.userData.HEIGHT;
+            const RADIUS = die.userData.RADIUS;
+            const tiltAngle = -Math.atan2(HEIGHT, RADIUS * Math.cos(step / 2)) - 0.065;
+
+            const finalVisualY = -(physicalFaceIndex - 1) * step;
+            const startVisualY = die.rotation.y;
+            const targetVisualY = finalVisualY - (Math.PI * 2 * totalSpinFactor);
+            
+            const startPos = die.position.clone();
+            const startPivotY = 0;
+
+            function animateStep(now) {
+                if (stopSimulation) {
+                    die.position.copy(endPosition);
+                    die.position.y = die.userData.groundOffset;
+                    die.rotation.set(tiltAngle, finalVisualY, 0);
+                    setDieValue(die, targetValue);
+                    resolve();
+                    return;
+                }
+
+                const elapsed = now - startTime;
+                const t = Math.min(elapsed / duration, 1);
+                const ease = 1 - Math.pow(1 - t, 3);
+                
+                const currentOrbit = (1 - ease) * orbitSpeed;
+                die.rotation.y = startVisualY + (targetVisualY - startVisualY) * ease;
+                die.rotation.x = tiltAngle;
+
+                const spiralRadius = (1 - ease) * 2;
+                die.position.x = endPosition.x + Math.sin(currentOrbit) * spiralRadius;
+                die.position.z = endPosition.z + Math.cos(currentOrbit) * spiralRadius;
+                die.position.y = die.userData.groundOffset;
+
+                if (t < 1) {
+                    requestAnimationFrame(animateStep);
+                } else {
+                    die.position.x = endPosition.x;
+                    die.position.z = endPosition.z;
+                    die.position.y = die.userData.groundOffset;
+                    die.rotation.set(tiltAngle, finalVisualY, 0);
+                    setDieValue(die, targetValue);
+                    resolve();
+                }
+            }
+            requestAnimationFrame(animateStep);
+        });
+    }
+
+    function animateRegularDieRoll(die, targetValue, endPosition) {
+        return new Promise(resolve => {
+            const sides = die.userData.sides;
+            const start = die.position.clone();
+            const end = endPosition.clone();
+            const startT = performance.now();
+            const rollDuration = 800;
+            const startRotation = { x: die.rotation.x, y: die.rotation.y, z: die.rotation.z };
+            const spinSpeed = 3 + Math.random() * 3;
+            
+            const finalRotation = getFaceUpRotation(sides, targetValue);
+            const groundY = die.userData.groundOffset || 0.45;
+
+            function step(now) {
+                if (stopSimulation) {
+                    die.position.copy(end);
+                    die.position.y = groundY;
+                    die.rotation.x = finalRotation.x;
+                    die.rotation.y = finalRotation.y;
+                    die.rotation.z = finalRotation.z;
+                    setDieValue(die, targetValue);
+                    resolve();
+                    return;
+                }
+
+                const elapsed = now - startT;
+                const t = Math.min(elapsed / rollDuration, 1);
+                
+                die.position.lerpVectors(start, end, t);
+                die.position.y = groundY + Math.sin(t * Math.PI) * 3;
+
+                if (t < 0.95) {
+                    die.rotation.x = startRotation.x + spinSpeed * elapsed * 0.004;
+                    die.rotation.y = startRotation.y + spinSpeed * elapsed * 0.004;
+                    die.rotation.z = startRotation.z + spinSpeed * elapsed * 0.003;
+                } else {
+                    const settleT = (t - 0.95) / 0.05;
+                    die.rotation.x = die.rotation.x * (1 - settleT) + finalRotation.x * settleT;
+                    die.rotation.y = die.rotation.y * (1 - settleT) + finalRotation.y * settleT;
+                    die.rotation.z = die.rotation.z * (1 - settleT) + finalRotation.z * settleT;
+                }
+
+                if (t < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    die.position.copy(end);
+                    die.position.y = groundY;
+                    die.rotation.x = finalRotation.x;
+                    die.rotation.y = finalRotation.y;
+                    die.rotation.z = finalRotation.z;
+                    setDieValue(die, targetValue);
+                    resolve();
+                }
+            }
+            requestAnimationFrame(step);
+        });
+    }
+
     function updateCurrentRow() {
         const tableBody = document.getElementById('resultsTableBody');
         const columns = getTableColumns();
-        let currentRow = tableBody.rows[currentRound - 1];
+        let currentRowEl = tableBody.rows[currentRound - 1];
         
-        if (!currentRow) {
-            currentRow = tableBody.insertRow();
-            currentRow.insertCell(0).textContent = currentRound;
+        if (!currentRowEl) {
+            currentRowEl = tableBody.insertRow();
+            currentRowEl.insertCell(0).textContent = currentRound;
             for (let i = 0; i < columns.length; i++) {
-                currentRow.insertCell(i + 1);
+                currentRowEl.insertCell(i + 1);
             }
-            currentRow.insertCell(columns.length + 1);
+            currentRowEl.insertCell(columns.length + 1);
         }
 
         let totalRolls = 0;
@@ -1696,10 +2363,10 @@
         for (let i = 0; i < columns.length; i++) {
             const count = currentModeResults[i] || 0;
             const pct = totalRolls > 0 ? ((count / totalRolls) * 100).toFixed(1) : '0.0';
-            currentRow.cells[i + 1].innerHTML = `${count}<span class="pct">${pct}%</span>`;
+            currentRowEl.cells[i + 1].innerHTML = `${count}<span class="pct">${pct}%</span>`;
         }
         
-        currentRow.cells[columns.length + 1].textContent = totalRolls;
+        currentRowEl.cells[columns.length + 1].textContent = totalRolls;
         
         updateGrandTotals();
     }
