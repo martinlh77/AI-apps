@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Base64 Image Tool</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+
+        /* General UI Elements */
+        h2 { margin-top: 0; font-size: 1.25rem; }
+        
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            box-sizing: border-box;
+            margin-bottom: 1rem;
+            background: #f8fafc;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input[type="text"], input[type="file"] {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-secondary { background: #e2e8f0; color: var(--text); }
+        button:hover { filter: brightness(90%); }
+
+        .preview-box {
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+        }
+
+        img { max-width: 100%; max-height: 400px; border-radius: 4px; }
+        
+        .alert {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .alert-error { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('toImage')">Base64 to Image</div>
+        <div class="tab" onclick="switchTab('toBase64')">Image to Base64</div>
+    </div>
+
+    <div id="toImage" class="content-section active">
+        <h2>Decode Base64 to Image</h2>
+        <textarea id="b64Input" placeholder="Paste Base64 string here..."></textarea>
+        <div id="error1" class="alert alert-error">Invalid Base64 data.</div>
+        
+        <div class="btn-row">
+            <button class="btn-primary" onclick="b64ToImage()">Generate Image</button>
+            <button class="btn-secondary" onclick="clearInput('b64Input', 'preview1')">Clear</button>
+            <a id="dlLink" download="decoded-image.png" style="display:none">
+                <button class="btn-success">Download Image</button>
+            </a>
+        </div>
+        <div class="preview-box" id="preview1">Preview will appear here</div>
+    </div>
+
+    <div id="toBase64" class="content-section">
+        <h2>Encode Image to Base64</h2>
+        
+        <div class="input-group">
+            <label>Option A: Upload File</label>
+            <input type="file" id="fileInput" accept="image/*" onchange="handleFile(this)">
+            
+            <label>Option B: Image URL (CORS permitting)</label>
+            <div style="display:flex; gap: 5px;">
+                <input type="text" id="urlInput" placeholder="https://example.com/image.jpg">
+                <button class="btn-primary" onclick="urlToBase64()">Fetch</button>
+            </div>
+        </div>
+
+        <div id="error2" class="alert alert-error">Failed to process image. Ensure the URL allows cross-origin requests.</div>
+
+        <textarea id="b64Output" readonly placeholder="Resulting Base64 code will appear here..."></textarea>
+        
+        <div class="btn-row">
+            <button class="btn-success" onclick="copyToClipboard()">Copy to Clipboard</button>
+            <button class="btn-secondary" onclick="clearInput('b64Output', 'preview2')">Clear All</button>
+        </div>
+        
+        <div class="preview-box" id="preview2">Source Preview</div>
+    </div>
+</div>
+
+<script>
+    // Tab Logic
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    // Base64 to Image
+    function b64ToImage() {
+        const input = document.getElementById('b64Input').value.trim();
+        const preview = document.getElementById('preview1');
+        const err = document.getElementById('error1');
+        const dl = document.getElementById('dlLink');
+        
+        if(!input) return;
+        err.style.display = 'none';
+
+        const img = new Image();
+        img.onload = () => {
+            preview.innerHTML = '';
+            preview.appendChild(img);
+            dl.href = img.src;
+            dl.style.display = 'block';
+        };
+        img.onerror = () => {
+            err.style.display = 'block';
+            dl.style.display = 'none';
+        };
+        img.src = input.startsWith('data:image') ? input : `data:image/png;base64,${input}`;
+    }
+
+    // Image to Base64: File Upload
+    function handleFile(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            processResult(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Image to Base64: URL
+    async function urlToBase64() {
+        const url = document.getElementById('urlInput').value.trim();
+        const err = document.getElementById('error2');
+        if (!url) return;
+        err.style.display = 'none';
+
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.onloadend = () => processResult(reader.result);
+            reader.readAsDataURL(blob);
+        } catch (e) {
+            err.style.display = 'block';
+            console.error(e);
+        }
+    }
+
+    function processResult(b64String) {
+        document.getElementById('b64Output').value = b64String;
+        const preview = document.getElementById('preview2');
+        preview.innerHTML = `<img src="${b64String}">`;
+    }
+
+    function copyToClipboard() {
+        const copyText = document.getElementById("b64Output");
+        copyText.select();
+        document.execCommand("copy");
+        alert("Copied to clipboard!");
+    }
+
+    function clearInput(textId, previewId) {
+        document.getElementById(textId).value = '';
+        document.getElementById(previewId).innerHTML = 'Preview will appear here';
+        if(textId === 'b64Input') document.getElementById('dlLink').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
