@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Image Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-6">
+
+    <div class="max-w-md w-full bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
+        <h1 class="text-2xl font-bold mb-6 text-indigo-400">Add Image to Carousel</h1>
+        
+        <div class="space-y-4">
+            <!-- Token Input -->
+            <div>
+                <label class="block text-sm font-medium text-gray-400">GitHub Personal Access Token</label>
+                <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <p class="text-xs text-gray-500 mt-1">This is never stored. Paste it each time you use this tool.</p>
+            </div>
+
+            <!-- Image URL Input -->
+            <div>
+                <label class="block text-sm font-medium text-gray-400">New Image URL</label>
+                <input type="text" id="new-image-url" placeholder="https://image.pollinations.ai/..." class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <!-- Action Button -->
+            <button id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-lg transition duration-300">
+                Update images.json
+            </button>
+
+            <!-- Status Message -->
+            <div id="status" class="hidden p-4 rounded-lg text-sm font-medium"></div>
+        </div>
+    </div>
+
+    <script>
+        const OWNER = "martinlh77";
+        const REPO = "AI-apps";
+        const FILE_PATH = "images.json";
+
+        const submitBtn = document.getElementById('submit-btn');
+        const statusDiv = document.getElementById('status');
+
+        submitBtn.addEventListener('click', async () => {
+            const token = document.getElementById('gh-token').value;
+            const newImageUrl = document.getElementById('new-image-url').value;
+
+            if (!token || !newImageUrl) {
+                showStatus("Please fill in both fields.", "bg-red-900 text-red-200");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Updating...";
+            showStatus("Fetching current file...", "bg-blue-900 text-blue-200");
+
+            try {
+                // 1. Get the current file content and its SHA (required by GitHub to update)
+                const getUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE_PATH}`;
+                const getResponse = await fetch(getUrl, {
+                    headers: { "Authorization": `token ${token}` }
+                });
+
+                if (!getResponse.ok) throw new Error("Could not find images.json. Check your token and repo name.");
+
+                const fileData = await getResponse.json();
+                const sha = fileData.sha; // We need this to prove we are updating the latest version
+                
+                // GitHub sends content in Base64 encoding, we must decode it
+                const currentContent = JSON.parse(atob(fileData.content));
+
+                // 2. Update the array
+                currentContent.push(newImageUrl);
+
+                // 3. Send the updated file back to GitHub
+                const updateResponse = await fetch(getUrl, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `token ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: "Added new image via Manager App", // Commit message
+                        content: btoa(JSON.stringify(currentContent, null, 2)), // Encode back to Base64
+                        sha: sha
+                    })
+                });
+
+                if (updateResponse.ok) {
+                    showStatus("✅ Success! Image added to GitHub. Carousel will update in 1-2 minutes.", "bg-green-900 text-green-200");
+                    document.getElementById('new-image-url').value = ""; // Clear input
+                } else {
+                    throw new Error("GitHub API rejected the update.");
+                }
+
+            } catch (err) {
+                showStatus("❌ Error: " + err.message, "bg-red-900 text-red-200");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Update images.json";
+            }
+        });
+
+        function showStatus(msg, classes) {
+            statusDiv.textContent = msg;
+            statusDiv.className = `p-4 rounded-lg text-sm font-medium ${classes}`;
+            statusDiv.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
