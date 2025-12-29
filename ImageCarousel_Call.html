@@ -40,7 +40,8 @@
 
     <script>
         // --- GITHUB CONFIGURATION ---
-        const JSON_URL = "https://martinlh77.github.io/AI-apps/images.json";
+        // 1. Add a "Cache Buster" (a timestamp) so Google Sites doesn't show an old version
+        const JSON_URL = "https://martinlh77.github.io/AI-apps/images.json?t=" + new Date().getTime();
         
         let images = []; 
         let currentIndex = 0;
@@ -51,10 +52,11 @@
         const dotIndicators = document.getElementById('dot-indicators');
         const toggleAutoplayBtn = document.getElementById('toggle-autoplay-btn');
 
-        // Fetch the list from GitHub
         async function loadImages() {
             try {
-                const response = await fetch(JSON_URL);
+                // 2. Add { cache: "no-store" } to the fetch request
+                const response = await fetch(JSON_URL, { cache: "no-store" });
+                
                 if (!response.ok) throw new Error("Could not load image list");
                 images = await response.json();
                 
