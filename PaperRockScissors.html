@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Roshambo</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            touch-action: manipulation;
+        }
+
+        .container {
+            background-color: var(--card);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h1 { margin-bottom: 0.5rem; color: var(--primary); }
+        
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .game-area { display: none; }
+        .menu-area { display: block; }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            font-weight: bold;
+        }
+
+        .choice-btn {
+            background: #334155;
+            font-size: 3rem;
+            padding: 20px 10px;
+        }
+
+        .choice-btn:active { transform: scale(0.95); }
+        .choice-btn:hover { background: #475569; }
+
+        .menu-btn {
+            background: var(--primary);
+            color: white;
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 20px;
+            font-size: 1.2rem;
+        }
+
+        .reset-btn {
+            background: #ef4444;
+            color: white;
+            margin-top: 2rem;
+            padding: 10px 20px;
+        }
+
+        #status-text {
+            font-size: 1.5rem;
+            margin: 1.5rem 0;
+            min-height: 3rem;
+            color: #fbbf24;
+        }
+
+        .reveal-zone {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            font-size: 4rem;
+            margin: 1rem 0;
+            height: 6rem;
+        }
+
+        .hidden { display: none; }
+
+        .player-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>✊✋✌️</h1>
+        
+        <!-- MAIN MENU -->
+        <div id="menu" class="menu-area">
+            <p>Select Game Mode:</p>
+            <button class="menu-btn" onclick="startGame('cpu')">Player vs CPU</button>
+            <button class="menu-btn" onclick="startGame('pvp')">Local 2 Players</button>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div id="game" class="game-area">
+            <div class="scoreboard">
+                <div>P1: <span id="p1-score">0</span></div>
+                <div id="p2-label">CPU: <span id="p2-score">0</span></div>
+            </div>
+
+            <h2 id="turn-indicator">Player 1, Choose!</h2>
+            
+            <div class="reveal-zone">
+                <div id="p1-display">?</div>
+                <div id="p2-display">?</div>
+            </div>
+
+            <div id="status-text">Ready?</div>
+
+            <div class="btn-group" id="controls">
+                <button class="choice-btn" onclick="makeChoice('rock')">✊</button>
+                <button class="choice-btn" onclick="makeChoice('paper')">✋</button>
+                <button class="choice-btn" onclick="makeChoice('scissors')">✌️</button>
+            </div>
+
+            <button class="reset-btn" onclick="resetGame()">Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        let gameMode = 'cpu';
+        let p1Score = 0;
+        let p2Score = 0;
+        let p1Choice = null;
+        let p2Choice = null;
+        let isProcessing = false;
+
+        const emojis = {
+            rock: '✊',
+            paper: '✋',
+            scissors: '✌️',
+            hidden: '❓'
+        };
+
+        function startGame(mode) {
+            gameMode = mode;
+            p1Score = 0;
+            p2Score = 0;
+            document.getElementById('p1-score').innerText = '0';
+            document.getElementById('p2-score').innerText = '0';
+            document.getElementById('p2-label').innerHTML = mode === 'cpu' ? 'CPU: <span id="p2-score">0</span>' : 'P2: <span id="p2-score">0</span>';
+            
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            resetRound();
+        }
+
+        function resetRound() {
+            p1Choice = null;
+            p2Choice = null;
+            isProcessing = false;
+            document.getElementById('p1-display').innerText = '?';
+            document.getElementById('p2-display').innerText = '?';
+            document.getElementById('status-text').innerText = "Make your move!";
+            document.getElementById('turn-indicator').innerText = "Player 1's Turn";
+            document.getElementById('controls').classList.remove('hidden');
+        }
+
+        function makeChoice(choice) {
+            if (isProcessing) return;
+
+            if (gameMode === 'cpu') {
+                p1Choice = choice;
+                const choices = ['rock', 'paper', 'scissors'];
+                p2Choice = choices[Math.floor(Math.random() * 3)];
+                revealResults();
+            } else {
+                // PvP Logic
+                if (!p1Choice) {
+                    p1Choice = choice;
+                    document.getElementById('status-text').innerText = "P1 Locked In!";
+                    document.getElementById('turn-indicator').innerText = "Player 2's Turn (Pass the phone)";
+                    // Briefly hide icons so P2 doesn't see P1's choice
+                    document.getElementById('p1-display').innerText = '✅';
+                } else {
+                    p2Choice = choice;
+                    revealResults();
+                }
+            }
+        }
+
+        function revealResults() {
+            isProcessing = true;
+            document.getElementById('controls').classList.add('hidden');
+            document.getElementById('turn-indicator').innerText = "REVEAL!";
+            
+            document.getElementById('p1-display').innerText = emojis[p1Choice];
+            document.getElementById('p2-display').innerText = emojis[p2Choice];
+
+            const result = determineWinner(p1Choice, p2Choice);
+            
+            if (result === 'draw') {
+                document.getElementById('status-text').innerText = "It's a Draw! 🤝";
+            } else if (result === 'p1') {
+                p1Score++;
+                document.getElementById('status-text').innerText = "Player 1 Wins! 🎉";
+                document.getElementById('p1-score').innerText = p1Score;
+            } else {
+                p2Score++;
+                document.getElementById('status-text').innerText = (gameMode === 'cpu' ? "CPU Wins! 🤖" : "Player 2 Wins! 🎉");
+                document.getElementById('p2-score').innerText = p2Score;
+            }
+
+            setTimeout(() => {
+                if (gameMode !== 'menu') {
+                    resetRound();
+                }
+            }, 2000);
+        }
+
+        function determineWinner(c1, c2) {
+            if (c1 === c2) return 'draw';
+            if (
+                (c1 === 'rock' && c2 === 'scissors') ||
+                (c1 === 'paper' && c2 === 'rock') ||
+                (c1 === 'scissors' && c2 === 'paper')
+            ) {
+                return 'p1';
+            }
+            return 'p2';
+        }
+
+        function resetGame() {
+            document.getElementById('menu').style.display = 'block';
+            document.getElementById('game').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
