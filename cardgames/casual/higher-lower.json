@@ -1,0 +1,87 @@
+{
+  "gameId": "higher-lower-v1",
+  "metadata": {
+    "name": "Higher or Lower",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Guess if the next card is higher or lower. How long can your streak last?",
+    "category": "casual",
+    "difficulty": "easy",
+    "estimatedPlayTime": "5-10 minutes",
+    "thumbnail": "cardgames/casual/higher-lower-thumb.png",
+    "tags": ["casual", "single-player", "guessing", "quick"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52
+    }
+  },
+  
+  "instructions": {
+    "overview": "Guess whether the next card will be higher or lower than the current card. Build the longest streak you can!",
+    "setup": [
+      "Deck is shuffled",
+      "First card is revealed",
+      "Your streak starts at 0"
+    ],
+    "gameplay": [
+      "Look at the current card",
+      "Click 'HIGHER' if you think the next card is higher",
+      "Click 'LOWER' if you think the next card is lower",
+      "If correct, your streak increases and you see the next card",
+      "If wrong, game ends and you see your final score",
+      "Card values: Ace=1, 2-10=face value, Jack=11, Queen=12, King=13",
+      "If next card equals current card, you win that round"
+    ],
+    "winning": "Try to get the highest streak possible. Challenge: reach a 20-card streak!",
+    "examples": [
+      {
+        "title": "Higher Guess",
+        "description": "Current card is 5, you guess HIGHER, next is 8 - Correct!",
+        "cards": ["hearts-5", "clubs-8"]
+      },
+      {
+        "title": "Lower Guess",
+        "description": "Current card is Queen, you guess LOWER, next is 3 - Correct!",
+        "cards": ["diamonds-queen", "spades-3"]
+      },
+      {
+        "title": "Equal Cards",
+        "description": "Current and next are same rank - You win!",
+        "cards": ["hearts-7", "clubs-7"]
+      }
+    ]
+  },
+  
+  "ui": {
+    "layout": "simple",
+    "zones": [
+      {
+        "id": "current-card",
+        "type": "single",
+        "position": {"x": "center", "y": "center"}
+      }
+    ],
+    "animations": {
+      "flipSpeed": 300,
+      "slideSpeed": 400,
+      "celebrationOnWin": false
+    }
+  },
+  
+  "gameLogicModule": "cardgames/casual/higher-lower.js"
+}
