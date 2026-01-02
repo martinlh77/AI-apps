@@ -1,0 +1,86 @@
+{
+  "gameId": "memory-classic-v1",
+  "metadata": {
+    "name": "Classic Memory Match",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Flip cards to find matching pairs. Test your memory skills!",
+    "category": "memory",
+    "difficulty": "easy",
+    "estimatedPlayTime": "5-10 minutes",
+    "thumbnail": "cardgames/memory/thumbnail.png",
+    "tags": ["memory", "single-player", "matching", "casual"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 20,
+      "note": "Uses 20 random cards (10 pairs)"
+    }
+  },
+  
+  "instructions": {
+    "overview": "Find all matching pairs by remembering card locations. Match cards by rank (suit doesn't matter).",
+    "setup": [
+      "20 random cards are selected and shuffled",
+      "Cards are laid face-down in a 4×5 grid",
+      "Timer starts on first card flip"
+    ],
+    "gameplay": [
+      "Click any face-down card to flip it over",
+      "Click a second card to find its match",
+      "If cards match (same rank), they stay face-up",
+      "If cards don't match, they flip back after 1 second",
+      "Remember locations to find pairs faster",
+      "Try to match all pairs in fewest moves"
+    ],
+    "winning": "Match all 10 pairs to win. Challenge yourself to beat your best time!",
+    "examples": [
+      {
+        "title": "Matching Pair",
+        "description": "Two cards with the same rank match (suit doesn't matter)",
+        "cards": ["hearts-7", "clubs-7"]
+      },
+      {
+        "title": "Another Match",
+        "description": "Queens from different suits also match",
+        "cards": ["diamonds-queen", "spades-queen"]
+      }
+    ]
+  },
+  
+  "ui": {
+    "layout": "grid",
+    "zones": [
+      {
+        "id": "game-grid",
+        "type": "grid",
+        "rows": 4,
+        "cols": 5,
+        "position": {"x": "center", "y": "center"},
+        "cardSize": "medium"
+      }
+    ],
+    "animations": {
+      "flipSpeed": 300,
+      "matchDelay": 500,
+      "mismatchDelay": 1000,
+      "celebrationOnWin": true
+    }
+  },
+  
+  "gameLogicModule": "cardgames/memory/classic-memory.js"
+}
