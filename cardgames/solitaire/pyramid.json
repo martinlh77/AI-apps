@@ -1,0 +1,103 @@
+{
+  "gameId": "solitaire-pyramid-v1",
+  "metadata": {
+    "name": "Pyramid Solitaire",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Remove cards that add up to 13 to clear the pyramid.",
+    "category": "solitaire",
+    "difficulty": "medium",
+    "estimatedPlayTime": "10-15 minutes",
+    "thumbnail": "cardgames/solitaire/pyramid-thumb.png",
+    "tags": ["solitaire", "single-player", "math", "strategy"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52
+    }
+  },
+  
+  "instructions": {
+    "overview": "Clear the pyramid by removing pairs of cards that add up to 13. Kings can be removed alone.",
+    "setup": [
+      "28 cards are dealt in a pyramid shape: 7 rows with 1-7 cards",
+      "Each card overlaps two cards in the row below",
+      "Remaining 24 cards form the stock pile",
+      "Only uncovered cards can be selected"
+    ],
+    "gameplay": [
+      "Select two uncovered cards that add up to 13 to remove them",
+      "Kings (value 13) can be removed by themselves",
+      "Card values: Ace=1, 2-10=face value, Jack=11, Queen=12, King=13",
+      "A card is uncovered when no cards are on top of it",
+      "Click stock to draw cards one at a time",
+      "Use drawn cards to make pairs with pyramid cards"
+    ],
+    "winning": "Remove all 28 cards from the pyramid to win",
+    "examples": [
+      {
+        "title": "Valid Pair (13)",
+        "description": "Ace (1) + Queen (12) = 13",
+        "cards": ["hearts-ace", "spades-queen"]
+      },
+      {
+        "title": "King Removal",
+        "description": "King (13) can be removed alone",
+        "cards": ["diamonds-king"]
+      },
+      {
+        "title": "Another Pair",
+        "description": "5 + 8 = 13",
+        "cards": ["clubs-5", "hearts-8"]
+      },
+      {
+        "title": "Jack + 2",
+        "description": "Jack (11) + 2 = 13",
+        "cards": ["spades-jack", "diamonds-2"]
+      }
+    ]
+  },
+  
+  "ui": {
+    "layout": "pyramid",
+    "zones": [
+      {
+        "id": "pyramid",
+        "type": "pyramid-grid",
+        "rows": 7,
+        "position": {"x": "center", "y": "top"}
+      },
+      {
+        "id": "stock",
+        "type": "pile",
+        "position": {"x": "left", "y": "bottom"}
+      },
+      {
+        "id": "waste",
+        "type": "pile",
+        "position": {"x": "center", "y": "bottom"}
+      }
+    ],
+    "animations": {
+      "dealSpeed": 200,
+      "removeSpeed": 300,
+      "celebrationOnWin": true
+    }
+  },
+  
+  "gameLogicModule": "cardgames/solitaire/pyramid.js"
+}
