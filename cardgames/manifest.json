@@ -19,7 +19,7 @@
       "addedDate": "2025-01-15"
     },
     {
-      "id": "higher-lower-v1",
+      "id": "casual-higher-lower-v1",
       "configPath": "cardgames/casual/higher-lower.json",
       "modulePath": "cardgames/casual/higher-lower.js",
       "thumbnail": "cardgames/casual/higher-lower-thumb.png",
