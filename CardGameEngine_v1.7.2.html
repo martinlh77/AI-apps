@@ -1,0 +1,3537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Game Engine v1.7</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root { 
+            --accent: #00ffcc; 
+            --bg: #0f0f0f; 
+            --card-bg: #1a1a1a; 
+            --enhance: #a8e6cf; 
+            --revert: #ff8c94;
+            --gold: #ffd700;
+            --blue: #87ceeb;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Georgia', serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #f0f0f0;
+        }
+
+        /* Tab Navigation */
+        .main-tabs {
+            display: flex;
+            gap: 0;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 0;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-content {
+            margin-top: 60px;
+        }
+
+        .main-tab {
+            padding: 15px 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            flex: 1;
+            text-align: center;
+        }
+
+        .main-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .main-tab.active {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--gold);
+            border-bottom: 3px solid var(--gold);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Designer App Styles */
+        .app-container {
+            display: flex;
+            min-height: calc(100vh - 60px);
+        }
+
+        .sidebar {
+            width: 320px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 20px 20px 150px 20px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: calc(100vh - 60px);
+            position: sticky;
+            top: 60px;
+        }
+
+        .sidebar h2 {
+            color: var(--gold);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid var(--gold);
+            padding-bottom: 10px;
+        }
+
+        .sidebar h3 {
+            color: var(--blue);
+            margin: 15px 0 10px;
+            font-size: 1rem;
+        }
+
+        .sidebar label {
+            display: block;
+            margin: 8px 0 4px;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .sidebar input[type="text"],
+        .sidebar input[type="password"],
+        .sidebar select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .sidebar select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
+        #styleDropdown option {
+            background: #000;
+            color: #fff;
+        }
+
+        .sidebar input[type="text"]:focus,
+        .sidebar input[type="password"]:focus,
+        .sidebar select:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+        }
+
+        .emoji-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .emoji-preview {
+            font-size: 2rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .emoji-input {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin: 5px 0;
+            width: 100%;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--gold), #ffaa00);
+            color: #1a1a2e;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .collapsible {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            transition: background 0.3s;
+        }
+
+        .collapsible-header:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .collapsible-header::after {
+            content: '▼';
+            font-size: 0.8rem;
+            transition: transform 0.3s;
+        }
+
+        .collapsible.open .collapsible-header::after {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding: 0 15px;
+        }
+
+        .collapsible.open .collapsible-content {
+            max-height: 2000px;
+            padding: 15px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .main-content h1 {
+            color: var(--gold);
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .main-content .subtitle {
+            color: var(--blue);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        /* Card Display */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .card-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card-label {
+            margin-top: 10px;
+            color: #ccc;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .playing-card {
+            width: 150px;
+            height: 210px;
+            background: #fff;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .playing-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .playing-card.red { color: #c41e3a; }
+        .playing-card.black { color: #1a1a1a; }
+
+        .card-border {
+            position: absolute;
+            inset: 4px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .border-style-1 { border: 2px solid currentColor; }
+        .border-style-2 { border: 3px double currentColor; }
+        .border-style-3 {
+            border: 2px solid currentColor;
+            box-shadow: inset 0 0 0 4px transparent, inset 0 0 0 5px currentColor;
+        }
+
+        .border-style-4 {
+            border: 2px solid currentColor;
+            background: linear-gradient(45deg, transparent 48%, currentColor 48%, currentColor 52%, transparent 52%),
+                        linear-gradient(-45deg, transparent 48%, currentColor 48%, currentColor 52%, transparent 52%);
+            background-size: 8px 8px;
+            background-position: 0 0;
+            -webkit-background-clip: padding-box;
+            background-clip: padding-box;
+        }
+
+        .border-style-5 {
+            border: 3px solid currentColor;
+            border-image: repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 1px, transparent 3px) 3;
+        }
+
+        .corner-index {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Times New Roman', serif;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .corner-index.top-left { top: 8px; left: 8px; }
+        .corner-index.bottom-right { bottom: 8px; right: 8px; transform: rotate(180deg); }
+        .corner-index .rank { font-size: 1.1rem; }
+        .corner-index .mini-pip { font-size: 0.9rem; margin-top: -2px; }
+
+        .pip-area {
+            position: absolute;
+            top: 30px;
+            bottom: 30px;
+            left: 25px;
+            right: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pip { font-size: 1.4rem; line-height: 1; }
+        .pip.large { font-size: 3rem; }
+        .pip.inverted { transform: rotate(180deg); }
+
+        .face-card-window {
+            position: absolute;
+            top: 28px;
+            bottom: 28px;
+            left: 22px;
+            right: 22px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f5dc, #fffaf0);
+            border: 2px solid currentColor;
+        }
+
+        .face-card-window img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .face-card-window .placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: #999;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .card-back {
+            width: 150px;
+            height: 210px;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            background: #fff;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .card-back:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-back-inner {
+            position: absolute;
+            inset: 6px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+        }
+
+        .card-back-inner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-back-inner .placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: repeating-linear-gradient(45deg, #1a1a2e, #1a1a2e 10px, #16213e 10px, #16213e 20px);
+            color: var(--gold);
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .card-controls {
+            margin-top: 10px;
+            width: 150px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .card-controls label {
+            font-size: 0.7rem !important;
+            margin: 0 !important;
+            text-align: center;
+        }
+
+        .card-controls .upload-btn {
+            padding: 5px;
+            font-size: 0.7rem;
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .card-controls .upload-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--gold);
+        }
+
+        .card-controls input[type="file"] { display: none; }
+
+        .card-controls input[type="text"] {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 4px;
+            font-size: 0.7rem;
+            border-radius: 4px;
+        }
+
+        .card-controls .btn-load {
+            padding: 4px;
+            font-size: 0.7rem;
+            background: var(--blue);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .suit-section {
+            margin: 30px 0;
+        }
+
+        .suit-section h3 {
+            color: var(--gold);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            color: #ccc;
+            transition: all 0.3s;
+        }
+
+        .tab:hover { background: rgba(255, 255, 255, 0.15); }
+        .tab.active {
+            background: rgba(255, 215, 0, 0.2);
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        /* Generator App Styles */
+        .header-panel {
+            background: #1e1e1e;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            margin: 20px;
+            position: sticky;
+            top: 80px;
+            z-index: 999;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex-grow: 1;
+            min-width: 200px;
+        }
+
+        .field label {
+            font-size: 11px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .btn-rand { background: #6c5ce7; color: white; }
+        .btn-start { background: var(--accent); color: #000; font-size: 12px; }
+        .btn-export { background: #f1c40f; color: #000; margin-top: 20px; font-size: 12px; }
+        .btn-tool { background: #333; color: #ccc; margin-top: 5px; }
+        .btn-enhance { background: #2d3436; color: var(--enhance); border: 1px solid var(--enhance); }
+        .btn-revert { background: #2d3436; color: var(--revert); border: 1px solid var(--revert); display: none; }
+        .btn-stop { 
+            background: #e74c3c; 
+            color: white; 
+            font-size: 12px;
+        }
+        .btn-themed { background: #00b894; color: white; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .card-ui {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            transition: 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .card-ui.active {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(0,255,204,0.2);
+            background: #222;
+        }
+
+        .card-ui h3 {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            color: var(--accent);
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+        }
+
+        .img-box {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: #050505;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 1px solid #222;
+            position: relative;
+        }
+
+        .img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(0,255,204,0.1);
+            border-left-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-small {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0,255,204,0.1);
+            border-left-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .prompt-editor {
+            width: 100%;
+            height: 90px;
+            background: #000;
+            color: #ccc;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 11px;
+            box-sizing: border-box;
+            resize: none;
+            margin-bottom: 5px;
+            font-style: italic;
+        }
+
+        .url-link {
+            font-size: 9px;
+            color: #3498db;
+            text-decoration: none;
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 8px;
+            background: #000;
+            padding: 4px;
+        }
+
+        .tool-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .export-area {
+            margin: 20px;
+            background: #111;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+
+        textarea#output {
+            width: 100%;
+            height: 150px;
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            border: 1px solid #333;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .writing-indicator {
+            display: flex;
+            align-items: center;
+            color: #888;
+            font-style: italic;
+        }
+
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .status-message.success {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            color: #90ee90;
+        }
+
+        .status-message.error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            color: #ff6b6b;
+        }
+
+        /* Deck Management Styles */
+        .deck-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .deck-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+
+        .deck-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--gold);
+        }
+
+        .deck-thumbnail {
+            width: 60px;
+            height: 84px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .deck-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .deck-thumbnail .placeholder-thumb {
+            font-size: 0.7rem;
+            color: #666;
+            text-align: center;
+            padding: 5px;
+        }
+
+        .deck-info {
+            flex: 1;
+        }
+
+        .deck-name {
+            font-weight: bold;
+            color: var(--gold);
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .deck-name:hover {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        .deck-name-input {
+            background: #000;
+            color: var(--gold);
+            border: 1px solid var(--accent);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        .deck-meta {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .deck-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-load-deck {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-download {
+            background: #3498db;
+            color: white;
+        }
+
+        .export-format-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .format-option {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .format-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .format-option.selected {
+            border-color: var(--accent);
+            background: rgba(0, 255, 204, 0.1);
+            color: var(--accent);
+        }
+
+        /* Game Browser Styles */
+        .game-browser-container {
+            display: flex;
+            min-height: calc(100vh - 60px);
+        }
+
+        .game-sidebar {
+            width: 300px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            height: calc(100vh - 60px);
+            position: sticky;
+            top: 60px;
+        }
+
+        .game-filters {
+            margin-bottom: 20px;
+        }
+
+        .game-filters label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+
+        .game-filters select {
+            width: 100%;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: #fff;
+        }
+
+.game-filters select option {
+    background: #1a1a2e;
+    color: #fff;
+}
+
+        .game-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .game-card:hover {
+            border-color: var(--gold);
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .game-card.selected {
+            border-color: var(--accent);
+            background: rgba(0, 255, 204, 0.1);
+        }
+
+        .game-card-thumb {
+            width: 100%;
+            height: 80px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .game-card-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .game-card-title {
+            font-weight: bold;
+            color: var(--gold);
+            margin-bottom: 4px;
+        }
+
+        .game-card-meta {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .game-main-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .game-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60vh;
+        }
+
+        .placeholder-content {
+            text-align: center;
+            color: #666;
+        }
+
+        .placeholder-icon {
+            font-size: 8rem;
+            margin-top: 30px;
+            opacity: 0.3;
+        }
+
+        .game-header {
+            margin-bottom: 30px;
+        }
+
+        .game-header h1 {
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+
+        .game-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        .instructions-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .ins-tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .ins-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .ins-tab.active {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--gold);
+            border-bottom: 3px solid var(--gold);
+        }
+
+        .instructions-content {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .instructions-content h3 {
+            color: var(--blue);
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .instructions-content ul {
+            margin-left: 20px;
+        }
+
+        .instructions-content li {
+            margin-bottom: 8px;
+        }
+
+        .example-card-demo {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+        }
+
+        .example-card-demo .playing-card {
+            width: 80px;
+            height: 112px;
+        }
+
+        .deck-selection {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .deck-selection h3 {
+            color: var(--gold);
+            margin-bottom: 15px;
+        }
+
+        #deck-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .deck-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .deck-option:hover {
+            border-color: var(--gold);
+        }
+
+        .deck-option.selected {
+            border-color: var(--accent);
+            background: rgba(0, 255, 204, 0.1);
+        }
+
+        .deck-option-thumb {
+            width: 100%;
+            height: 100px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            background: #000;
+        }
+
+        .deck-option-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .btn-large {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+        }
+
+        /* Game Play Area */
+        .game-play-area {
+            width: 100%;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-game-control {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .btn-game-control:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .game-stats {
+            margin-left: auto;
+            display: flex;
+            gap: 20px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .game-board {
+            min-height: 600px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+        }
+
+/* Game Card Styles */
+.game-card-element {
+    width: 100px;
+    height: 140px;
+    background: #fff;
+    border-radius: 8px;
+    position: absolute;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    opacity: 1 !important;  /* ← Force full opacity */
+}
+
+.game-card-element:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.game-card-element.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.game-card-element.face-down {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+}
+
+/* Ensure game cards use full designer styling without opacity issues */
+.game-card-element .corner-index,
+.game-card-element .card-border,
+.game-card-element .pip-area,
+.game-card-element .face-card-window {
+    opacity: 1 !important;  /* ← Force full opacity on all card elements */
+}
+
+.game-card-element .pip,
+.game-card-element .rank,
+.game-card-element .mini-pip {
+    opacity: 1 !important;  /* ← Force full opacity on text/symbols */
+}
+
+        /* Base Animations */
+        @keyframes card-deal {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes card-flip {
+            0%, 100% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg); }
+        }
+
+        @keyframes card-match {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); box-shadow: 0 0 20px var(--accent); }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes win-celebration {
+            0% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-30px) rotate(10deg); }
+            50% { transform: translateY(0) rotate(-10deg); }
+            75% { transform: translateY(-15px) rotate(5deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+
+        .card-dealing { animation: card-deal 0.3s ease-out; }
+        .card-flipping { animation: card-flip 0.4s ease-in-out; }
+        .card-matching { animation: card-match 0.5s ease-out forwards; }
+        .celebrating { animation: win-celebration 1s ease-in-out; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 215, 0, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 215, 0, 0.5); }
+
+        /* Mobile Sidebar Toggle */
+        .sidebar-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: var(--gold);
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: transform 0.3s;
+        }
+
+        .sidebar-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 998;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .app-container {
+                flex-direction: column;
+            }
+
+            .sidebar, .game-sidebar {
+                position: fixed;
+                left: -100%;
+                top: 60px;
+                width: 90%;
+                max-width: 320px;
+                height: calc(100vh - 60px);
+                border-right: 1px solid rgba(255, 255, 255, 0.1);
+                transition: left 0.3s ease;
+                z-index: 999;
+                overflow-y: auto;
+            }
+
+            .sidebar.open, .game-sidebar.open {
+                left: 0;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+
+            .sidebar-toggle {
+                display: flex;
+            }
+
+            .main-content, .game-main-area {
+                width: 100%;
+                padding: 20px 10px;
+            }
+
+            .card-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+
+            .playing-card {
+                width: 130px;
+                height: 182px;
+            }
+
+            .card-back {
+                width: 130px;
+                height: 182px;
+            }
+
+            .main-tabs {
+                font-size: 0.8rem;
+            }
+
+            .main-tab {
+                padding: 12px 10px;
+            }
+
+            .game-stats {
+                width: 100%;
+                margin-left: 0;
+                margin-top: 10px;
+                justify-content: space-around;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Tab Navigation -->
+    <div class="main-tabs">
+        <button class="main-tab active" onclick="switchMainTab('designer')">🎨 Design Deck</button>
+        <button class="main-tab" onclick="switchMainTab('generator')">🤖 AI Generator</button>
+        <button class="main-tab" onclick="switchMainTab('manage')">💾 Manage Decks</button>
+        <button class="main-tab" onclick="switchMainTab('play')">🎮 Play Games</button>
+    </div>
+
+    <!-- Designer Tab -->
+    <div id="designer-tab" class="tab-content active">
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+        <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">⚙️</button>
+        <div class="app-container">
+            <aside class="sidebar">
+                <h2>🃏 Card Designer</h2>
+
+                <div class="theme-selector">
+                    <label for="theme-select">Select Theme/Deck:</label>
+                    <select id="theme-select">
+                        <option value="custom">Custom Deck</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="loadTheme()">Load Theme</button>
+                </div>
+
+                <div class="collapsible open">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span>Load Saved Deck</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <label for="saved-deck-select">Saved Decks:</label>
+                        <select id="saved-deck-select">
+                            <option value="">-- Select Saved Deck --</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="loadSavedDeckFromDesigner()">Load Selected Deck</button>
+                    </div>
+                </div>
+
+                <div class="collapsible open">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span>Border Style</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <label for="border-style">Card Border Design:</label>
+                        <select id="border-style" onchange="updateAllCards()">
+                            <option value="1">Simple Line</option>
+                            <option value="2">Double Line</option>
+                            <option value="3">Inset Shadow</option>
+                            <option value="4">Diagonal Pattern</option>
+                            <option value="5">Dashed Border</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="collapsible open">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span>Suit Symbols</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <p style="font-size: 0.8rem; color: #888; margin-bottom: 10px;">
+                            Enter any emoji or character for each suit
+                        </p>
+
+                        <label>Hearts (Red):</label>
+                        <div class="emoji-picker">
+                            <div class="emoji-preview" id="hearts-preview">♥</div>
+                            <input type="text" id="hearts-emoji" class="emoji-input" value="♥" onchange="updateSuitEmoji('hearts')" maxlength="2">
+                        </div>
+
+                        <label>Diamonds (Red):</label>
+                        <div class="emoji-picker">
+                            <div class="emoji-preview" id="diamonds-preview">♦</div>
+                            <input type="text" id="diamonds-emoji" class="emoji-input" value="♦" onchange="updateSuitEmoji('diamonds')" maxlength="2">
+                        </div>
+
+                        <label>Clubs (Black):</label>
+                        <div class="emoji-picker">
+                            <div class="emoji-preview" id="clubs-preview">♣</div>
+                            <input type="text" id="clubs-emoji" class="emoji-input" value="♣" onchange="updateSuitEmoji('clubs')" maxlength="2">
+                        </div>
+
+                        <label>Spades (Black):</label>
+                        <div class="emoji-picker">
+                            <div class="emoji-preview" id="spades-preview">♠</div>
+                            <input type="text" id="spades-emoji" class="emoji-input" value="♠" onchange="updateSuitEmoji('spades')" maxlength="2">
+                        </div>
+
+                        <button class="btn btn-secondary" onclick="resetEmojis()">Reset to Default</button>
+                    </div>
+                </div>
+
+                <div class="collapsible open">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span>Save Current Deck</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <label for="deck-name-input">Deck Name:</label>
+                        <input type="text" id="deck-name-input" placeholder="My Custom Deck">
+                        <button class="btn btn-primary" onclick="saveCurrentDeck()" id="save-deck-btn">💾 Save to History</button>
+                        <button class="btn btn-secondary" onclick="downloadDeckJSON()" id="download-deck-btn">⬇️ Download JSON</button>
+                    </div>
+                </div>
+
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                        <span>Import Deck</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <label class="upload-btn">
+                            📂 Upload JSON File
+                            <input type="file" accept=".json" onchange="importDeckJSON(this)">
+                        </label>
+                        <button class="btn btn-secondary" id="load-recent-btn" onclick="loadRecentUpload()" style="display:none; margin-top:10px;">
+                            ⏱️ Load Recent Upload
+                        </button>
+                        <div id="recent-upload-name" style="font-size:0.8rem; color:#888; margin-top:5px;"></div>
+                    </div>
+                </div>
+
+                <div id="status-area"></div>
+            </aside>
+
+            <main class="main-content">
+                <h1>Playing Card Designer</h1>
+                <p class="subtitle">Design custom playing cards with your own emojis and artwork</p>
+
+                <div class="tabs">
+                    <div class="tab active" data-tab="all" onclick="switchTab('all')">All Cards</div>
+                    <div class="tab" data-tab="hearts" onclick="switchTab('hearts')">Hearts</div>
+                    <div class="tab" data-tab="diamonds" onclick="switchTab('diamonds')">Diamonds</div>
+                    <div class="tab" data-tab="clubs" onclick="switchTab('clubs')">Clubs</div>
+                    <div class="tab" data-tab="spades" onclick="switchTab('spades')">Spades</div>
+                    <div class="tab" data-tab="back" onclick="switchTab('back')">Card Back</div>
+                </div>
+
+                <div id="card-display"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Generator Tab -->
+    <div id="generator-tab" class="tab-content">
+        <div class="header-panel">
+            <div class="input-group">
+                <div class="field">
+                    <label>API Key</label>
+                    <input type="password" id="apiKey" placeholder="Enter key...">
+                </div>
+                <div class="field" id="themeField">
+                    <label>Theme</label>
+                    <input type="text" id="deckTheme" placeholder="e.g. Ancient Jungle Ruins">
+                </div>
+                <button class="btn-rand" onclick="randomizeTheme()">Random Theme</button>
+            </div>
+
+            <div class="input-group">
+                <div class="field" style="flex-grow: 0; min-width: 150px;">
+                    <label>Styles</label>
+                    <select id="styleDropdown" onchange="addStyle()">
+                        <option value="">-- Choose Style --</option>
+                        <option value="Watercolor with ink wash">Watercolor</option>
+                        <option value="Impressionist Oil Painting">Oil Painting</option>
+                        <option value="Detailed Pencil Sketch">Pencil Sketch</option>
+                        <option value="Studio Ghibli aesthetic">Studio Ghibli</option>
+                        <option value="Cyberpunk neon aesthetic">Cyberpunk</option>
+                        <option value="Steampunk Victorian machinery">Steampunk</option>
+                        <option value="Dark fantasy illustration">Dark Fantasy</option>
+                        <option value="Anime cel shaded">Anime</option>
+                        <option value="Photorealistic hyperdetailed">Photorealistic</option>
+                        <option value="Low poly 3D render">Low Poly</option>
+                        <option value="Stained glass cathedral style">Stained Glass</option>
+                        <option value="Charcoal and chalk on toned paper">Charcoal Drawing</option>
+                        <option value="Pastel soft dreamy colors">Pastel</option>
+                        <option value="Graffiti street art style">Graffiti</option>
+                        <option value="Woodcut print medieval">Woodcut</option>
+                        <option value="Chinese ink brush painting">Chinese Ink</option>
+                        <option value="Psychedelic 60s poster art">Psychedelic</option>
+                        <option value="Vaporwave aesthetic">Vaporwave</option>
+                        <option value="Sci-fi futuristic chrome">Sci-Fi Chrome</option>
+                        <option value="Impressionist pointillism">Pointillism</option>
+                        <option value="Expressionist bold brushstrokes">Expressionist</option>
+                        <option value="Collage mixed media">Collage</option>
+                        <option value="Claymation 3D sculpted">Claymation</option>
+                        <option value="Botanical scientific illustration">Botanical</option>
+                        <option value="Egyptian hieroglyphic style">Egyptian</option>
+                        <option value="Byzantine mosaic gold leaf">Byzantine</option>
+                        <option value="Celtic knotwork intricate">Celtic</option>
+                        <option value="Persian miniature painting">Persian Miniature</option>
+                        <option value="African tribal art patterns">African Tribal</option>
+                        <option value="Aboriginal dot painting">Aboriginal</option>
+                        <option value="Nordic Viking runes">Nordic Viking</option>
+                        <option value="Rococo ornate pastels">Rococo</option>
+                        <option value="Synthwave retro 80s">Synthwave</option>
+                        <option value="Dieselpunk industrial">Dieselpunk</option>
+                        <option value="Solarpunk utopian nature">Solarpunk</option>
+                        <option value="Biopunk organic tech">Biopunk</option>
+                        <option value="Glitch art digital corruption">Glitch Art</option>
+                        <option value="Film noir dramatic shadows">Film Noir</option>
+                        <option value="Neon lighting colorful glow">Neon Lit</option>
+                        <option value="Bioluminescent glowing organisms">Bioluminescent</option>
+                        <option value="Metallic chrome reflective">Metallic</option>
+                        <option value="Paper cut layered depth">Paper Cut</option>
+                        <option value="Origami folded geometric">Origami</option>
+                        <option value="Cosmic space nebula stars">Cosmic</option>
+                        <option value="Fractal mathematical infinite">Fractal</option>
+                        <option value="Mandala symmetrical spiritual">Mandala</option>
+                        <option value="Vintage retro nostalgic">Vintage</option>
+                        <option value="Fairy tale enchanted magical">Fairy Tale</option>
+                        <option value="Horror nightmare terrifying">Horror</option>
+                        <option value="Whimsical playful fanciful">Whimsical</option>
+                        <option value="Majestic grand impressive">Majestic</option>
+                        <option value="Epic grand scale heroic">Epic</option>
+                        <option value="Surreal impossible dreamlike">Surreal</option>
+                        <option value="Fantasy imaginative magical">Fantasy</option>
+                        <option value="Science fiction future tech">Science Fiction</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Artistic Direction (Style/Medium)</label>
+                    <input type="text" id="styleInput" placeholder="Combined styles...">
+                </div>
+                <button class="btn-rand" style="background:#e17055" onclick="randomizeStyle()">Random Style</button>
+            </div>
+
+            <div class="input-group">
+                <button class="btn-rand" style="background:#00b894" onclick="randomizeAllPrompts()">Step 2: Generate Prompts</button>
+                <button class="btn-start" onclick="generateFullDeck()">Step 3: Draw Deck</button>
+                <button class="btn-start" style="background:#9b59b6" onclick="loadGeneratedImagesToDesigner()">Step 4: Load to Designer</button>
+                <button class="btn-stop" onclick="stopProcess()">Stop</button>
+                <div id="status" style="font-size: 12px; color: var(--accent); margin-left: 10px; font-weight: bold;">Status: Idle</div>
+            </div>
+        </div>
+
+        <div id="card-grid" class="grid"></div>
+
+        <div class="export-area">
+            <h3 style="color: var(--gold); margin-bottom: 15px;">Export Generated Deck</h3>
+            
+            <div class="export-format-selector">
+                <div class="format-option selected" onclick="selectExportFormat('json')" data-format="json">
+                    <strong>JSON Format</strong><br>
+                    <small>Structured deck data</small>
+                </div>
+                <div class="format-option" onclick="selectExportFormat('text')" data-format="text">
+                    <strong>Plain Text</strong><br>
+                    <small>Human readable</small>
+                </div>
+            </div>
+
+            <label for="gen-deck-name" style="color: #ccc; display: block; margin-bottom: 5px;">Deck Name:</label>
+            <input type="text" id="gen-deck-name" placeholder="Generated Deck Name" 
+                   style="width: 100%; padding: 10px; background: #000; color: #fff; border: 1px solid #333; border-radius: 6px; margin-bottom: 10px;">
+
+            <button class="btn-export" onclick="exportData()">Export Final Data</button>
+            <button class="btn-export" style="background: var(--accent); color: #000;" onclick="saveGeneratedDeck()">💾 Save to History</button>
+            <textarea id="output" readonly></textarea>
+        </div>
+    </div>
+
+    <!-- Manage Decks Tab -->
+    <div id="manage-tab" class="tab-content">
+        <div style="padding: 30px; max-width: 1200px; margin: 0 auto;">
+            <h1>💾 Manage Saved Decks</h1>
+            <p class="subtitle">Load, download, or delete your saved decks</p>
+
+            <div id="deck-list-container" class="deck-list">
+                <p style="color: #888; text-align: center; padding: 40px;">No saved decks yet. Create and save a deck from the Designer or AI Generator tabs.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Play Games Tab -->
+    <div id="play-tab" class="tab-content">
+        <div class="sidebar-overlay" id="game-sidebar-overlay" onclick="toggleGameSidebar()"></div>
+        <button class="sidebar-toggle" id="game-sidebar-toggle" onclick="toggleGameSidebar()">🎮</button>
+        <div class="game-browser-container">
+            <!-- Sidebar: Game Selection -->
+            <aside class="game-sidebar" id="game-sidebar">
+                <h2>🎮 Available Games</h2>
+                
+                <div class="game-filters">
+    <label>Category:</label>
+    <select id="game-category-filter" onchange="filterGames()">
+        <option value="all">All Games</option>
+    </select>
+    
+    <label>Players:</label>
+                    <select id="game-players-filter" onchange="filterGames()">
+                        <option value="all">Any</option>
+                        <option value="1">Single Player</option>
+                        <option value="2+">2+ Players</option>
+                    </select>
+                </div>
+                
+                <div id="game-list" class="game-list">
+                    <div style="padding: 20px; text-align: center; color: #888;">
+                        <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 10px;"></div>
+                        <p>Loading games...</p>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Main Area: Game Display -->
+            <main class="game-main-area">
+                <!-- No game selected state -->
+                <div id="no-game-selected" class="game-placeholder">
+                    <div class="placeholder-content">
+                        <h2>🎴 Choose a Game</h2>
+                        <p>Select a game from the sidebar to view instructions and start playing</p>
+                        <div class="placeholder-icon">🃏</div>
+                    </div>
+                </div>
+                
+                <!-- Game selected: Show instructions/setup -->
+                <div id="game-instructions" class="game-instructions" style="display:none;">
+                    <div class="game-header">
+                        <h1 id="game-title"></h1>
+                        <div class="game-meta">
+                            <span class="game-players" id="game-players"></span>
+                            <span class="game-time" id="game-time"></span>
+                            <span class="game-difficulty" id="game-difficulty"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="instructions-tabs">
+                        <button class="ins-tab active" onclick="switchInstructionTab('overview')">Overview</button>
+                        <button class="ins-tab" onclick="switchInstructionTab('rules')">Rules</button>
+                        <button class="ins-tab" onclick="switchInstructionTab('examples')">Examples</button>
+                    </div>
+                    
+                    <div id="instructions-content" class="instructions-content">
+                        <!-- Populated dynamically -->
+                    </div>
+                    
+                    <div class="deck-selection">
+                        <h3>Select Deck(s)</h3>
+                        <div id="deck-selector">
+                            <!-- Populated from saved decks -->
+                        </div>
+                        <button class="btn btn-primary btn-large" onclick="startGame()">
+                            🎮 Start Game
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Active game play area -->
+                <div id="game-play-area" class="game-play-area" style="display:none;">
+                    <div class="game-controls">
+                        <button class="btn-game-control" onclick="pauseGame()">⏸️ Pause</button>
+                        <button class="btn-game-control" onclick="showGameRules()">❓ Rules</button>
+                        <button class="btn-game-control" onclick="restartGame()">🔄 Restart</button>
+                        <button class="btn-game-control" onclick="exitGame()">🚪 Exit</button>
+                        
+                        <div class="game-stats">
+                            <span id="game-moves">Moves: 0</span>
+                            <span id="game-time-elapsed">Time: 0:00</span>
+                            <span id="game-score">Score: 0</span>
+                        </div>
+                    </div>
+                    
+                    <div id="game-board" class="game-board">
+                        <!-- Game-specific board rendered here -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // Global State
+        // ============================================
+        
+        const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+        const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'Joker'];
+        
+        const suitColors = {
+            hearts: 'red',
+            diamonds: 'red',
+            clubs: 'black',
+            spades: 'black'
+        };
+
+        const defaultEmojis = {
+            hearts: '♥',
+            diamonds: '♦',
+            clubs: '♣',
+            spades: '♠'
+        };
+
+        let currentEmojis = { ...defaultEmojis };
+        
+        let cardImages = {
+            back: null,
+            'hearts-ace': null, 'hearts-jack': null, 'hearts-queen': null, 'hearts-king': null, 'hearts-joker': null,
+            'diamonds-ace': null, 'diamonds-jack': null, 'diamonds-queen': null, 'diamonds-king': null, 'diamonds-joker': null,
+            'clubs-ace': null, 'clubs-jack': null, 'clubs-queen': null, 'clubs-king': null, 'clubs-joker': null,
+            'spades-ace': null, 'spades-jack': null, 'spades-queen': null, 'spades-king': null, 'spades-joker': null
+        };
+
+        let themes = {};
+        let currentTab = 'all';
+        let currentExportFormat = 'json';
+
+        // Generator state
+        const generatorCards = [
+            { id: 'back', name: 'Back of Deck', type: 'pattern' },
+            { id: 'h_ace', name: 'Hearts Ace', type: 'ace' }, { id: 'h_jack', name: 'Hearts Jack', type: 'jack' }, 
+            { id: 'h_queen', name: 'Hearts Queen', type: 'queen' }, { id: 'h_king', name: 'Hearts King', type: 'king' }, 
+            { id: 'h_joker', name: 'Hearts Joker', type: 'jester' },
+            { id: 'd_ace', name: 'Diamonds Ace', type: 'ace' }, { id: 'd_jack', name: 'Diamonds Jack', type: 'jack' }, 
+            { id: 'd_queen', name: 'Diamonds Queen', type: 'queen' }, { id: 'd_king', name: 'Diamonds King', type: 'king' }, 
+            { id: 'd_joker', name: 'Diamonds Joker', type: 'jester' },
+            { id: 'c_ace', name: 'Clubs Ace', type: 'ace' }, { id: 'c_jack', name: 'Clubs Jack', type: 'jack' }, 
+            { id: 'c_queen', name: 'Clubs Queen', type: 'queen' }, { id: 'c_king', name: 'Clubs King', type: 'king' }, 
+            { id: 'c_joker', name: 'Clubs Joker', type: 'jester' },
+            { id: 's_ace', name: 'Spades Ace', type: 'ace' }, { id: 's_jack', name: 'Spades Jack', type: 'jack' }, 
+            { id: 's_queen', name: 'Spades Queen', type: 'queen' }, { id: 's_king', name: 'Spades King', type: 'king' }, 
+            { id: 's_joker', name: 'Spades Joker', type: 'jester' }
+        ];
+
+        let promptHistory = {}; 
+        let stopRequested = false;
+        let usedStyles = [];
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+        const allStyles = [
+            "Watercolor with ink wash", "Impressionist Oil Painting", "Detailed Pencil Sketch", "Studio Ghibli aesthetic",
+            "Vibrant 2D Vector Illustration", "Dark Gothic Horror", "Surreal Dreamcore", "Traditional Japanese Ukiyo-e",
+            "Cinematic concept art", "Art Nouveau with ornate borders", "Cyberpunk neon aesthetic",
+            "Steampunk Victorian machinery", "Pixel art retro gaming", "Dark fantasy illustration", 
+            "Photorealistic hyperdetailed", "Anime cel shaded", "Low poly 3D render", "Stained glass cathedral style",
+            "Charcoal and chalk on toned paper", "Pastel soft dreamy colors", "Graffiti street art style",
+            "Woodcut print medieval", "Chinese ink brush painting", "Psychedelic 60s poster art", "Vaporwave aesthetic",
+            "Sci-fi futuristic chrome", "Impressionist pointillism", "Expressionist bold brushstrokes",
+            "Collage mixed media", "Claymation 3D sculpted", "Botanical scientific illustration",
+            "Egyptian hieroglyphic style", "Byzantine mosaic gold leaf", "Celtic knotwork intricate",
+            "Persian miniature painting", "African tribal art patterns", "Aboriginal dot painting",
+            "Nordic Viking runes", "Rococo ornate pastels", "Synthwave retro 80s", "Dieselpunk industrial",
+            "Solarpunk utopian nature", "Biopunk organic tech", "Glitch art digital corruption",
+            "Film noir dramatic shadows", "Neon lighting colorful glow", "Bioluminescent glowing organisms",
+            "Metallic chrome reflective", "Paper cut layered depth", "Origami folded geometric",
+            "Cosmic space nebula stars", "Fractal mathematical infinite", "Mandala symmetrical spiritual",
+            "Vintage retro nostalgic", "Fairy tale enchanted magical", "Horror nightmare terrifying",
+            "Whimsical playful fanciful", "Majestic grand impressive", "Epic grand scale heroic",
+            "Surreal impossible dreamlike", "Fantasy imaginative magical", "Science fiction future tech"
+        ];
+
+        // Game System State
+        let availableGames = [];
+        let selectedGame = null;
+        let selectedGameConfig = null;
+        let selectedDeckForGame = null;
+        let currentGameInstance = null;
+        let gameTimer = null;
+        let gameStartTime = null;
+
+        // ============================================
+        // Tab Navigation
+        // ============================================
+        
+        function switchMainTab(tabName) {
+            document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            if (tabName === 'manage') {
+                loadDeckList();
+            } else if (tabName === 'generator') {
+                initGenerator();
+            } else if (tabName === 'play') {
+                if (availableGames.length === 0) {
+                    loadGamesManifest();
+                }
+            }
+        }
+
+        // ============================================
+        // Pip Layout Patterns (Designer)
+        // ============================================
+        
+        const pipLayouts = {
+            'A': [{ x: 0.5, y: 0.5, large: true }],
+            '2': [{ x: 0.5, y: 0.15 }, { x: 0.5, y: 0.85, inverted: true }],
+            '3': [{ x: 0.5, y: 0.15 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.85, inverted: true }],
+            '4': [{ x: 0.25, y: 0.15 }, { x: 0.75, y: 0.15 }, { x: 0.25, y: 0.85, inverted: true }, { x: 0.75, y: 0.85, inverted: true }],
+            '5': [{ x: 0.25, y: 0.15 }, { x: 0.75, y: 0.15 }, { x: 0.5, y: 0.5 }, { x: 0.25, y: 0.85, inverted: true }, { x: 0.75, y: 0.85, inverted: true }],
+            '6': [{ x: 0.25, y: 0.15 }, { x: 0.75, y: 0.15 }, { x: 0.25, y: 0.5 }, { x: 0.75, y: 0.5 }, { x: 0.25, y: 0.85, inverted: true }, { x: 0.75, y: 0.85, inverted: true }],
+            '7': [{ x: 0.25, y: 0.15 }, { x: 0.75, y: 0.15 }, { x: 0.5, y: 0.325 }, { x: 0.25, y: 0.5 }, { x: 0.75, y: 0.5 }, { x: 0.25, y: 0.85, inverted: true }, { x: 0.75, y: 0.85, inverted: true }],
+            '8': [{ x: 0.25, y: 0.12 }, { x: 0.75, y: 0.12 }, { x: 0.25, y: 0.37 }, { x: 0.75, y: 0.37 }, { x: 0.25, y: 0.63, inverted: true }, { x: 0.75, y: 0.63, inverted: true }, { x: 0.25, y: 0.88, inverted: true }, { x: 0.75, y: 0.88, inverted: true }],
+            '9': [{ x: 0.25, y: 0.12 }, { x: 0.75, y: 0.12 }, { x: 0.25, y: 0.34 }, { x: 0.75, y: 0.34 }, { x: 0.5, y: 0.5 }, { x: 0.25, y: 0.66, inverted: true }, { x: 0.75, y: 0.66, inverted: true }, { x: 0.25, y: 0.88, inverted: true }, { x: 0.75, y: 0.88, inverted: true }],
+            '10': [{ x: 0.25, y: 0.1 }, { x: 0.75, y: 0.1 }, { x: 0.5, y: 0.25 }, { x: 0.25, y: 0.4 }, { x: 0.75, y: 0.4 }, { x: 0.25, y: 0.6, inverted: true }, { x: 0.75, y: 0.6, inverted: true }, { x: 0.5, y: 0.75, inverted: true }, { x: 0.25, y: 0.9, inverted: true }, { x: 0.75, y: 0.9, inverted: true }]
+        };
+
+        // ============================================
+        // Designer Functions
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadThemesFromJSON();
+            renderAllCards();
+            
+            // Check for recent upload
+            const recentUpload = localStorage.getItem('recentUpload');
+            if (recentUpload) {
+                try {
+                    const deckData = JSON.parse(recentUpload);
+                    const backImage = deckData.cardImages && deckData.cardImages.back ? 
+                        `<img src="${deckData.cardImages.back}" style="width:30px;height:42px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:8px;" onerror="this.style.display='none'">` :
+                        '🃏 ';
+                    
+                    document.getElementById('load-recent-btn').style.display = 'block';
+                    document.getElementById('recent-upload-name').innerHTML = `${backImage}Recent: ${deckData.name}`;
+                } catch (error) {
+                    // Invalid recent upload
+                }
+            }
+        });
+
+        function createCard(suit, rank, isLarge = false) {
+            const color = suitColors[suit];
+            const emoji = currentEmojis[suit];
+            const borderStyle = document.getElementById('border-style').value;
+            const sizeClass = isLarge ? 'large' : '';
+            
+            let cardContent = '';
+            const isFaceCard = ['A', 'J', 'Q', 'K', 'Joker'].includes(rank);
+            
+            const rankDisplay = rank === 'Joker' ? '🃏' : rank;
+            cardContent += `
+                <div class="corner-index top-left">
+                    <span class="rank">${rankDisplay}</span>
+                    <span class="mini-pip">${emoji}</span>
+                </div>
+                <div class="corner-index bottom-right">
+                    <span class="rank">${rankDisplay}</span>
+                    <span class="mini-pip">${emoji}</span>
+                </div>
+            `;
+            
+            cardContent += `<div class="card-border border-style-${borderStyle}"></div>`;
+            
+            if (isFaceCard) {
+                const rankMap = { 'A': 'ace', 'J': 'jack', 'Q': 'queen', 'K': 'king', 'Joker': 'joker' };
+                const imageKey = `${suit}-${rankMap[rank]}`;
+                const imageUrl = cardImages[imageKey];
+                
+                cardContent += `<div class="face-card-window">`;
+                if (imageUrl) {
+                    cardContent += `<img src="${imageUrl}" alt="${rank} of ${suit}" onerror="this.parentElement.innerHTML='<div class=\\'placeholder\\'>Image failed to load</div>'">`;
+                } else {
+                    cardContent += `<div class="placeholder">Upload or link<br>${rank} image</div>`;
+                }
+                cardContent += `</div>`;
+            } else {
+                const layout = pipLayouts[rank];
+                if (layout) {
+                    cardContent += `<div class="pip-area">`;
+                    layout.forEach(pip => {
+                        const classes = ['pip'];
+                        if (pip.large) classes.push('large');
+                        if (pip.inverted) classes.push('inverted');
+                        
+                        const style = `position: absolute; left: ${pip.x * 100}%; top: ${pip.y * 100}%; transform: translate(-50%, -50%)${pip.inverted ? ' rotate(180deg)' : ''}`;
+                        cardContent += `<span class="${classes.join(' ')}" style="${style}">${emoji}</span>`;
+                    });
+                    cardContent += `</div>`;
+                }
+            }
+            
+            return `<div class="playing-card ${color} ${sizeClass}">${cardContent}</div>`;
+        }
+
+        function createCardBack(isLarge = false) {
+            const sizeClass = isLarge ? 'large' : '';
+            let content = '';
+            
+            if (cardImages.back) {
+                content = `<img src="${cardImages.back}" alt="Card Back" onerror="this.parentElement.innerHTML='<div class=\\'placeholder\\'>Back Design</div>'">`;
+            } else {
+                content = `<div class="placeholder">Upload or link<br>card back design</div>`;
+            }
+            
+            return `
+                <div class="card-back ${sizeClass}">
+                    <div class="card-back-inner">
+                        ${content}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAllCards() {
+            const display = document.getElementById('card-display');
+            let html = '';
+            
+            // Update saved deck dropdown
+            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+            const savedDeckSelect = document.getElementById('saved-deck-select');
+            if (savedDeckSelect) {
+                savedDeckSelect.innerHTML = '<option value="">-- Select Saved Deck --</option>' +
+                    savedDecks.map((deck, index) => `<option value="${index}">${deck.name}</option>`).join('');
+            }
+            
+            const getControls = (key) => {
+                return `
+                <div class="card-controls">
+                    <label class="upload-btn">📁 Upload<input type="file" style="display:none" onchange="handleImageUpload('${key}', this)"></label>
+                    <input type="text" id="${key}-url" placeholder="Paste URL...">
+                    <button class="btn btn-load" onclick="loadImageFromUrl('${key}')">Load</button>
+                </div>`;
+            };
+
+            if (currentTab === 'all') {
+                // Show card back first in "All Cards" view
+                html += `<div class="suit-section"><h3>🂠 Card Back Design</h3><div class="card-grid">`;
+                html += `<div class="card-wrapper">`;
+                html += createCardBack();
+                html += `<div class="card-label">Back</div>`;
+                html += getControls('back');
+                html += `</div></div></div>`;
+                
+                // Then show all suits
+                suits.forEach(suit => {
+                    html += `<div class="suit-section">`;
+                    html += `<h3><span class="suit-icon" style="color: ${suitColors[suit] === 'red' ? '#c41e3a' : '#1a1a1a'}">${currentEmojis[suit]}</span> ${suit.charAt(0).toUpperCase() + suit.slice(1)}</h3>`;
+                    html += `<div class="card-grid">`;
+                    ranks.forEach(rank => {
+                        const isFace = ['A', 'J', 'Q', 'K', 'Joker'].includes(rank);
+                        const rankMap = { 'A': 'ace', 'J': 'jack', 'Q': 'queen', 'K': 'king', 'Joker': 'joker' };
+                        const key = `${suit}-${rankMap[rank]}`;
+                        
+                        html += `<div class="card-wrapper">`;
+                        html += createCard(suit, rank);
+                        html += `<div class="card-label">${rank}</div>`;
+                        if (isFace) html += getControls(key);
+                        html += `</div>`;
+                    });
+                    html += `</div></div>`;
+                });
+            } else if (suits.includes(currentTab)) {
+                // Individual suit view
+                const suit = currentTab;
+                html += `<div class="suit-section">`;
+                html += `<h3><span class="suit-icon" style="color: ${suitColors[suit] === 'red' ? '#c41e3a' : '#1a1a1a'}">${currentEmojis[suit]}</span> ${suit.charAt(0).toUpperCase() + suit.slice(1)}</h3>`;
+                html += `<div class="card-grid">`;
+                ranks.forEach(rank => {
+                    const isFace = ['A', 'J', 'Q', 'K', 'Joker'].includes(rank);
+                    const rankMap = { 'A': 'ace', 'J': 'jack', 'Q': 'queen', 'K': 'king', 'Joker': 'joker' };
+                    const key = `${suit}-${rankMap[rank]}`;
+                    
+                    html += `<div class="card-wrapper">`;
+                    html += createCard(suit, rank);
+                    html += `<div class="card-label">${rank}</div>`;
+                    if (isFace) html += getControls(key);
+                    html += `</div>`;
+                });
+                html += `</div></div>`;
+            } else if (currentTab === 'back') {
+                // Card back only view
+                html += `<div class="suit-section"><h3>🂠 Card Back Design</h3><div class="card-grid">`;
+                html += `<div class="card-wrapper">`;
+                html += createCardBack();
+                html += `<div class="card-label">Back</div>`;
+                html += getControls('back');
+                html += `</div></div></div>`;
+            }
+            
+            display.innerHTML = html;
+        }
+
+        function updateAllCards() {
+            renderAllCards();
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tabs .tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.tab === tab);
+            });
+            renderAllCards();
+        }
+
+        function toggleCollapsible(header) {
+            const collapsible = header.parentElement;
+            collapsible.classList.toggle('open');
+        }
+
+        function updateSuitEmoji(suit) {
+            const input = document.getElementById(`${suit}-emoji`);
+            const preview = document.getElementById(`${suit}-preview`);
+            const value = input.value || defaultEmojis[suit];
+            
+            currentEmojis[suit] = value;
+            preview.textContent = value;
+            renderAllCards();
+        }
+
+        function resetEmojis() {
+            suits.forEach(suit => {
+                currentEmojis[suit] = defaultEmojis[suit];
+                document.getElementById(`${suit}-emoji`).value = defaultEmojis[suit];
+                document.getElementById(`${suit}-preview`).textContent = defaultEmojis[suit];
+            });
+            renderAllCards();
+        }
+
+        async function handleImageUpload(key, input) {
+            const file = input.files[0];
+            if (file) {
+                // Show temporary preview with base64
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    cardImages[key] = e.target.result;
+                    renderAllCards();
+                };
+                reader.readAsDataURL(file);
+                
+                // Upload to ImgBB in background
+                showStatus(`Uploading ${key} to ImgBB...`, 'success');
+                try {
+                    const url = await uploadToImgBB(file);
+                    cardImages[key] = url;
+                    showStatus(`Image uploaded for ${key}`, 'success');
+                    renderAllCards();
+                } catch (error) {
+                    showStatus(`Upload failed for ${key}, using temporary preview`, 'error');
+                }
+            }
+        }
+
+        async function uploadToImgBB(file) {
+            // Free ImgBB API key
+            const API_KEY = '826c861ba73c2e3b6f6a37cb0a3d54d6';
+            
+            // Convert file to base64
+            const base64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    // Remove data:image/xxx;base64, prefix
+                    const base64String = reader.result.split(',')[1];
+                    resolve(base64String);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            const formData = new FormData();
+            formData.append('image', base64);
+            
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${API_KEY}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('ImgBB error:', errorData);
+                throw new Error('Upload failed: ' + (errorData.error?.message || 'Unknown error'));
+            }
+            
+            const data = await response.json();
+            if (data.success) {
+                return data.data.url;
+            } else {
+                throw new Error('Upload failed');
+            }
+        }
+
+        function loadImageFromUrl(key) {
+            const urlInput = document.getElementById(`${key}-url`);
+            const url = urlInput.value.trim();
+            
+            if (url) {
+                cardImages[key] = url;
+                showStatus(`Image URL set for ${key}`, 'success');
+                renderAllCards();
+            } else {
+                showStatus('Please enter a valid URL', 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusArea = document.getElementById('status-area');
+            statusArea.innerHTML = `<div class="status-message ${type}">${message}</div>`;
+            setTimeout(() => {
+                statusArea.innerHTML = '';
+            }, 3000);
+        }
+
+        function loadTheme() {
+            const themeSelect = document.getElementById('theme-select');
+            const themeKey = themeSelect.value;
+            
+            if (themeKey === 'custom') {
+                Object.keys(cardImages).forEach(key => {
+                    cardImages[key] = null;
+                });
+                showStatus('Custom deck ready - add your own images', 'success');
+            } else {
+                const theme = themes[themeKey];
+                if (theme) {
+                    cardImages.back = theme.back;
+                    Object.keys(theme.cards).forEach(key => {
+                        cardImages[key] = theme.cards[key];
+                    });
+                    
+                    if (theme.suits) {
+                        Object.keys(theme.suits).forEach(suit => {
+                            currentEmojis[suit] = theme.suits[suit];
+                            document.getElementById(`${suit}-emoji`).value = theme.suits[suit];
+                            document.getElementById(`${suit}-preview`).textContent = theme.suits[suit];
+                        });
+                    }
+                    
+                    if (theme.borderStyle) {
+                        document.getElementById('border-style').value = theme.borderStyle;
+                    }
+                    
+                    showStatus(`Loaded theme: ${theme.name}`, 'success');
+                }
+            }
+            
+            renderAllCards();
+        }
+
+        async function loadThemesFromJSON() {
+            try {
+                const response = await fetch('https://martinlh77.github.io/AI-apps/DefaultFaceCards.json');
+                if (!response.ok) throw new Error('Failed to load themes');
+                
+                const loadedThemes = await response.json();
+                themes = loadedThemes;
+                
+                const themeSelect = document.getElementById('theme-select');
+                themeSelect.innerHTML = '<option value="custom">Custom Deck</option>';
+                
+                Object.keys(themes).forEach(key => {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = themes[key].name;
+                    themeSelect.appendChild(option);
+                });
+                
+                showStatus('Themes loaded successfully', 'success');
+                renderAllCards();
+            } catch (error) {
+                console.error('Error loading themes:', error);
+                showStatus('Failed to load themes from server', 'error');
+                renderAllCards();
+            }
+        }
+
+        // ============================================
+        // Deck Management Functions
+        // ============================================
+        
+        function generateDeckId() {
+            return 'deck_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function createDeckDataStructure(name, metadata = {}) {
+            return {
+                deckId: generateDeckId(),
+                name: name || 'Untitled Deck',
+                created: new Date().toISOString(),
+                suits: { ...currentEmojis },
+                cardImages: { ...cardImages },
+                borderStyle: document.getElementById('border-style').value,
+                metadata: metadata
+            };
+        }
+
+        async function saveCurrentDeck() {
+            const deckName = document.getElementById('deck-name-input').value.trim() || 'Untitled Deck';
+            
+            // Check for base64 images
+            const imagesToUpload = {};
+            
+            for (const [key, value] of Object.entries(cardImages)) {
+                if (value && value.startsWith('data:')) {
+                    imagesToUpload[key] = value;
+                }
+            }
+            
+            if (Object.keys(imagesToUpload).length > 0) {
+                const imageCount = Object.keys(imagesToUpload).length;
+                const userChoice = confirm(
+                    `⚠️ This deck contains ${imageCount} uploaded image(s).\n\n` +
+                    `WARNING: Uploaded images cannot be saved to browser history.\n` +
+                    `They need to be hosted online first.\n\n` +
+                    `OPTIONS:\n` +
+                    `✅ Click OK to download this deck as JSON file (recommended)\n` +
+                    `❌ Click Cancel to go back and use URL links instead\n\n` +
+                    `To use uploaded images:\n` +
+                    `1. Download the deck JSON\n` +
+                    `2. Upload images to imgur.com, imgbb.com, or postimages.org\n` +
+                    `3. Use the URL links in the card designer\n` +
+                    `4. Then save to history`
+                );
+                
+                if (userChoice) {
+                    // User chose to download
+                    await downloadDeckJSON();
+                    showStatus('Deck downloaded as JSON. Upload images online and use URL links to save to history.', 'success');
+                } else {
+                    showStatus('Save cancelled. Please use URL links for images instead of uploads.', 'error');
+                }
+                return;
+            }
+            
+            // No base64 images, safe to save
+            const deckData = createDeckDataStructure(deckName);
+            
+            try {
+                const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+                savedDecks.push(deckData);
+                localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
+                
+                showStatus(`Deck "${deckName}" saved to history!`, 'success');
+                document.getElementById('deck-name-input').value = '';
+                renderAllCards();
+            } catch (error) {
+                if (error.name === 'QuotaExceededError') {
+                    showStatus('Storage full! Download deck as JSON instead.', 'error');
+                } else {
+                    showStatus('Failed to save deck: ' + error.message, 'error');
+                }
+            }
+        }
+
+        async function downloadDeckJSON() {
+            const deckName = document.getElementById('deck-name-input').value.trim() || 'Untitled Deck';
+            
+            // Check for base64 images
+            const hasBase64 = Object.values(cardImages).some(v => v && v.startsWith('data:'));
+            
+            if (hasBase64) {
+                const proceed = confirm(
+                    `⚠️ This deck contains uploaded images (base64 data).\n\n` +
+                    `The JSON file will be VERY LARGE.\n\n` +
+                    `RECOMMENDED: Upload images to a hosting service first:\n` +
+                    `• imgur.com (free, no account needed)\n` +
+                    `• imgbb.com (free)\n` +
+                    `• postimages.org (free)\n\n` +
+                    `Then paste the image URLs in the card designer.\n\n` +
+                    `Continue with large file download?`
+                );
+                
+                if (!proceed) {
+                    showStatus('Download cancelled.', 'error');
+                    return;
+                }
+            }
+            
+            const deckData = createDeckDataStructure(deckName);
+            
+            const blob = new Blob([JSON.stringify(deckData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${deckName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showStatus(`Deck "${deckName}" downloaded as JSON!`, 'success');
+        }
+
+        function importDeckJSON(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const deckData = JSON.parse(e.target.result);
+                        
+                        // Store as recent upload
+                        localStorage.setItem('recentUpload', JSON.stringify(deckData));
+                        
+                        loadDeckData(deckData);
+                        showStatus(`Deck "${deckData.name}" imported successfully!`, 'success');
+                        
+                        // Show load recent button with thumbnail
+                        const backImage = deckData.cardImages && deckData.cardImages.back ? 
+                            `<img src="${deckData.cardImages.back}" style="width:30px;height:42px;object-fit:cover;border-radius:3px;vertical-align:middle;margin-right:8px;" onerror="this.style.display='none'">` :
+                            '🃏 ';
+                        
+                        document.getElementById('load-recent-btn').style.display = 'block';
+                        document.getElementById('recent-upload-name').innerHTML = `${backImage}Recent: ${deckData.name}`;
+                    } catch (error) {
+                        showStatus('Failed to import deck: Invalid JSON format', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function loadRecentUpload() {
+            const recentUpload = localStorage.getItem('recentUpload');
+            if (recentUpload) {
+                try {
+                    const deckData = JSON.parse(recentUpload);
+                    loadDeckData(deckData);
+                    showStatus(`Loaded recent upload: ${deckData.name}`, 'success');
+                } catch (error) {
+                    showStatus('Failed to load recent upload', 'error');
+                }
+            }
+        }
+
+        function loadDeckData(deckData) {
+            if (deckData.suits) {
+                Object.keys(deckData.suits).forEach(suit => {
+                    currentEmojis[suit] = deckData.suits[suit];
+                    document.getElementById(`${suit}-emoji`).value = deckData.suits[suit];
+                    document.getElementById(`${suit}-preview`).textContent = deckData.suits[suit];
+                });
+            }
+            
+            if (deckData.cardImages) {
+                Object.keys(deckData.cardImages).forEach(key => {
+                    cardImages[key] = deckData.cardImages[key];
+                });
+            }
+            
+            if (deckData.borderStyle) {
+                document.getElementById('border-style').value = deckData.borderStyle;
+            }
+            
+            renderAllCards();
+        }
+
+        function loadDeckList() {
+            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+            const container = document.getElementById('deck-list-container');
+            
+            if (savedDecks.length === 0) {
+                container.innerHTML = '<p style="color: #888; text-align: center; padding: 40px;">No saved decks yet. Create and save a deck from the Designer or AI Generator tabs.</p>';
+                return;
+            }
+            
+            container.innerHTML = savedDecks.map((deck, index) => {
+                const backImage = deck.cardImages && deck.cardImages.back ? 
+                    `<img src="${deck.cardImages.back}" alt="Deck back" onerror="this.parentElement.innerHTML='<div class=\\'placeholder-thumb\\'>🃏</div>'">` :
+                    `<div class="placeholder-thumb">🃏</div>`;
+                
+                return `
+                <div class="deck-item">
+                    <div class="deck-thumbnail">
+                        ${backImage}
+                    </div>
+                    <div class="deck-info">
+                        <div class="deck-name" id="deck-name-${index}" onclick="editDeckName(${index})">${deck.name}</div>
+                        <div class="deck-meta">Created: ${new Date(deck.created).toLocaleString()}</div>
+                        ${deck.metadata && deck.metadata.aiGenerated ? '<div class="deck-meta" style="color: var(--accent);">🤖 AI Generated</div>' : ''}
+                    </div>
+                    <div class="deck-actions">
+                        <button class="btn-small btn-load-deck" onclick="loadSavedDeck(${index})">Load</button>
+                        <button class="btn-small btn-download" onclick="downloadSavedDeck(${index})">Download</button>
+                        <button class="btn-small btn-delete" onclick="deleteSavedDeck(${index})">Delete</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function editDeckName(index) {
+            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+            const deck = savedDecks[index];
+            const nameElement = document.getElementById(`deck-name-${index}`);
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = deck.name;
+            input.className = 'deck-name-input';
+            
+            input.onblur = function() {
+                const newName = input.value.trim() || deck.name;
+                savedDecks[index].name = newName;
+                localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
+                loadDeckList();
+            };
+            
+            input.onkeydown = function(e) {
+                if (e.key === 'Enter') {
+                    input.blur();
+                } else if (e.key === 'Escape') {
+                    loadDeckList();
+                }
+            };
+            
+            nameElement.replaceWith(input);
+            input.focus();
+            input.select();
+        }
+
+        function loadSavedDeck(index) {
+            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+            const deck = savedDecks[index];
+            
+            if (deck) {
+                loadDeckData(deck);
+                switchMainTab('designer');
+                showStatus(`Loaded deck: ${deck.name}`, 'success');
+            }
+        }
+
+        function downloadSavedDeck(index) {
+            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+            const deck = savedDecks[index];
+            
+            if (deck) {
+                const blob = new Blob([JSON.stringify(deck, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${deck.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        function loadSavedDeckFromDesigner() {
+            const select = document.getElementById('saved-deck-select');
+            const index = select.value;
+            
+            if (index === '') {
+                showStatus('Please select a deck to load', 'error');
+                return;
+            }
+            
+            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+            const deck = savedDecks[index];
+            
+            if (deck) {
+                loadDeckData(deck);
+                showStatus(`Loaded deck: ${deck.name}`, 'success');
+            }
+        }
+
+        function deleteSavedDeck(index) {
+            if (confirm('Are you sure you want to delete this deck?')) {
+                const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+                savedDecks.splice(index, 1);
+                localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
+                loadDeckList();
+            }
+        }
+
+        // ============================================
+        // Generator Functions
+        // ============================================
+        
+        function initGenerator() {
+            const grid = document.getElementById('card-grid');
+            if (grid.children.length > 0) return; // Already initialized
+            
+            generatorCards.forEach((card, i) => {
+                const div = document.createElement('div');
+                div.className = 'card-ui';
+                div.id = `card-ui-${i}`;
+                div.innerHTML = `
+                    <h3>${card.name}</h3>
+                    <div class="img-box" id="box-${i}"><div style="color:#333">Ready</div></div>
+                    <textarea class="prompt-editor" id="prompt-${i}" placeholder="Prompt..."></textarea>
+                    <div class="tool-row">
+                        <button class="btn-tool btn-themed" onclick="themedSinglePrompt(${i})">New Themed Prompt</button>
+                        <button class="btn-tool" onclick="randomizeSinglePrompt(${i})">Random Prompt</button>
+                    </div>
+                    <div class="tool-row">
+                        <button class="btn-tool btn-enhance" onclick="enhancePrompt(${i})">Enhance</button>
+                        <button class="btn-tool btn-revert" id="revert-${i}" onclick="revertPrompt(${i})">Revert</button>
+                    </div>
+                    <a href="#" class="url-link" id="link-${i}" target="_blank">Pending...</a>
+                    <button class="btn-gen" style="background:#3498db; color:white; width:100%" onclick="generateSingle(${i})">Generate New Card Image</button>
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        function addStyle() {
+            const dropdown = document.getElementById('styleDropdown');
+            const input = document.getElementById('styleInput');
+            if (dropdown.value) {
+                const current = input.value.trim();
+                input.value = current ? `${current}, ${dropdown.value}` : dropdown.value;
+                dropdown.value = "";
+            }
+        }
+
+        function randomizeStyle() {
+            const input = document.getElementById('styleInput');
+            const availableStyles = allStyles.filter(s => !usedStyles.includes(s));
+            
+            if (availableStyles.length === 0) {
+                usedStyles = [];
+                availableStyles.push(...allStyles);
+            }
+            
+            const randomIndex = Math.floor(Math.random() * availableStyles.length);
+            const selectedStyle = availableStyles[randomIndex];
+            usedStyles.push(selectedStyle);
+            
+            const current = input.value.trim();
+            input.value = current ? `${current}, ${selectedStyle}` : selectedStyle;
+        }
+
+        function stopProcess() {
+            stopRequested = true;
+            document.getElementById('status').innerText = "Status: Stopping...";
+        }
+
+        async function fetchText(prompt) {
+            const DEFAULT_API_KEY = "pk_WlWG5xAS9Wm060JP";
+            const key = document.getElementById('apiKey').value || DEFAULT_API_KEY;
+            const seed = Math.floor(Math.random() * 100000000);
+            const url = `https://gen.pollinations.ai/text/${encodeURIComponent(prompt)}?model=nova-micro&seed=${seed}&key=${key}`;
+            const resp = await fetch(url);
+            const text = await resp.text();
+            await sleep(3500);
+            return text.trim();
+        }
+
+        async function randomizeTheme() {
+            const themeField = document.getElementById('themeField');
+            const themeInput = document.getElementById('deckTheme');
+            
+            themeInput.style.display = 'none';
+            
+            const spinnerDiv = document.createElement('div');
+            spinnerDiv.className = 'theme-spinner-container';
+            spinnerDiv.id = 'themeSpinner';
+            spinnerDiv.innerHTML = '<div class="spinner-small"></div><span style="margin-left:10px;color:#888;">Generating theme...</span>';
+            spinnerDiv.style.cssText = 'display:flex;align-items:center;background:#111;border:1px solid #444;padding:12px;border-radius:6px;height:19px;';
+            themeField.appendChild(spinnerDiv);
+            
+            const categories = [
+                "animals (any species, real or fictional)",
+                "food and cuisine",
+                "sports and athletics",
+                "professions and occupations",
+                "vehicles and transportation",
+                "plants and flowers",
+                "fantasy creatures",
+                "ocean and sea life",
+                "space and astronomy",
+                "mythological beings"
+            ];
+            const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+            
+            try {
+                const theme = await fetchText(`Pick ONE random specific thing from this category: ${randomCategory}. Be unexpected and creative. Return ONLY 1-4 words describing the theme, nothing else.`);
+                
+                const spinner = document.getElementById('themeSpinner');
+                if (spinner) spinner.remove();
+                themeInput.style.display = '';
+                themeInput.value = theme;
+            } catch (e) {
+                const spinner = document.getElementById('themeSpinner');
+                if (spinner) spinner.remove();
+                themeInput.style.display = '';
+            }
+        }
+
+        function getTypeDescription(type) {
+            switch(type) {
+                case 'pattern':
+                    return "a seamless decorative pattern suitable for the back of playing cards. Create an intricate, symmetrical design with repeating motifs";
+                case 'ace':
+                    return "a grand, symbolic representation of power and primacy. Feature a single magnificent central element that represents excellence, achievement, or supremacy. NOT a royal person, NOT a face card";
+                case 'jack':
+                    return "a young, clever character who is NOT royalty. This should be a cunning servant, skilled apprentice, resourceful messenger, daring adventurer, or witty commoner. NOT a prince, NOT a noble, NOT wearing a crown";
+                case 'queen':
+                    return "a regal, powerful queen or empress. A majestic female ruler with crown and royal attire, radiating authority and grace";
+                case 'king':
+                    return "a mighty, authoritative king or emperor. A powerful male ruler with crown and royal regalia, commanding presence and strength";
+                case 'jester':
+                    return "a whimsical trickster, fool, or jester character. A playful, mischievous entertainer with bells, motley costume, or comedic elements. NOT the Batman villain Joker unless specifically themed";
+                default:
+                    return "a visual element";
+            }
+        }
+
+        function getTypeInstruction(type) {
+            switch(type) {
+                case 'pattern':
+                    return "a symmetrical decorative pattern with repeating motifs";
+                case 'ace':
+                    return "a single iconic symbol or object (NOT a person, NOT royalty)";
+                case 'jack':
+                    return "a young clever character (servant, apprentice, or adventurer - NOT royalty, no crown)";
+                case 'queen':
+                    return "a regal queen or empress with crown and royal attire";
+                case 'king':
+                    return "a mighty king or emperor with crown and royal regalia";
+                case 'jester':
+                    return "a playful jester or fool with bells and motley costume";
+                default:
+                    return "a visual element";
+            }
+        }
+
+        async function themedSinglePrompt(i) {
+            const theme = document.getElementById('deckTheme').value;
+            const style = document.getElementById('styleInput').value || "Digital art";
+            if (!theme) return alert("Enter a theme first!");
+
+            const card = generatorCards[i];
+            const editor = document.getElementById(`prompt-${i}`);
+            const cardDiv = document.getElementById(`card-ui-${i}`);
+            
+            cardDiv.classList.add('active');
+            editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            editor.value = "";
+            editor.style.display = 'none';
+            
+            const writingDiv = document.createElement('div');
+            writingDiv.className = 'writing-indicator';
+            writingDiv.id = `writing-${i}`;
+            writingDiv.style.cssText = 'height:90px;background:#000;border:1px solid #333;border-radius:4px;padding:8px;margin-bottom:5px;display:flex;align-items:center;';
+            writingDiv.innerHTML = '<span>AI Writing...</span><div class="spinner-small"></div>';
+            editor.parentElement.insertBefore(writingDiv, editor);
+
+            const typeInstruction = getTypeInstruction(card.type);
+
+            const instruction = `Generate a SHORT visual description (1-2 sentences max) for: ${typeInstruction}
+
+Theme: ${theme}
+
+Rules:
+1. Output ONLY the short description, no intro phrases
+2. Do NOT mention "card", "playing card", "suit", or card terminology
+3. Keep it simple and focused on the visual subject
+
+Output:`;
+
+            const shortDescription = await fetchText(instruction);
+            
+            const existingWritingDiv = document.getElementById(`writing-${i}`);
+            if (existingWritingDiv) existingWritingDiv.remove();
+            editor.style.display = '';
+            editor.value = `In the style of ${style}, with the theme of "${theme}": ${shortDescription.trim()}`;
+            cardDiv.classList.remove('active');
+        }
+
+        async function randomizeSinglePrompt(i) {
+            const card = generatorCards[i];
+            const editor = document.getElementById(`prompt-${i}`);
+            const cardDiv = document.getElementById(`card-ui-${i}`);
+            
+            cardDiv.classList.add('active');
+            editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            editor.value = "";
+            editor.style.display = 'none';
+            
+            const writingDiv = document.createElement('div');
+            writingDiv.className = 'writing-indicator';
+            writingDiv.id = `writing-${i}`;
+            writingDiv.style.cssText = 'height:90px;background:#000;border:1px solid #333;border-radius:4px;padding:8px;margin-bottom:5px;display:flex;align-items:center;';
+            writingDiv.innerHTML = '<span>AI Writing...</span><div class="spinner-small"></div>';
+            editor.parentElement.insertBefore(writingDiv, editor);
+
+            const typeDescription = getTypeDescription(card.type);
+
+            const instruction = `Create a completely random and creative detailed visual illustration prompt for: ${typeDescription}.
+
+Choose your own random theme and random art style.
+
+CRITICAL RULES:
+1. Output ONLY the image prompt description
+2. Do NOT mention "card", "playing card", or card terminology
+3. Focus on: subject, environment, lighting, colors, textures, mood
+
+Output:`;
+
+            const result = await fetchText(instruction);
+            
+            const existingWritingDiv = document.getElementById(`writing-${i}`);
+            if (existingWritingDiv) existingWritingDiv.remove();
+            editor.style.display = '';
+            editor.value = result;
+            cardDiv.classList.remove('active');
+        }
+
+        async function enhancePrompt(i) {
+            const editor = document.getElementById(`prompt-${i}`);
+            const current = editor.value;
+            if (!current) return;
+            promptHistory[i] = current;
+            document.getElementById(`revert-${i}`).style.display = 'block';
+            
+            const cardDiv = document.getElementById(`card-ui-${i}`);
+            editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            editor.value = "";
+            editor.style.display = 'none';
+            
+            const writingDiv = document.createElement('div');
+            writingDiv.className = 'writing-indicator';
+            writingDiv.id = `writing-${i}`;
+            writingDiv.style.cssText = 'height:90px;background:#000;border:1px solid #333;border-radius:4px;padding:8px;margin-bottom:5px;display:flex;align-items:center;';
+            writingDiv.innerHTML = '<span>AI Writing...</span><div class="spinner-small"></div>';
+            editor.parentElement.insertBefore(writingDiv, editor);
+            
+            const res = await fetchText(`Enhance this art prompt with more vivid descriptive detail, cinematic lighting, and atmospheric elements. Output ONLY the enhanced prompt: ${current}`);
+            
+            const existingWritingDiv = document.getElementById(`writing-${i}`);
+            if (existingWritingDiv) existingWritingDiv.remove();
+            editor.style.display = '';
+            editor.value = res;
+        }
+
+        function revertPrompt(i) {
+            if (promptHistory[i]) {
+                document.getElementById(`prompt-${i}`).value = promptHistory[i];
+                document.getElementById(`revert-${i}`).style.display = 'none';
+            }
+        }
+
+        async function generateSingle(i) {
+            const DEFAULT_API_KEY = "pk_WlWG5xAS9Wm060JP";
+            const key = document.getElementById('apiKey').value || DEFAULT_API_KEY;
+            const promptValue = document.getElementById(`prompt-${i}`).value;
+            if (!promptValue) return;
+
+            const box = document.getElementById(`box-${i}`);
+            const cardDiv = document.getElementById(`card-ui-${i}`);
+            cardDiv.classList.add('active');
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            box.innerHTML = `<div class="spinner"></div>`;
+            await sleep(1500);
+
+            const seed = Math.floor(Math.random() * 100000000);
+            const neg = encodeURIComponent("playing card, card border, card frame, text, letters, numbers, suit icons, watermark, signature, logo");
+            const baseUrl = `https://gen.pollinations.ai/image/${encodeURIComponent(promptValue)}?model=zimage&seed=${seed}&private=true&nologo=true&enhance=true&safe=true&nofeed=true&width=1024&height=1024&quality=high&negative_prompt=${neg}`;
+            
+            const img = new Image();
+            img.onload = () => {
+                box.innerHTML = "";
+                box.appendChild(img);
+                document.getElementById(`link-${i}`).href = baseUrl;
+                document.getElementById(`link-${i}`).innerText = baseUrl;
+                cardDiv.classList.remove('active');
+            };
+            img.src = `${baseUrl}&key=${key}`;
+        }
+
+        async function randomizeAllPrompts() {
+            stopRequested = false;
+            for (let i = 0; i < generatorCards.length; i++) {
+                if (stopRequested) {
+                    document.getElementById('status').innerText = "Status: Stopped";
+                    return;
+                }
+                document.getElementById('status').innerText = `Writing Prompt ${i+1}/${generatorCards.length}`;
+                await themedSinglePrompt(i);
+            }
+            document.getElementById('status').innerText = "Prompts Ready.";
+        }
+
+        async function generateFullDeck() {
+            stopRequested = false;
+            for (let i = 0; i < generatorCards.length; i++) {
+                if (stopRequested) {
+                    document.getElementById('status').innerText = "Status: Stopped";
+                    return;
+                }
+                document.getElementById('status').innerText = `Drawing Image ${i+1}/${generatorCards.length}`;
+                await generateSingle(i);
+                if (i < generatorCards.length - 1) {
+                    await sleep(6000);
+                }
+            }
+            document.getElementById('status').innerText = "Deck Finished.";
+        }
+
+        function selectExportFormat(format) {
+            currentExportFormat = format;
+            document.querySelectorAll('.format-option').forEach(opt => {
+                opt.classList.toggle('selected', opt.dataset.format === format);
+            });
+        }
+
+        function convertGeneratorDataToDeckStructure() {
+            const theme = document.getElementById('deckTheme').value;
+            const artisticDirection = document.getElementById('styleInput').value;
+            const deckName = document.getElementById('gen-deck-name').value.trim() || 'Generated Deck';
+            
+            const deckData = {
+                deckId: generateDeckId(),
+                name: deckName,
+                created: new Date().toISOString(),
+                suits: { ...defaultEmojis },
+                cardImages: {},
+                borderStyle: "1",
+                metadata: {
+                    aiGenerated: true,
+                    theme: theme,
+                    artisticStyle: artisticDirection,
+                    prompts: {}
+                }
+            };
+            
+            // Map generator card IDs to designer format
+            const idMap = {
+                'back': 'back',
+                'h_ace': 'hearts-ace', 'h_jack': 'hearts-jack', 'h_queen': 'hearts-queen', 'h_king': 'hearts-king', 'h_joker': 'hearts-joker',
+                'd_ace': 'diamonds-ace', 'd_jack': 'diamonds-jack', 'd_queen': 'diamonds-queen', 'd_king': 'diamonds-king', 'd_joker': 'diamonds-joker',
+                'c_ace': 'clubs-ace', 'c_jack': 'clubs-jack', 'c_queen': 'clubs-queen', 'c_king': 'clubs-king', 'c_joker': 'clubs-joker',
+                's_ace': 'spades-ace', 's_jack': 'spades-jack', 's_queen': 'spades-queen', 's_king': 'spades-king', 's_joker': 'spades-joker'
+            };
+            
+            generatorCards.forEach((card, i) => {
+                const linkElement = document.getElementById(`link-${i}`);
+                const url = linkElement.href;
+                const prompt = document.getElementById(`prompt-${i}`).value;
+                
+                if (url && url !== '#' && url.includes('pollinations.ai')) {
+                    const designerKey = idMap[card.id];
+                    deckData.cardImages[designerKey] = url;
+                    deckData.metadata.prompts[designerKey] = prompt;
+                }
+            });
+            
+            return deckData;
+        }
+
+        function exportData() {
+            if (currentExportFormat === 'json') {
+                const deckData = convertGeneratorDataToDeckStructure();
+                document.getElementById('output').value = JSON.stringify(deckData, null, 2);
+            } else {
+                // Plain text format
+                const theme = document.getElementById('deckTheme').value;
+                const artisticDirection = document.getElementById('styleInput').value;
+                let out = '';
+                generatorCards.forEach((card, i) => {
+                    out += `-----------------------------------\nTHEME: ${theme}\nARTISTIC DIRECTION: ${artisticDirection}\nNAME: ${card.name}\nPROMPT: ${document.getElementById(`prompt-${i}`).value}\nLINK: ${document.getElementById(`link-${i}`).href}\n`;
+                });
+                out += `-----------------------------------`;
+                document.getElementById('output').value = out;
+            }
+        }
+
+        async function saveGeneratedDeck() {
+            const deckData = convertGeneratorDataToDeckStructure();
+            
+            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+            savedDecks.push(deckData);
+            localStorage.setItem('savedDecks', JSON.stringify(savedDecks));
+            
+            alert(`Deck "${deckData.name}" saved to history!`);
+        }
+
+        function loadGeneratedImagesToDesigner() {
+            const deckData = convertGeneratorDataToDeckStructure();
+            
+            // Load the deck data into the designer
+            loadDeckData(deckData);
+            
+            // Switch to designer tab
+            switchMainTab('designer');
+            
+            showStatus(`Generated deck loaded into designer!`, 'success');
+        }
+
+        // ============================================
+        // Game System Functions
+        // ============================================
+
+        // Initialize game module registry
+        window.GameModules = window.GameModules || {};
+
+        // Game Engine API
+        const GameEngine = {
+            currentGame: null,
+            selectedDeck: null,
+            
+            // Deck Management
+            shuffleDeck(cards) {
+                const shuffled = [...cards];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            },
+            
+createCardArray(deckData, includeJokers = false) {
+    const cards = [];
+    const suits = ['hearts', 'diamonds', 'clubs', 'spades'];
+    const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+    
+    suits.forEach(suit => {
+        ranks.forEach(rank => {
+            const rankMap = {
+                'A': 'ace', 'J': 'jack', 'Q': 'queen', 'K': 'king',
+                '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
+                '7': '7', '8': '8', '9': '9', '10': '10'
+            };
+            const imageKey = `${suit}-${rankMap[rank]}`;
+            
+            cards.push({
+            suit: suit,
+            rank: rank,
+            image: deckData.cardImages[imageKey] || null,
+            backImage: deckData.cardImages.back || null,
+            suitEmoji: deckData.suits[suit],
+            color: ['hearts', 'diamonds'].includes(suit) ? 'red' : 'black',
+            borderStyle: deckData.borderStyle || "1",
+            faceUp: false,
+            id: `${suit}-${rank}-${Math.random().toString(36).substr(2, 9)}`
+           });
+        });
+    });
+    
+    // Add jokers if requested
+    if (includeJokers) {
+        suits.forEach(suit => {
+            cards.push({
+                suit: suit,
+                rank: 'Joker',
+                image: deckData.cardImages[`${suit}-joker`] || null,
+                backImage: deckData.cardImages.back || null,
+                suitEmoji: deckData.suits[suit],
+                color: ['hearts', 'diamonds'].includes(suit) ? 'red' : 'black',
+                faceUp: false,
+                id: `${suit}-Joker-${Math.random().toString(36).substr(2, 9)}`
+            });
+        });
+    }
+    
+    return cards;
+},
+            
+            // Animation System
+            animateCardMove(cardElement, fromPos, toPos, duration = 300) {
+                return new Promise(resolve => {
+                    cardElement.style.transition = `all ${duration}ms ease-out`;
+                    cardElement.style.transform = `translate(${toPos.x - fromPos.x}px, ${toPos.y - fromPos.y}px)`;
+                    setTimeout(() => {
+                        cardElement.style.transition = '';
+                        cardElement.style.transform = '';
+                        resolve();
+                    }, duration);
+                });
+            },
+            
+            animateCardFlip(cardElement, duration = 200) {
+                return new Promise(resolve => {
+                    cardElement.classList.add('card-flipping');
+                    setTimeout(() => {
+                        cardElement.classList.remove('card-flipping');
+                        resolve();
+                    }, duration * 2);
+                });
+            },
+            
+            celebrateWin() {
+                const gameBoard = document.getElementById('game-board');
+                const cards = gameBoard.querySelectorAll('.game-card-element');
+                
+                cards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.classList.add('celebrating');
+                    }, index * 50);
+                });
+                
+                setTimeout(() => {
+                    alert('🎉 Congratulations! You won! 🎉');
+                }, cards.length * 50 + 1000);
+            },
+            
+            // Rendering
+            renderGameState(state) {
+                // This will be implemented by individual games
+                console.log('Game state updated:', state);
+            },
+            
+renderCard(cardData, faceUp = true) {
+    const cardDiv = document.createElement('div');
+    cardDiv.className = `game-card-element ${cardData.color} ${faceUp ? 'face-up' : 'face-down'}`;
+    cardDiv.dataset.cardId = cardData.id;
+    
+    // Force full opacity at element creation
+    cardDiv.style.opacity = '1';
+    
+    if (faceUp) {
+        // Use the FULL designer card rendering
+        cardDiv.innerHTML = this.createFullCardHTML(cardData);
+        cardDiv.style.background = '#fff';
+    } else {
+        // Card back
+        if (cardData.backImage) {
+            cardDiv.innerHTML = `<img src="${cardData.backImage}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" alt="Card back">`;
+        } else {
+            cardDiv.style.background = 'linear-gradient(135deg, #1a1a2e, #16213e)';
+        }
+    }
+    
+    return cardDiv;
+},
+
+createFullCardHTML(cardData) {
+    const borderStyle = cardData.borderStyle || "1";
+    const isFaceCard = ['A', 'J', 'Q', 'K', 'Joker'].includes(cardData.rank);
+    const rankDisplay = cardData.rank === 'Joker' ? '🃏' : cardData.rank;
+    
+    // Wrap everything in a playing-card div to inherit designer styles
+    let html = `<div class="playing-card ${cardData.color}" style="width:100%;height:100%;position:relative;">`;
+    
+    html += `
+        <div class="corner-index top-left">
+            <span class="rank">${rankDisplay}</span>
+            <span class="mini-pip">${cardData.suitEmoji}</span>
+        </div>
+        <div class="corner-index bottom-right">
+            <span class="rank">${rankDisplay}</span>
+            <span class="mini-pip">${cardData.suitEmoji}</span>
+        </div>
+        <div class="card-border border-style-${borderStyle}"></div>
+    `;
+    
+    if (isFaceCard) {
+        html += `<div class="face-card-window">`;
+        if (cardData.image) {
+            html += `<img src="${cardData.image}" alt="${cardData.rank} of ${cardData.suit}" onerror="this.parentElement.innerHTML='<div class=\\'placeholder\\'>Image failed to load</div>'">`;
+        } else {
+            html += `<div class="placeholder">No image</div>`;
+        }
+        html += `</div>`;
+    } else {
+        // Number card - render pips
+        const layout = this.getPipLayout(cardData.rank);
+        if (layout) {
+            html += `<div class="pip-area">`;
+            layout.forEach(pip => {
+                const classes = ['pip'];
+                if (pip.large) classes.push('large');
+                if (pip.inverted) classes.push('inverted');
+                
+                const style = `position: absolute; left: ${pip.x * 100}%; top: ${pip.y * 100}%; transform: translate(-50%, -50%)${pip.inverted ? ' rotate(180deg)' : ''}`;
+                html += `<span class="${classes.join(' ')}" style="${style}">${cardData.suitEmoji}</span>`;
+            });
+            html += `</div>`;
+        }
+    }
+    
+    html += `</div>`; // Close playing-card wrapper
+    
+    return html;
+},
+
+getPipLayout(rank) {
+    const pipLayouts = {
+        'A': [{ x: 0.5, y: 0.5, large: true }],
+        '2': [{ x: 0.5, y: 0.15 }, { x: 0.5, y: 0.85, inverted: true }],
+        '3': [{ x: 0.5, y: 0.15 }, { x: 0.5, y: 0.5 }, { x: 0.5, y: 0.85, inverted: true }],
+        '4': [{ x: 0.25, y: 0.15 }, { x: 0.75, y: 0.15 }, { x: 0.25, y: 0.85, inverted: true }, { x: 0.75, y: 0.85, inverted: true }],
+        '5': [{ x: 0.25, y: 0.15 }, { x: 0.75, y: 0.15 }, { x: 0.5, y: 0.5 }, { x: 0.25, y: 0.85, inverted: true }, { x: 0.75, y: 0.85, inverted: true }],
+        '6': [{ x: 0.25, y: 0.15 }, { x: 0.75, y: 0.15 }, { x: 0.25, y: 0.5 }, { x: 0.75, y: 0.5 }, { x: 0.25, y: 0.85, inverted: true }, { x: 0.75, y: 0.85, inverted: true }],
+        '7': [{ x: 0.25, y: 0.15 }, { x: 0.75, y: 0.15 }, { x: 0.5, y: 0.325 }, { x: 0.25, y: 0.5 }, { x: 0.75, y: 0.5 }, { x: 0.25, y: 0.85, inverted: true }, { x: 0.75, y: 0.85, inverted: true }],
+        '8': [{ x: 0.25, y: 0.12 }, { x: 0.75, y: 0.12 }, { x: 0.25, y: 0.37 }, { x: 0.75, y: 0.37 }, { x: 0.25, y: 0.63, inverted: true }, { x: 0.75, y: 0.63, inverted: true }, { x: 0.25, y: 0.88, inverted: true }, { x: 0.75, y: 0.88, inverted: true }],
+        '9': [{ x: 0.25, y: 0.12 }, { x: 0.75, y: 0.12 }, { x: 0.25, y: 0.34 }, { x: 0.75, y: 0.34 }, { x: 0.5, y: 0.5 }, { x: 0.25, y: 0.66, inverted: true }, { x: 0.75, y: 0.66, inverted: true }, { x: 0.25, y: 0.88, inverted: true }, { x: 0.75, y: 0.88, inverted: true }],
+        '10': [{ x: 0.25, y: 0.1 }, { x: 0.75, y: 0.1 }, { x: 0.5, y: 0.25 }, { x: 0.25, y: 0.4 }, { x: 0.75, y: 0.4 }, { x: 0.25, y: 0.6, inverted: true }, { x: 0.75, y: 0.6, inverted: true }, { x: 0.5, y: 0.75, inverted: true }, { x: 0.25, y: 0.9, inverted: true }, { x: 0.75, y: 0.9, inverted: true }]
+    };
+    return pipLayouts[rank];
+},
+            
+            clearGameBoard() {
+                const board = document.getElementById('game-board');
+                board.innerHTML = '';
+            }
+        };
+
+        // Load games manifest
+        // Load games manifest
+        async function loadGamesManifest() {
+            try {
+                const response = await fetch('https://martinlh77.github.io/AI-apps/cardgames/manifest.json');
+                if (!response.ok) throw new Error('Failed to load games manifest');
+                
+                const manifest = await response.json();
+                availableGames = manifest.games || [];
+                
+                // Populate category filter from manifest
+                populateCategoryFilter(manifest.categories || []);
+                
+                renderGameList();
+                return manifest;
+            } catch (error) {
+                console.error('Error loading games:', error);
+                document.getElementById('game-list').innerHTML = `
+                    <div style="padding: 20px; color: #ff6b6b; text-align: center;">
+                        <p>❌ Failed to load games</p>
+                        <p style="font-size: 0.8rem; margin-top: 10px;">Make sure the games folder is set up on GitHub</p>
+                        <p style="font-size: 0.7rem; margin-top: 5px; color: #888;">Expected: https://martinlh77.github.io/AI-apps/cardgames/manifest.json</p>
+                    </div>
+                `;
+            }
+        }
+
+        function populateCategoryFilter(categories) {
+            const categoryFilter = document.getElementById('game-category-filter');
+            if (!categoryFilter) return;
+            
+            categoryFilter.innerHTML = '<option value="all">All Games</option>';
+            
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.textContent = `${cat.icon} ${cat.name}`;
+                categoryFilter.appendChild(option);
+            });
+        }
+
+function renderGameList() {
+    const gameList = document.getElementById('game-list');
+    
+    if (availableGames.length === 0) {
+        gameList.innerHTML = '<p style="color: #888; padding: 20px; text-align: center;">No games available yet. Create games in the cardgames folder.</p>';
+        return;
+    }
+    
+    gameList.innerHTML = availableGames.map((game, index) => `
+        <div class="game-card ${selectedGame?.id === game.id ? 'selected' : ''}" 
+             onclick="selectGame('${game.id}')"
+             data-category="${game.id.split('-')[0]}">
+            <div class="game-card-thumb">
+                <img src="https://martinlh77.github.io/AI-apps/${game.thumbnail}" 
+                     alt="${game.id}" 
+                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>'">
+            </div>
+            <div class="game-card-title">${game.id}</div>
+            <div class="game-card-meta">Loading info...</div>
+        </div>
+    `).join('');
+    
+    // Load game configs to get names
+    availableGames.forEach(async (game, index) => {
+        try {
+            const config = await loadGameConfig(game.id);
+            const cardElements = gameList.querySelectorAll('.game-card');
+            if (cardElements[index]) {
+                cardElements[index].querySelector('.game-card-title').textContent = config.metadata.name;
+                cardElements[index].querySelector('.game-card-meta').textContent = 
+                    `${config.requirements.playerCount.min}${config.requirements.playerCount.max > 1 ? '-' + config.requirements.playerCount.max : ''} player • ${config.metadata.difficulty}`;
+            }
+        } catch (error) {
+            console.error(`Failed to load config for ${game.id}`);
+        }
+    });
+}
+
+        async function selectGame(gameId) {
+            const game = availableGames.find(g => g.id === gameId);
+            if (!game) return;
+            
+            selectedGame = game;
+            renderGameList();
+            
+            try {
+                const config = await loadGameConfig(gameId);
+                selectedGameConfig = config;
+                showGameInstructions(config);
+            } catch (error) {
+                alert('Failed to load game: ' + error.message);
+            }
+        }
+
+        async function loadGameConfig(gameId) {
+            const game = availableGames.find(g => g.id === gameId);
+            if (!game) throw new Error('Game not found');
+            
+            const response = await fetch(`https://martinlh77.github.io/AI-apps/${game.configPath}`);
+            if (!response.ok) throw new Error('Failed to load game config');
+            
+            return await response.json();
+        }
+
+        function showGameInstructions(config) {
+            document.getElementById('no-game-selected').style.display = 'none';
+            document.getElementById('game-instructions').style.display = 'block';
+            document.getElementById('game-play-area').style.display = 'none';
+            
+            // Populate header
+            document.getElementById('game-title').textContent = config.metadata.name;
+            document.getElementById('game-players').textContent = 
+                `👥 ${config.requirements.playerCount.min}${config.requirements.playerCount.max > 1 ? '-' + config.requirements.playerCount.max : ''} player(s)`;
+            document.getElementById('game-time').textContent = `⏱️ ${config.metadata.estimatedPlayTime}`;
+            document.getElementById('game-difficulty').textContent = `📊 ${config.metadata.difficulty}`;
+            
+            // Show overview by default
+            switchInstructionTab('overview');
+            
+            // Populate deck selector
+            renderDeckSelector(config);
+        }
+
+        function switchInstructionTab(tab) {
+            const config = selectedGameConfig;
+            if (!config) return;
+            
+            document.querySelectorAll('.ins-tab').forEach(t => {
+                t.classList.toggle('active', t.textContent.toLowerCase().includes(tab));
+            });
+            
+            const content = document.getElementById('instructions-content');
+            
+            if (tab === 'overview') {
+                content.innerHTML = `
+                    <h3>Overview</h3>
+                    <p>${config.instructions.overview}</p>
+                    
+                    <h3>Setup</h3>
+                    <ul>${config.instructions.setup.map(s => `<li>${s}</li>`).join('')}</ul>
+                    
+                    <h3>Winning</h3>
+                    <p>${config.instructions.winning}</p>
+                `;
+            } else if (tab === 'rules') {
+                content.innerHTML = `
+                    <h3>How to Play</h3>
+                    <ul>${config.instructions.gameplay.map(g => `<li>${g}</li>`).join('')}</ul>
+                `;
+            } else if (tab === 'examples') {
+                content.innerHTML = `<h3>Examples</h3>`;
+                
+                if (config.instructions.examples && config.instructions.examples.length > 0) {
+                    config.instructions.examples.forEach(example => {
+                        content.innerHTML += `
+                            <div class="example-card-demo">
+                                <div>
+                                    <strong>${example.title}</strong><br>
+                                    <span style="color: #aaa; font-size: 0.9rem;">${example.description}</span>
+                                </div>
+                                <div style="display: flex; gap: 10px; margin-left: 20px;">
+                                    ${example.cards.map(cardKey => renderExampleCard(cardKey)).join('')}
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    content.innerHTML += '<p style="color: #888;">No examples available for this game.</p>';
+                }
+            }
+        }
+
+        function renderExampleCard(cardKey) {
+            // Use default deck for examples
+            const [suit, rank] = cardKey.split('-');
+            const emoji = defaultEmojis[suit];
+            const color = suitColors[suit];
+            const rankDisplay = rank === 'ace' ? 'A' : rank === 'jack' ? 'J' : rank === 'queen' ? 'Q' : rank === 'king' ? 'K' : rank;
+            
+            return `
+                <div class="playing-card ${color}" style="width: 80px; height: 112px;">
+                    <div class="corner-index top-left">
+                        <span class="rank">${rankDisplay.toUpperCase()}</span>
+                        <span class="mini-pip">${emoji}</span>
+                    </div>
+                    <div class="corner-index bottom-right">
+                        <span class="rank">${rankDisplay.toUpperCase()}</span>
+                        <span class="mini-pip">${emoji}</span>
+                    </div>
+                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem;">
+                        ${emoji}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDeckSelector(config) {
+            const selector = document.getElementById('deck-selector');
+            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+            
+            if (savedDecks.length === 0) {
+                selector.innerHTML = `
+                    <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #888;">
+                        <p>No saved decks found.</p>
+                        <p style="margin-top: 10px;">Create a deck in the Designer or AI Generator tab first.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            selector.innerHTML = savedDecks.map((deck, index) => {
+                const backImage = deck.cardImages?.back || null;
+                return `
+                    <div class="deck-option ${selectedDeckForGame === index ? 'selected' : ''}" 
+                         onclick="selectDeckForGame(${index})">
+                        <div class="deck-option-thumb">
+                            ${backImage ? 
+                                `<img src="${backImage}" alt="${deck.name}" onerror="this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;color:#666;\\'>🃏</div>'">` :
+                                `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;">🃏</div>`
+                            }
+                        </div>
+                        <div style="margin-top: 8px; font-size: 0.85rem; color: #ccc;">
+                            ${deck.name}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectDeckForGame(index) {
+            selectedDeckForGame = index;
+            
+            // Re-render selector to show selection
+            document.querySelectorAll('.deck-option').forEach((opt, i) => {
+                opt.classList.toggle('selected', i === index);
+            });
+        }
+
+        async function startGame() {
+            if (!selectedGame) {
+                alert('Please select a game first');
+                return;
+            }
+            
+            if (selectedDeckForGame === null) {
+                alert('Please select a deck to play with');
+                return;
+            }
+            
+            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+            const deckData = savedDecks[selectedDeckForGame];
+            
+            if (!deckData) {
+                alert('Selected deck not found');
+                return;
+            }
+            
+            try {
+                // Load game module
+                const game = availableGames.find(g => g.id === selectedGame.id);
+                await loadGameModule(`https://martinlh77.github.io/AI-apps/${game.modulePath}`);
+                
+                // Hide instructions, show play area
+                document.getElementById('game-instructions').style.display = 'none';
+                document.getElementById('game-play-area').style.display = 'block';
+                
+                // Initialize game
+                const GameClass = window.GameModules[selectedGame.id];
+                if (!GameClass) {
+                    throw new Error('Game module not loaded correctly');
+                }
+                
+                currentGameInstance = new GameClass(GameEngine, deckData);
+                currentGameInstance.setup();
+                
+                // Start timer
+                gameStartTime = Date.now();
+                startGameTimer();
+                
+            } catch (error) {
+                console.error('Error starting game:', error);
+                alert('Failed to start game: ' + error.message + '\n\nMake sure the game files are uploaded to GitHub.');
+            }
+        }
+
+        function loadGameModule(url) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = url;
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Failed to load game module from: ' + url));
+                document.head.appendChild(script);
+            });
+        }
+
+        function startGameTimer() {
+            if (gameTimer) clearInterval(gameTimer);
+            
+            gameTimer = setInterval(() => {
+                if (gameStartTime) {
+                    const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('game-time-elapsed').textContent = 
+                        `Time: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        function pauseGame() {
+            if (currentGameInstance && currentGameInstance.pause) {
+                currentGameInstance.pause();
+            }
+            if (gameTimer) {
+                clearInterval(gameTimer);
+                gameTimer = null;
+            }
+        }
+
+        function restartGame() {
+            if (currentGameInstance && confirm('Restart the current game?')) {
+                gameStartTime = Date.now();
+                startGameTimer();
+                currentGameInstance.setup();
+            }
+        }
+
+        function exitGame() {
+            if (confirm('Exit game and return to game selection?')) {
+                if (gameTimer) {
+                    clearInterval(gameTimer);
+                    gameTimer = null;
+                }
+                currentGameInstance = null;
+                gameStartTime = null;
+                document.getElementById('game-play-area').style.display = 'none';
+                document.getElementById('game-instructions').style.display = 'block';
+            }
+        }
+
+        function showGameRules() {
+            // Show instructions overlay or modal
+            if (selectedGameConfig) {
+                const rulesText = selectedGameConfig.instructions.gameplay.join('\n• ');
+                alert(`📖 Game Rules:\n\n• ${rulesText}`);
+            }
+        }
+
+function filterGames() {
+    const category = document.getElementById('game-category-filter').value;
+    const players = document.getElementById('game-players-filter').value;
+    
+    const gameCards = document.querySelectorAll('.game-card');
+    
+    gameCards.forEach(card => {
+        const cardCategory = card.dataset.category;
+        let showCard = true;
+        
+        // Filter by category
+        if (category !== 'all' && cardCategory !== category) {
+            showCard = false;
+        }
+        
+        // Show/hide the card
+        card.style.display = showCard ? 'block' : 'none';
+    });
+    
+    // Check if any games are visible
+    const visibleGames = Array.from(gameCards).filter(card => card.style.display !== 'none');
+    
+    if (visibleGames.length === 0) {
+        const gameList = document.getElementById('game-list');
+        const tempDiv = document.createElement('div');
+        tempDiv.style.cssText = 'padding: 20px; text-align: center; color: #888;';
+        tempDiv.textContent = 'No games match the selected filters.';
+        gameList.appendChild(tempDiv);
+    }
+}
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+
+        function toggleGameSidebar() {
+            const sidebar = document.getElementById('game-sidebar');
+            const overlay = document.getElementById('game-sidebar-overlay');
+            
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+        }
+    </script>
+</body>
+</html>
