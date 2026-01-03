@@ -27,13 +27,13 @@
       "addedDate": "2025-01-15"
     },
     {
-  "id": "multiplayer-go-fish-v1",
-  "configPath": "cardgames/multiplayer/go-fish.json",
-  "modulePath": "cardgames/multiplayer/go-fish.js",
-  "thumbnail": "cardgames/multiplayer/go-fish-thumb.png",
-  "featured": true,
-  "addedDate": "2025-01-15"
-}
+      "id": "multiplayer-go-fish-v1",
+      "configPath": "cardgames/multiplayer/go-fish.json",
+      "modulePath": "cardgames/multiplayer/go-fish.js",
+      "thumbnail": "cardgames/multiplayer/go-fish-thumb.png",
+      "featured": true,
+      "addedDate": "2025-01-15"
+    }
   ],
   "categories": [
     {
