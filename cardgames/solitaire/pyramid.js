@@ -22,6 +22,9 @@ class PyramidSolitaire {
       'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7,
       '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13
     };
+    
+    // ✅ ADD: Initialize resize handler
+    this.resizeHandler = null;
   }
   
   setup() {
@@ -54,6 +57,13 @@ class PyramidSolitaire {
     this.state.score = 0;
     this.state.gameWon = false;
     
+    // ✅ ADD: Add resize listener
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
+    this.resizeHandler = () => this.render();
+    window.addEventListener('resize', this.resizeHandler);
+    
     this.render();
     this.updateStats();
   }
@@ -82,31 +92,56 @@ class PyramidSolitaire {
     }
   }
   
-  scaleCardElement(cardElement, isMobile) {
-    // Apply consistent scaling to card content
-    if (isMobile) {
-      cardElement.style.fontSize = '0.65rem';
+  // ✅ IMPROVED: Complete mobile scaling following guide
+  scaleCardForMobile(cardElement) {
+    cardElement.style.fontSize = '0.7rem';
+    
+    const cardFront = cardElement.querySelector('.card-front');
+    const cardBack = cardElement.querySelector('.card-back');
+    
+    if (cardFront) {
+      cardFront.style.fontSize = '0.7rem';
       
-      const cardFront = cardElement.querySelector('.card-front');
-      const cardBack = cardElement.querySelector('.card-back');
+      // Scale rank display (corner numbers/letters)
+      const rankDisplays = cardFront.querySelectorAll('.card-rank');
+      rankDisplays.forEach(rank => {
+        rank.style.fontSize = '0.85rem';
+      });
       
-      if (cardFront) {
-        cardFront.style.fontSize = '0.65rem';
-        // Scale rank display
-        const rankDisplays = cardFront.querySelectorAll('.card-rank');
-        rankDisplays.forEach(rank => {
-          rank.style.fontSize = '0.85rem';
-        });
-        // Scale suit emoji
-        const suitCenter = cardFront.querySelector('.card-suit-center');
-        if (suitCenter) {
-          suitCenter.style.fontSize = '1.5rem';
+      // ✅ ADD: Scale mini suit icons in corners
+      const miniPips = cardFront.querySelectorAll('.mini-pip');
+      miniPips.forEach(pip => {
+        pip.style.fontSize = '0.7rem';
+      });
+      
+      // Scale center suit emoji
+      const suitCenter = cardFront.querySelector('.card-suit-center');
+      if (suitCenter) {
+        suitCenter.style.fontSize = '2rem'; // Standard from guide
+      }
+      
+      // ✅ ADD: Scale center pips (for numbered cards)
+      const pips = cardFront.querySelectorAll('.pip');
+      pips.forEach(pip => {
+        if (pip.classList.contains('large')) {
+          pip.style.fontSize = '2rem';
+        } else {
+          pip.style.fontSize = '0.98rem';
         }
-      }
+      });
       
-      if (cardBack) {
-        cardBack.style.fontSize = '0.65rem';
+      // ✅ ADD: Scale face card windows (J, Q, K)
+      const faceWindow = cardFront.querySelector('.face-card-window');
+      if (faceWindow) {
+        faceWindow.style.top = '20px';
+        faceWindow.style.bottom = '20px';
+        faceWindow.style.left = '15px';
+        faceWindow.style.right = '15px';
       }
+    }
+    
+    if (cardBack) {
+      cardBack.style.fontSize = '0.7rem';
     }
   }
   
@@ -156,8 +191,10 @@ class PyramidSolitaire {
         cardElement.style.position = 'relative';
         cardElement.style.transition = 'all 0.2s';
         
-        // Apply responsive scaling
-        this.scaleCardElement(cardElement, isMobile);
+        // ✅ CHANGED: Use improved scaling method
+        if (isMobile) {
+          this.scaleCardForMobile(cardElement);
+        }
         
         // Highlight if selected
         if (this.state.selectedLocation?.type === 'pyramid' &&
@@ -213,8 +250,10 @@ class PyramidSolitaire {
       stockCard.style.height = '100%';
       stockCard.onclick = () => this.drawFromStock();
       
-      // Apply responsive scaling
-      this.scaleCardElement(stockCard, isMobile);
+      // ✅ CHANGED: Use improved scaling method
+      if (isMobile) {
+        this.scaleCardForMobile(stockCard);
+      }
       
       stockDiv.appendChild(stockCard);
       
@@ -251,8 +290,10 @@ class PyramidSolitaire {
       wasteCard.style.position = 'relative';
       wasteCard.style.transition = 'all 0.2s';
       
-      // Apply responsive scaling
-      this.scaleCardElement(wasteCard, isMobile);
+      // ✅ CHANGED: Use improved scaling method
+      if (isMobile) {
+        this.scaleCardForMobile(wasteCard);
+      }
       
       if (this.state.selectedLocation?.type === 'waste') {
         wasteCard.style.border = '3px solid #00ffcc';
@@ -424,6 +465,14 @@ class PyramidSolitaire {
   
   pause() {
     // Pyramid doesn't need pause
+  }
+  
+  // ✅ ADD: Cleanup method
+  cleanup() {
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = null;
+    }
   }
 }
 
