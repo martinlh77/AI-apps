@@ -23,8 +23,21 @@ class PyramidSolitaire {
       '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13
     };
     
-    // ✅ ADD: Initialize resize handler
     this.resizeHandler = null;
+    
+    // ✅ ADD: Touch/zoom state for mobile
+    this.touchState = {
+      scale: 1,
+      minScale: 0.5,
+      maxScale: 2,
+      translateX: 0,
+      translateY: 0,
+      lastTouchDistance: 0,
+      lastTouchCenter: { x: 0, y: 0 },
+      isPanning: false,
+      startPanX: 0,
+      startPanY: 0
+    };
   }
   
   setup() {
@@ -57,7 +70,12 @@ class PyramidSolitaire {
     this.state.score = 0;
     this.state.gameWon = false;
     
-    // ✅ ADD: Add resize listener
+    // Reset zoom/pan state
+    this.touchState.scale = 1;
+    this.touchState.translateX = 0;
+    this.touchState.translateY = 0;
+    
+    // Add resize listener
     if (this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler);
     }
@@ -92,7 +110,6 @@ class PyramidSolitaire {
     }
   }
   
-  // ✅ IMPROVED: Complete mobile scaling following guide
   scaleCardForMobile(cardElement) {
     cardElement.style.fontSize = '0.7rem';
     
@@ -108,7 +125,7 @@ class PyramidSolitaire {
         rank.style.fontSize = '0.85rem';
       });
       
-      // ✅ ADD: Scale mini suit icons in corners
+      // Scale mini suit icons in corners
       const miniPips = cardFront.querySelectorAll('.mini-pip');
       miniPips.forEach(pip => {
         pip.style.fontSize = '0.7rem';
@@ -117,10 +134,10 @@ class PyramidSolitaire {
       // Scale center suit emoji
       const suitCenter = cardFront.querySelector('.card-suit-center');
       if (suitCenter) {
-        suitCenter.style.fontSize = '2rem'; // Standard from guide
+        suitCenter.style.fontSize = '2rem';
       }
       
-      // ✅ ADD: Scale center pips (for numbered cards)
+      // Scale center pips (for numbered cards)
       const pips = cardFront.querySelectorAll('.pip');
       pips.forEach(pip => {
         if (pip.classList.contains('large')) {
@@ -130,7 +147,7 @@ class PyramidSolitaire {
         }
       });
       
-      // ✅ ADD: Scale face card windows (J, Q, K)
+      // Scale face card windows (J, Q, K)
       const faceWindow = cardFront.querySelector('.face-card-window');
       if (faceWindow) {
         faceWindow.style.top = '20px';
@@ -142,6 +159,100 @@ class PyramidSolitaire {
     
     if (cardBack) {
       cardBack.style.fontSize = '0.7rem';
+    }
+  }
+  
+  // ✅ ADD: Setup touch event handlers for mobile zoom/pan
+  setupTouchHandlers(gameBoard, isMobile) {
+    if (!isMobile) return;
+    
+    // Remove existing listeners
+    gameBoard.ontouchstart = null;
+    gameBoard.ontouchmove = null;
+    gameBoard.ontouchend = null;
+    
+    gameBoard.ontouchstart = (e) => this.handleTouchStart(e, gameBoard);
+    gameBoard.ontouchmove = (e) => this.handleTouchMove(e, gameBoard);
+    gameBoard.ontouchend = (e) => this.handleTouchEnd(e);
+  }
+  
+  // ✅ ADD: Handle touch start
+  handleTouchStart(e, gameBoard) {
+    if (e.touches.length === 2) {
+      // Two fingers - prepare for pinch zoom
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      
+      this.touchState.lastTouchDistance = this.getTouchDistance(touch1, touch2);
+      this.touchState.lastTouchCenter = this.getTouchCenter(touch1, touch2);
+      this.touchState.isPanning = true;
+      this.touchState.startPanX = this.touchState.translateX;
+      this.touchState.startPanY = this.touchState.translateY;
+    }
+  }
+  
+  // ✅ ADD: Handle touch move
+  handleTouchMove(e, gameBoard) {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      
+      // Calculate pinch zoom
+      const currentDistance = this.getTouchDistance(touch1, touch2);
+      const scaleChange = currentDistance / this.touchState.lastTouchDistance;
+      
+      let newScale = this.touchState.scale * scaleChange;
+      newScale = Math.max(this.touchState.minScale, Math.min(this.touchState.maxScale, newScale));
+      
+      // Calculate pan
+      const currentCenter = this.getTouchCenter(touch1, touch2);
+      const deltaX = currentCenter.x - this.touchState.lastTouchCenter.x;
+      const deltaY = currentCenter.y - this.touchState.lastTouchCenter.y;
+      
+      this.touchState.scale = newScale;
+      this.touchState.translateX += deltaX;
+      this.touchState.translateY += deltaY;
+      
+      this.touchState.lastTouchDistance = currentDistance;
+      this.touchState.lastTouchCenter = currentCenter;
+      
+      // Apply transform
+      this.applyTransform(gameBoard);
+    }
+  }
+  
+  // ✅ ADD: Handle touch end
+  handleTouchEnd(e) {
+    if (e.touches.length < 2) {
+      this.touchState.isPanning = false;
+    }
+  }
+  
+  // ✅ ADD: Calculate distance between two touches
+  getTouchDistance(touch1, touch2) {
+    const dx = touch2.clientX - touch1.clientX;
+    const dy = touch2.clientY - touch1.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  
+  // ✅ ADD: Calculate center point between two touches
+  getTouchCenter(touch1, touch2) {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
+  }
+  
+  // ✅ ADD: Apply transform to game board
+  applyTransform(gameBoard) {
+    const pyramidContainer = gameBoard.querySelector('.pyramid-container');
+    if (pyramidContainer) {
+      pyramidContainer.style.transform = 
+        `translate(${this.touchState.translateX}px, ${this.touchState.translateY}px) scale(${this.touchState.scale})`;
+      pyramidContainer.style.transformOrigin = 'center center';
+      pyramidContainer.style.transition = 'none';
     }
   }
   
@@ -157,16 +268,60 @@ class PyramidSolitaire {
     
     // Determine if we're on mobile
     const isMobile = window.innerWidth < 700;
-    const cardWidth = isMobile ? '70px' : '100px';
-    const cardHeight = isMobile ? '98px' : '140px';
-    const cardGap = isMobile ? '5px' : '10px';
+    
+    // ✅ ADD: Enable overflow and touch handling on mobile
+    if (isMobile) {
+      gameBoard.style.overflow = 'hidden';
+      gameBoard.style.touchAction = 'none'; // Prevent default touch behaviors
+      gameBoard.style.position = 'relative';
+      
+      // Add helper text
+      const helperText = document.createElement('div');
+      helperText.textContent = '🤏 Pinch to zoom • ✌️ Two fingers to pan';
+      helperText.style.position = 'absolute';
+      helperText.style.top = '5px';
+      helperText.style.left = '50%';
+      helperText.style.transform = 'translateX(-50%)';
+      helperText.style.fontSize = '0.75rem';
+      helperText.style.color = '#00ffcc';
+      helperText.style.background = 'rgba(0,0,0,0.8)';
+      helperText.style.padding = '5px 12px';
+      helperText.style.borderRadius = '15px';
+      helperText.style.zIndex = '1000';
+      helperText.style.pointerEvents = 'none';
+      helperText.style.whiteSpace = 'nowrap';
+      gameBoard.appendChild(helperText);
+    }
+    
+    const cardWidth = isMobile ? '60px' : '100px';
+    const cardHeight = isMobile ? '84px' : '140px';
+    const cardGap = isMobile ? '4px' : '10px';
+    
+    // ✅ CHANGED: Wrap pyramid in container for transform
+    const pyramidWrapper = document.createElement('div');
+    pyramidWrapper.className = 'pyramid-wrapper';
+    pyramidWrapper.style.width = '100%';
+    pyramidWrapper.style.display = 'flex';
+    pyramidWrapper.style.justifyContent = 'center';
+    pyramidWrapper.style.alignItems = 'center';
+    pyramidWrapper.style.flex = '1';
+    pyramidWrapper.style.overflow = isMobile ? 'visible' : 'visible';
     
     // Render pyramid
     const pyramidContainer = document.createElement('div');
+    pyramidContainer.className = 'pyramid-container';
     pyramidContainer.style.display = 'flex';
     pyramidContainer.style.flexDirection = 'column';
     pyramidContainer.style.alignItems = 'center';
     pyramidContainer.style.gap = cardGap;
+    
+    // ✅ ADD: Apply current transform state if on mobile
+    if (isMobile) {
+      pyramidContainer.style.transform = 
+        `translate(${this.touchState.translateX}px, ${this.touchState.translateY}px) scale(${this.touchState.scale})`;
+      pyramidContainer.style.transformOrigin = 'center center';
+      pyramidContainer.style.willChange = 'transform';
+    }
     
     this.state.pyramid.forEach((row, rowIndex) => {
       const rowDiv = document.createElement('div');
@@ -191,7 +346,6 @@ class PyramidSolitaire {
         cardElement.style.position = 'relative';
         cardElement.style.transition = 'all 0.2s';
         
-        // ✅ CHANGED: Use improved scaling method
         if (isMobile) {
           this.scaleCardForMobile(cardElement);
         }
@@ -208,19 +362,21 @@ class PyramidSolitaire {
         if (!card.covered) {
           cardElement.onclick = () => this.handlePyramidCardClick(rowIndex, colIndex);
           
-          // Add hover effect
-          cardElement.onmouseenter = () => {
-            if (!card.covered) {
-              cardElement.style.transform = 'translateY(-5px)';
-            }
-          };
-          cardElement.onmouseleave = () => {
-            if (!(this.state.selectedLocation?.type === 'pyramid' &&
-                  this.state.selectedLocation?.row === rowIndex &&
-                  this.state.selectedLocation?.col === colIndex)) {
-              cardElement.style.transform = 'translateY(0)';
-            }
-          };
+          // Add hover effect (not on mobile during zoom/pan)
+          if (!isMobile) {
+            cardElement.onmouseenter = () => {
+              if (!card.covered) {
+                cardElement.style.transform = 'translateY(-5px)';
+              }
+            };
+            cardElement.onmouseleave = () => {
+              if (!(this.state.selectedLocation?.type === 'pyramid' &&
+                    this.state.selectedLocation?.row === rowIndex &&
+                    this.state.selectedLocation?.col === colIndex)) {
+                cardElement.style.transform = 'translateY(0)';
+              }
+            };
+          }
         }
         
         rowDiv.appendChild(cardElement);
@@ -229,13 +385,19 @@ class PyramidSolitaire {
       pyramidContainer.appendChild(rowDiv);
     });
     
-    gameBoard.appendChild(pyramidContainer);
+    pyramidWrapper.appendChild(pyramidContainer);
+    gameBoard.appendChild(pyramidWrapper);
     
     // Render stock and waste
     const bottomArea = document.createElement('div');
     bottomArea.style.display = 'flex';
-    bottomArea.style.gap = isMobile ? '20px' : '30px';
+    bottomArea.style.gap = isMobile ? '15px' : '30px';
     bottomArea.style.alignItems = 'center';
+    bottomArea.style.zIndex = '100'; // Keep above pyramid
+    bottomArea.style.background = 'rgba(26, 26, 46, 0.95)'; // ✅ ADD background so it's visible
+    bottomArea.style.padding = isMobile ? '10px 15px' : '15px 20px';
+    bottomArea.style.borderRadius = '12px';
+    bottomArea.style.boxShadow = '0 -2px 10px rgba(0,0,0,0.5)';
     
     // Stock pile
     const stockDiv = document.createElement('div');
@@ -250,7 +412,6 @@ class PyramidSolitaire {
       stockCard.style.height = '100%';
       stockCard.onclick = () => this.drawFromStock();
       
-      // ✅ CHANGED: Use improved scaling method
       if (isMobile) {
         this.scaleCardForMobile(stockCard);
       }
@@ -290,7 +451,6 @@ class PyramidSolitaire {
       wasteCard.style.position = 'relative';
       wasteCard.style.transition = 'all 0.2s';
       
-      // ✅ CHANGED: Use improved scaling method
       if (isMobile) {
         this.scaleCardForMobile(wasteCard);
       }
@@ -309,6 +469,11 @@ class PyramidSolitaire {
     
     bottomArea.appendChild(wasteDiv);
     gameBoard.appendChild(bottomArea);
+    
+    // ✅ ADD: Setup touch handlers after rendering
+    if (isMobile) {
+      this.setupTouchHandlers(gameBoard, isMobile);
+    }
   }
   
   handlePyramidCardClick(row, col) {
@@ -467,11 +632,18 @@ class PyramidSolitaire {
     // Pyramid doesn't need pause
   }
   
-  // ✅ ADD: Cleanup method
   cleanup() {
     if (this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler);
       this.resizeHandler = null;
+    }
+    
+    // ✅ ADD: Clean up touch handlers
+    const gameBoard = document.getElementById('game-board');
+    if (gameBoard) {
+      gameBoard.ontouchstart = null;
+      gameBoard.ontouchmove = null;
+      gameBoard.ontouchend = null;
     }
   }
 }
