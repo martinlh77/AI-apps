@@ -16,6 +16,7 @@ class ClassicMemory {
       isProcessing: false,
       gameWon: false
     };
+    this.resizeHandler = null; // ✅ Already present
   }
   
   setup() {
@@ -58,6 +59,13 @@ class ClassicMemory {
     this.state.pairsFound = 0;
     this.state.isProcessing = false;
     this.state.gameWon = false;
+    
+    // ✅ Add resize listener
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
+    this.resizeHandler = () => this.render();
+    window.addEventListener('resize', this.resizeHandler);
     
     this.render();
     this.updateStats();
@@ -106,29 +114,9 @@ class ClassicMemory {
       if (isMobile) {
         cardElement.style.width = '80px';
         cardElement.style.height = '112px';
-        cardElement.style.fontSize = '0.7rem'; // Scale down text
         
-        // Scale down the card content
-        const cardFront = cardElement.querySelector('.card-front');
-        const cardBack = cardElement.querySelector('.card-back');
-        
-        if (cardFront) {
-          cardFront.style.fontSize = '0.7rem';
-          // Scale rank display
-          const rankDisplays = cardFront.querySelectorAll('.card-rank');
-          rankDisplays.forEach(rank => {
-            rank.style.fontSize = '1rem';
-          });
-          // Scale suit emoji
-          const suitCenter = cardFront.querySelector('.card-suit-center');
-          if (suitCenter) {
-            suitCenter.style.fontSize = '2rem';
-          }
-        }
-        
-        if (cardBack) {
-          cardBack.style.fontSize = '0.7rem';
-        }
+        // ✅ Use helper method for complete mobile scaling
+        this.scaleCardForMobile(cardElement);
       } else {
         cardElement.style.width = '120px';
         cardElement.style.height = '168px';
@@ -149,6 +137,48 @@ class ClassicMemory {
       
       gameBoard.appendChild(cardElement);
     });
+  }
+  
+  // ✅ NEW: Complete mobile scaling method
+  scaleCardForMobile(cardElement) {
+    cardElement.style.fontSize = '0.7rem';
+    
+    // Scale rank displays (corner numbers/letters)
+    const rankDisplays = cardElement.querySelectorAll('.card-rank');
+    rankDisplays.forEach(rank => {
+      rank.style.fontSize = '1rem'; // Your existing value works
+    });
+    
+    // Scale mini suit icons in corners
+    const miniPips = cardElement.querySelectorAll('.mini-pip');
+    miniPips.forEach(pip => {
+      pip.style.fontSize = '0.7rem';
+    });
+    
+    // Scale center suit display
+    const suitCenter = cardElement.querySelector('.card-suit-center');
+    if (suitCenter) {
+      suitCenter.style.fontSize = '2rem';
+    }
+    
+    // Scale center pips (for numbered cards)
+    const pips = cardElement.querySelectorAll('.pip');
+    pips.forEach(pip => {
+      if (pip.classList.contains('large')) {
+        pip.style.fontSize = '2rem';
+      } else {
+        pip.style.fontSize = '0.98rem';
+      }
+    });
+    
+    // ✅ Scale face card windows (J, Q, K)
+    const faceWindow = cardElement.querySelector('.face-card-window');
+    if (faceWindow) {
+      faceWindow.style.top = '20px';
+      faceWindow.style.bottom = '20px';
+      faceWindow.style.left = '15px';
+      faceWindow.style.right = '15px';
+    }
   }
   
   handleCardClick(index) {
@@ -205,6 +235,14 @@ class ClassicMemory {
   
   pause() {
     // Memory game doesn't need pause functionality
+  }
+  
+  // ✅ NEW: Cleanup method
+  cleanup() {
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = null;
+    }
   }
 }
 
