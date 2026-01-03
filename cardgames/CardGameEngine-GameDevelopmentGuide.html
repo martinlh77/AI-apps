@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Game Engine - Game Development Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #f0f0f0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: #ffd700;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-align: center;
+            border-bottom: 3px solid #ffd700;
+            padding-bottom: 15px;
+        }
+
+        h2 {
+            color: #00ffcc;
+            font-size: 1.8rem;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-left: 10px;
+            border-left: 5px solid #00ffcc;
+        }
+
+        h3 {
+            color: #87ceeb;
+            font-size: 1.3rem;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: #ffd700;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #87ceeb;
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+        }
+
+        .important-box {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box {
+            background: rgba(255, 107, 107, 0.1);
+            border: 2px solid #ff6b6b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .info-box {
+            background: rgba(0, 255, 204, 0.1);
+            border: 2px solid #00ffcc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .code-block {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            color: #00ff00;
+        }
+
+        .code-block pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .filename {
+            background: #16213e;
+            color: #ffd700;
+            padding: 8px 15px;
+            border-radius: 6px 6px 0 0;
+            font-weight: bold;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 35px;
+            height: 35px;
+            background: #00ffcc;
+            color: #000;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 35px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        th, td {
+            border: 1px solid #444;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(0, 255, 204, 0.2);
+            color: #00ffcc;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .highlight {
+            background: rgba(255, 215, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .inline-code {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #00ffcc;
+            font-size: 0.95rem;
+        }
+
+        .ai-prompt-box {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(75, 0, 130, 0.2));
+            border: 3px solid #8b2be2;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+
+        .ai-prompt-box h3 {
+            color: #da70d6;
+            margin-top: 0;
+        }
+
+        a {
+            color: #00ffcc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .checklist {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .checklist li:before {
+            content: "✓ ";
+            color: #00ff00;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+            .container {
+                background: white;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Card Game Engine</h1>
+        <p class="subtitle">Complete Guide to Creating New Card Games</p>
+
+        <div class="info-box">
+            <h3>📖 About This Guide</h3>
+            <p>This document provides everything you need to create new card games for the Card Game Engine. Use this guide when working with AI to generate games. You do NOT need to provide the main Card Game Engine HTML file to AI - just this guide and your game description.</p>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 1: OVERVIEW -->
+        <!-- ============================================ -->
+
+        <h2>📋 Part 1: Overview</h2>
+
+        <h3>What You'll Create</h3>
+        <p>Each card game consists of <strong>THREE files</strong>:</p>
+        <ol>
+            <li><strong>Game Config JSON</strong> - Metadata, rules, instructions</li>
+            <li><strong>Game Logic JS</strong> - The actual game code</li>
+            <li><strong>Manifest Entry</strong> - Registration in the games list</li>
+        </ol>
+
+        <h3>Game Architecture</h3>
+        <p>Games interact with the Card Game Engine through a standardized API. Your game receives:</p>
+        <ul>
+            <li><span class="inline-code">engine</span> - Access to card manipulation, rendering, and animation functions</li>
+            <li><span class="inline-code">deckData</span> - The player's selected deck with all card images and styling</li>
+        </ul>
+
+        <div class="important-box">
+            <h4>🎯 Core Principle</h4>
+            <p>Games must work with <strong>ANY custom deck</strong> that follows the standard 52-card structure (4 suits, 13 ranks, optional 4 jokers). Your game should never assume specific card images exist.</p>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 2: FILE STRUCTURE -->
+        <!-- ============================================ -->
+
+        <h2>📁 Part 2: GitHub Repository Structure</h2>
+
+        <h3>Where Files Go</h3>
+        <div class="code-block">
+<pre>AI-apps/
+├── cardgames/
+│   ├── manifest.json                    ← Master game registry
+│   │
+│   ├── [category]/                      ← Create category folders
+│   │   ├── [game-name].json            ← Game configuration
+│   │   ├── [game-name].js              ← Game logic
+│   │   └── [game-name]-thumb.png       ← Thumbnail (optional)
+│   │
+│   ├── solitaire/
+│   │   ├── pyramid.json
+│   │   ├── pyramid.js
+│   │   └── pyramid-thumb.png
+│   │
+│   ├── memory/
+│   │   ├── classic-memory.json
+│   │   └── classic-memory.js
+│   │
+│   └── casual/
+│       ├── higher-lower.json
+│       └── higher-lower.js</pre>
+        </div>
+
+        <h3>Game Categories</h3>
+        <table>
+            <tr>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Examples</th>
+            </tr>
+            <tr>
+                <td><strong>solitaire</strong></td>
+                <td>Single-player patience games</td>
+                <td>Klondike, Pyramid, Spider, FreeCell</td>
+            </tr>
+            <tr>
+                <td><strong>memory</strong></td>
+                <td>Memory and matching games</td>
+                <td>Concentration, Pairs, Match Game</td>
+            </tr>
+            <tr>
+                <td><strong>casual</strong></td>
+                <td>Simple, quick games</td>
+                <td>Higher/Lower, War, Go Fish</td>
+            </tr>
+            <tr>
+                <td><strong>multiplayer</strong></td>
+                <td>Games for 2+ players</td>
+                <td>Hearts, Spades, Rummy (future)</td>
+            </tr>
+            <tr>
+                <td><strong>puzzle</strong></td>
+                <td>Logic-based card games</td>
+                <td>Accordion, Monte Carlo</td>
+            </tr>
+            <tr>
+                <td><strong>strategy</strong></td>
+                <td>Deep strategic games</td>
+                <td>Canfield, Yukon</td>
+            </tr>
+        </table>
+
+        <h3>Naming Conventions</h3>
+        <div class="important-box">
+            <h4>File Naming Rules</h4>
+            <ul>
+                <li><strong>Game ID:</strong> <span class="inline-code">[category]-[name]-v[version]</span></li>
+                <li><strong>Example:</strong> <span class="inline-code">solitaire-klondike-v1</span></li>
+                <li><strong>JSON File:</strong> <span class="inline-code">[name].json</span> (lowercase, hyphens)</li>
+                <li><strong>JS File:</strong> <span class="inline-code">[name].js</span> (matches JSON name)</li>
+                <li><strong>Class Name:</strong> <span class="inline-code">PascalCaseGameName</span> (no hyphens)</li>
+            </ul>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 3: GAME CONFIG JSON -->
+        <!-- ============================================ -->
+
+        <h2>⚙️ Part 3: Game Configuration JSON</h2>
+
+        <h3>Complete JSON Structure</h3>
+        <p>Every game config follows this exact structure:</p>
+
+        <div class="filename">📄 cardgames/[category]/[game-name].json</div>
+        <div class="code-block">
+<pre>{
+  "gameId": "category-gamename-v1",
+  
+  "metadata": {
+    "name": "Human Readable Game Name",
+    "version": "1.0.0",
+    "author": "Your Name or Card Game Engine",
+    "description": "Brief description of the game (1-2 sentences)",
+    "category": "solitaire",
+    "difficulty": "easy|medium|hard",
+    "estimatedPlayTime": "5-10 minutes",
+    "thumbnail": "cardgames/category/gamename-thumb.png",
+    "tags": ["tag1", "tag2", "tag3"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52,
+      "note": "Optional note about card usage"
+    }
+  },
+  
+  "instructions": {
+    "overview": "One paragraph explaining the game's objective",
+    "setup": [
+      "Step 1 of setup",
+      "Step 2 of setup",
+      "Step 3 of setup"
+    ],
+    "gameplay": [
+      "Rule 1",
+      "Rule 2",
+      "Rule 3"
+    ],
+    "winning": "How to win the game",
+    "examples": [
+      {
+        "title": "Example Title",
+        "description": "What this example shows",
+        "cards": ["hearts-ace", "spades-queen"]
+      }
+    ]
+  },
+  
+  "ui": {
+    "layout": "grid|pyramid|cascade|simple",
+    "zones": [
+      {
+        "id": "zone-name",
+        "type": "pile|grid|foundation",
+        "position": {"x": "left|center|right", "y": "top|center|bottom"}
+      }
+    ],
+    "animations": {
+      "dealSpeed": 300,
+      "flipSpeed": 200,
+      "celebrationOnWin": true
+    }
+  },
+  
+  "gameLogicModule": "cardgames/category/gamename.js"
+}</pre>
+        </div>
+
+        <h3>Field Explanations</h3>
+
+        <h4>Metadata Section</h4>
+        <table>
+            <tr>
+                <th>Field</th>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><span class="inline-code">name</span></td>
+                <td>string</td>
+                <td>Display name shown to players</td>
+            </tr>
+            <tr>
+                <td><span class="inline-code">difficulty</span></td>
+                <td>string</td>
+                <td>Must be: <span class="inline-code">easy</span>, <span class="inline-code">medium</span>, or <span class="inline-code">hard</span></td>
+            </tr>
+            <tr>
+                <td><span class="inline-code">category</span></td>
+                <td>string</td>
+                <td>Must match folder name (solitaire, memory, casual, etc.)</td>
+            </tr>
+            <tr>
+                <td><span class="inline-code">tags</span></td>
+                <td>array</td>
+                <td>Keywords for searching/filtering</td>
+            </tr>
+        </table>
+
+        <h4>Card Requirements</h4>
+
+        <div class="info-box">
+            <h4>📌 Understanding Jokers</h4>
+            <p>The Card Game Engine supports <strong>four jokers</strong> - one for each suit:</p>
+            <ul>
+                <li><span class="inline-code">hearts-joker</span></li>
+                <li><span class="inline-code">diamonds-joker</span></li>
+                <li><span class="inline-code">clubs-joker</span></li>
+                <li><span class="inline-code">spades-joker</span></li>
+            </ul>
+            <p><strong>Each joker has a suit assignment</strong> and can have unique artwork. When you set <span class="inline-code">"includeJokers": true</span>, all four jokers are included (56 cards total).</p>
+            <p>Example joker card object:</p>
+            <div class="code-block">
+<pre>{
+  suit: 'hearts',
+  rank: 'Joker',
+  image: 'url-to-hearts-joker.png',
+  suitEmoji: '♥',
+  color: 'red',
+  id: 'hearts-Joker-xyz123'
+}</pre>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <h4>⚠️ Important: Joker Usage</h4>
+            <p><strong>Most games do NOT use jokers!</strong> Set <span class="inline-code">"includeJokers": false</span> unless your game specifically needs them.</p>
+            <p>Standard deck = 52 cards (4 suits × 13 ranks). With jokers = 56 cards (52 + 4 jokers).</p>
+        </div>
+
+        <h4>Card Requirements Template</h4>
+        <div class="code-block">
+<pre>"cards": {
+  "includeJokers": false,    // Set to true if your game uses jokers
+  "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+  "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+  "totalCardsNeeded": 52,    // Or 56 if including jokers
+  "note": "Optional note - e.g., 'Uses 2 decks' or 'Jokers are wild cards'"
+}</pre>
+        </div>
+
+        <h4>Instructions Format</h4>
+        <ul>
+            <li><strong>overview:</strong> Single paragraph, 1-3 sentences</li>
+            <li><strong>setup:</strong> Array of strings, each is one setup step</li>
+            <li><strong>gameplay:</strong> Array of rules, one rule per string</li>
+            <li><strong>winning:</strong> Single string describing win condition</li>
+            <li><strong>examples:</strong> Visual examples using card notation</li>
+        </ul>
+
+        <h4>Card Notation in Examples</h4>
+        <p>Use this format: <span class="inline-code">[suit]-[rank]</span></p>
+        <div class="code-block">
+<pre>Suits: hearts, diamonds, clubs, spades
+Ranks: ace, 2, 3, 4, 5, 6, 7, 8, 9, 10, jack, queen, king, joker
+
+Examples:
+  "hearts-ace"       → Ace of Hearts
+  "diamonds-queen"   → Queen of Diamonds
+  "clubs-7"          → 7 of Clubs
+  "spades-king"      → King of Spades
+  "hearts-joker"     → Joker of Hearts (if game uses jokers)
+  "spades-joker"     → Joker of Spades (if game uses jokers)</pre>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 4: GAME LOGIC JAVASCRIPT -->
+        <!-- ============================================ -->
+
+        <h2>🎯 Part 4: Game Logic JavaScript</h2>
+
+        <h3>Template Structure</h3>
+        <p>Every game follows this exact structure:</p>
+
+        <div class="filename">📄 cardgames/[category]/[game-name].js</div>
+        <div class="code-block">
+<pre>/**
+ * Game Name
+ * Brief description
+ */
+
+class GameClassName {
+  constructor(engine, deckData) {
+    this.engine = engine;      // Engine API access
+    this.deck = deckData;      // Player's selected deck
+    this.state = {
+      // Your game state variables here
+      moves: 0,
+      score: 0,
+      gameWon: false
+    };
+    this.resizeHandler = null; // For responsive resize events
+  }
+  
+  setup() {
+    // Initialize game, deal cards, etc.
+    // Called when game starts or restarts
+    
+    // Add resize listener for responsive display
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
+    this.resizeHandler = () => this.render();
+    window.addEventListener('resize', this.resizeHandler);
+    
+    this.render();
+    this.updateStats();
+  }
+  
+  render() {
+    // Update the visual display
+    // Clear and rebuild the game board
+    const gameBoard = document.getElementById('game-board');
+    gameBoard.innerHTML = '';
+    
+    // Detect mobile for responsive sizing
+    const isMobile = window.innerWidth < 700;
+    
+    // Render your game here with mobile-responsive sizing
+    // Example for grid-based games:
+    // if (isMobile) {
+    //   gameBoard.style.gridTemplateColumns = 'repeat(4, 80px)';
+    //   // Scale card sizes and fonts
+    // } else {
+    //   gameBoard.style.gridTemplateColumns = 'repeat(5, 120px)';
+    // }
+  }
+  
+  updateStats() {
+    // Update the stats display
+    document.getElementById('game-moves').textContent = `Moves: ${this.state.moves}`;
+    document.getElementById('game-score').textContent = `Score: ${this.state.score}`;
+  }
+  
+  pause() {
+    // Optional: Handle pause functionality
+  }
+  
+  cleanup() {
+    // Remove resize listener when game ends
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = null;
+    }
+  }
+}
+
+// Register the game (REQUIRED - must match gameId)
+window.GameModules = window.GameModules || {};
+window.GameModules['category-gamename-v1'] = GameClassName;</pre>
+        </div>
+
+        <h3>Required Methods</h3>
+        <table>
+            <tr>
+                <th>Method</th>
+                <th>Required</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><span class="inline-code">constructor(engine, deckData)</span></td>
+                <td>✅ Yes</td>
+                <td>Initialize game with engine and deck access</td>
+            </tr>
+            <tr>
+                <td><span class="inline-code">this.resizeHandler</span> (property)</td>
+                <td>⚠️ Recommended</td>
+                <td>Store resize listener for cleanup</td>
+            </tr>
+            <tr>
+                <td><span class="inline-code">setup()</span></td>
+                <td>✅ Yes</td>
+                <td>Start/restart game, deal cards, reset state</td>
+            </tr>
+            <tr>
+                <td><span class="inline-code">render()</span></td>
+                <td>✅ Yes</td>
+                <td>Update visual display of game board</td>
+            </tr>
+            <tr>
+                <td><span class="inline-code">updateStats()</span></td>
+                <td>✅ Yes</td>
+                <td>Update moves, score, time display</td>
+            </tr>
+            <tr>
+                <td><span class="inline-code">pause()</span></td>
+                <td>❌ No</td>
+                <td>Handle pause (can be empty)</td>
+            </tr>
+            <tr>
+                <td><span class="inline-code">cleanup()</span></td>
+                <td>⚠️ Recommended</td>
+                <td>Remove event listeners when game ends</td>
+            </tr>
+        </table>
+
+        <h3>Game Engine API Reference</h3>
+        <p>The <span class="inline-code">engine</span> object provides these methods:</p>
+
+        <h4>Card Management</h4>
+        <div class="code-block">
+<pre>// Create array of 52 card objects from deck (no jokers)
+const cards = this.engine.createCardArray(this.deck);
+// Returns: Array of 52 card objects
+
+// Create array with jokers included (56 cards total)
+const cardsWithJokers = this.engine.createCardArray(this.deck, true);
+// Returns: Array of 56 card objects (52 + 4 jokers)
+
+// Shuffle an array of cards (Fisher-Yates)
+const shuffled = this.engine.shuffleDeck(cards);
+// Returns: Shuffled array</pre>
+        </div>
+
+        <div class="info-box">
+            <h4>🃏 Working with Jokers</h4>
+            <p>When your game config has <span class="inline-code">"includeJokers": true</span>, you must pass <span class="inline-code">true</span> as the second parameter to <span class="inline-code">createCardArray()</span>:</p>
+            <div class="code-block">
+<pre>setup() {
+  // For games WITH jokers (56 cards)
+  const allCards = this.engine.createCardArray(this.deck, true);
+  
+  // For games WITHOUT jokers (52 cards) - default behavior
+  const allCards = this.engine.createCardArray(this.deck);
+  // OR explicitly:
+  const allCards = this.engine.createCardArray(this.deck, false);
+  
+  // Joker cards will have:
+  // - rank: "Joker"
+  // - suit: "hearts"|"diamonds"|"clubs"|"spades"
+  // - image: URL to joker image for that suit
+  // - color: "red" (hearts/diamonds) or "black" (clubs/spades)
+}</pre>
+            </div>
+        </div>
+
+        <h4>Card Object Structure</h4>
+        <div class="code-block">
+<pre>{
+  suit: 'hearts',           // hearts, diamonds, clubs, spades (jokers also have suits)
+  rank: 'A',                // A, 2-10, J, Q, K, Joker
+  image: 'url',             // Card face image URL
+  backImage: 'url',         // Card back image URL
+  suitEmoji: '♥',           // Suit symbol from deck
+  color: 'red',             // 'red' or 'black'
+  faceUp: false,            // Current card orientation
+  id: 'hearts-A-xyz123'     // Unique identifier
+}</pre>
+        </div>
+
+        <h4>Rendering Methods</h4>
+        <div class="code-block">
+<pre>// Render a card as HTML element
+const cardElement = this.engine.renderCard(cardData, faceUp);
+// cardData: card object from array
+// faceUp: true/false
+// Returns: HTML div element
+
+// Clear the game board
+this.engine.clearGameBoard();
+
+// Show win celebration animation
+this.engine.celebrateWin();</pre>
+        </div>
+
+        <h4>Animation Methods</h4>
+        <div class="code-block">
+<pre>// Animate card movement
+await this.engine.animateCardMove(element, fromPos, toPos, duration);
+// element: HTML element
+// fromPos: {x: number, y: number}
+// toPos: {x: number, y: number}
+// duration: milliseconds (default 300)
+
+// Animate card flip
+await this.engine.animateCardFlip(element, duration);
+// element: HTML element
+// duration: milliseconds (default 200)</pre>
+        </div>
+
+        <h3>Accessing DOM Elements</h3>
+        <div class="code-block">
+<pre>// Game board container
+const gameBoard = document.getElementById('game-board');
+
+// Stats displays
+document.getElementById('game-moves')        // Moves counter
+document.getElementById('game-time-elapsed') // Timer display
+document.getElementById('game-score')        // Score display</pre>
+        </div>
+
+        <h3>Common Game Patterns</h3>
+
+        <h4>Pattern 1: Card Value Comparison</h4>
+        <div class="code-block">
+<pre>const cardValues = {
+  'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7,
+  '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13
+};
+
+function getCardValue(card) {
+  return cardValues[card.rank];
+}
+
+function isHigher(card1, card2) {
+  return getCardValue(card1) > getCardValue(card2);
+}</pre>
+        </div>
+
+        <h4>Pattern 2: Matching Cards</h4>
+        <div class="code-block">
+<pre>function cardsMatch(card1, card2) {
+  return card1.rank === card2.rank;  // Match by rank
+  // OR
+  return card1.suit === card2.suit;  // Match by suit
+}
+
+function isAlternatingColor(card1, card2) {
+  return card1.color !== card2.color;
+}</pre>
+        </div>
+
+        <h4>Pattern 3: Grid Layout (Mobile Responsive)</h4>
+        <div class="code-block">
+<pre>render() {
+  const gameBoard = document.getElementById('game-board');
+  gameBoard.innerHTML = '';
+  gameBoard.style.display = 'grid';
+  gameBoard.style.gap = '15px';
+  gameBoard.style.justifyContent = 'center';
+  
+  // Mobile detection and responsive sizing
+  const isMobile = window.innerWidth < 700;
+  
+  if (isMobile) {
+    // Mobile: smaller cards, adjusted grid
+    gameBoard.style.gridTemplateColumns = 'repeat(4, 80px)';
+    gameBoard.style.gridTemplateRows = 'repeat(5, 112px)';
+    gameBoard.style.gap = '10px';
+  } else {
+    // Desktop: standard card size
+    gameBoard.style.gridTemplateColumns = 'repeat(5, 120px)';
+    gameBoard.style.gridTemplateRows = 'repeat(4, 168px)';
+  }
+  
+  this.state.cards.forEach((card, index) => {
+    const cardElement = this.engine.renderCard(card, true);
+    
+    // Set card dimensions based on screen size
+    const cardSize = isMobile ? 
+      { width: '80px', height: '112px' } : 
+      { width: '120px', height: '168px' };
+    
+    cardElement.style.width = cardSize.width;
+    cardElement.style.height = cardSize.height;
+    
+    // Scale fonts on mobile
+    if (isMobile) {
+      cardElement.style.fontSize = '0.7rem';
+      
+      // Scale rank displays
+      cardElement.querySelectorAll('.rank').forEach(rank => {
+        rank.style.fontSize = '0.85rem';
+      });
+      
+      // Scale mini suit icons
+      cardElement.querySelectorAll('.mini-pip').forEach(pip => {
+        pip.style.fontSize = '0.7rem';
+      });
+      
+      // Scale center pips
+      cardElement.querySelectorAll('.pip').forEach(pip => {
+        if (pip.classList.contains('large')) {
+          pip.style.fontSize = '2rem';
+        } else {
+          pip.style.fontSize = '0.98rem';
+        }
+      });
+    }
+    
+    cardElement.onclick = () => this.handleCardClick(index);
+    gameBoard.appendChild(cardElement);
+  });
+}</pre>
+        </div>
+
+        <h4>Pattern 4: Win Detection</h4>
+        <div class="code-block">
+<pre>checkWin() {
+  // Example: All cards matched
+  if (this.state.matchedPairs.length === this.state.totalCards) {
+    this.state.gameWon = true;
+    setTimeout(() => {
+      this.engine.celebrateWin();
+    }, 500);
+    return true;
+  }
+  return false;
+}</pre>
+        </div>
+
+        <h4>Pattern 5: Handling Jokers</h4>
+        <div class="code-block">
+<pre>// Check if card is a joker
+function isJoker(card) {
+  return card.rank === 'Joker';
+}
+
+// Assign joker values in your game
+const cardValues = {
+  'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7,
+  '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13,
+  'Joker': 0  // or 15, or wild, depending on your game
+};
+
+// Example: Joker as wild card
+function cardsMatch(card1, card2) {
+  if (card1.rank === 'Joker' || card2.rank === 'Joker') {
+    return true;  // Joker matches anything
+  }
+  return card1.rank === card2.rank;
+}
+
+// Example: Filter out jokers if needed
+const withoutJokers = allCards.filter(card => card.rank !== 'Joker');
+
+// Example: Separate jokers by suit
+const heartsJoker = allCards.find(c => c.suit === 'hearts' && c.rank === 'Joker');
+const diamondsJoker = allCards.find(c => c.suit === 'diamonds' && c.rank === 'Joker');</pre>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 4.5: MOBILE RESPONSIVENESS -->
+        <!-- ============================================ -->
+
+        <h2>📱 Part 4.5: Mobile Responsiveness</h2>
+
+        <h3>Why Mobile Support Matters</h3>
+        <p>All games MUST be responsive and work on mobile devices. Players use phones and tablets, so your game must adapt to smaller screens.</p>
+
+        <div class="important-box">
+            <h4>🎯 Mobile Breakpoint</h4>
+            <p>Use <span class="inline-code">window.innerWidth < 700</span> to detect mobile devices.</p>
+            <ul>
+                <li><strong>Desktop:</strong> ≥ 700px width → 120×168px cards</li>
+                <li><strong>Mobile:</strong> < 700px width → 80×112px cards</li>
+            </ul>
+        </div>
+
+        <h3>Required Responsive Elements</h3>
+
+        <h4>1. Card Sizing</h4>
+        <div class="code-block">
+<pre>// In your render() method:
+const isMobile = window.innerWidth < 700;
+
+// Set card dimensions
+const cardSize = isMobile ? 
+  { width: '80px', height: '112px' } : 
+  { width: '120px', height: '168px' };
+
+cardElement.style.width = cardSize.width;
+cardElement.style.height = cardSize.height;</pre>
+        </div>
+
+        <h4>2. Grid Adjustments</h4>
+        <div class="code-block">
+<pre>// For grid-based layouts:
+if (isMobile) {
+  gameBoard.style.gridTemplateColumns = 'repeat(4, 80px)';
+  gameBoard.style.gridTemplateRows = 'repeat(5, 112px)';
+  gameBoard.style.gap = '10px';
+} else {
+  gameBoard.style.gridTemplateColumns = 'repeat(5, 120px)';
+  gameBoard.style.gridTemplateRows = 'repeat(4, 168px)';
+  gameBoard.style.gap = '15px';
+}</pre>
+        </div>
+
+        <h4>3. Font Scaling</h4>
+        <div class="code-block">
+<pre>// Scale all text elements on mobile:
+if (isMobile) {
+  cardElement.style.fontSize = '0.7rem';
+  
+  // Scale rank displays (corner numbers/letters)
+  cardElement.querySelectorAll('.rank').forEach(rank => {
+    rank.style.fontSize = '0.85rem';
+  });
+  
+  // Scale mini suit icons
+  cardElement.querySelectorAll('.mini-pip').forEach(pip => {
+    pip.style.fontSize = '0.7rem';
+  });
+  
+  // Scale center pips
+  cardElement.querySelectorAll('.pip').forEach(pip => {
+    if (pip.classList.contains('large')) {
+      pip.style.fontSize = '2rem'; // Down from 3rem
+    } else {
+      pip.style.fontSize = '0.98rem'; // Down from 1.4rem
+    }
+  });
+  
+  // Scale face card windows
+  const faceWindow = cardElement.querySelector('.face-card-window');
+  if (faceWindow) {
+    faceWindow.style.top = '20px';
+    faceWindow.style.bottom = '20px';
+    faceWindow.style.left = '15px';
+    faceWindow.style.right = '15px';
+  }
+}</pre>
+        </div>
+
+        <h4>4. Resize Listener</h4>
+        <div class="code-block">
+<pre>// In constructor:
+constructor(engine, deckData) {
+  // ... other initialization ...
+  this.resizeHandler = null;
+}
+
+// In setup():
+setup() {
+  // ... game initialization ...
+  
+  // Add resize listener
+  if (this.resizeHandler) {
+    window.removeEventListener('resize', this.resizeHandler);
+  }
+  this.resizeHandler = () => this.render();
+  window.addEventListener('resize', this.resizeHandler);
+  
+  this.render();
+}
+
+// Add cleanup method:
+cleanup() {
+  if (this.resizeHandler) {
+    window.removeEventListener('resize', this.resizeHandler);
+    this.resizeHandler = null;
+  }
+}</pre>
+        </div>
+
+        <h3>Complete Responsive Template</h3>
+        <div class="code-block">
+<pre>class ResponsiveGame {
+  constructor(engine, deckData) {
+    this.engine = engine;
+    this.deck = deckData;
+    this.state = { /* game state */ };
+    this.resizeHandler = null; // For responsive updates
+  }
+  
+  setup() {
+    // Game initialization...
+    
+    // Add resize listener
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+    }
+    this.resizeHandler = () => this.render();
+    window.addEventListener('resize', this.resizeHandler);
+    
+    this.render();
+  }
+  
+  render() {
+    const gameBoard = document.getElementById('game-board');
+    gameBoard.innerHTML = '';
+    
+    // Detect mobile
+    const isMobile = window.innerWidth < 700;
+    
+    // Set up responsive grid
+    gameBoard.style.display = 'grid';
+    gameBoard.style.justifyContent = 'center';
+    
+    if (isMobile) {
+      gameBoard.style.gridTemplateColumns = 'repeat(4, 80px)';
+      gameBoard.style.gap = '10px';
+    } else {
+      gameBoard.style.gridTemplateColumns = 'repeat(5, 120px)';
+      gameBoard.style.gap = '15px';
+    }
+    
+    // Render cards with responsive sizing
+    this.state.cards.forEach(card => {
+      const cardElement = this.engine.renderCard(card, true);
+      
+      // Set dimensions
+      const size = isMobile ? 
+        { width: '80px', height: '112px' } : 
+        { width: '120px', height: '168px' };
+      cardElement.style.width = size.width;
+      cardElement.style.height = size.height;
+      
+      // Scale fonts on mobile
+      if (isMobile) {
+        this.scaleCardForMobile(cardElement);
+      }
+      
+      gameBoard.appendChild(cardElement);
+    });
+  }
+  
+  scaleCardForMobile(cardElement) {
+    cardElement.style.fontSize = '0.7rem';
+    
+    cardElement.querySelectorAll('.rank').forEach(el => {
+      el.style.fontSize = '0.85rem';
+    });
+    
+    cardElement.querySelectorAll('.mini-pip').forEach(el => {
+      el.style.fontSize = '0.7rem';
+    });
+    
+    cardElement.querySelectorAll('.pip').forEach(pip => {
+      pip.style.fontSize = pip.classList.contains('large') ? '2rem' : '0.98rem';
+    });
+  }
+  
+  cleanup() {
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = null;
+    }
+  }
+}</pre>
+        </div>
+
+        <div class="warning-box">
+            <h4>⚠️ Important Scaling Ratios</h4>
+            <ul>
+                <li><strong>Card size:</strong> 80/120 = 0.667× (about 2/3 size)</li>
+                <li><strong>Base font:</strong> 0.7rem (70% of original)</li>
+                <li><strong>Rank displays:</strong> 0.85rem</li>
+                <li><strong>Mini pips:</strong> 0.7rem</li>
+                <li><strong>Large center pips:</strong> 2rem (down from 3rem)</li>
+                <li><strong>Small pips:</strong> 0.98rem (down from 1.4rem)</li>
+            </ul>
+        </div>
+
+        <h3>Testing Checklist for Mobile</h3>
+        <ul class="checklist">
+            <li>Test on actual mobile device (not just browser resize)</li>
+            <li>Cards fit on screen without horizontal scrolling</li>
+            <li>All text is readable at mobile size</li>
+            <li>Touch targets are large enough (at least 44×44px)</li>
+            <li>Game rotates properly (portrait/landscape)</li>
+            <li>No UI elements are cut off or overlapping</li>
+            <li>Resize listener updates display when orientation changes</li>
+        </ul>
+
+        <!-- ============================================ -->
+        <!-- SECTION 5: MANIFEST -->
+        <!-- ============================================ -->
+
+        <h2>📝 Part 5: Updating the Manifest</h2>
+
+        <h3>What is the Manifest?</h3>
+        <p>The manifest.json file is the master registry that tells the Card Game Engine which games are available.</p>
+
+        <div class="filename">📄 cardgames/manifest.json</div>
+        <div class="code-block">
+<pre>{
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-15T00:00:00Z",
+  "games": [
+    {
+      "id": "memory-classic-v1",
+      "configPath": "cardgames/memory/classic-memory.json",
+      "modulePath": "cardgames/memory/classic-memory.js",
+      "thumbnail": "cardgames/memory/thumbnail.png",
+      "featured": true,
+      "addedDate": "2025-01-15"
+    },
+    {
+      "id": "solitaire-pyramid-v1",
+      "configPath": "cardgames/solitaire/pyramid.json",
+      "modulePath": "cardgames/solitaire/pyramid.js",
+      "thumbnail": "cardgames/solitaire/pyramid-thumb.png",
+      "featured": false,
+      "addedDate": "2025-01-15"
+    }
+  ],
+  "categories": [
+    {
+      "id": "solitaire",
+      "name": "Solitaire Games",
+      "icon": "♠️"
+    },
+    {
+      "id": "memory",
+      "name": "Memory Games",
+      "icon": "🧠"
+    }
+  ]
+}</pre>
+        </div>
+
+        <h3>Adding Your Game to the Manifest</h3>
+        <div class="step-item">
+            <span class="step-number">1</span>
+            <div class="step-content">
+                <strong>Add game entry to the "games" array:</strong>
+                <div class="code-block">
+<pre>{
+  "id": "your-game-id-v1",
+  "configPath": "cardgames/category/gamename.json",
+  "modulePath": "cardgames/category/gamename.js",
+  "thumbnail": "cardgames/category/gamename-thumb.png",
+  "featured": false,
+  "addedDate": "2025-01-15"
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">2</span>
+            <div class="step-content">
+                <strong>Update the lastUpdated timestamp:</strong>
+                <div class="code-block">
+<pre>"lastUpdated": "2025-01-15T12:30:00Z"</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">3</span>
+            <div class="step-content">
+                <strong>If using a new category, add it to "categories" array:</strong>
+                <div class="code-block">
+<pre>{
+  "id": "newcategory",
+  "name": "New Category Name",
+  "icon": "🎲"
+}</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <h4>⚠️ Critical: JSON Syntax</h4>
+            <ul>
+                <li>Add comma after previous game entry (except last one)</li>
+                <li>No trailing commas in arrays or objects</li>
+                <li>Use double quotes, not single quotes</li>
+                <li>Validate JSON before committing: <a href="https://jsonlint.com" target="_blank">jsonlint.com</a></li>
+            </ul>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 6: COMPLETE EXAMPLE -->
+        <!-- ============================================ -->
+
+        <h2>📦 Part 6: Complete Example - "War" Card Game</h2>
+
+        <h3>Game Overview</h3>
+        <p>Let's create a simple "War" card game to demonstrate the complete process.</p>
+
+        <h4>Step 1: Create Game Config</h4>
+        <div class="filename">📄 cardgames/casual/war.json</div>
+        <div class="code-block">
+<pre>{
+  "gameId": "casual-war-v1",
+  "metadata": {
+    "name": "War",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Classic card comparison game. Highest card wins!",
+    "category": "casual",
+    "difficulty": "easy",
+    "estimatedPlayTime": "5-10 minutes",
+    "thumbnail": "cardgames/casual/war-thumb.png",
+    "tags": ["casual", "single-player", "quick", "simple"]
+  },
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52
+    }
+  },
+  "instructions": {
+    "overview": "Compete against the computer in a classic game of War. Highest card wins each battle!",
+    "setup": [
+      "Deck is shuffled and split evenly",
+      "You get 26 cards, computer gets 26 cards",
+      "All cards start face-down"
+    ],
+    "gameplay": [
+      "Click 'Draw Cards' to flip your top card and computer's top card",
+      "Higher card wins both cards",
+      "Won cards go to bottom of winner's deck",
+      "Ace is high (14), then King (13), Queen (12), Jack (11)",
+      "If cards tie, both are discarded (simplified rules)",
+      "Game continues until someone runs out of cards"
+    ],
+    "winning": "Win by capturing all 52 cards (or have more cards when opponent runs out)",
+    "examples": [
+      {
+        "title": "You Win",
+        "description": "Your King beats computer's 8",
+        "cards": ["hearts-king", "clubs-8"]
+      },
+      {
+        "title": "Computer Wins",
+        "description": "Computer's Ace beats your Jack",
+        "cards": ["diamonds-jack", "spades-ace"]
+      }
+    ]
+  },
+  "ui": {
+    "layout": "simple",
+    "zones": [
+      {
+        "id": "player-deck",
+        "type": "pile",
+        "position": {"x": "left", "y": "center"}
+      },
+      {
+        "id": "computer-deck",
+        "type": "pile",
+        "position": {"x": "right", "y": "center"}
+      }
+    ],
+    "animations": {
+      "flipSpeed": 300,
+      "celebrationOnWin": true
+    }
+  },
+  "gameLogicModule": "cardgames/casual/war.js"
+}</pre>
+        </div>
+
+        <p><strong>Note:</strong> The complete War game JavaScript implementation would follow all the patterns shown in Part 4 and Part 4.5, including mobile responsiveness. For brevity, refer to the earlier sections for the complete game logic structure.</p>
+
+        <!-- ============================================ -->
+        <!-- SECTION 7: STEP BY STEP DEPLOYMENT -->
+        <!-- ============================================ -->
+
+        <h2>🚀 Part 7: Deployment Steps</h2>
+
+        <div class="step-item">
+            <span class="step-number">1</span>
+            <div class="step-content">
+                <strong>Create Category Folder (if needed)</strong>
+                <p>In your GitHub repository AI-apps/cardgames/, create folder: <span class="inline-code">categoryname/</span></p>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">2</span>
+            <div class="step-content">
+                <strong>Upload Game Config JSON</strong>
+                <p>Place <span class="inline-code">gamename.json</span> in the category folder</p>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">3</span>
+            <div class="step-content">
+                <strong>Upload Game Logic JS</strong>
+                <p>Place <span class="inline-code">gamename.js</span> in the same folder</p>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">4</span>
+            <div class="step-content">
+                <strong>Update Manifest</strong>
+                <p>Edit <span class="inline-code">cardgames/manifest.json</span> to add your game entry</p>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">5</span>
+            <div class="step-content">
+                <strong>Test in Browser</strong>
+                <p>Open Card Game Engine, go to Play Games tab, verify your game appears</p>
+            </div>
+        </div>
+
+        <div class="step-item">
+            <span class="step-number">6</span>
+            <div class="step-content">
+                <strong>Test Gameplay</strong>
+                <p>Select a deck, start your game, verify all features work correctly</p>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 8: TESTING CHECKLIST -->
+        <!-- ============================================ -->
+
+        <h2>✅ Part 8: Testing Checklist</h2>
+
+        <div class="info-box">
+            <h3>Before Deployment</h3>
+            <ul class="checklist">
+                <li>JSON files validate with no syntax errors</li>
+                <li>Game ID matches in config, JS, and manifest</li>
+                <li>All file paths are correct</li>
+                <li>Class name matches registration name</li>
+                <li>Game works with default deck</li>
+                <li>Game works with custom AI-generated deck</li>
+                <li><strong>Game displays correctly on mobile (< 700px width)</strong></li>
+                <li><strong>Cards are scaled to 80×112px on mobile</strong></li>
+                <li><strong>All fonts are readable on mobile devices</strong></li>
+                <li><strong>Resize listener updates display when screen rotates</strong></li>
+                <li><strong>No horizontal scrolling on mobile</strong></li>
+                <li>If game uses jokers, <span class="inline-code">createCardArray()</span> is called with <span class="inline-code">true</span></li>
+                <li>All buttons and interactions respond correctly</li>
+                <li>Stats display updates properly</li>
+                <li>Win condition triggers correctly</li>
+                <li>Restart functionality works</li>
+                <li>No console errors in browser</li>
+            </ul>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 9: AI PROMPT -->
+        <!-- ============================================ -->
+
+        <h2>🤖 Part 9: AI Prompt for Game Creation</h2>
+
+        <div class="ai-prompt-box">
+            <h3>Copy This Prompt to AI</h3>
+            <p>When you want to create a new card game, use this prompt with your AI assistant:</p>
+            
+            <div class="code-block">
+<pre>You are an expert JavaScript game developer creating a card game for the Card Game Engine.
+
+CONTEXT:
+- Card Game Engine is a web-based platform for playing card games
+- Games use a standardized API to interact with the engine
+- Players can use any custom 52-card deck they've created
+- The engine supports optional jokers (4 total, one per suit)
+- Each game consists of a JSON config file and a JavaScript logic file
+
+YOUR TASK:
+Create a complete, working card game following the exact specifications in this guide.
+
+GAME REQUEST:
+[DESCRIBE YOUR GAME HERE - e.g., "Create a Klondike Solitaire game" or "Create a Blackjack game"]
+
+REQUIREMENTS:
+1. Create the complete JSON configuration file
+2. Create the complete JavaScript game logic file
+3. Provide the manifest.json entry
+4. Follow all naming conventions exactly
+5. Use only the documented Game Engine API methods
+6. IMPLEMENT MOBILE RESPONSIVENESS following the exact pattern in Part 4.5
+7. Make the game work with any custom deck
+8. Include comprehensive instructions in the config
+9. Add proper examples showing gameplay
+
+SPECIFICATIONS:
+- Game must work with standard 52-card deck (4 suits, 13 ranks)
+- Only use jokers if absolutely necessary (set includeJokers: false otherwise)
+- If jokers are used, call createCardArray(this.deck, true) to get 56 cards
+- Implement all required methods: constructor, setup, render, updateStats
+- Register the game properly with window.GameModules
+- Use semantic IDs and naming (category-gamename-v1)
+- Make game fully responsive with mobile support (detect window.innerWidth < 700)
+- Scale card sizes: 120×168px desktop, 80×112px mobile
+- Scale all fonts proportionally on mobile (0.7rem base, 0.85rem ranks, etc.)
+- Add resize listener in setup(), remove in cleanup()
+- Make UI responsive and clear
+- Add win detection and celebration
+- Include restart functionality
+
+JOKER HANDLING:
+- Four jokers exist: hearts-joker, diamonds-joker, clubs-joker, spades-joker
+- Each joker has rank: "Joker" and a suit assignment
+- Default behavior excludes jokers (52 cards)
+- To include jokers: set "includeJokers": true in config AND call 
+  this.engine.createCardArray(this.deck, true) in setup()
+
+OUTPUT FORMAT:
+Provide three code blocks:
+1. Complete JSON config with filename comment
+2. Complete JavaScript logic with filename comment
+3. Manifest entry to add
+
+Ensure all code is production-ready, tested, and follows the exact patterns 
+shown in the Game Development Guide.</pre>
+            </div>
+
+            <h4>Example Usage</h4>
+            <div class="code-block">
+<pre>GAME REQUEST:
+Create a "Concentration" memory game where:
+- 20 cards are laid out face-down in a 4x5 grid
+- Player flips two cards at a time
+- If they match (same rank), they stay face-up
+- If they don't match, they flip back face-down after 1 second
+- Game tracks moves and time
+- Win by matching all 10 pairs
+- Difficulty: Easy
+- Category: memory
+- No jokers needed
+- Must be mobile responsive</pre>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 10: COMMON ISSUES -->
+        <!-- ============================================ -->
+
+        <h2>⚠️ Part 10: Troubleshooting Common Issues</h2>
+
+        <h3>Game Not Appearing in List</h3>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>Game doesn't show in Play Games tab</td>
+                <td>Check manifest.json syntax, ensure game entry is properly added with comma separation</td>
+            </tr>
+            <tr>
+                <td>Manifest file not loading</td>
+                <td>Verify path: <span class="inline-code">https://martinlh77.github.io/AI-apps/cardgames/manifest.json</span></td>
+            </tr>
+            <tr>
+                <td>Thumbnail not showing</td>
+                <td>Check image path in manifest, ensure file exists, or remove thumbnail line</td>
+            </tr>
+        </table>
+
+        <h3>Game Loading Errors</h3>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>"Game module not loaded correctly"</td>
+                <td>Check that gameId in manifest matches window.GameModules registration</td>
+            </tr>
+            <tr>
+                <td>"Failed to load game config"</td>
+                <td>Verify configPath in manifest points to correct JSON file</td>
+            </tr>
+            <tr>
+                <td>JavaScript file not loading</td>
+                <td>Check modulePath in manifest, ensure file exists on GitHub</td>
+            </tr>
+            <tr>
+                <td>Class not found error</td>
+                <td>Verify class name matches in JS file and window.GameModules registration</td>
+            </tr>
+        </table>
+
+        <h3>Gameplay Issues</h3>
+        <table>
+            <tr>
+                <th>Problem</th>
+                <th>Solution</th>
+            </tr>
+            <tr>
+                <td>Cards not rendering</td>
+                <td>Check that you're using <span class="inline-code">this.engine.renderCard()</span> correctly</td>
+            </tr>
+            <tr>
+                <td>Wrong number of cards (52 vs 56)</td>
+                <td>If config has includeJokers: true, must call <span class="inline-code">createCardArray(this.deck, true)</span></td>
+            </tr>
+            <tr>
+                <td>Jokers not appearing</td>
+                <td>Ensure config has "includeJokers": true AND createCardArray receives true parameter</td>
+            </tr>
+            <tr>
+                <td>Clicks not responding</td>
+                <td>Ensure onclick handlers are attached to elements after rendering</td>
+            </tr>
+            <tr>
+                <td>Stats not updating</td>
+                <td>Call <span class="inline-code">this.updateStats()</span> after state changes</td>
+            </tr>
+            <tr>
+                <td>Game doesn't restart</td>
+                <td>Make sure setup() fully resets all state properties</td>
+            </tr>
+        </table>
+
+        <!-- ============================================ -->
+        <!-- SECTION 11: BEST PRACTICES -->
+        <!-- ============================================ -->
+
+        <h2>💡 Part 11: Best Practices</h2>
+
+        <div class="important-box">
+            <h3>Code Quality</h3>
+            <ul>
+                <li><strong>Clear variable names:</strong> Use descriptive names like <span class="inline-code">matchedPairs</span> not <span class="inline-code">mp</span></li>
+                <li><strong>Comments:</strong> Add comments explaining complex logic</li>
+                <li><strong>Consistent formatting:</strong> Use proper indentation (2 spaces)</li>
+                <li><strong>Error handling:</strong> Check for edge cases (empty decks, no cards left)</li>
+                <li><strong>State management:</strong> Keep all game state in <span class="inline-code">this.state</span></li>
+            </ul>
+        </div>
+
+        <div class="info-box">
+            <h3>User Experience</h3>
+            <ul>
+                <li><strong>Visual feedback:</strong> Highlight selected cards, show animations</li>
+                <li><strong>Clear instructions:</strong> Write instructions players can actually follow</li>
+                <li><strong>Responsive layout:</strong> Test on different screen sizes</li>
+                <li><strong>Meaningful stats:</strong> Show relevant information (moves, time, score)</li>
+                <li><strong>Win celebration:</strong> Call <span class="inline-code">this.engine.celebrateWin()</span></li>
+            </ul>
+        </div>
+
+        <div class="warning-box">
+            <h3>Performance</h3>
+            <ul>
+                <li><strong>Don't render unnecessarily:</strong> Only call render() when state changes</li>
+                <li><strong>Clean up elements:</strong> Clear old elements before adding new ones</li>
+                <li><strong>Optimize loops:</strong> Don't loop through entire deck every frame</li>
+                <li><strong>Use CSS animations:</strong> Let browser handle animations, not JS</li>
+            </ul>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 12: QUICK REFERENCE -->
+        <!-- ============================================ -->
+
+        <h2>📚 Part 12: Quick Reference Card</h2>
+
+        <table>
+            <tr>
+                <th colspan="2" style="background: rgba(255, 215, 0, 0.3);">File Structure</th>
+            </tr>
+            <tr>
+                <td>Config JSON</td>
+                <td><span class="inline-code">cardgames/[category]/[name].json</span></td>
+            </tr>
+            <tr>
+                <td>Logic JS</td>
+                <td><span class="inline-code">cardgames/[category]/[name].js</span></td>
+            </tr>
+            <tr>
+                <td>Game ID Format</td>
+                <td><span class="inline-code">[category]-[name]-v[version]</span></td>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <th colspan="2" style="background: rgba(0, 255, 204, 0.3);">Engine API</th>
+            </tr>
+            <tr>
+                <td>Create cards (no jokers)</td>
+                <td><span class="inline-code">this.engine.createCardArray(this.deck)</span></td>
+            </tr>
+            <tr>
+                <td>Create cards (with jokers)</td>
+                <td><span class="inline-code">this.engine.createCardArray(this.deck, true)</span></td>
+            </tr>
+            <tr>
+                <td>Shuffle</td>
+                <td><span class="inline-code">this.engine.shuffleDeck(cards)</span></td>
+            </tr>
+            <tr>
+                <td>Render card</td>
+                <td><span class="inline-code">this.engine.renderCard(card, faceUp)</span></td>
+            </tr>
+            <tr>
+                <td>Clear board</td>
+                <td><span class="inline-code">this.engine.clearGameBoard()</span></td>
+            </tr>
+            <tr>
+                <td>Win animation</td>
+                <td><span class="inline-code">this.engine.celebrateWin()</span></td>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <th colspan="2" style="background: rgba(135, 206, 235, 0.3);">Card Object</th>
+            </tr>
+            <tr>
+                <td>Suit</td>
+                <td><span class="inline-code">card.suit</span> → "hearts", "diamonds", "clubs", "spades"</td>
+            </tr>
+            <tr>
+                <td>Rank</td>
+                <td><span class="inline-code">card.rank</span> → "A", "2"-"10", "J", "Q", "K", "Joker"</td>
+            </tr>
+            <tr>
+                <td>Color</td>
+                <td><span class="inline-code">card.color</span> → "red" or "black"</td>
+            </tr>
+            <tr>
+                <td>Image</td>
+                <td><span class="inline-code">card.image</span> → URL to card face</td>
+            </tr>
+            <tr>
+                <td>Emoji</td>
+                <td><span class="inline-code">card.suitEmoji</span> → "♥", "♦", "♣", "♠"</td>
+            </tr>
+            <tr>
+                <td>Check Joker</td>
+                <td><span class="inline-code">card.rank === 'Joker'</span> → true/false</td>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <th colspan="2" style="background: rgba(138, 43, 226, 0.3);">Mobile Responsiveness</th>
+            </tr>
+            <tr>
+                <td>Breakpoint</td>
+                <td><span class="inline-code">window.innerWidth < 700</span></td>
+            </tr>
+            <tr>
+                <td>Desktop Cards</td>
+                <td>120×168px</td>
+            </tr>
+            <tr>
+                <td>Mobile Cards</td>
+                <td>80×112px</td>
+            </tr>
+            <tr>
+                <td>Base Font (mobile)</td>
+                <td>0.7rem</td>
+            </tr>
+            <tr>
+                <td>Rank Font (mobile)</td>
+                <td>0.85rem</td>
+            </tr>
+            <tr>
+                <td>Resize Listener</td>
+                <td>Add in setup(), remove in cleanup()</td>
+            </tr>
+        </table>
+
+        <!-- ============================================ -->
+        <!-- FOOTER -->
+        <!-- ============================================ -->
+
+        <div style="margin-top: 60px; padding-top: 30px; border-top: 2px solid #444; text-align: center; color: #888;">
+            <p><strong>Card Game Engine</strong> - Game Development Guide v1.2</p>
+            <p>Version 1.2 (with Mobile Responsiveness) | Last Updated: January 2025</p>
+            <p style="margin-top: 20px;">
+                <a href="https://github.com/martinlh77/AI-apps" target="_blank">GitHub Repository</a> | 
+                <a href="https://martinlh77.github.io/AI-apps/CardGameEngine_v1.7.html" target="_blank">Card Game Engine</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 0.9rem;">
+                🎮 Happy Game Development! 🎮
+            </p>
+        </div>
+    </div>
+</body>
+</html>
