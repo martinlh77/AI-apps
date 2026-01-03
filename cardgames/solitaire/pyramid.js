@@ -82,6 +82,34 @@ class PyramidSolitaire {
     }
   }
   
+  scaleCardElement(cardElement, isMobile) {
+    // Apply consistent scaling to card content
+    if (isMobile) {
+      cardElement.style.fontSize = '0.65rem';
+      
+      const cardFront = cardElement.querySelector('.card-front');
+      const cardBack = cardElement.querySelector('.card-back');
+      
+      if (cardFront) {
+        cardFront.style.fontSize = '0.65rem';
+        // Scale rank display
+        const rankDisplays = cardFront.querySelectorAll('.card-rank');
+        rankDisplays.forEach(rank => {
+          rank.style.fontSize = '0.85rem';
+        });
+        // Scale suit emoji
+        const suitCenter = cardFront.querySelector('.card-suit-center');
+        if (suitCenter) {
+          suitCenter.style.fontSize = '1.5rem';
+        }
+      }
+      
+      if (cardBack) {
+        cardBack.style.fontSize = '0.65rem';
+      }
+    }
+  }
+  
   render() {
     const gameBoard = document.getElementById('game-board');
     gameBoard.innerHTML = '';
@@ -92,35 +120,44 @@ class PyramidSolitaire {
     gameBoard.style.padding = '20px';
     gameBoard.style.minHeight = '600px';
     
+    // Determine if we're on mobile
+    const isMobile = window.innerWidth < 700;
+    const cardWidth = isMobile ? '70px' : '100px';
+    const cardHeight = isMobile ? '98px' : '140px';
+    const cardGap = isMobile ? '5px' : '10px';
+    
     // Render pyramid
     const pyramidContainer = document.createElement('div');
     pyramidContainer.style.display = 'flex';
     pyramidContainer.style.flexDirection = 'column';
     pyramidContainer.style.alignItems = 'center';
-    pyramidContainer.style.gap = '10px';
+    pyramidContainer.style.gap = cardGap;
     
     this.state.pyramid.forEach((row, rowIndex) => {
       const rowDiv = document.createElement('div');
       rowDiv.style.display = 'flex';
-      rowDiv.style.gap = '10px';
+      rowDiv.style.gap = cardGap;
       
       row.forEach((card, colIndex) => {
         if (!card) {
           const emptySpace = document.createElement('div');
-          emptySpace.style.width = '100px';
-          emptySpace.style.height = '140px';
+          emptySpace.style.width = cardWidth;
+          emptySpace.style.height = cardHeight;
           emptySpace.style.visibility = 'hidden';
           rowDiv.appendChild(emptySpace);
           return;
         }
         
         const cardElement = this.engine.renderCard(card, true);
-        cardElement.style.width = '100px';
-        cardElement.style.height = '140px';
+        cardElement.style.width = cardWidth;
+        cardElement.style.height = cardHeight;
         cardElement.style.opacity = card.covered ? '0.5' : '1';
         cardElement.style.cursor = card.covered ? 'not-allowed' : 'pointer';
         cardElement.style.position = 'relative';
         cardElement.style.transition = 'all 0.2s';
+        
+        // Apply responsive scaling
+        this.scaleCardElement(cardElement, isMobile);
         
         // Highlight if selected
         if (this.state.selectedLocation?.type === 'pyramid' &&
@@ -160,13 +197,13 @@ class PyramidSolitaire {
     // Render stock and waste
     const bottomArea = document.createElement('div');
     bottomArea.style.display = 'flex';
-    bottomArea.style.gap = '30px';
+    bottomArea.style.gap = isMobile ? '20px' : '30px';
     bottomArea.style.alignItems = 'center';
     
     // Stock pile
     const stockDiv = document.createElement('div');
-    stockDiv.style.width = '100px';
-    stockDiv.style.height = '140px';
+    stockDiv.style.width = cardWidth;
+    stockDiv.style.height = cardHeight;
     stockDiv.style.cursor = this.state.stock.length > 0 ? 'pointer' : 'default';
     stockDiv.style.position = 'relative';
     
@@ -175,6 +212,10 @@ class PyramidSolitaire {
       stockCard.style.width = '100%';
       stockCard.style.height = '100%';
       stockCard.onclick = () => this.drawFromStock();
+      
+      // Apply responsive scaling
+      this.scaleCardElement(stockCard, isMobile);
+      
       stockDiv.appendChild(stockCard);
       
       // Stock counter
@@ -185,22 +226,22 @@ class PyramidSolitaire {
       counter.style.right = '5px';
       counter.style.background = 'rgba(0,0,0,0.8)';
       counter.style.color = '#00ffcc';
-      counter.style.padding = '5px 10px';
+      counter.style.padding = isMobile ? '3px 7px' : '5px 10px';
       counter.style.borderRadius = '50%';
-      counter.style.fontSize = '0.9rem';
+      counter.style.fontSize = isMobile ? '0.75rem' : '0.9rem';
       counter.style.fontWeight = 'bold';
       counter.style.border = '2px solid #00ffcc';
       stockDiv.appendChild(counter);
     } else {
-      stockDiv.innerHTML = '<div style="width:100%;height:100%;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;">Empty</div>';
+      stockDiv.innerHTML = `<div style="width:100%;height:100%;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:${isMobile ? '0.7rem' : '0.9rem'};">Empty</div>`;
     }
     
     bottomArea.appendChild(stockDiv);
     
     // Waste pile
     const wasteDiv = document.createElement('div');
-    wasteDiv.style.width = '100px';
-    wasteDiv.style.height = '140px';
+    wasteDiv.style.width = cardWidth;
+    wasteDiv.style.height = cardHeight;
     
     if (this.state.waste) {
       const wasteCard = this.engine.renderCard(this.state.waste, true);
@@ -209,6 +250,9 @@ class PyramidSolitaire {
       wasteCard.style.cursor = 'pointer';
       wasteCard.style.position = 'relative';
       wasteCard.style.transition = 'all 0.2s';
+      
+      // Apply responsive scaling
+      this.scaleCardElement(wasteCard, isMobile);
       
       if (this.state.selectedLocation?.type === 'waste') {
         wasteCard.style.border = '3px solid #00ffcc';
@@ -219,7 +263,7 @@ class PyramidSolitaire {
       wasteCard.onclick = () => this.handleWasteCardClick();
       wasteDiv.appendChild(wasteCard);
     } else {
-      wasteDiv.innerHTML = '<div style="width:100%;height:100%;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;">Waste</div>';
+      wasteDiv.innerHTML = `<div style="width:100%;height:100%;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:${isMobile ? '0.7rem' : '0.9rem'};">Waste</div>`;
     }
     
     bottomArea.appendChild(wasteDiv);
