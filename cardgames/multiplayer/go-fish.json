@@ -1,0 +1,107 @@
+{
+  "gameId": "multiplayer-go-fish-v1",
+  
+  "metadata": {
+    "name": "Go Fish",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Classic card matching game for 2-4 players. Ask opponents for cards to make sets of four.",
+    "category": "multiplayer",
+    "difficulty": "easy",
+    "estimatedPlayTime": "10-15 minutes",
+    "thumbnail": "cardgames/multiplayer/go-fish-thumb.png",
+    "tags": ["multiplayer", "matching", "casual", "family-friendly", "cpu-opponents"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 2,
+      "max": 4
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52,
+      "note": "Standard 52-card deck. Each rank has 4 cards (one per suit)."
+    }
+  },
+  
+  "instructions": {
+    "overview": "Collect sets of four matching cards (all four suits of the same rank). Ask other players for cards you need. If they don't have it, 'Go Fish' from the deck!",
+    "setup": [
+      "Choose number of players (2-4) and how many are CPU opponents",
+      "Each player is dealt 5 cards (2-3 players) or 4 cards (4 players)",
+      "Remaining cards form the draw pile (fishing pond)",
+      "Players examine their hands and any complete sets of 4 are placed down immediately"
+    ],
+    "gameplay": [
+      "On your turn, ask any opponent for a specific rank (e.g., 'Do you have any 7s?')",
+      "You must have at least one card of that rank in your hand to ask",
+      "If opponent has cards of that rank, they give you ALL of them",
+      "You can continue asking (same or different player/rank) as long as you get cards",
+      "If opponent doesn't have the rank, they say 'Go Fish!' and you draw from the pond",
+      "If you draw the rank you asked for, you get another turn",
+      "When you collect all 4 cards of a rank, place them down as a set (counts as 1 point)",
+      "Turn passes to next player when you don't get cards or pond is empty",
+      "CPU opponents use smart AI to remember which cards were asked for"
+    ],
+    "winning": "Game ends when all 13 sets are made. Player with the most sets wins!",
+    "examples": [
+      {
+        "title": "Successful Ask",
+        "description": "You have a 7 of Hearts. You ask CPU 1 for 7s. CPU 1 has 7 of Diamonds and 7 of Clubs and gives both to you.",
+        "cards": ["hearts-7", "diamonds-7", "clubs-7"]
+      },
+      {
+        "title": "Complete Set",
+        "description": "You now have all four 7s and place them down for 1 point.",
+        "cards": ["hearts-7", "diamonds-7", "clubs-7", "spades-7"]
+      },
+      {
+        "title": "Go Fish",
+        "description": "You ask for Queens but opponent has none. You draw from pond.",
+        "cards": ["hearts-queen"]
+      }
+    ]
+  },
+  
+  "ui": {
+    "layout": "multiplayer-hands",
+    "zones": [
+      {
+        "id": "player-hand",
+        "type": "hand",
+        "position": {"x": "center", "y": "bottom"}
+      },
+      {
+        "id": "opponent-hands",
+        "type": "grid",
+        "position": {"x": "center", "y": "top"}
+      },
+      {
+        "id": "draw-pile",
+        "type": "pile",
+        "position": {"x": "center", "y": "center"}
+      },
+      {
+        "id": "sets-area",
+        "type": "grid",
+        "position": {"x": "left", "y": "center"}
+      }
+    ],
+    "animations": {
+      "dealSpeed": 200,
+      "flipSpeed": 300,
+      "celebrationOnWin": true
+    }
+  },
+  
+  "gameLogicModule": "cardgames/multiplayer/go-fish.js"
+}
