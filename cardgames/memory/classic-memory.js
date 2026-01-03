@@ -20,7 +20,7 @@ class ClassicMemory {
   
   setup() {
     // Create card array and select 10 random cards
-    const allCards = this.engine.createCardArray(this.deck, false); // Explicitly set to false
+    const allCards = this.engine.createCardArray(this.deck, false);
     
     // Verify we have enough cards
     if (!allCards || allCards.length < 10) {
@@ -67,19 +67,24 @@ class ClassicMemory {
     const gameBoard = document.getElementById('game-board');
     gameBoard.innerHTML = '';
     gameBoard.style.display = 'grid';
-    gameBoard.style.gridTemplateColumns = 'repeat(5, 120px)';
-    gameBoard.style.gridTemplateRows = 'repeat(4, 168px)';
-    gameBoard.style.gap = '15px';
-    gameBoard.style.justifyContent = 'center';
-    gameBoard.style.alignContent = 'center';
-    gameBoard.style.minHeight = '600px';
     
-    // Add responsive design for mobile
-    if (window.innerWidth < 700) {
+    // Determine if we're on mobile
+    const isMobile = window.innerWidth < 700;
+    
+    if (isMobile) {
       gameBoard.style.gridTemplateColumns = 'repeat(4, 80px)';
       gameBoard.style.gridTemplateRows = 'repeat(5, 112px)';
       gameBoard.style.gap = '10px';
+    } else {
+      gameBoard.style.gridTemplateColumns = 'repeat(5, 120px)';
+      gameBoard.style.gridTemplateRows = 'repeat(4, 168px)';
+      gameBoard.style.gap = '15px';
     }
+    
+    gameBoard.style.justifyContent = 'center';
+    gameBoard.style.alignContent = 'center';
+    gameBoard.style.minHeight = '600px';
+    gameBoard.style.padding = '20px';
     
     if (this.state.grid.length === 0) {
       const errorMsg = document.createElement('div');
@@ -96,17 +101,40 @@ class ClassicMemory {
       const isMatched = this.state.matchedPairs.includes(index);
       
       const cardElement = this.engine.renderCard(card, isFlipped || isMatched);
-      cardElement.style.position = 'relative';
       
-      // Responsive card sizing
-      if (window.innerWidth < 700) {
+      // Apply responsive sizing to the entire card
+      if (isMobile) {
         cardElement.style.width = '80px';
         cardElement.style.height = '112px';
+        cardElement.style.fontSize = '0.7rem'; // Scale down text
+        
+        // Scale down the card content
+        const cardFront = cardElement.querySelector('.card-front');
+        const cardBack = cardElement.querySelector('.card-back');
+        
+        if (cardFront) {
+          cardFront.style.fontSize = '0.7rem';
+          // Scale rank display
+          const rankDisplays = cardFront.querySelectorAll('.card-rank');
+          rankDisplays.forEach(rank => {
+            rank.style.fontSize = '1rem';
+          });
+          // Scale suit emoji
+          const suitCenter = cardFront.querySelector('.card-suit-center');
+          if (suitCenter) {
+            suitCenter.style.fontSize = '2rem';
+          }
+        }
+        
+        if (cardBack) {
+          cardBack.style.fontSize = '0.7rem';
+        }
       } else {
         cardElement.style.width = '120px';
         cardElement.style.height = '168px';
       }
       
+      cardElement.style.position = 'relative';
       cardElement.style.cursor = (isMatched || this.state.isProcessing) ? 'default' : 'pointer';
       cardElement.style.opacity = isMatched ? '0.5' : '1';
       cardElement.dataset.index = index;
