@@ -20,16 +20,35 @@ class ClassicMemory {
   
   setup() {
     // Create card array and select 10 random cards
-    const allCards = this.engine.createCardArray(this.deck);
+    const allCards = this.engine.createCardArray(this.deck, false); // Explicitly set to false
+    
+    // Verify we have enough cards
+    if (!allCards || allCards.length < 10) {
+      console.error('Not enough cards in deck:', allCards?.length || 0);
+      return;
+    }
+    
     const shuffled = this.engine.shuffleDeck(allCards);
     const selected = shuffled.slice(0, 10);
     
+    // Verify we got 10 cards
+    if (selected.length !== 10) {
+      console.error('Failed to select 10 cards, got:', selected.length);
+      return;
+    }
+    
     // Create pairs by duplicating
     const pairs = [];
-    selected.forEach(card => {
-      pairs.push({...card, id: card.id + '-a'});
-      pairs.push({...card, id: card.id + '-b'});
+    selected.forEach((card, index) => {
+      pairs.push({...card, id: `${card.suit}-${card.rank}-a-${index}`});
+      pairs.push({...card, id: `${card.suit}-${card.rank}-b-${index}`});
     });
+    
+    // Verify we have 20 cards
+    if (pairs.length !== 20) {
+      console.error('Failed to create pairs, got:', pairs.length);
+      return;
+    }
     
     // Shuffle the pairs
     this.state.grid = this.engine.shuffleDeck(pairs);
@@ -55,14 +74,39 @@ class ClassicMemory {
     gameBoard.style.alignContent = 'center';
     gameBoard.style.minHeight = '600px';
     
+    // Add responsive design for mobile
+    if (window.innerWidth < 700) {
+      gameBoard.style.gridTemplateColumns = 'repeat(4, 80px)';
+      gameBoard.style.gridTemplateRows = 'repeat(5, 112px)';
+      gameBoard.style.gap = '10px';
+    }
+    
+    if (this.state.grid.length === 0) {
+      const errorMsg = document.createElement('div');
+      errorMsg.textContent = 'Error: No cards to display. Please restart the game.';
+      errorMsg.style.color = '#ff6b6b';
+      errorMsg.style.padding = '20px';
+      errorMsg.style.textAlign = 'center';
+      gameBoard.appendChild(errorMsg);
+      return;
+    }
+    
     this.state.grid.forEach((card, index) => {
       const isFlipped = this.state.flippedIndices.includes(index);
       const isMatched = this.state.matchedPairs.includes(index);
       
       const cardElement = this.engine.renderCard(card, isFlipped || isMatched);
       cardElement.style.position = 'relative';
-      cardElement.style.width = '120px';
-      cardElement.style.height = '168px';
+      
+      // Responsive card sizing
+      if (window.innerWidth < 700) {
+        cardElement.style.width = '80px';
+        cardElement.style.height = '112px';
+      } else {
+        cardElement.style.width = '120px';
+        cardElement.style.height = '168px';
+      }
+      
       cardElement.style.cursor = (isMatched || this.state.isProcessing) ? 'default' : 'pointer';
       cardElement.style.opacity = isMatched ? '0.5' : '1';
       cardElement.dataset.index = index;
