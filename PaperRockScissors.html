@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emoji Roshambo</title>
+    <title>Emoji Paper Rock Scissors</title>
     <style>
         :root {
             --primary: #6366f1;
@@ -23,6 +23,7 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
+            overflow: hidden;
             touch-action: manipulation;
         }
 
@@ -32,25 +33,27 @@
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             text-align: center;
-            width: 90%;
+            width: 95%;
             max-width: 500px;
+            z-index: 1;
         }
 
-        h1 { margin-bottom: 0.5rem; color: var(--primary); }
-        
         .scoreboard {
-            display: flex;
-            justify-content: space-around;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
             margin-bottom: 2rem;
-            font-size: 1.2rem;
+            font-size: 0.9rem;
             font-weight: bold;
             background: rgba(255,255,255,0.05);
-            padding: 10px;
+            padding: 15px 10px;
             border-radius: 10px;
         }
 
+        .score-box { display: flex; flex-direction: column; }
+        .score-val { font-size: 1.4rem; color: var(--primary); margin-top: 5px; }
+
         .game-area { display: none; }
-        .menu-area { display: block; }
 
         .btn-group {
             display: grid;
@@ -63,35 +66,25 @@
             border: none;
             border-radius: 12px;
             padding: 15px;
-            font-size: 1rem;
             cursor: pointer;
-            transition: transform 0.1s, background 0.2s;
             font-weight: bold;
+            transition: transform 0.1s;
         }
 
         .choice-btn {
             background: #334155;
             font-size: 3rem;
-            padding: 20px 10px;
         }
 
-        .choice-btn:active { transform: scale(0.95); }
-        .choice-btn:hover { background: #475569; }
+        .choice-btn:active { transform: scale(0.9); }
 
         .menu-btn {
             background: var(--primary);
             color: white;
             width: 100%;
-            margin-bottom: 10px;
             padding: 20px;
             font-size: 1.2rem;
-        }
-
-        .reset-btn {
-            background: #ef4444;
-            color: white;
-            margin-top: 2rem;
-            padding: 10px 20px;
+            margin-bottom: 10px;
         }
 
         #status-text {
@@ -104,49 +97,92 @@
         .reveal-zone {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            font-size: 4rem;
-            margin: 1rem 0;
-            height: 6rem;
+            gap: 40px;
+            font-size: 5rem;
+            height: 8rem;
+            align-items: center;
         }
 
-        .hidden { display: none; }
+        /* SHAKING ANIMATION */
+        @keyframes shakeP1 {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-30px) rotate(-15deg); }
+        }
+        @keyframes shakeP2 {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            50% { transform: translateY(-30px) rotate(15deg); }
+        }
 
-        .player-label {
-            font-size: 0.8rem;
+        .shaking-p1 { animation: shakeP1 0.5s ease-in-out 3; }
+        .shaking-p2 { animation: shakeP2 0.5s ease-in-out 3; }
+
+        /* FULL SCREEN OVERLAY */
+        #video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.98);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #video-overlay img {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.4);
+        }
+
+        .cutscene-title {
+            color: white;
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            font-weight: bold;
             text-transform: uppercase;
-            color: #94a3b8;
-            margin-top: 5px;
+            text-align: center;
+            letter-spacing: 2px;
         }
+
+        .reset-btn { background: #ef4444; color: white; margin-top: 2rem; padding: 10px 20px; }
     </style>
 </head>
 <body>
 
+    <!-- OVERLAY FOR CUTSCENES -->
+    <div id="video-overlay">
+        <div class="cutscene-title" id="winner-banner">BATTLE!</div>
+        <img id="gif-display" src="" alt="Battle Scene">
+    </div>
+
     <div class="container">
         <h1>✊✋✌️</h1>
         
-        <!-- MAIN MENU -->
         <div id="menu" class="menu-area">
             <p>Select Game Mode:</p>
             <button class="menu-btn" onclick="startGame('cpu')">Player vs CPU</button>
             <button class="menu-btn" onclick="startGame('pvp')">Local 2 Players</button>
         </div>
 
-        <!-- GAME SCREEN -->
         <div id="game" class="game-area">
             <div class="scoreboard">
-                <div>P1: <span id="p1-score">0</span></div>
-                <div id="p2-label">CPU: <span id="p2-score">0</span></div>
+                <div class="score-box">P1 <span id="p1-score" class="score-val">0</span></div>
+                <div class="score-box">DRAWS <span id="draw-score" class="score-val" style="color:#94a3b8">0</span></div>
+                <div class="score-box" id="p2-label">CPU <span id="p2-score" class="score-val">0</span></div>
             </div>
 
-            <h2 id="turn-indicator">Player 1, Choose!</h2>
+            <h2 id="turn-indicator">Ready?</h2>
             
             <div class="reveal-zone">
-                <div id="p1-display">?</div>
-                <div id="p2-display">?</div>
+                <div id="p1-display">❓</div>
+                <div id="p2-display">❓</div>
             </div>
 
-            <div id="status-text">Ready?</div>
+            <div id="status-text">Choose your move!</div>
 
             <div class="btn-group" id="controls">
                 <button class="choice-btn" onclick="makeChoice('rock')">✊</button>
@@ -162,103 +198,148 @@
         let gameMode = 'cpu';
         let p1Score = 0;
         let p2Score = 0;
+        let drawCount = 0;
         let p1Choice = null;
         let p2Choice = null;
         let isProcessing = false;
 
         const emojis = {
-            rock: '✊',
-            paper: '✋',
-            scissors: '✌️',
-            hidden: '❓'
+            rock: '✊', paper: '✋', scissors: '✌️',
+            fist1: '🤜', fist2: '🤛'
+        };
+
+        const winGifs = {
+            'paper_rock': 'https://files.catbox.moe/1dnp7r.gif',
+            'scissors_paper': 'https://files.catbox.moe/r302p4.gif',
+            'rock_scissors': 'https://files.catbox.moe/jd6b2n.gif'
+        };
+
+        const drawLinks = {
+            rock: "https://files.catbox.moe/c1i2k7.jpg",
+            scissors: "https://files.catbox.moe/banxp5.jpg",
+            paper: [
+                "https://files.catbox.moe/cifvs3.jpg",
+                "https://files.catbox.moe/l3k63z.jpg",
+                "https://files.catbox.moe/2h0jhh.jpg"
+            ]
         };
 
         function startGame(mode) {
             gameMode = mode;
-            p1Score = 0;
-            p2Score = 0;
-            document.getElementById('p1-score').innerText = '0';
-            document.getElementById('p2-score').innerText = '0';
-            document.getElementById('p2-label').innerHTML = mode === 'cpu' ? 'CPU: <span id="p2-score">0</span>' : 'P2: <span id="p2-score">0</span>';
-            
+            p1Score = 0; p2Score = 0; drawCount = 0;
+            updateScoreDisplay();
+            document.getElementById('p2-label').innerHTML = mode === 'cpu' ? 'CPU <span id="p2-score" class="score-val">0</span>' : 'P2 <span id="p2-score" class="score-val">0</span>';
             document.getElementById('menu').style.display = 'none';
             document.getElementById('game').style.display = 'block';
             resetRound();
         }
 
         function resetRound() {
-            p1Choice = null;
-            p2Choice = null;
-            isProcessing = false;
-            document.getElementById('p1-display').innerText = '?';
-            document.getElementById('p2-display').innerText = '?';
+            p1Choice = null; p2Choice = null; isProcessing = false;
+            document.getElementById('p1-display').innerText = '❓';
+            document.getElementById('p2-display').innerText = '❓';
+            document.getElementById('p1-display').className = '';
+            document.getElementById('p2-display').className = '';
             document.getElementById('status-text').innerText = "Make your move!";
             document.getElementById('turn-indicator').innerText = "Player 1's Turn";
-            document.getElementById('controls').classList.remove('hidden');
+            document.getElementById('controls').style.display = 'grid';
         }
 
         function makeChoice(choice) {
             if (isProcessing) return;
-
             if (gameMode === 'cpu') {
                 p1Choice = choice;
-                const choices = ['rock', 'paper', 'scissors'];
-                p2Choice = choices[Math.floor(Math.random() * 3)];
-                revealResults();
+                p2Choice = ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)];
+                playSequence();
             } else {
-                // PvP Logic
                 if (!p1Choice) {
                     p1Choice = choice;
-                    document.getElementById('status-text').innerText = "P1 Locked In!";
-                    document.getElementById('turn-indicator').innerText = "Player 2's Turn (Pass the phone)";
-                    // Briefly hide icons so P2 doesn't see P1's choice
                     document.getElementById('p1-display').innerText = '✅';
+                    document.getElementById('status-text').innerText = "P1 Locked!";
+                    document.getElementById('turn-indicator').innerText = "Player 2's Turn";
                 } else {
                     p2Choice = choice;
-                    revealResults();
+                    playSequence();
                 }
             }
         }
 
-        function revealResults() {
+        async function playSequence() {
             isProcessing = true;
-            document.getElementById('controls').classList.add('hidden');
-            document.getElementById('turn-indicator').innerText = "REVEAL!";
+            document.getElementById('controls').style.display = 'none';
             
-            document.getElementById('p1-display').innerText = emojis[p1Choice];
-            document.getElementById('p2-display').innerText = emojis[p2Choice];
+            // 1. SHAKE PHASE (1.5s)
+            const p1Disp = document.getElementById('p1-display');
+            const p2Disp = document.getElementById('p2-display');
+            p1Disp.innerText = emojis.fist1; p2Disp.innerText = emojis.fist2;
+            p1Disp.classList.add('shaking-p1'); p2Disp.classList.add('shaking-p2');
+            document.getElementById('turn-indicator').innerText = "ROCK... PAPER... SCISSORS...";
 
+            await new Promise(r => setTimeout(r, 1500));
+
+            // 2. REVEAL PHASE (Visible for 1.2s before cutscene)
+            p1Disp.classList.remove('shaking-p1'); p2Disp.classList.remove('shaking-p2');
+            p1Disp.innerText = emojis[p1Choice]; p2Disp.innerText = emojis[p2Choice];
+            
             const result = determineWinner(p1Choice, p2Choice);
-            
-            if (result === 'draw') {
-                document.getElementById('status-text').innerText = "It's a Draw! 🤝";
-            } else if (result === 'p1') {
-                p1Score++;
-                document.getElementById('status-text').innerText = "Player 1 Wins! 🎉";
-                document.getElementById('p1-score').innerText = p1Score;
-            } else {
-                p2Score++;
-                document.getElementById('status-text').innerText = (gameMode === 'cpu' ? "CPU Wins! 🤖" : "Player 2 Wins! 🎉");
-                document.getElementById('p2-score').innerText = p2Score;
-            }
+            if(result === 'draw') document.getElementById('status-text').innerText = "TIE!";
+            else document.getElementById('status-text').innerText = result === 'p1' ? "P1 WINS!" : "P2 WINS!";
 
-            setTimeout(() => {
-                if (gameMode !== 'menu') {
-                    resetRound();
+            // Mandatory delay to see the result emojis
+            await new Promise(r => setTimeout(r, 1200));
+
+            // 3. CUTSCENE PHASE
+            await showCutscene(result);
+
+            // 4. SCORE & RESET
+            updateScore(result);
+            resetRound();
+        }
+
+        function showCutscene(result) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('video-overlay');
+                const img = document.getElementById('gif-display');
+                const banner = document.getElementById('winner-banner');
+                
+                let src = "";
+                if (result === 'draw') {
+                    banner.innerText = "IT'S A DRAW!";
+                    if (p1Choice === 'rock') src = drawLinks.rock;
+                    else if (p1Choice === 'scissors') src = drawLinks.scissors;
+                    else src = drawLinks.paper[Math.floor(Math.random() * 3)];
+                } else {
+                    banner.innerText = result === 'p1' ? "PLAYER 1 WINS!" : (gameMode === 'cpu' ? "CPU WINS!" : "PLAYER 2 WINS!");
+                    let key = result === 'p1' ? `${p1Choice}_${p2Choice}` : `${p2Choice}_${p1Choice}`;
+                    src = winGifs[key];
                 }
-            }, 2000);
+
+                img.src = src + (src.includes('?') ? "&" : "?") + "t=" + new Date().getTime();
+                overlay.style.display = 'flex';
+
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    resolve();
+                }, 3500);
+            });
         }
 
         function determineWinner(c1, c2) {
             if (c1 === c2) return 'draw';
-            if (
-                (c1 === 'rock' && c2 === 'scissors') ||
-                (c1 === 'paper' && c2 === 'rock') ||
-                (c1 === 'scissors' && c2 === 'paper')
-            ) {
-                return 'p1';
-            }
-            return 'p2';
+            return ((c1 === 'rock' && c2 === 'scissors') || (c1 === 'paper' && c2 === 'rock') || (c1 === 'scissors' && c2 === 'paper')) ? 'p1' : 'p2';
+        }
+
+        function updateScore(winner) {
+            if (winner === 'p1') p1Score++;
+            else if (winner === 'p2') p2Score++;
+            else drawCount++;
+            updateScoreDisplay();
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('p1-score').innerText = p1Score;
+            document.getElementById('p2-score').innerText = p2Score;
+            document.getElementById('draw-score').innerText = drawCount;
         }
 
         function resetGame() {
