@@ -69,7 +69,8 @@ class PyramidSolitaire {
         const leftChild = this.state.pyramid[row + 1]?.[col];
         const rightChild = this.state.pyramid[row + 1]?.[col + 1];
         
-        card.covered = !!(leftChild || rightChild);
+        // Card is covered if BOTH children exist
+        card.covered = !!(leftChild && rightChild);
       }
     }
     
@@ -89,6 +90,7 @@ class PyramidSolitaire {
     gameBoard.style.alignItems = 'center';
     gameBoard.style.gap = '30px';
     gameBoard.style.padding = '20px';
+    gameBoard.style.minHeight = '600px';
     
     // Render pyramid
     const pyramidContainer = document.createElement('div');
@@ -107,6 +109,7 @@ class PyramidSolitaire {
           const emptySpace = document.createElement('div');
           emptySpace.style.width = '100px';
           emptySpace.style.height = '140px';
+          emptySpace.style.visibility = 'hidden';
           rowDiv.appendChild(emptySpace);
           return;
         }
@@ -114,19 +117,36 @@ class PyramidSolitaire {
         const cardElement = this.engine.renderCard(card, true);
         cardElement.style.width = '100px';
         cardElement.style.height = '140px';
-        cardElement.style.opacity = card.covered ? '0.6' : '1';
-        cardElement.style.cursor = card.covered ? 'default' : 'pointer';
+        cardElement.style.opacity = card.covered ? '0.5' : '1';
+        cardElement.style.cursor = card.covered ? 'not-allowed' : 'pointer';
         cardElement.style.position = 'relative';
+        cardElement.style.transition = 'all 0.2s';
         
+        // Highlight if selected
         if (this.state.selectedLocation?.type === 'pyramid' &&
             this.state.selectedLocation?.row === rowIndex &&
             this.state.selectedLocation?.col === colIndex) {
           cardElement.style.border = '3px solid #00ffcc';
           cardElement.style.transform = 'translateY(-10px)';
+          cardElement.style.boxShadow = '0 5px 20px rgba(0, 255, 204, 0.5)';
         }
         
         if (!card.covered) {
           cardElement.onclick = () => this.handlePyramidCardClick(rowIndex, colIndex);
+          
+          // Add hover effect
+          cardElement.onmouseenter = () => {
+            if (!card.covered) {
+              cardElement.style.transform = 'translateY(-5px)';
+            }
+          };
+          cardElement.onmouseleave = () => {
+            if (!(this.state.selectedLocation?.type === 'pyramid' &&
+                  this.state.selectedLocation?.row === rowIndex &&
+                  this.state.selectedLocation?.col === colIndex)) {
+              cardElement.style.transform = 'translateY(0)';
+            }
+          };
         }
         
         rowDiv.appendChild(cardElement);
@@ -163,12 +183,13 @@ class PyramidSolitaire {
       counter.style.position = 'absolute';
       counter.style.top = '5px';
       counter.style.right = '5px';
-      counter.style.background = 'rgba(0,0,0,0.7)';
+      counter.style.background = 'rgba(0,0,0,0.8)';
       counter.style.color = '#00ffcc';
       counter.style.padding = '5px 10px';
       counter.style.borderRadius = '50%';
       counter.style.fontSize = '0.9rem';
       counter.style.fontWeight = 'bold';
+      counter.style.border = '2px solid #00ffcc';
       stockDiv.appendChild(counter);
     } else {
       stockDiv.innerHTML = '<div style="width:100%;height:100%;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;">Empty</div>';
@@ -187,10 +208,12 @@ class PyramidSolitaire {
       wasteCard.style.height = '100%';
       wasteCard.style.cursor = 'pointer';
       wasteCard.style.position = 'relative';
+      wasteCard.style.transition = 'all 0.2s';
       
       if (this.state.selectedLocation?.type === 'waste') {
         wasteCard.style.border = '3px solid #00ffcc';
         wasteCard.style.transform = 'translateY(-10px)';
+        wasteCard.style.boxShadow = '0 5px 20px rgba(0, 255, 204, 0.5)';
       }
       
       wasteCard.onclick = () => this.handleWasteCardClick();
@@ -206,6 +229,21 @@ class PyramidSolitaire {
   handlePyramidCardClick(row, col) {
     const card = this.state.pyramid[row][col];
     if (!card || card.covered) return;
+    
+    const cardValue = this.cardValues[card.rank];
+    
+    // Special case: King can be removed alone
+    if (cardValue === 13) {
+      this.removeCard({ type: 'pyramid', row, col });
+      this.state.moves++;
+      this.state.score += 10;
+      this.state.selectedCard = null;
+      this.state.selectedLocation = null;
+      this.updateStats();
+      this.checkWinCondition();
+      this.render();
+      return;
+    }
     
     // If no card selected, select this one
     if (!this.state.selectedCard) {
@@ -232,6 +270,21 @@ class PyramidSolitaire {
   handleWasteCardClick() {
     if (!this.state.waste) return;
     
+    const cardValue = this.cardValues[this.state.waste.rank];
+    
+    // Special case: King can be removed alone
+    if (cardValue === 13) {
+      this.state.waste = null;
+      this.state.moves++;
+      this.state.score += 10;
+      this.state.selectedCard = null;
+      this.state.selectedLocation = null;
+      this.updateStats();
+      this.checkWinCondition();
+      this.render();
+      return;
+    }
+    
     // If no card selected, select waste
     if (!this.state.selectedCard) {
       this.state.selectedCard = this.state.waste;
@@ -257,21 +310,9 @@ class PyramidSolitaire {
     const value1 = this.cardValues[card1.rank];
     const value2 = this.cardValues[card2.rank];
     
-    // Check if King (can be removed alone)
-    if (value1 === 13 && !card2) {
-      this.removeCard(this.state.selectedLocation);
-      return;
-    }
-    
-    if (value2 === 13 && this.state.selectedCard) {
-      this.removeCard(location2);
-      this.state.selectedCard = null;
-      this.state.selectedLocation = null;
-      return;
-    }
-    
     // Check if sum is 13
     if (value1 + value2 === 13) {
+      // Valid match!
       this.removeCard(this.state.selectedLocation);
       this.removeCard(location2);
       this.state.moves++;
@@ -279,21 +320,14 @@ class PyramidSolitaire {
       this.state.selectedCard = null;
       this.state.selectedLocation = null;
       this.updateStats();
-      
-      // Check win
-      if (this.checkWin()) {
-        this.state.gameWon = true;
-        setTimeout(() => {
-          this.engine.celebrateWin();
-        }, 500);
-      }
+      this.checkWinCondition();
+      this.render();
     } else {
-      // Invalid match - just select the new card
+      // Invalid match - select the new card instead
       this.state.selectedCard = card2;
       this.state.selectedLocation = location2;
+      this.render();
     }
-    
-    this.render();
   }
   
   removeCard(location) {
@@ -310,20 +344,33 @@ class PyramidSolitaire {
     
     this.state.waste = this.state.stock.shift();
     this.state.waste.faceUp = true;
+    
+    // Clear any selection when drawing a new card
     this.state.selectedCard = null;
     this.state.selectedLocation = null;
     
     this.render();
   }
   
-  checkWin() {
+  checkWinCondition() {
     // Check if pyramid is empty
+    let pyramidEmpty = true;
     for (let row of this.state.pyramid) {
       for (let card of row) {
-        if (card !== null) return false;
+        if (card !== null) {
+          pyramidEmpty = false;
+          break;
+        }
       }
+      if (!pyramidEmpty) break;
     }
-    return true;
+    
+    if (pyramidEmpty && !this.state.gameWon) {
+      this.state.gameWon = true;
+      setTimeout(() => {
+        this.engine.celebrateWin();
+      }, 500);
+    }
   }
   
   updateStats() {
