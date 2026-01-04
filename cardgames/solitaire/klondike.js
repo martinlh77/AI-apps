@@ -469,22 +469,20 @@ class KlondikeSolitaire {
     return slot;
   }
 
-  createCardElement(card, size, faceDown) {
+createCardElement(card, size, faceDown) {
     if (faceDown) {
-      // Create a card showing the back
-      const div = document.createElement('div');
-      div.style.cssText = `width:${size.w}px; height:${size.h}px; border-radius:8px; background-size:cover; background-position:center; background-repeat:no-repeat; border:1px solid #ccc;`;
+      // Use engine's renderCard with faceUp: false to show back
+      const cardEl = this.engine.renderCard(card, false);
+      cardEl.style.width = `${size.w}px`;
+      cardEl.style.height = `${size.h}px`;
       
-      // Use the deck's back image
-      if (this.deck.backImage) {
-        div.style.backgroundImage = `url(${this.deck.backImage})`;
-      } else {
-        // Fallback gradient if no back image
-        div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        div.style.border = '2px solid #fff';
+      // Scale fonts for mobile
+      const isMobile = window.innerWidth < 700;
+      if (isMobile) {
+        cardEl.style.fontSize = '0.6rem';
       }
       
-      return div;
+      return cardEl;
     } else if (card) {
       // Use the engine's renderCard method to display the actual deck card
       const cardEl = this.engine.renderCard(card, true);
