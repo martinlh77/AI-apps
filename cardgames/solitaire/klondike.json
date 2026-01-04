@@ -1,0 +1,34 @@
+{
+  "gameId": "solitaire-klondike-v1",
+  "metadata": {
+    "name": "Klondike Solitaire Pro",
+    "version": "1.1.0",
+    "author": "Card Game Engine",
+    "description": "Classic Solitaire with advanced mobile controls including pinch-to-zoom and two-finger pan.",
+    "category": "solitaire",
+    "difficulty": "medium",
+    "estimatedPlayTime": "5-15 minutes",
+    "tags": ["classic", "solitaire", "mobile-optimized", "zoom"]
+  },
+  "requirements": {
+    "playerCount": { "min": 1, "max": 1 },
+    "decks": { "count": 1, "requiresStandardDeck": true, "customDecksAllowed": true },
+    "cards": { "includeJokers": false, "totalCardsNeeded": 52 }
+  },
+  "instructions": {
+    "overview": "Sort the deck into foundations by suit from Ace to King. Use two fingers to zoom or pan the board.",
+    "setup": ["Seven tableau columns are dealt.", "Choose Draw 1 or Draw 3."],
+    "gameplay": [
+      "Tableau: Build descending, alternating colors.",
+      "Foundations: Build ascending by suit.",
+      "Mobile Controls: Pinch with two fingers to zoom. Drag with two fingers to move the board.",
+      "Waste: Tap the empty stock to recycle the waste pile."
+    ],
+    "winning": "Move all cards to the four Foundation piles."
+  },
+  "ui": {
+    "layout": "cascade",
+    "animations": { "dealSpeed": 200, "flipSpeed": 150, "celebrationOnWin": true }
+  },
+  "gameLogicModule": "cardgames/solitaire/klondike.js"
+}
