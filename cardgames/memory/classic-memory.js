@@ -337,20 +337,86 @@ class ClassicMemory {
     gameBoard.appendChild(controlsDiv);
   }
   
-  scaleCardForMobile(cardElement) {
-    cardElement.style.fontSize = '0.7rem';
+scaleCardForMobile(cardElement) {
+  cardElement.style.fontSize = '0.7rem';
+  
+  const cardFront = cardElement.querySelector('.card-front');
+  const cardBack = cardElement.querySelector('.card-back');
+  
+  if (cardFront) {
+    cardFront.style.fontSize = '0.7rem';
     
-    const cardFront = cardElement.querySelector('.card-front');
-    const cardBack = cardElement.querySelector('.card-back');
+    // Scale rank displays
+    const rankDisplays = cardFront.querySelectorAll('.card-rank');
+    rankDisplays.forEach(rank => {
+      rank.style.fontSize = '0.85rem';
+    });
     
-    if (cardFront) {
-      cardFront.style.fontSize = '0.7rem';
-      
-      // Scale rank displays
-      const rankDisplays = cardFront.querySelectorAll('.card-rank');
-      rankDisplays.forEach(rank => {
-        rank.style.fontSize = '0.85rem';
+    // Scale mini suit icons
+    const miniPips = cardFront.querySelectorAll('.mini-pip');
+    miniPips.forEach(pip => {
+      pip.style.fontSize = '0.7rem';
+    });
+    
+    // FOR MOBILE: Hide all multiple pips and show only center suit
+    const allPips = cardFront.querySelectorAll('.pip');
+    const suitCenter = cardFront.querySelector('.card-suit-center');
+    
+    if (allPips.length > 1) {
+      // Multiple pips exist - hide them all
+      allPips.forEach(pip => {
+        pip.style.display = 'none';
       });
+      
+      // Show or create single centered pip
+      if (suitCenter) {
+        suitCenter.style.display = 'flex';
+        suitCenter.style.fontSize = '2.5rem';
+        suitCenter.style.position = 'absolute';
+        suitCenter.style.top = '50%';
+        suitCenter.style.left = '50%';
+        suitCenter.style.transform = 'translate(-50%, -50%)';
+      } else {
+        // Create centered pip if it doesn't exist
+        const centerPip = document.createElement('div');
+        centerPip.className = 'card-suit-center';
+        centerPip.textContent = cardElement.dataset.suitEmoji || 
+                                this.state.grid[cardElement.dataset.index]?.suitEmoji || '♠';
+        centerPip.style.fontSize = '2.5rem';
+        centerPip.style.position = 'absolute';
+        centerPip.style.top = '50%';
+        centerPip.style.left = '50%';
+        centerPip.style.transform = 'translate(-50%, -50%)';
+        centerPip.style.display = 'flex';
+        centerPip.style.alignItems = 'center';
+        centerPip.style.justifyContent = 'center';
+        cardFront.appendChild(centerPip);
+      }
+    } else {
+      // Single pip - just scale it
+      allPips.forEach(pip => {
+        pip.style.fontSize = '2.5rem';
+      });
+      
+      if (suitCenter) {
+        suitCenter.style.fontSize = '2.5rem';
+      }
+    }
+    
+    // Scale face card windows
+    const faceWindow = cardFront.querySelector('.face-card-window');
+    if (faceWindow) {
+      faceWindow.style.top = '20px';
+      faceWindow.style.bottom = '20px';
+      faceWindow.style.left = '15px';
+      faceWindow.style.right = '15px';
+    }
+  }
+  
+  if (cardBack) {
+    cardBack.style.fontSize = '0.7rem';
+  }
+}
       
       // Scale mini suit icons
       const miniPips = cardFront.querySelectorAll('.mini-pip');
