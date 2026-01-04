@@ -212,7 +212,7 @@ class KlondikeSolitaire {
   isValidFoundationMove(card, foundIdx) {
     const foundation = this.state.foundations[foundIdx];
     if (foundation.length === 0) {
-      return this.cardValues[card.rank] === 1;
+      return this.cardValues[card.rank] === 1; // Must be Ace
     }
     const topCard = foundation[foundation.length - 1];
     return card.suit === topCard.suit && this.cardValues[card.rank] === this.cardValues[topCard.rank] + 1;
@@ -223,14 +223,16 @@ class KlondikeSolitaire {
     const movingCard = cards[0];
     
     if (destCol.length === 0) {
-      return this.cardValues[movingCard.rank] === 13;
+      return this.cardValues[movingCard.rank] === 13; // Must be King
     }
     
     const destCard = destCol[destCol.length - 1];
     if (!destCard.faceUp) return false;
     
-    const isRed = (suit) => suit === 'hearts' || suit === 'diamonds';
-    const colorDifferent = isRed(movingCard.suit) !== isRed(destCard.suit);
+    // Check alternating colors - Fixed to use card.color property from deck
+    const colorDifferent = movingCard.color !== destCard.color;
+    
+    // Check descending value (moving card must be one less than destination)
     const valueCorrect = this.cardValues[movingCard.rank] === this.cardValues[destCard.rank] - 1;
     
     return colorDifferent && valueCorrect;
@@ -325,7 +327,7 @@ class KlondikeSolitaire {
     gameBoard.appendChild(wrapper);
 
     const isMobile = window.innerWidth < 700;
-    const cardSize = isMobile ? { w: 45, h: 63 } : { w: 100, h: 140 };
+    const cardSize = isMobile ? { w: 60, h: 84 } : { w: 100, h: 140 };
     const gap = isMobile ? 8 : 20;
 
     const content = document.createElement('div');
@@ -345,7 +347,7 @@ class KlondikeSolitaire {
     stock.style.cursor = 'pointer';
     stock.onclick = () => this.drawFromStock();
     if (this.state.stock.length > 0) {
-      const cardBack = this.createCard(null, cardSize, true);
+      const cardBack = this.createCardElement(null, cardSize, true);
       stock.appendChild(cardBack);
     }
     stockWaste.appendChild(stock);
@@ -354,7 +356,7 @@ class KlondikeSolitaire {
     const waste = this.createSlot(cardSize, 'waste', 0);
     if (this.state.waste.length > 0) {
       const topCard = this.state.waste[this.state.waste.length - 1];
-      const cardEl = this.createCard(topCard, cardSize, false);
+      const cardEl = this.createCardElement(topCard, cardSize, false);
       cardEl.style.cursor = 'grab';
       cardEl.onpointerdown = (e) => this.handlePointerDown(e, 'waste', 0, this.state.waste.length - 1);
       cardEl.ondblclick = () => this.handleDblClick('waste', 0, this.state.waste.length - 1);
@@ -372,7 +374,7 @@ class KlondikeSolitaire {
       const slot = this.createSlot(cardSize, 'foundation', i);
       if (this.state.foundations[i].length > 0) {
         const topCard = this.state.foundations[i][this.state.foundations[i].length - 1];
-        slot.appendChild(this.createCard(topCard, cardSize, false));
+        slot.appendChild(this.createCardElement(topCard, cardSize, false));
       }
       foundations.appendChild(slot);
     }
@@ -395,7 +397,7 @@ class KlondikeSolitaire {
       }
       
       this.state.tableau[i].forEach((card, idx) => {
-        const cardEl = this.createCard(card, cardSize, !card.faceUp);
+        const cardEl = this.createCardElement(card, cardSize, !card.faceUp);
         cardEl.style.position = 'absolute';
         cardEl.style.top = `${idx * (isMobile ? 20 : 30)}px`;
         
@@ -421,21 +423,43 @@ class KlondikeSolitaire {
     return slot;
   }
 
-  createCard(card, size, faceDown) {
-    const div = document.createElement('div');
-    div.style.cssText = `width:${size.w}px; height:${size.h}px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:bold; user-select:none; transition:opacity 0.2s;`;
-    
+  createCardElement(card, size, faceDown) {
     if (faceDown) {
-      div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-      div.style.border = '2px solid #fff';
+      // Use the deck's back image
+      const backCard = this.engine.renderCard(card || {backImage: this.deck.backImage}, false);
+      backCard.style.width = `${size.w}px`;
+      backCard.style.height = `${size.h}px`;
+      return backCard;
     } else if (card) {
-      const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
-      div.style.background = 'white';
-      div.style.color = isRed ? '#e74c3c' : '#2c3e50';
-      div.style.border = '2px solid #ddd';
-      div.innerHTML = `<div style="text-align:center; font-size:${size.w < 60 ? '12px' : '18px'};">${card.rank}<br>${card.suitEmoji}</div>`;
+      // Use the engine's renderCard method to display the actual deck card
+      const cardEl = this.engine.renderCard(card, true);
+      cardEl.style.width = `${size.w}px`;
+      cardEl.style.height = `${size.h}px`;
+      
+      // Scale fonts for mobile
+      const isMobile = window.innerWidth < 700;
+      if (isMobile) {
+        cardEl.style.fontSize = '0.7rem';
+        
+        cardEl.querySelectorAll('.rank').forEach(el => {
+          el.style.fontSize = '0.85rem';
+        });
+        
+        cardEl.querySelectorAll('.mini-pip').forEach(el => {
+          el.style.fontSize = '0.7rem';
+        });
+        
+        cardEl.querySelectorAll('.pip').forEach(pip => {
+          pip.style.fontSize = pip.classList.contains('large') ? '2rem' : '0.98rem';
+        });
+      }
+      
+      return cardEl;
     }
     
+    // Empty placeholder
+    const div = document.createElement('div');
+    div.style.cssText = `width:${size.w}px; height:${size.h}px; border-radius:8px;`;
     return div;
   }
 
