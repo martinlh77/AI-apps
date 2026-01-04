@@ -19,6 +19,13 @@
       "addedDate": "2025-01-15"
     },
     {
+  "id": "solitaire-klondike-v1",
+  "configPath": "cardgames/solitaire/klondike.json",
+  "modulePath": "cardgames/solitaire/klondike.js",
+  "featured": true,
+  "addedDate": "2025-01-04"
+},
+    {
       "id": "casual-higher-lower-v1",
       "configPath": "cardgames/casual/higher-lower.json",
       "modulePath": "cardgames/casual/higher-lower.js",
