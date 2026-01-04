@@ -464,12 +464,56 @@
         <video class="preview-video" id="previewVideo" controls></video>
     </div>
 
+    <script>
+        // Test if script is running
+        console.log('Script loaded');
+        
+        // Simple test - attach a click handler directly
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded');
+            
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            
+            if (uploadArea) {
+                console.log('Upload area found');
+                uploadArea.addEventListener('click', function() {
+                    console.log('Upload area clicked!');
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                });
+            } else {
+                console.error('Upload area NOT found');
+            }
+            
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    console.log('Files selected:', e.target.files);
+                });
+            }
+            
+            // Test buttons
+            const addUrlBtn = document.getElementById('addUrlBtn');
+            if (addUrlBtn) {
+                console.log('Add URL button found');
+                addUrlBtn.addEventListener('click', function() {
+                    console.log('Add URL button clicked!');
+                    alert('Button works!');
+                });
+            }
+        });
+    </script>
+    
     <script type="module">
         import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js';
         import { fetchFile, toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/index.js';
         
+        console.log('Module script loaded');
+        
         class VideoConcatenator {
             constructor() {
+                console.log('VideoConcatenator constructor called');
                 this.files = [];
                 this.urlVideos = [];
                 this.isProcessing = false;
@@ -481,18 +525,38 @@
                 this.fetchFile = fetchFile;
                 this.toBlobURL = toBlobURL;
                 
-                // Wait for DOM to be ready
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', () => this.init());
-                } else {
-                    this.init();
-                }
+                // Initialize immediately - DOM should be ready when module executes
+                this.init();
             }
             
             init() {
+                console.log('Init called');
+                
+                // Wait a moment for the simple test script to attach first
+                setTimeout(() => {
+                    console.log('Setting up VideoConcatenator event listeners');
+                    this.setupEventListeners();
+                }, 100);
+            }
+            
+            setupEventListeners() {
                 // Mode switching
-                document.getElementById('concatenateMode').addEventListener('click', () => this.switchMode('concatenate'));
-                document.getElementById('convertMode').addEventListener('click', () => this.switchMode('convert'));
+                const concatenateMode = document.getElementById('concatenateMode');
+                const convertMode = document.getElementById('convertMode');
+                
+                if (concatenateMode) {
+                    concatenateMode.addEventListener('click', () => {
+                        console.log('Concatenate mode clicked');
+                        this.switchMode('concatenate');
+                    });
+                }
+                
+                if (convertMode) {
+                    convertMode.addEventListener('click', () => {
+                        console.log('Convert mode clicked');
+                        this.switchMode('convert');
+                    });
+                }
                 
                 // Concatenate mode elements
                 const uploadArea = document.getElementById('uploadArea');
@@ -509,82 +573,141 @@
                 const convertBtn = document.getElementById('convertBtn');
                 const clearConvertBtn = document.getElementById('clearConvertBtn');
                 
-                // Concatenate mode handlers
-                uploadArea.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    fileInput.click();
+                console.log('Elements:', {
+                    uploadArea: !!uploadArea,
+                    fileInput: !!fileInput,
+                    addUrlBtn: !!addUrlBtn,
+                    combineBtn: !!combineBtn
                 });
                 
-                fileInput.addEventListener('change', (e) => {
-                    this.handleFiles(e.target.files);
-                });
+                // Concatenate mode handlers - DON'T override the simple test
+                // We'll just add file change handler
+                if (fileInput) {
+                    fileInput.addEventListener('change', (e) => {
+                        console.log('File input change (from class)');
+                        this.handleFiles(e.target.files);
+                    });
+                }
                 
-                uploadArea.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    uploadArea.classList.add('dragover');
-                });
+                if (uploadArea) {
+                    uploadArea.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        uploadArea.classList.add('dragover');
+                    });
+                    
+                    uploadArea.addEventListener('dragleave', () => {
+                        uploadArea.classList.remove('dragover');
+                    });
+                    
+                    uploadArea.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        uploadArea.classList.remove('dragover');
+                        this.handleFiles(e.dataTransfer.files);
+                    });
+                }
                 
-                uploadArea.addEventListener('dragleave', () => {
-                    uploadArea.classList.remove('dragover');
-                });
+                if (addUrlBtn) {
+                    // Remove all existing listeners by cloning
+                    const newAddUrlBtn = addUrlBtn.cloneNode(true);
+                    addUrlBtn.parentNode.replaceChild(newAddUrlBtn, addUrlBtn);
+                    
+                    newAddUrlBtn.addEventListener('click', () => {
+                        console.log('Add URL clicked (from class)');
+                        this.handleUrl();
+                    });
+                }
                 
-                uploadArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    uploadArea.classList.remove('dragover');
-                    this.handleFiles(e.dataTransfer.files);
-                });
+                if (videoUrlInput) {
+                    videoUrlInput.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            console.log('Enter pressed in URL input');
+                            this.handleUrl();
+                        }
+                    });
+                }
                 
-                addUrlBtn.addEventListener('click', () => this.handleUrl());
-                videoUrlInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') this.handleUrl();
-                });
+                if (formatSelect) {
+                    formatSelect.addEventListener('change', (e) => {
+                        const formatInfo = document.getElementById('formatInfo');
+                        if (formatInfo) {
+                            if (e.target.value === 'webm') {
+                                formatInfo.textContent = 'Fast encoding, good compatibility';
+                            } else {
+                                formatInfo.textContent = 'Best compatibility, requires conversion (slower)';
+                            }
+                        }
+                    });
+                }
                 
-                formatSelect.addEventListener('change', (e) => {
-                    const formatInfo = document.getElementById('formatInfo');
-                    if (e.target.value === 'webm') {
-                        formatInfo.textContent = 'Fast encoding, good compatibility';
-                    } else {
-                        formatInfo.textContent = 'Best compatibility, requires conversion (slower)';
-                    }
-                });
+                if (combineBtn) {
+                    combineBtn.addEventListener('click', () => {
+                        console.log('Combine button clicked');
+                        this.combineVideos();
+                    });
+                }
                 
-                combineBtn.addEventListener('click', () => this.combineVideos());
-                clearBtn.addEventListener('click', () => this.clearAll());
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', () => {
+                        console.log('Clear button clicked');
+                        this.clearAll();
+                    });
+                }
                 
                 // Convert mode handlers
-                convertUploadArea.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    convertFileInput.click();
-                });
+                if (convertUploadArea) {
+                    convertUploadArea.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (convertFileInput) {
+                            convertFileInput.click();
+                        }
+                    });
+                    
+                    convertUploadArea.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        convertUploadArea.classList.add('dragover');
+                    });
+                    
+                    convertUploadArea.addEventListener('dragleave', () => {
+                        convertUploadArea.classList.remove('dragover');
+                    });
+                    
+                    convertUploadArea.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        convertUploadArea.classList.remove('dragover');
+                        if (e.dataTransfer.files.length > 0) {
+                            this.handleConvertFile(e.dataTransfer.files[0]);
+                        }
+                    });
+                }
                 
-                convertFileInput.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) {
-                        this.handleConvertFile(e.target.files[0]);
-                    }
-                });
+                if (convertFileInput) {
+                    convertFileInput.addEventListener('change', (e) => {
+                        console.log('Convert file input changed');
+                        if (e.target.files.length > 0) {
+                            this.handleConvertFile(e.target.files[0]);
+                        }
+                    });
+                }
                 
-                convertUploadArea.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    convertUploadArea.classList.add('dragover');
-                });
+                if (convertBtn) {
+                    convertBtn.addEventListener('click', () => {
+                        console.log('Convert button clicked');
+                        this.convertVideo();
+                    });
+                }
                 
-                convertUploadArea.addEventListener('dragleave', () => {
-                    convertUploadArea.classList.remove('dragover');
-                });
+                if (clearConvertBtn) {
+                    clearConvertBtn.addEventListener('click', () => {
+                        console.log('Clear convert button clicked');
+                        this.clearConvert();
+                    });
+                }
                 
-                convertUploadArea.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    convertUploadArea.classList.remove('dragover');
-                    if (e.dataTransfer.files.length > 0) {
-                        this.handleConvertFile(e.dataTransfer.files[0]);
-                    }
-                });
-                
-                convertBtn.addEventListener('click', () => this.convertVideo());
-                clearConvertBtn.addEventListener('click', () => this.clearConvert());
+                console.log('Event listeners setup complete');
             }
             
             switchMode(mode) {
+                console.log('Switching to mode:', mode);
                 this.currentMode = mode;
                 
                 const concatenateMode = document.getElementById('concatenateMode');
@@ -593,22 +716,24 @@
                 const convertSection = document.getElementById('convertSection');
                 
                 if (mode === 'concatenate') {
-                    concatenateMode.classList.add('active');
-                    convertMode.classList.remove('active');
-                    concatenateSection.style.display = 'block';
-                    convertSection.style.display = 'none';
+                    if (concatenateMode) concatenateMode.classList.add('active');
+                    if (convertMode) convertMode.classList.remove('active');
+                    if (concatenateSection) concatenateSection.style.display = 'block';
+                    if (convertSection) convertSection.style.display = 'none';
                 } else {
-                    concatenateMode.classList.remove('active');
-                    convertMode.classList.add('active');
-                    concatenateSection.style.display = 'none';
-                    convertSection.style.display = 'block';
+                    if (concatenateMode) concatenateMode.classList.remove('active');
+                    if (convertMode) convertMode.classList.add('active');
+                    if (concatenateSection) concatenateSection.style.display = 'none';
+                    if (convertSection) convertSection.style.display = 'block';
                 }
                 
                 this.hideStatus();
-                document.getElementById('previewVideo').style.display = 'none';
+                const previewVideo = document.getElementById('previewVideo');
+                if (previewVideo) previewVideo.style.display = 'none';
             }
             
             handleConvertFile(file) {
+                console.log('handleConvertFile called with:', file);
                 if (!file || !file.type.startsWith('video/')) {
                     this.showStatus('Please select a valid video file', 'error');
                     return;
@@ -616,12 +741,15 @@
                 
                 this.convertFile = file;
                 this.renderConvertFile();
-                document.getElementById('convertBtn').disabled = false;
+                const convertBtn = document.getElementById('convertBtn');
+                if (convertBtn) convertBtn.disabled = false;
                 this.hideStatus();
             }
             
             renderConvertFile() {
                 const convertFileList = document.getElementById('convertFileList');
+                if (!convertFileList) return;
+                
                 if (!this.convertFile) {
                     convertFileList.innerHTML = '';
                     return;
@@ -640,24 +768,30 @@
             clearConvert() {
                 this.convertFile = null;
                 this.renderConvertFile();
-                document.getElementById('convertBtn').disabled = true;
-                document.getElementById('convertFileInput').value = '';
+                const convertBtn = document.getElementById('convertBtn');
+                if (convertBtn) convertBtn.disabled = true;
+                const convertFileInput = document.getElementById('convertFileInput');
+                if (convertFileInput) convertFileInput.value = '';
                 this.hideStatus();
-                document.getElementById('previewVideo').style.display = 'none';
+                const previewVideo = document.getElementById('previewVideo');
+                if (previewVideo) previewVideo.style.display = 'none';
             }
             
             async convertVideo() {
+                console.log('convertVideo called');
                 if (!this.convertFile) {
                     this.showStatus('Please select a video file first', 'error');
                     return;
                 }
                 
                 this.isProcessing = true;
-                document.getElementById('convertBtn').disabled = true;
+                const convertBtn = document.getElementById('convertBtn');
+                if (convertBtn) convertBtn.disabled = true;
                 this.showProgress(0);
                 
                 try {
                     const targetFormat = document.getElementById('convertFormatSelect').value;
+                    console.log('Converting to:', targetFormat);
                     
                     let outputBlob;
                     let fileExtension;
@@ -685,8 +819,10 @@
                     // Create download link and preview
                     const url = URL.createObjectURL(outputBlob);
                     const previewVideo = document.getElementById('previewVideo');
-                    previewVideo.src = url;
-                    previewVideo.style.display = 'block';
+                    if (previewVideo) {
+                        previewVideo.src = url;
+                        previewVideo.style.display = 'block';
+                    }
                     
                     // Auto-download
                     const originalName = this.convertFile.name.replace(/\.[^/.]+$/, '');
@@ -702,7 +838,8 @@
                     this.showStatus(`Error: ${error.message}`, 'error');
                 } finally {
                     this.isProcessing = false;
-                    document.getElementById('convertBtn').disabled = false;
+                    const convertBtn = document.getElementById('convertBtn');
+                    if (convertBtn) convertBtn.disabled = false;
                     setTimeout(() => this.hideProgress(), 2000);
                 }
             }
@@ -851,8 +988,9 @@
             }
             
             async handleUrl() {
+                console.log('handleUrl called');
                 const input = document.getElementById('videoUrlInput');
-                const url = input.value.trim();
+                const url = input ? input.value.trim() : '';
                 
                 if (!url) {
                     this.showStatus('Please enter a URL', 'error');
@@ -902,7 +1040,7 @@
                     this.updateCombineButton();
                     this.hideStatus();
                     
-                    input.value = '';
+                    if (input) input.value = '';
                     
                 } catch (error) {
                     this.showStatus(`Error: ${error.message}`, 'error');
@@ -922,6 +1060,7 @@
             }
             
             handleFiles(fileList) {
+                console.log('handleFiles called with:', fileList);
                 const newFiles = Array.from(fileList).filter(file => 
                     file.type.startsWith('video/')
                 );
@@ -939,6 +1078,8 @@
             
             renderFileList() {
                 const fileList = document.getElementById('fileList');
+                if (!fileList) return;
+                
                 fileList.innerHTML = '';
                 
                 this.files.forEach((file, index) => {
@@ -959,7 +1100,7 @@
                 fileItem.dataset.index = index;
                 fileItem.dataset.type = type;
                 
-                const displayIndex = document.querySelectorAll('.file-item').length + 1;
+                const displayIndex = document.querySelectorAll('#fileList .file-item').length + 1;
                 const icon = type === 'url' ? '🔗' : '📁';
                 const name = type === 'url' ? data.name : data.name;
                 const size = type === 'url' ? data.size : this.formatFileSize(data.size);
@@ -974,9 +1115,12 @@
                 `;
                 
                 // Add remove button handler
-                fileItem.querySelector('.remove-btn').addEventListener('click', () => {
-                    this.removeItem(index, type);
-                });
+                const removeBtn = fileItem.querySelector('.remove-btn');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', () => {
+                        this.removeItem(index, type);
+                    });
+                }
                 
                 fileItem.addEventListener('dragstart', (e) => {
                     e.dataTransfer.effectAllowed = 'move';
@@ -994,11 +1138,13 @@
                     if (draggingItem !== fileItem) {
                         const rect = fileItem.getBoundingClientRect();
                         const midpoint = rect.top + rect.height / 2;
-                        const fileList = document.getElementById('fileList');
-                        if (e.clientY < midpoint) {
-                            fileList.insertBefore(draggingItem, fileItem);
-                        } else {
-                            fileList.insertBefore(draggingItem, fileItem.nextSibling);
+                        const fileListEl = document.getElementById('fileList');
+                        if (fileListEl) {
+                            if (e.clientY < midpoint) {
+                                fileListEl.insertBefore(draggingItem, fileItem);
+                            } else {
+                                fileListEl.insertBefore(draggingItem, fileItem.nextSibling);
+                            }
                         }
                     }
                 });
@@ -1007,6 +1153,7 @@
             }
             
             removeItem(index, type) {
+                console.log('removeItem called:', index, type);
                 if (type === 'file') {
                     this.files.splice(index, 1);
                 } else {
@@ -1017,23 +1164,30 @@
             }
             
             clearAll() {
+                console.log('clearAll called');
                 this.files = [];
                 this.urlVideos = [];
                 this.renderFileList();
                 this.updateCombineButton();
                 this.hideStatus();
-                document.getElementById('previewVideo').style.display = 'none';
-                document.getElementById('videoUrlInput').value = '';
-                document.getElementById('fileInput').value = '';
+                const previewVideo = document.getElementById('previewVideo');
+                if (previewVideo) previewVideo.style.display = 'none';
+                const videoUrlInput = document.getElementById('videoUrlInput');
+                if (videoUrlInput) videoUrlInput.value = '';
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput) fileInput.value = '';
             }
             
             updateCombineButton() {
                 const combineBtn = document.getElementById('combineBtn');
+                if (!combineBtn) return;
+                
                 const totalVideos = this.files.length + this.urlVideos.length;
                 combineBtn.disabled = totalVideos < 2 || this.isProcessing;
             }
             
             async combineVideos() {
+                console.log('combineVideos called');
                 const totalVideos = this.files.length + this.urlVideos.length;
                 
                 if (totalVideos < 2) {
@@ -1048,7 +1202,8 @@
                 try {
                     let combinedBlob = await this.concatenateWithCanvas();
                     
-                    const format = document.getElementById('formatSelect').value;
+                    const formatSelect = document.getElementById('formatSelect');
+                    const format = formatSelect ? formatSelect.value : 'webm';
                     let fileExtension = 'webm';
                     let mimeType = 'video/webm';
                     
@@ -1063,8 +1218,10 @@
                     
                     const url = URL.createObjectURL(combinedBlob);
                     const previewVideo = document.getElementById('previewVideo');
-                    previewVideo.src = url;
-                    previewVideo.style.display = 'block';
+                    if (previewVideo) {
+                        previewVideo.src = url;
+                        previewVideo.style.display = 'block';
+                    }
                     
                     const a = document.createElement('a');
                     a.href = url;
@@ -1084,6 +1241,7 @@
             }
             
             async concatenateWithCanvas() {
+                // [Previous canvas concatenation code - kept the same]
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 const videoElements = [];
@@ -1310,29 +1468,39 @@
             showProgress(percent) {
                 const progressContainer = document.getElementById('progressContainer');
                 const progressFill = document.getElementById('progressFill');
-                progressContainer.style.display = 'block';
-                progressFill.style.width = percent + '%';
-                progressFill.textContent = Math.round(percent) + '%';
+                if (progressContainer) progressContainer.style.display = 'block';
+                if (progressFill) {
+                    progressFill.style.width = percent + '%';
+                    progressFill.textContent = Math.round(percent) + '%';
+                }
             }
             
             hideProgress() {
-                document.getElementById('progressContainer').style.display = 'none';
+                const progressContainer = document.getElementById('progressContainer');
+                if (progressContainer) progressContainer.style.display = 'none';
             }
             
             showStatus(message, type) {
                 const status = document.getElementById('status');
-                status.textContent = message;
-                status.className = `status ${type}`;
+                if (status) {
+                    status.textContent = message;
+                    status.className = `status ${type}`;
+                }
             }
             
             hideStatus() {
                 const status = document.getElementById('status');
-                status.className = 'status';
+                if (status) {
+                    status.className = 'status';
+                }
             }
         }
         
-        // Initialize the concatenator
-        window.videoConcatenator = new VideoConcatenator();
+        // Initialize the concatenator after a brief delay
+        setTimeout(() => {
+            console.log('Creating VideoConcatenator instance');
+            window.videoConcatenator = new VideoConcatenator();
+        }, 200);
     </script>
 </body>
 </html>
