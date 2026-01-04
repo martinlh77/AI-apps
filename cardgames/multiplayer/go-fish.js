@@ -1,7 +1,6 @@
 /**
  * Go Fish - Classic Card Matching Game
- * 2-4 players (human and/or CPU)
- * Features: Smart CPU AI, Improved Hand Layout, Mobile support
+ * Completely rebuilt with proper spacing, visibility, and mobile support
  */
 
 class GoFish {
@@ -12,40 +11,34 @@ class GoFish {
       players: [],
       currentPlayerIndex: 0,
       drawPile: [],
-      sets: [], // {player: index, rank: 'A', cards: []}
+      sets: [],
       gameWon: false,
       turnInProgress: false,
       selectedRank: null,
       selectedOpponent: null,
-      cpuMemory: [], // What CPU players remember about asks
-      message: 'Select number of players to start'
+      cpuMemory: [],
+      message: 'Welcome to Go Fish!'
     };
     this.resizeHandler = null;
     this.config = {
       totalPlayers: 2,
       humanPlayers: 1
     };
-    
-    // Mobile gesture support
-    this.gesture = {
-      scale: 1,
-      translateX: 0,
-      translateY: 0,
-      lastScale: 1,
-      lastTranslateX: 0,
-      lastTranslateY: 0,
-      initialDistance: 0,
-      isPinching: false,
-      isPanning: false
-    };
   }
   
   setup() {
-    this.state.gameWon = false;
-    this.state.turnInProgress = false;
-    this.state.selectedRank = null;
-    this.state.selectedOpponent = null;
-    this.state.message = 'Select number of players to start';
+    this.state = {
+      players: [],
+      currentPlayerIndex: 0,
+      drawPile: [],
+      sets: [],
+      gameWon: false,
+      turnInProgress: false,
+      selectedRank: null,
+      selectedOpponent: null,
+      cpuMemory: [],
+      message: 'Welcome to Go Fish!'
+    };
     
     if (this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler);
@@ -53,96 +46,195 @@ class GoFish {
     this.resizeHandler = () => this.render();
     window.addEventListener('resize', this.resizeHandler);
     
-    this.showPlayerSetup();
+    this.showSetupScreen();
   }
   
-  showPlayerSetup() {
+  showSetupScreen() {
     const gameBoard = document.getElementById('game-board');
     gameBoard.innerHTML = '';
-    gameBoard.style.display = 'flex';
-    gameBoard.style.flexDirection = 'column';
-    gameBoard.style.alignItems = 'center';
-    gameBoard.style.justifyContent = 'center';
-    gameBoard.style.gap = '20px';
-    gameBoard.style.padding = '20px';
-    gameBoard.style.background = '#1a1a2e';
+    gameBoard.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      gap: 25px;
+      min-height: 500px;
+    `;
     
     const isMobile = window.innerWidth < 700;
     
+    // Title
     const title = document.createElement('div');
-    title.style.fontSize = isMobile ? '1.8rem' : '2.5rem';
-    title.style.color = '#ffd700';
-    title.style.fontWeight = 'bold';
+    title.style.cssText = `
+      font-size: ${isMobile ? '2rem' : '3rem'};
+      font-weight: bold;
+      color: #ffd700;
+      text-align: center;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    `;
     title.textContent = '🎣 Go Fish';
     gameBoard.appendChild(title);
     
+    // Setup box
     const setupBox = document.createElement('div');
-    setupBox.style.background = 'rgba(255, 255, 255, 0.05)';
-    setupBox.style.padding = '30px';
-    setupBox.style.borderRadius = '15px';
-    setupBox.style.border = '2px solid #00ffcc';
-    setupBox.style.width = '100%';
-    setupBox.style.maxWidth = '400px';
-    
-    // Config markup
-    setupBox.innerHTML = `
-      <div style="margin-bottom:20px">
-        <label style="display:block; color:#fff; margin-bottom:10px">Total Players</label>
-        <select id="total-pts" style="width:100%; padding:10px; border-radius:5px; background:#000; color:#fff; border:1px solid #00ffcc">
-          <option value="2">2 Players</option>
-          <option value="3">3 Players</option>
-          <option value="4">4 Players</option>
-        </select>
-      </div>
-      <div style="margin-bottom:30px">
-        <label style="display:block; color:#fff; margin-bottom:10px">Human Players</label>
-        <select id="human-pts" style="width:100%; padding:10px; border-radius:5px; background:#000; color:#fff; border:1px solid #00ffcc">
-          <option value="1">1 Human (vs CPUs)</option>
-        </select>
-      </div>
-      <button id="start-btn" style="width:100%; padding:15px; background:#00ffcc; color:#000; border:none; border-radius:5px; font-weight:bold; cursor:pointer">START GAME</button>
+    setupBox.style.cssText = `
+      background: rgba(0, 0, 0, 0.7);
+      border: 3px solid #00ffcc;
+      border-radius: 15px;
+      padding: ${isMobile ? '20px' : '40px'};
+      max-width: ${isMobile ? '90%' : '500px'};
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     `;
     
-    gameBoard.appendChild(setupBox);
-
-    const totalSelect = setupBox.querySelector('#total-pts');
-    const humanSelect = setupBox.querySelector('#human-pts');
-    
-    totalSelect.onchange = () => {
-        const val = parseInt(totalSelect.value);
-        humanSelect.innerHTML = '';
-        for(let i=1; i < val; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.textContent = `${i} Human${i>1?'s':''} / ${val-i} CPU${(val-i)>1?'s':''}`;
-            humanSelect.appendChild(opt);
+    // Player count selector
+    setupBox.appendChild(this.createSelector(
+      'Total Players:', 
+      'players-select',
+      [2, 3, 4],
+      this.config.totalPlayers,
+      (val) => {
+        this.config.totalPlayers = val;
+        if (this.config.humanPlayers > val - 1) {
+          this.config.humanPlayers = val - 1;
         }
+        this.showSetupScreen();
+      },
+      isMobile
+    ));
+    
+    // Human players selector
+    const humanOptions = [];
+    for (let i = 1; i < this.config.totalPlayers; i++) {
+      humanOptions.push(i);
+    }
+    setupBox.appendChild(this.createSelector(
+      'Human Players:', 
+      'human-select',
+      humanOptions,
+      Math.min(this.config.humanPlayers, this.config.totalPlayers - 1),
+      (val) => { this.config.humanPlayers = val; },
+      isMobile
+    ));
+    
+    // Start button
+    const startBtn = document.createElement('button');
+    startBtn.textContent = '🎮 Start Game';
+    startBtn.style.cssText = `
+      width: 100%;
+      padding: ${isMobile ? '15px' : '20px'};
+      font-size: ${isMobile ? '1.2rem' : '1.5rem'};
+      font-weight: bold;
+      background: linear-gradient(135deg, #00ff88, #00ccff);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    `;
+    startBtn.onmouseover = () => {
+      startBtn.style.transform = 'scale(1.05)';
+      startBtn.style.boxShadow = '0 5px 20px rgba(0,255,200,0.5)';
     };
-
-    setupBox.querySelector('#start-btn').onclick = () => {
-      this.config.totalPlayers = parseInt(totalSelect.value);
-      this.config.humanPlayers = parseInt(humanSelect.value);
-      this.startGame();
+    startBtn.onmouseout = () => {
+      startBtn.style.transform = 'scale(1)';
+      startBtn.style.boxShadow = 'none';
     };
+    startBtn.onclick = () => this.startGame();
+    setupBox.appendChild(startBtn);
+    
+    gameBoard.appendChild(setupBox);
+    
+    // Instructions
+    const instructions = document.createElement('div');
+    instructions.style.cssText = `
+      max-width: ${isMobile ? '90%' : '600px'};
+      text-align: center;
+      color: #87ceeb;
+      font-size: ${isMobile ? '0.9rem' : '1.1rem'};
+      line-height: 1.8;
+      background: rgba(0,0,0,0.5);
+      padding: 20px;
+      border-radius: 10px;
+      border: 2px solid #444;
+    `;
+    instructions.innerHTML = `
+      <strong style="color: #ffd700; font-size: 1.2em;">How to Play:</strong><br><br>
+      • Click your cards to select a rank<br>
+      • Click an opponent to ask them<br>
+      • If they have it, you get their cards<br>
+      • If not, Go Fish from the deck!<br>
+      • Collect all 4 of a rank to make a set<br>
+      • Most sets wins!
+    `;
+    gameBoard.appendChild(instructions);
+    
+    this.updateStats();
+  }
+  
+  createSelector(label, id, options, currentValue, onChange, isMobile) {
+    const container = document.createElement('div');
+    container.style.cssText = 'margin-bottom: 25px;';
+    
+    const labelEl = document.createElement('div');
+    labelEl.style.cssText = `
+      font-size: ${isMobile ? '1.1rem' : '1.3rem'};
+      color: #fff;
+      margin-bottom: 10px;
+      font-weight: bold;
+    `;
+    labelEl.textContent = label;
+    container.appendChild(labelEl);
+    
+    const select = document.createElement('select');
+    select.id = id;
+    select.style.cssText = `
+      width: 100%;
+      padding: 12px;
+      font-size: ${isMobile ? '1rem' : '1.2rem'};
+      border-radius: 8px;
+      border: 2px solid #00ffcc;
+      background: #1a1a2e;
+      color: #fff;
+      cursor: pointer;
+    `;
+    
+    options.forEach(opt => {
+      const option = document.createElement('option');
+      option.value = opt;
+      option.textContent = opt;
+      if (opt === currentValue) option.selected = true;
+      select.appendChild(option);
+    });
+    
+    select.onchange = (e) => onChange(parseInt(e.target.value));
+    container.appendChild(select);
+    
+    return container;
   }
   
   startGame() {
+    // Initialize players
     this.state.players = [];
     for (let i = 0; i < this.config.totalPlayers; i++) {
       const isHuman = i < this.config.humanPlayers;
       this.state.players.push({
         id: i,
-        name: isHuman ? `Player ${i + 1}` : `CPU ${i + 1 - this.config.humanPlayers}`,
+        name: isHuman ? `You` : `CPU ${i - this.config.humanPlayers + 1}`,
         isHuman: isHuman,
         hand: [],
         sets: 0
       });
     }
     
+    // Create and shuffle deck
     const allCards = this.engine.createCardArray(this.deck);
     this.state.drawPile = this.engine.shuffleDeck(allCards);
     
-    const cardsPerPlayer = this.config.totalPlayers <= 3 ? 7 : 5;
+    // Deal cards (7 for 2 players, 5 for 3-4 players)
+    const cardsPerPlayer = this.config.totalPlayers === 2 ? 7 : 5;
     for (let i = 0; i < cardsPerPlayer; i++) {
       this.state.players.forEach(player => {
         if (this.state.drawPile.length > 0) {
@@ -151,13 +243,20 @@ class GoFish {
       });
     }
     
-    this.state.players.forEach(player => this.checkAndRemoveSets(player));
-    this.state.cpuMemory = [];
+    // Check for initial sets
+    this.state.players.forEach(player => {
+      this.checkAndRemoveSets(player);
+    });
+    
     this.state.currentPlayerIndex = 0;
-    this.state.sets = [];
-    this.state.message = `${this.state.players[0].name}'s turn`;
+    this.state.message = "Your turn! Select a rank from your hand, then click an opponent.";
     
     this.render();
+    
+    // If first player is CPU, start their turn
+    if (!this.state.players[0].isHuman) {
+      setTimeout(() => this.executeCPUTurn(), 1500);
+    }
   }
   
   checkAndRemoveSets(player) {
@@ -171,7 +270,11 @@ class GoFish {
         const setCards = player.hand.filter(card => card.rank === rank);
         player.hand = player.hand.filter(card => card.rank !== rank);
         player.sets++;
-        this.state.sets.push({ player: player.id, rank: rank, cards: setCards });
+        this.state.sets.push({
+          player: player.id,
+          rank: rank,
+          cards: setCards
+        });
       }
     });
   }
@@ -181,281 +284,512 @@ class GoFish {
     
     const gameBoard = document.getElementById('game-board');
     gameBoard.innerHTML = '';
-    gameBoard.style.display = 'grid';
-    gameBoard.style.gridTemplateRows = 'auto 1fr auto';
-    gameBoard.style.height = '100vh';
-    gameBoard.style.width = '100%';
-    gameBoard.style.padding = '10px';
-    gameBoard.style.boxSizing = 'border-box';
-    gameBoard.style.overflow = 'hidden';
-    gameBoard.style.background = 'radial-gradient(circle, #1a2a6c, #b21f1f, #fdbb2d)';
+    gameBoard.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      gap: 20px;
+      overflow-y: auto;
+      max-height: 100vh;
+    `;
     
     const isMobile = window.innerWidth < 700;
-
-    // 1. HEADER: Message and Stats
-    const header = document.createElement('div');
-    header.style.textAlign = 'center';
-    header.style.padding = '10px';
-    header.style.background = 'rgba(0,0,0,0.6)';
-    header.style.borderRadius = '10px';
-    header.style.marginBotton = '10px';
     
-    const msg = document.createElement('div');
-    msg.style.color = '#fff';
-    msg.style.fontSize = isMobile ? '1.1rem' : '1.4rem';
-    msg.style.fontWeight = 'bold';
-    msg.textContent = this.state.message;
-    header.appendChild(msg);
-    gameBoard.appendChild(header);
-
-    // 2. MAIN AREA: Opponents and Table
-    const mainArea = document.createElement('div');
-    mainArea.style.display = 'flex';
-    mainArea.style.flexDirection = 'column';
-    mainArea.style.justifyContent = 'space-around';
-    mainArea.style.alignItems = 'center';
-    mainArea.style.overflowY = 'auto';
-
-    // Opponents Grid
-    const oppGrid = document.createElement('div');
-    oppGrid.style.display = 'flex';
-    oppGrid.style.gap = '15px';
-    oppGrid.style.flexWrap = 'wrap';
-    oppGrid.style.justifyContent = 'center';
-    oppGrid.style.width = '100%';
-
-    this.state.players.forEach((player, idx) => {
-        if (idx === 0) return; // Skip human
-        oppGrid.appendChild(this.createOpponentUI(player, idx, isMobile));
+    // Message bar
+    const messageBar = document.createElement('div');
+    messageBar.style.cssText = `
+      background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(0,255,200,0.2));
+      border: 2px solid #ffd700;
+      border-radius: 10px;
+      padding: ${isMobile ? '12px' : '15px'};
+      text-align: center;
+      font-size: ${isMobile ? '1rem' : '1.3rem'};
+      font-weight: bold;
+      color: #ffd700;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    `;
+    messageBar.textContent = this.state.message;
+    gameBoard.appendChild(messageBar);
+    
+    // Opponents section
+    const opponentsSection = document.createElement('div');
+    opponentsSection.style.cssText = `
+      display: flex;
+      gap: ${isMobile ? '10px' : '15px'};
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 10px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+    `;
+    
+    this.state.players.forEach((player, index) => {
+      if (index !== 0) { // Skip human player
+        opponentsSection.appendChild(this.createOpponentDisplay(player, index, isMobile));
+      }
     });
-    mainArea.appendChild(oppGrid);
-
-    // Fishing Pond (Draw Pile)
-    const tableCenter = document.createElement('div');
-    tableCenter.style.display = 'flex';
-    tableCenter.style.gap = '40px';
-    tableCenter.style.alignItems = 'center';
-    tableCenter.style.margin = '20px 0';
+    gameBoard.appendChild(opponentsSection);
     
-    const pond = document.createElement('div');
-    pond.style.textAlign = 'center';
-    pond.innerHTML = `<div style="color:#00ffcc; font-weight:bold">POND (${this.state.drawPile.length})</div>`;
-    if(this.state.drawPile.length > 0) {
-        const back = this.engine.renderCard({suit:'spades', rank:'A'}, false);
-        back.style.width = '60px';
-        back.style.height = '85px';
-        pond.appendChild(back);
+    // Draw pile and stats
+    const centerSection = document.createElement('div');
+    centerSection.style.cssText = `
+      display: flex;
+      gap: ${isMobile ? '15px' : '30px'};
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      flex-wrap: wrap;
+    `;
+    
+    // Draw pile
+    const pileContainer = document.createElement('div');
+    pileContainer.style.cssText = 'text-align: center;';
+    
+    const pileLabel = document.createElement('div');
+    pileLabel.style.cssText = `
+      color: #00ffcc;
+      font-size: ${isMobile ? '1rem' : '1.2rem'};
+      font-weight: bold;
+      margin-bottom: 10px;
+    `;
+    pileLabel.textContent = `🎣 Pond: ${this.state.drawPile.length}`;
+    pileContainer.appendChild(pileLabel);
+    
+    if (this.state.drawPile.length > 0) {
+      const pileCard = this.engine.renderCard(this.state.drawPile[0], false);
+      pileCard.style.cssText = `
+        width: ${isMobile ? '70px' : '100px'};
+        height: ${isMobile ? '98px' : '140px'};
+      `;
+      pileContainer.appendChild(pileCard);
     }
-    tableCenter.appendChild(pond);
-
-    const setCounter = document.createElement('div');
-    setCounter.style.color = '#ffd700';
-    setCounter.style.textAlign = 'center';
-    setCounter.innerHTML = `<div style="font-weight:bold">TOTAL SETS</div><div style="font-size:2rem">${this.state.sets.length}/13</div>`;
-    tableCenter.appendChild(setCounter);
-
-    mainArea.appendChild(tableCenter);
-    gameBoard.appendChild(mainArea);
-
-    // 3. FOOTER: Human Hand and Controls
-    const footer = document.createElement('div');
-    footer.style.background = 'rgba(0,0,0,0.4)';
-    footer.style.padding = '15px';
-    footer.style.borderRadius = '15px 15px 0 0';
-    footer.style.display = 'flex';
-    footer.style.flexDirection = 'column';
-    footer.style.alignItems = 'center';
-
-    const handContainer = document.createElement('div');
-    handContainer.style.display = 'flex';
-    handContainer.style.flexWrap = 'wrap';
-    handContainer.style.justifyContent = 'center';
-    handContainer.style.gap = '10px';
-    handContainer.style.width = '100%';
-    handContainer.style.marginBottom = '15px';
-
-    const human = this.state.players[0];
-    human.hand.sort((a, b) => a.value - b.value).forEach(card => {
+    centerSection.appendChild(pileContainer);
+    
+    // Sets counter
+    const setsDisplay = document.createElement('div');
+    setsDisplay.style.cssText = `
+      text-align: center;
+      font-size: ${isMobile ? '1.2rem' : '1.5rem'};
+      color: #ffd700;
+      font-weight: bold;
+    `;
+    setsDisplay.innerHTML = `📚 Sets Complete<br>${this.state.sets.length} / 13`;
+    centerSection.appendChild(setsDisplay);
+    
+    gameBoard.appendChild(centerSection);
+    
+    // Current player's hand
+    const humanPlayer = this.state.players[0];
+    const handSection = document.createElement('div');
+    handSection.style.cssText = `
+      background: ${this.state.currentPlayerIndex === 0 ? 'rgba(0,255,200,0.2)' : 'rgba(0,0,0,0.3)'};
+      border: 3px solid ${this.state.currentPlayerIndex === 0 ? '#00ffcc' : '#444'};
+      border-radius: 15px;
+      padding: ${isMobile ? '15px' : '20px'};
+    `;
+    
+    const handHeader = document.createElement('div');
+    handHeader.style.cssText = `
+      text-align: center;
+      font-size: ${isMobile ? '1.2rem' : '1.5rem'};
+      font-weight: bold;
+      color: #00ff88;
+      margin-bottom: 15px;
+    `;
+    handHeader.textContent = `Your Hand (${humanPlayer.hand.length} cards) - ${humanPlayer.sets} sets`;
+    handSection.appendChild(handHeader);
+    
+    // Cards display
+    const cardsContainer = document.createElement('div');
+    cardsContainer.style.cssText = `
+      display: flex;
+      gap: ${isMobile ? '8px' : '12px'};
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 10px;
+    `;
+    
+    if (humanPlayer.hand.length === 0) {
+      const emptyMsg = document.createElement('div');
+      emptyMsg.style.cssText = `
+        color: #888;
+        font-size: ${isMobile ? '1rem' : '1.2rem'};
+        padding: 20px;
+      `;
+      emptyMsg.textContent = 'No cards - waiting for game to end';
+      cardsContainer.appendChild(emptyMsg);
+    } else {
+      humanPlayer.hand.forEach(card => {
         const cardEl = this.engine.renderCard(card, true);
-        cardEl.style.width = isMobile ? '55px' : '80px';
-        cardEl.style.height = isMobile ? '80px' : '115px';
-        cardEl.style.cursor = 'pointer';
-        cardEl.style.transition = 'transform 0.2s';
+        const isSelected = this.state.selectedRank === card.rank;
+        const canSelect = this.state.currentPlayerIndex === 0 && !this.state.turnInProgress;
         
-        if (this.state.selectedRank === card.rank) {
-            cardEl.style.transform = 'translateY(-20px)';
-            cardEl.style.boxShadow = '0 0 15px #ffd700';
-            cardEl.style.border = '2px solid #ffd700';
+        cardEl.style.cssText = `
+          width: ${isMobile ? '70px' : '100px'};
+          height: ${isMobile ? '98px' : '140px'};
+          cursor: ${canSelect ? 'pointer' : 'default'};
+          border: 3px solid ${isSelected ? '#ffd700' : 'transparent'};
+          border-radius: 8px;
+          transition: all 0.2s;
+          box-shadow: ${isSelected ? '0 0 20px rgba(255,215,0,0.6)' : 'none'};
+        `;
+        
+        if (isMobile) {
+          this.scaleCardForMobile(cardEl);
         }
-
-        cardEl.onclick = () => {
-            if (this.state.currentPlayerIndex !== 0 || this.state.turnInProgress) return;
-            this.state.selectedRank = card.rank;
-            this.render();
-        };
-        handContainer.appendChild(cardEl);
-    });
-    footer.appendChild(handContainer);
-
-    // Action Row
-    if (this.state.currentPlayerIndex === 0 && !this.state.gameWon) {
-        const askBtn = document.createElement('button');
-        askBtn.textContent = (this.state.selectedRank && this.state.selectedOpponent !== null) 
-            ? `Ask ${this.state.players[this.state.selectedOpponent].name} for ${this.state.selectedRank}s`
-            : "Select a Card & Opponent";
         
-        askBtn.style.padding = '12px 25px';
-        askBtn.style.fontSize = '1.1rem';
-        askBtn.style.borderRadius = '30px';
-        askBtn.style.border = 'none';
-        askBtn.style.fontWeight = 'bold';
-        askBtn.style.cursor = (this.state.selectedRank && this.state.selectedOpponent !== null) ? 'pointer' : 'not-allowed';
-        askBtn.style.background = (this.state.selectedRank && this.state.selectedOpponent !== null) ? '#00ffcc' : '#555';
+        if (canSelect) {
+          cardEl.onmouseover = () => {
+            if (!isSelected) {
+              cardEl.style.transform = 'translateY(-10px) scale(1.05)';
+              cardEl.style.boxShadow = '0 10px 20px rgba(0,255,200,0.4)';
+            }
+          };
+          cardEl.onmouseout = () => {
+            if (!isSelected) {
+              cardEl.style.transform = 'translateY(0) scale(1)';
+              cardEl.style.boxShadow = 'none';
+            }
+          };
+          cardEl.onclick = () => this.selectRank(card.rank);
+        }
         
-        askBtn.onclick = () => this.executePlayerAsk();
-        footer.appendChild(askBtn);
+        cardsContainer.appendChild(cardEl);
+      });
     }
-
-    gameBoard.appendChild(footer);
+    
+    handSection.appendChild(cardsContainer);
+    gameBoard.appendChild(handSection);
+    
+    // Action button
+    if (this.state.currentPlayerIndex === 0 && !this.state.turnInProgress && humanPlayer.hand.length > 0) {
+      const actionBtn = document.createElement('button');
+      const canAsk = this.state.selectedRank && this.state.selectedOpponent !== null;
+      actionBtn.textContent = canAsk ? '🎣 Ask for Cards!' : 'Select rank & opponent';
+      actionBtn.disabled = !canAsk;
+      actionBtn.style.cssText = `
+        padding: ${isMobile ? '15px 30px' : '18px 40px'};
+        font-size: ${isMobile ? '1.1rem' : '1.3rem'};
+        font-weight: bold;
+        background: ${canAsk ? 'linear-gradient(135deg, #00ff88, #00ccff)' : '#555'};
+        color: ${canAsk ? '#000' : '#888'};
+        border: none;
+        border-radius: 10px;
+        cursor: ${canAsk ? 'pointer' : 'not-allowed'};
+        margin: 0 auto;
+        display: block;
+        transition: all 0.2s;
+      `;
+      
+      if (canAsk) {
+        actionBtn.onmouseover = () => {
+          actionBtn.style.transform = 'scale(1.05)';
+          actionBtn.style.boxShadow = '0 5px 20px rgba(0,255,200,0.5)';
+        };
+        actionBtn.onmouseout = () => {
+          actionBtn.style.transform = 'scale(1)';
+          actionBtn.style.boxShadow = 'none';
+        };
+        actionBtn.onclick = () => this.executePlayerAsk();
+      }
+      
+      gameBoard.appendChild(actionBtn);
+    }
+    
     this.updateStats();
   }
   
-  createOpponentUI(player, index, isMobile) {
-    const box = document.createElement('div');
-    const isActive = this.state.currentPlayerIndex === index;
+  createOpponentDisplay(player, index, isMobile) {
+    const oppBox = document.createElement('div');
     const isSelected = this.state.selectedOpponent === index;
-
-    box.style.padding = '10px';
-    box.style.borderRadius = '10px';
-    box.style.background = isActive ? 'rgba(0, 255, 204, 0.3)' : 'rgba(255, 255, 255, 0.1)';
-    box.style.border = isSelected ? '3px solid #ffd700' : (isActive ? '3px solid #00ffcc' : '1px solid #666');
-    box.style.minWidth = isMobile ? '100px' : '140px';
-    box.style.textAlign = 'center';
-    box.style.cursor = 'pointer';
-
-    box.innerHTML = `
-        <div style="color:#fff; font-weight:bold; font-size:0.9rem">${player.name}</div>
-        <div style="color:#00ffcc; font-size:0.8rem">Cards: ${player.hand.length} | Sets: ${player.sets}</div>
+    const canSelect = this.state.currentPlayerIndex === 0 && !this.state.turnInProgress && 
+                      this.state.selectedRank && player.hand.length > 0;
+    
+    oppBox.style.cssText = `
+      background: ${isSelected ? 'rgba(255,215,0,0.2)' : 'rgba(0,0,0,0.5)'};
+      border: 3px solid ${isSelected ? '#ffd700' : '#00ffcc'};
+      border-radius: 10px;
+      padding: ${isMobile ? '10px' : '15px'};
+      min-width: ${isMobile ? '120px' : '160px'};
+      cursor: ${canSelect ? 'pointer' : 'default'};
+      transition: all 0.2s;
+      box-shadow: ${isSelected ? '0 0 20px rgba(255,215,0,0.5)' : 'none'};
     `;
-
-    box.onclick = () => {
-        if (this.state.currentPlayerIndex !== 0 || this.state.turnInProgress) return;
-        this.state.selectedOpponent = index;
-        this.render();
-    };
-
-    return box;
+    
+    if (canSelect) {
+      oppBox.onmouseover = () => {
+        oppBox.style.transform = 'scale(1.05)';
+        oppBox.style.borderColor = '#ffd700';
+      };
+      oppBox.onmouseout = () => {
+        oppBox.style.transform = 'scale(1)';
+        if (!isSelected) oppBox.style.borderColor = '#00ffcc';
+      };
+      oppBox.onclick = () => this.selectOpponent(index);
+    }
+    
+    const nameLabel = document.createElement('div');
+    nameLabel.style.cssText = `
+      text-align: center;
+      font-size: ${isMobile ? '1rem' : '1.2rem'};
+      font-weight: bold;
+      color: #ff8800;
+      margin-bottom: 10px;
+    `;
+    nameLabel.textContent = player.name;
+    oppBox.appendChild(nameLabel);
+    
+    const statsLabel = document.createElement('div');
+    statsLabel.style.cssText = `
+      text-align: center;
+      font-size: ${isMobile ? '0.85rem' : '1rem'};
+      color: #fff;
+      margin-bottom: 10px;
+    `;
+    statsLabel.textContent = `${player.hand.length} cards | ${player.sets} sets`;
+    oppBox.appendChild(statsLabel);
+    
+    // Show card backs
+    const cardsRow = document.createElement('div');
+    cardsRow.style.cssText = `
+      display: flex;
+      gap: 3px;
+      justify-content: center;
+      flex-wrap: wrap;
+    `;
+    
+    const numToShow = Math.min(player.hand.length, 5);
+    for (let i = 0; i < numToShow; i++) {
+      const cardBack = this.engine.renderCard(player.hand[0], false);
+      cardBack.style.cssText = `
+        width: ${isMobile ? '25px' : '35px'};
+        height: ${isMobile ? '35px' : '49px'};
+      `;
+      cardsRow.appendChild(cardBack);
+    }
+    
+    if (player.hand.length > 5) {
+      const moreLabel = document.createElement('div');
+      moreLabel.style.cssText = `
+        color: #fff;
+        font-size: ${isMobile ? '0.8rem' : '1rem'};
+        line-height: ${isMobile ? '35px' : '49px'};
+      `;
+      moreLabel.textContent = `+${player.hand.length - 5}`;
+      cardsRow.appendChild(moreLabel);
+    }
+    
+    oppBox.appendChild(cardsRow);
+    return oppBox;
   }
-
+  
+  selectRank(rank) {
+    if (this.state.turnInProgress) return;
+    
+    this.state.selectedRank = rank;
+    
+    if (this.state.selectedOpponent !== null) {
+      const opp = this.state.players[this.state.selectedOpponent];
+      this.state.message = `Ready to ask ${opp.name} for ${rank}s. Click "Ask for Cards!"`;
+    } else {
+      this.state.message = `Selected ${rank}s. Now click an opponent to ask.`;
+    }
+    
+    this.render();
+  }
+  
+  selectOpponent(index) {
+    if (this.state.turnInProgress) return;
+    if (!this.state.selectedRank) {
+      this.state.message = "Select a rank from your hand first!";
+      this.render();
+      return;
+    }
+    
+    this.state.selectedOpponent = index;
+    const opp = this.state.players[index];
+    this.state.message = `Ready to ask ${opp.name} for ${this.state.selectedRank}s. Click "Ask for Cards!"`;
+    this.render();
+  }
+  
   executePlayerAsk() {
-    if (!this.state.selectedRank || this.state.selectedOpponent === null || this.state.turnInProgress) return;
+    if (!this.state.selectedRank || this.state.selectedOpponent === null) return;
+    if (this.state.turnInProgress) return;
     
     this.state.turnInProgress = true;
-    const asker = this.state.players[0];
-    const target = this.state.players[this.state.selectedOpponent];
-    const rank = this.state.selectedRank;
-
-    const matches = target.hand.filter(c => c.rank === rank);
     
-    if (matches.length > 0) {
-        this.state.message = `Success! ${target.name} gave you ${matches.length} ${rank}${matches.length > 1 ? 's' : ''}!`;
-        target.hand = target.hand.filter(c => c.rank !== rank);
-        asker.hand.push(...matches);
-        this.checkAndRemoveSets(asker);
-        this.state.turnInProgress = false;
-        this.state.selectedRank = null; 
-        // Keep selectedOpponent for convenience or clear it
-        setTimeout(() => {
-            if (!this.checkGameEnd()) this.render();
-        }, 1500);
-    } else {
-        this.state.message = `${target.name} says: "GO FISH!"`;
-        this.render();
-        setTimeout(() => {
-            this.goFish(asker, rank);
-        }, 1200);
-    }
-  }
-
-  goFish(player, askedRank) {
-    if (this.state.drawPile.length > 0) {
-        const drawn = this.state.drawPile.pop();
-        player.hand.push(drawn);
-        this.checkAndRemoveSets(player);
-        
-        if (drawn.rank === askedRank) {
-            this.state.message = `You fished a ${drawn.rank}! You get to go again!`;
-            this.state.turnInProgress = false;
-            this.state.selectedRank = null;
-            setTimeout(() => { if (!this.checkGameEnd()) this.render(); }, 1500);
-        } else {
-            this.state.message = `You caught a ${drawn.rank}. Turn over.`;
-            this.render();
-            setTimeout(() => this.nextTurn(), 1500);
+    const opponent = this.state.players[this.state.selectedOpponent];
+    const rank = this.state.selectedRank;
+    
+    this.state.cpuMemory.push({
+      asker: 0,
+      opponent: this.state.selectedOpponent,
+      rank: rank
+    });
+    
+    const matchingCards = opponent.hand.filter(c => c.rank === rank);
+    
+    if (matchingCards.length > 0) {
+      // Got cards!
+      matchingCards.forEach(card => {
+        opponent.hand = opponent.hand.filter(c => c.id !== card.id);
+        this.state.players[0].hand.push(card);
+      });
+      
+      this.state.message = `${opponent.name} had ${matchingCards.length} ${rank}${matchingCards.length > 1 ? 's' : ''}! You get another turn.`;
+      this.checkAndRemoveSets(this.state.players[0]);
+      
+      this.state.selectedRank = null;
+      this.state.selectedOpponent = null;
+      this.state.turnInProgress = false;
+      
+      setTimeout(() => {
+        if (!this.checkGameEnd()) {
+          this.state.message = "Your turn! Select another rank.";
+          this.render();
         }
+      }, 2000);
     } else {
-        this.state.message = "The pond is empty! Turn passes.";
+      // Go Fish!
+      this.state.message = `${opponent.name} says "Go Fish!" Drawing...`;
+      this.render();
+      
+      setTimeout(() => {
+        if (this.state.drawPile.length > 0) {
+          const drawn = this.state.drawPile.pop();
+          this.state.players[0].hand.push(drawn);
+          
+          if (drawn.rank === rank) {
+            this.state.message = `Lucky! You drew the ${rank} you asked for! Another turn.`;
+            this.checkAndRemoveSets(this.state.players[0]);
+            
+            this.state.selectedRank = null;
+            this.state.selectedOpponent = null;
+            this.state.turnInProgress = false;
+            
+            setTimeout(() => {
+              if (!this.checkGameEnd()) {
+                this.state.message = "Your turn! Select a rank.";
+                this.render();
+              }
+            }, 2000);
+          } else {
+            this.state.message = `You drew a ${drawn.rank}. Turn passes.`;
+            this.checkAndRemoveSets(this.state.players[0]);
+            
+            setTimeout(() => this.nextTurn(), 2000);
+          }
+        } else {
+          this.state.message = "Pond is empty! Turn passes.";
+          setTimeout(() => this.nextTurn(), 1500);
+        }
         this.render();
-        setTimeout(() => this.nextTurn(), 1500);
+      }, 1500);
     }
+    
+    this.render();
   }
-
+  
   executeCPUTurn() {
     if (this.state.gameWon) return;
-    const cpu = this.state.players[this.state.currentPlayerIndex];
     
+    const cpu = this.state.players[this.state.currentPlayerIndex];
     if (cpu.hand.length === 0) {
-        this.nextTurn();
-        return;
+      this.nextTurn();
+      return;
     }
-
-    const targetIdx = this.chooseCPUTarget();
-    const target = this.state.players[targetIdx];
-    const rank = cpu.hand[Math.floor(Math.random() * cpu.hand.length)].rank;
-
-    this.state.message = `${cpu.name} asks ${target.name} for ${rank}s...`;
+    
+    this.state.turnInProgress = true;
+    
+    const { rank, opponentIndex } = this.chooseCPUAction();
+    const opponent = this.state.players[opponentIndex];
+    
+    this.state.message = `${cpu.name} asks ${opponent.name} for ${rank}s...`;
     this.render();
-
+    
     setTimeout(() => {
-        const matches = target.hand.filter(c => c.rank === rank);
-        if (matches.length > 0) {
-            this.state.message = `${cpu.name} got ${matches.length} ${rank}s from ${target.name}!`;
-            target.hand = target.hand.filter(c => c.rank !== rank);
-            cpu.hand.push(...matches);
-            this.checkAndRemoveSets(cpu);
-            this.render();
-            setTimeout(() => {
-                if (!this.checkGameEnd()) this.executeCPUTurn();
-            }, 1500);
-        } else {
-            this.state.message = `${target.name} says: "GO FISH!"`;
-            this.render();
-            setTimeout(() => {
-                if (this.state.drawPile.length > 0) {
-                    const drawn = this.state.drawPile.pop();
-                    cpu.hand.push(drawn);
-                    this.checkAndRemoveSets(cpu);
-                    if (drawn.rank === rank) {
-                        this.state.message = `${cpu.name} fished the ${rank}! They go again.`;
-                        this.render();
-                        setTimeout(() => this.executeCPUTurn(), 1500);
-                    } else {
-                        this.nextTurn();
-                    }
-                } else {
-                    this.nextTurn();
+      const matchingCards = opponent.hand.filter(c => c.rank === rank);
+      
+      if (matchingCards.length > 0) {
+        matchingCards.forEach(card => {
+          opponent.hand = opponent.hand.filter(c => c.id !== card.id);
+          cpu.hand.push(card);
+        });
+        
+        this.state.message = `${cpu.name} got ${matchingCards.length} ${rank}${matchingCards.length > 1 ? 's' : ''}!`;
+        this.checkAndRemoveSets(cpu);
+        this.state.turnInProgress = false;
+        
+        this.render();
+        
+        setTimeout(() => {
+          if (!this.checkGameEnd()) {
+            this.executeCPUTurn();
+          }
+        }, 1500);
+      } else {
+        this.state.message = `${opponent.name} says "Go Fish!"`;
+        this.render();
+        
+        setTimeout(() => {
+          if (this.state.drawPile.length > 0) {
+            const drawn = this.state.drawPile.pop();
+            cpu.hand.push(drawn);
+            
+            if (drawn.rank === rank) {
+              this.state.message = `${cpu.name} drew the ${rank} they wanted!`;
+              this.checkAndRemoveSets(cpu);
+              this.state.turnInProgress = false;
+              
+              this.render();
+              
+              setTimeout(() => {
+                if (!this.checkGameEnd()) {
+                  this.executeCPUTurn();
                 }
-            }, 1200);
-        }
+              }, 1500);
+            } else {
+              this.checkAndRemoveSets(cpu);
+              this.state.message = `${cpu.name} drew a card. Turn passes.`;
+              this.render();
+              
+              setTimeout(() => this.nextTurn(), 1500);
+            }
+          } else {
+            this.state.message = "Pond is empty! Turn passes.";
+            this.render();
+            setTimeout(() => this.nextTurn(), 1500);
+          }
+        }, 1000);
+      }
     }, 1500);
   }
-
-  chooseCPUTarget() {
-    let idx;
-    do {
-        idx = Math.floor(Math.random() * this.state.players.length);
-    } while (idx === this.state.currentPlayerIndex || this.state.players[idx].hand.length === 0);
-    return idx;
+  
+  chooseCPUAction() {
+    const cpu = this.state.players[this.state.currentPlayerIndex];
+    
+    // Count ranks in hand
+    const rankCounts = {};
+    cpu.hand.forEach(card => {
+      rankCounts[card.rank] = (rankCounts[card.rank] || 0) + 1;
+    });
+    
+    // Prefer ranks we have multiples of
+    const multipleRanks = Object.keys(rankCounts).filter(r => rankCounts[r] >= 2);
+    const chosenRank = multipleRanks.length > 0 ? 
+      multipleRanks[Math.floor(Math.random() * multipleRanks.length)] :
+      cpu.hand[Math.floor(Math.random() * cpu.hand.length)].rank;
+    
+    // Choose random opponent with cards
+    const validOpponents = this.state.players
+      .map((p, i) => i)
+      .filter(i => i !== this.state.currentPlayerIndex && this.state.players[i].hand.length > 0);
+    
+    const chosenOpponent = validOpponents[Math.floor(Math.random() * validOpponents.length)];
+    
+    return { rank: chosenRank, opponentIndex: chosenOpponent };
   }
   
   nextTurn() {
@@ -463,46 +797,75 @@ class GoFish {
     this.state.selectedOpponent = null;
     this.state.turnInProgress = false;
     
-    this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % this.state.players.length;
+    do {
+      this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % this.state.players.length;
+    } while (this.state.players[this.state.currentPlayerIndex].hand.length === 0 && 
+             this.state.players.some(p => p.hand.length > 0));
+    
+    const current = this.state.players[this.state.currentPlayerIndex];
     
     if (this.checkGameEnd()) return;
-
-    const currentPlayer = this.state.players[this.state.currentPlayerIndex];
-    this.state.message = `${currentPlayer.name}'s turn`;
+    
+    this.state.message = current.isHuman ? 
+      "Your turn! Select a rank and opponent." :
+      `${current.name}'s turn...`;
+    
     this.render();
     
-    if (!currentPlayer.isHuman) {
+    if (!current.isHuman) {
       setTimeout(() => this.executeCPUTurn(), 1000);
     }
   }
   
   checkGameEnd() {
-    const allSetsCollected = this.state.sets.length === 13;
-    const allHandsEmpty = this.state.players.every(p => p.hand.length === 0) && this.state.drawPile.length === 0;
-
-    if (allSetsCollected || allHandsEmpty) {
+    const allEmpty = this.state.players.every(p => p.hand.length === 0);
+    const allSets = this.state.sets.length === 13;
+    
+    if (allEmpty || allSets) {
       this.state.gameWon = true;
+      
       const maxSets = Math.max(...this.state.players.map(p => p.sets));
       const winners = this.state.players.filter(p => p.sets === maxSets);
       
-      this.state.message = winners.length === 1 
-        ? `🏆 ${winners[0].name} wins with ${maxSets} sets! 🏆`
-        : `🤝 Tie Game! ${winners.map(w => w.name).join(' & ')} win!`;
+      if (winners.length === 1) {
+        this.state.message = `🏆 ${winners[0].name} wins with ${maxSets} sets! 🏆`;
+      } else {
+        this.state.message = `🏆 Tie! ${winners.map(w => w.name).join(' & ')} with ${maxSets} sets! 🏆`;
+      }
       
       this.render();
-      this.engine.celebrateWin();
+      setTimeout(() => this.engine.celebrateWin(), 500);
       return true;
     }
+    
     return false;
   }
-
-  updateStats() {
-    document.getElementById('game-score').textContent = `Sets: ${this.state.sets.length}/13`;
-    document.getElementById('game-moves').textContent = `Pond: ${this.state.drawPile.length}`;
+  
+  scaleCardForMobile(cardElement) {
+    cardElement.style.fontSize = '0.6rem';
+    cardElement.querySelectorAll('.rank').forEach(el => {
+      el.style.fontSize = '0.75rem';
+    });
+    cardElement.querySelectorAll('.mini-pip').forEach(el => {
+      el.style.fontSize = '0.6rem';
+    });
+    cardElement.querySelectorAll('.pip').forEach(pip => {
+      pip.style.fontSize = pip.classList.contains('large') ? '1.5rem' : '0.8rem';
+    });
   }
   
+  updateStats() {
+    document.getElementById('game-moves').textContent = `Asks: ${this.state.cpuMemory.length}`;
+    document.getElementById('game-score').textContent = `Sets: ${this.state.sets.length}/13`;
+  }
+  
+  pause() {}
+  
   cleanup() {
-    if (this.resizeHandler) window.removeEventListener('resize', this.resizeHandler);
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = null;
+    }
   }
 }
 
