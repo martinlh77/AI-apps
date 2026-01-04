@@ -8,21 +8,36 @@ class KlondikeSolitaire {
     this.engine = engine;
     this.deck = deckData;
     this.state = {
-      stock: [], waste: [], foundations: [[], [], [], []], tableau: [[], [], [], [], [], [], []],
-      drawCount: 1, moves: 0, score: 0,
-      // Gesture/View State
-      zoom: 1.0, panX: 0, panY: 0,
-      // Drag State
-      isDragging: false, dragData: null, dragElement: null,
-      startX: 0, startY: 0, originalElement: null
+      stock: [], 
+      waste: [], 
+      foundations: [[], [], [], []], 
+      tableau: [[], [], [], [], [], [], []],
+      drawCount: 1, 
+      moves: 0, 
+      score: 0,
+      zoom: 1.0, 
+      panX: 0, 
+      panY: 0,
+      isDragging: false, 
+      dragData: null, 
+      dragElement: null,
+      startX: 0, 
+      startY: 0, 
+      originalElement: null
     };
     this.resizeHandler = null;
-    this.cardValues = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
+    this.cardValues = { 
+      'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, 
+      '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 
+    };
   }
 
   setup() {
-    this.state.moves = 0; this.state.score = 0;
-    this.state.zoom = 1.0; this.state.panX = 0; this.state.panY = 0;
+    this.state.moves = 0;
+    this.state.score = 0;
+    this.state.zoom = 1.0;
+    this.state.panX = 0;
+    this.state.panY = 0;
     
     const cards = this.engine.shuffleDeck(this.engine.createCardArray(this.deck));
     
@@ -53,6 +68,7 @@ class KlondikeSolitaire {
   setupUI() {
     const board = document.getElementById('game-board');
     board.style.touchAction = 'none';
+    
     if (!document.getElementById('solitaire-ctrl')) {
       const ctrl = document.createElement('div');
       ctrl.id = 'solitaire-ctrl';
@@ -62,33 +78,38 @@ class KlondikeSolitaire {
         <button id="d3" style="padding:8px 15px; background:#444; color:white; border:none; border-radius:4px; cursor:pointer;">Draw 3</button>
         <button id="reset-cam" style="padding:8px 15px; background:#ff6b6b; color:white; border:none; border-radius:4px; cursor:pointer;">Reset View</button>
       `;
-      board.parentElement.prepend(ctrl);
+      board.parentElement.insertBefore(ctrl, board);
+      
       document.getElementById('d1').onclick = () => this.setDraw(1);
       document.getElementById('d3').onclick = () => this.setDraw(3);
-      document.getElementById('reset-cam').onclick = () => { this.state.zoom = 1; this.state.panX = 0; this.state.panY = 0; this.render(); };
+      document.getElementById('reset-cam').onclick = () => { 
+        this.state.zoom = 1; 
+        this.state.panX = 0; 
+        this.state.panY = 0; 
+        this.render(); 
+      };
     }
   }
 
   setDraw(n) {
     this.state.drawCount = n;
     document.getElementById('d1').style.background = n === 1 ? '#00ffcc' : '#444';
+    document.getElementById('d1').style.color = n === 1 ? '#000' : '#fff';
     document.getElementById('d3').style.background = n === 3 ? '#00ffcc' : '#444';
+    document.getElementById('d3').style.color = n === 3 ? '#000' : '#fff';
   }
 
-  // --- DRAG, DROP & ZOOM GESTURES ---
-
   attachGlobalEvents() {
-    window.onpointermove = (e) => this.handlePointerMove(e);
-    window.onpointerup = (e) => this.handlePointerUp(e);
+    window.addEventListener('pointermove', (e) => this.handlePointerMove(e));
+    window.addEventListener('pointerup', (e) => this.handlePointerUp(e));
   }
 
   handlePointerDown(e, type, colIdx, cardIdx) {
-    if (e.button !== 0 && e.pointerType === 'mouse') return; // Only left click
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
     
     e.preventDefault();
     e.stopPropagation();
 
-    // Get the card
     let card;
     if (type === 'tableau') {
       card = this.state.tableau[colIdx][cardIdx];
@@ -106,14 +127,12 @@ class KlondikeSolitaire {
     this.state.startY = e.clientY;
     this.state.originalElement = e.currentTarget;
 
-    // Create visual drag proxy
     const rect = e.currentTarget.getBoundingClientRect();
     
     const container = document.createElement('div');
     container.id = 'drag-proxy';
     container.style.cssText = `position:fixed; left:${rect.left}px; top:${rect.top}px; pointer-events:none; z-index:10000; transition:none;`;
     
-    // If tableau, grab the card and everything below it
     if (type === 'tableau') {
       const colEl = e.currentTarget.parentElement;
       const siblings = Array.from(colEl.children).slice(cardIdx);
@@ -129,7 +148,7 @@ class KlondikeSolitaire {
     
     document.body.appendChild(container);
     this.state.dragElement = container;
-    e.currentTarget.style.opacity = '0.3'; // Semi-transparent original
+    e.currentTarget.style.opacity = '0.3';
   }
 
   handlePointerMove(e) {
@@ -143,14 +162,12 @@ class KlondikeSolitaire {
   handlePointerUp(e) {
     if (!this.state.isDragging) return;
     
-    const dragData = this.state.dragData;
     const dragEl = this.state.dragElement;
     this.state.isDragging = false;
     this.state.dragElement = null;
     
     if (dragEl) dragEl.remove();
 
-    // Check hit targets
     const targets = document.elementsFromPoint(e.clientX, e.clientY);
     const dropZone = targets.find(t => t.dataset.zoneType);
 
@@ -166,16 +183,11 @@ class KlondikeSolitaire {
       }
     }
 
-    if (!moved && this.state.originalElement) {
-      this.state.originalElement.style.opacity = '1';
-    }
-    
     this.state.originalElement = null;
     this.render();
   }
 
   handleDblClick(type, colIdx, cardIdx) {
-    // Attempt to auto-collect to foundations
     const cards = this.getSelectedCards(type, colIdx, cardIdx);
     if (cards.length !== 1) return;
 
@@ -187,8 +199,6 @@ class KlondikeSolitaire {
       }
     }
   }
-
-  // --- HELPER METHODS ---
 
   getSelectedCards(type, colIdx, cardIdx) {
     if (type === 'waste') {
@@ -202,10 +212,10 @@ class KlondikeSolitaire {
   isValidFoundationMove(card, foundIdx) {
     const foundation = this.state.foundations[foundIdx];
     if (foundation.length === 0) {
-      return this.cardValues[card.value] === 1; // Must be Ace
+      return this.cardValues[card.rank] === 1;
     }
     const topCard = foundation[foundation.length - 1];
-    return card.suit === topCard.suit && this.cardValues[card.value] === this.cardValues[topCard.value] + 1;
+    return card.suit === topCard.suit && this.cardValues[card.rank] === this.cardValues[topCard.rank] + 1;
   }
 
   isValidTableauMove(cards, destIdx) {
@@ -213,15 +223,15 @@ class KlondikeSolitaire {
     const movingCard = cards[0];
     
     if (destCol.length === 0) {
-      return this.cardValues[movingCard.value] === 13; // Must be King
+      return this.cardValues[movingCard.rank] === 13;
     }
     
     const destCard = destCol[destCol.length - 1];
     if (!destCard.faceUp) return false;
     
-    const isRed = (suit) => suit === '♥' || suit === '♦';
+    const isRed = (suit) => suit === 'hearts' || suit === 'diamonds';
     const colorDifferent = isRed(movingCard.suit) !== isRed(destCard.suit);
-    const valueCorrect = this.cardValues[movingCard.value] === this.cardValues[destCard.value] - 1;
+    const valueCorrect = this.cardValues[movingCard.rank] === this.cardValues[destCard.rank] - 1;
     
     return colorDifferent && valueCorrect;
   }
@@ -233,7 +243,6 @@ class KlondikeSolitaire {
     if (cards.length !== 1) return false;
     if (!this.isValidFoundationMove(cards[0], foundIdx)) return false;
     
-    // Remove from source
     if (type === 'waste') {
       this.state.waste.pop();
     } else if (type === 'tableau') {
@@ -243,7 +252,6 @@ class KlondikeSolitaire {
       }
     }
     
-    // Add to foundation
     this.state.foundations[foundIdx].push(cards[0]);
     this.state.moves++;
     this.state.score += 10;
@@ -259,7 +267,6 @@ class KlondikeSolitaire {
     if (cards.length === 0) return false;
     if (!this.isValidTableauMove(cards, destIdx)) return false;
     
-    // Remove from source
     if (type === 'waste') {
       this.state.waste.pop();
     } else if (type === 'tableau') {
@@ -269,7 +276,6 @@ class KlondikeSolitaire {
       }
     }
     
-    // Add to destination
     this.state.tableau[destIdx].push(...cards);
     this.state.moves++;
     this.updateStats();
@@ -278,7 +284,6 @@ class KlondikeSolitaire {
 
   drawFromStock() {
     if (this.state.stock.length === 0) {
-      // Recycle waste to stock
       if (this.state.waste.length === 0) return;
       this.state.stock = this.state.waste.reverse().map(c => ({...c, faceUp: false}));
       this.state.waste = [];
@@ -296,18 +301,19 @@ class KlondikeSolitaire {
   checkWin() {
     const allInFoundations = this.state.foundations.every(f => f.length === 13);
     if (allInFoundations) {
-      setTimeout(() => alert('🎉 You won! Moves: ' + this.state.moves), 100);
+      setTimeout(() => {
+        this.engine.celebrateWin();
+        alert('🎉 You won! Moves: ' + this.state.moves);
+      }, 100);
     }
   }
 
   updateStats() {
-    const statsEl = document.getElementById('game-stats');
-    if (statsEl) {
-      statsEl.textContent = `Moves: ${this.state.moves} | Score: ${this.state.score}`;
-    }
+    const movesEl = document.getElementById('game-moves');
+    const scoreEl = document.getElementById('game-score');
+    if (movesEl) movesEl.textContent = `Moves: ${this.state.moves}`;
+    if (scoreEl) scoreEl.textContent = `Score: ${this.state.score}`;
   }
-
-  // --- RENDERING ---
 
   render() {
     const gameBoard = document.getElementById('game-board');
@@ -326,12 +332,13 @@ class KlondikeSolitaire {
     content.style.cssText = 'display:flex; flex-direction:column; align-items:center; width:100%; padding-top:20px;';
     wrapper.appendChild(content);
 
-    // --- Top Row ---
+    // Top Row
     const topRow = document.createElement('div');
     topRow.style.cssText = `display:flex; justify-content:space-between; width:100%; max-width:900px; margin-bottom:${gap*2}px; padding:0 10px;`;
     
     const stockWaste = document.createElement('div');
-    stockWaste.style.display = 'flex'; stockWaste.style.gap = `${gap}px`;
+    stockWaste.style.display = 'flex';
+    stockWaste.style.gap = `${gap}px`;
     
     // Stock
     const stock = this.createSlot(cardSize, 'stock', 0);
@@ -348,6 +355,7 @@ class KlondikeSolitaire {
     if (this.state.waste.length > 0) {
       const topCard = this.state.waste[this.state.waste.length - 1];
       const cardEl = this.createCard(topCard, cardSize, false);
+      cardEl.style.cursor = 'grab';
       cardEl.onpointerdown = (e) => this.handlePointerDown(e, 'waste', 0, this.state.waste.length - 1);
       cardEl.ondblclick = () => this.handleDblClick('waste', 0, this.state.waste.length - 1);
       waste.appendChild(cardEl);
@@ -371,17 +379,16 @@ class KlondikeSolitaire {
     topRow.appendChild(foundations);
     content.appendChild(topRow);
     
-    // --- Tableau ---
+    // Tableau
     const tableau = document.createElement('div');
     tableau.style.cssText = `display:flex; gap:${gap}px; justify-content:center; width:100%; max-width:900px;`;
     
     for (let i = 0; i < 7; i++) {
       const col = document.createElement('div');
-      col.style.cssText = `position:relative; width:${cardSize.w}px;`;
+      col.style.cssText = `position:relative; width:${cardSize.w}px; min-height:${cardSize.h}px;`;
       col.dataset.zoneType = 'tableau';
       col.dataset.zoneIdx = i;
       
-      // Make empty column a drop zone
       if (this.state.tableau[i].length === 0) {
         const emptySlot = this.createSlot(cardSize, 'tableau', i);
         col.appendChild(emptySlot);
@@ -422,18 +429,28 @@ class KlondikeSolitaire {
       div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
       div.style.border = '2px solid #fff';
     } else if (card) {
-      const isRed = card.suit === '♥' || card.suit === '♦';
+      const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
       div.style.background = 'white';
       div.style.color = isRed ? '#e74c3c' : '#2c3e50';
       div.style.border = '2px solid #ddd';
-      div.innerHTML = `<div style="text-align:center; font-size:${size.w < 60 ? '12px' : '18px'};">${card.value}<br>${card.suit}</div>`;
+      div.innerHTML = `<div style="text-align:center; font-size:${size.w < 60 ? '12px' : '18px'};">${card.rank}<br>${card.suitEmoji}</div>`;
     }
     
     return div;
   }
+
+  pause() {
+    // Optional pause functionality
+  }
+
+  cleanup() {
+    if (this.resizeHandler) {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = null;
+    }
+  }
 }
 
-// Export for use
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = KlondikeSolitaire;
-}
+// REQUIRED: Register the game with window.GameModules
+window.GameModules = window.GameModules || {};
+window.GameModules['solitaire-klondike-v1'] = KlondikeSolitaire;
