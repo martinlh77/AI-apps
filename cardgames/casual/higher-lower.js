@@ -15,7 +15,9 @@ class HigherLower {
       bestStreak: 0,
       gameOver: false,
       lastGuess: null,
-      lastResult: null
+      lastResult: null,
+      showingComparison: false,
+      nextCard: null
     };
     
     this.cardValues = {
@@ -23,12 +25,10 @@ class HigherLower {
       '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13
     };
     
-    // ✅ ADD: Initialize resize handler
     this.resizeHandler = null;
   }
   
   setup() {
-    // Create and shuffle deck
     const allCards = this.engine.createCardArray(this.deck);
     this.state.cards = this.engine.shuffleDeck(allCards);
     this.state.currentIndex = 0;
@@ -38,8 +38,9 @@ class HigherLower {
     this.state.gameOver = false;
     this.state.lastGuess = null;
     this.state.lastResult = null;
+    this.state.showingComparison = false;
+    this.state.nextCard = null;
     
-    // ✅ ADD: Add resize listener
     if (this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler);
     }
@@ -50,7 +51,6 @@ class HigherLower {
     this.updateStats();
   }
   
-  // ✅ ADD: Mobile scaling helper
   scaleCardForMobile(cardElement) {
     cardElement.style.fontSize = '0.7rem';
     
@@ -60,25 +60,21 @@ class HigherLower {
     if (cardFront) {
       cardFront.style.fontSize = '0.7rem';
       
-      // Scale rank displays
       const rankDisplays = cardFront.querySelectorAll('.card-rank');
       rankDisplays.forEach(rank => {
         rank.style.fontSize = '0.85rem';
       });
       
-      // Scale mini suit icons
       const miniPips = cardFront.querySelectorAll('.mini-pip');
       miniPips.forEach(pip => {
         pip.style.fontSize = '0.7rem';
       });
       
-      // Scale center suit
       const suitCenter = cardFront.querySelector('.card-suit-center');
       if (suitCenter) {
         suitCenter.style.fontSize = '2rem';
       }
       
-      // Scale center pips
       const pips = cardFront.querySelectorAll('.pip');
       pips.forEach(pip => {
         if (pip.classList.contains('large')) {
@@ -88,7 +84,6 @@ class HigherLower {
         }
       });
       
-      // Scale face card windows
       const faceWindow = cardFront.querySelector('.face-card-window');
       if (faceWindow) {
         faceWindow.style.top = '20px';
@@ -103,231 +98,282 @@ class HigherLower {
     }
   }
   
-render() {
-  const gameBoard = document.getElementById('game-board');
-  gameBoard.innerHTML = '';
-  gameBoard.style.display = 'flex';
-  gameBoard.style.flexDirection = 'column';
-  gameBoard.style.alignItems = 'center';
-  gameBoard.style.justifyContent = 'flex-start';
-  gameBoard.style.gap = '0'; // Remove gap, use explicit margins instead
-  gameBoard.style.minHeight = '600px';
-  gameBoard.style.padding = '30px 20px';
-  gameBoard.style.paddingTop = '40px';
-  gameBoard.style.overflowY = 'auto';
-  
-  // Detect mobile
-  const isMobile = window.innerWidth < 700;
-  const cardWidth = isMobile ? '100px' : '150px';
-  const cardHeight = isMobile ? '140px' : '210px';
-  
-  if (this.state.gameOver) {
-    this.renderGameOver(gameBoard, isMobile);
-    return;
+  render() {
+    const gameBoard = document.getElementById('game-board');
+    gameBoard.innerHTML = '';
+    gameBoard.style.display = 'flex';
+    gameBoard.style.flexDirection = 'column';
+    gameBoard.style.alignItems = 'center';
+    gameBoard.style.justifyContent = 'flex-start';
+    gameBoard.style.gap = '0';
+    gameBoard.style.minHeight = '600px';
+    gameBoard.style.padding = '30px 20px';
+    gameBoard.style.paddingTop = '40px';
+    gameBoard.style.overflowY = 'auto';
+    
+    const isMobile = window.innerWidth < 700;
+    const cardWidth = isMobile ? '100px' : '150px';
+    const cardHeight = isMobile ? '140px' : '210px';
+    
+    if (this.state.gameOver) {
+      this.renderGameOver(gameBoard, isMobile, cardWidth, cardHeight);
+      return;
+    }
+    
+    if (this.state.showingComparison) {
+      this.renderComparison(gameBoard, isMobile, cardWidth, cardHeight);
+      return;
+    }
+    
+    // Title
+    const title = document.createElement('h2');
+    title.textContent = 'Will the next card be...';
+    title.style.color = '#00ffcc';
+    title.style.margin = '0 0 30px 0';
+    title.style.fontSize = isMobile ? '1.3rem' : '1.8rem';
+    title.style.textAlign = 'center';
+    gameBoard.appendChild(title);
+    
+    // Current card container
+    const cardContainer = document.createElement('div');
+    cardContainer.style.display = 'flex';
+    cardContainer.style.flexDirection = 'column';
+    cardContainer.style.alignItems = 'center';
+    cardContainer.style.gap = '15px';
+    cardContainer.style.margin = '0 0 40px 0';
+    
+    const cardElement = this.engine.renderCard(this.state.currentCard, true);
+    cardElement.style.width = cardWidth;
+    cardElement.style.height = cardHeight;
+    cardElement.classList.add('card-dealing');
+    
+    if (isMobile) {
+      this.scaleCardForMobile(cardElement);
+    }
+    
+    cardContainer.appendChild(cardElement);
+    
+    // Card value display
+    const valueDisplay = document.createElement('div');
+    valueDisplay.textContent = `Current Value: ${this.cardValues[this.state.currentCard.rank]}`;
+    valueDisplay.style.fontSize = isMobile ? '1rem' : '1.2rem';
+    valueDisplay.style.color = '#ffd700';
+    valueDisplay.style.fontWeight = 'bold';
+    valueDisplay.style.textAlign = 'center';
+    valueDisplay.style.margin = '0';
+    cardContainer.appendChild(valueDisplay);
+    
+    gameBoard.appendChild(cardContainer);
+    
+    // Buttons
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.gap = isMobile ? '15px' : '30px';
+    buttonContainer.style.margin = '0 0 20px 0';
+    buttonContainer.style.width = '100%';
+    buttonContainer.style.justifyContent = 'center';
+    
+    const higherBtn = this.createButton('⬆️ HIGHER', '#00b894', () => this.makeGuess('higher'), isMobile);
+    const lowerBtn = this.createButton('⬇️ LOWER', '#e74c3c', () => this.makeGuess('lower'), isMobile);
+    
+    buttonContainer.appendChild(higherBtn);
+    buttonContainer.appendChild(lowerBtn);
+    gameBoard.appendChild(buttonContainer);
   }
   
-  // Title
-  const title = document.createElement('h2');
-  title.textContent = 'Will the next card be...';
-  title.style.color = '#00ffcc';
-  title.style.margin = '0 0 30px 0';
-  title.style.fontSize = isMobile ? '1.3rem' : '1.8rem';
-  title.style.textAlign = 'center';
-  gameBoard.appendChild(title);
-  
-  // Current card container
-  const cardContainer = document.createElement('div');
-  cardContainer.style.display = 'flex';
-  cardContainer.style.flexDirection = 'column';
-  cardContainer.style.alignItems = 'center';
-  cardContainer.style.gap = '15px';
-  cardContainer.style.margin = '0 0 40px 0'; // Large bottom margin
-  cardContainer.style.position = 'relative';
-  cardContainer.style.zIndex = '1';
-  
-  const cardElement = this.engine.renderCard(this.state.currentCard, true);
-  cardElement.style.width = cardWidth;
-  cardElement.style.height = cardHeight;
-  cardElement.style.position = 'relative';
-  cardElement.style.zIndex = '1';
-  cardElement.classList.add('card-dealing');
-  
-  if (isMobile) {
-    this.scaleCardForMobile(cardElement);
-  }
-  
-  cardContainer.appendChild(cardElement);
-  
-  // Card value display (below the card)
-  const valueDisplay = document.createElement('div');
-  valueDisplay.textContent = `Current Value: ${this.cardValues[this.state.currentCard.rank]}`;
-  valueDisplay.style.fontSize = isMobile ? '1rem' : '1.2rem';
-  valueDisplay.style.color = '#ffd700';
-  valueDisplay.style.fontWeight = 'bold';
-  valueDisplay.style.textAlign = 'center';
-  valueDisplay.style.margin = '0';
-  cardContainer.appendChild(valueDisplay);
-  
-  gameBoard.appendChild(cardContainer);
-  
-  // Buttons (well separated from card)
-  const buttonContainer = document.createElement('div');
-  buttonContainer.style.display = 'flex';
-  buttonContainer.style.gap = isMobile ? '15px' : '30px';
-  buttonContainer.style.margin = '0 0 20px 0';
-  buttonContainer.style.position = 'relative';
-  buttonContainer.style.zIndex = '10';
-  buttonContainer.style.width = '100%';
-  buttonContainer.style.justifyContent = 'center';
-  
-  const higherBtn = document.createElement('button');
-  higherBtn.innerHTML = '⬆️ HIGHER';
-  higherBtn.className = 'btn-game-control';
-  higherBtn.style.fontSize = isMobile ? '1rem' : '1.3rem';
-  higherBtn.style.padding = isMobile ? '15px 30px' : '18px 45px';
-  higherBtn.style.background = '#00b894';
-  higherBtn.style.color = 'white';
-  higherBtn.style.fontWeight = 'bold';
-  higherBtn.style.cursor = 'pointer';
-  higherBtn.style.border = 'none';
-  higherBtn.style.borderRadius = '10px';
-  higherBtn.style.transition = 'all 0.2s';
-  higherBtn.style.boxShadow = '0 4px 15px rgba(0, 184, 148, 0.4)';
-  higherBtn.style.position = 'relative';
-  higherBtn.style.zIndex = '10';
-  higherBtn.onmouseenter = () => {
-    higherBtn.style.transform = 'scale(1.05)';
-    higherBtn.style.boxShadow = '0 6px 20px rgba(0, 184, 148, 0.6)';
-  };
-  higherBtn.onmouseleave = () => {
-    higherBtn.style.transform = 'scale(1)';
-    higherBtn.style.boxShadow = '0 4px 15px rgba(0, 184, 148, 0.4)';
-  };
-  higherBtn.onclick = () => this.makeGuess('higher');
-  buttonContainer.appendChild(higherBtn);
-  
-  const lowerBtn = document.createElement('button');
-  lowerBtn.innerHTML = '⬇️ LOWER';
-  lowerBtn.className = 'btn-game-control';
-  lowerBtn.style.fontSize = isMobile ? '1rem' : '1.3rem';
-  lowerBtn.style.padding = isMobile ? '15px 30px' : '18px 45px';
-  lowerBtn.style.background = '#e74c3c';
-  lowerBtn.style.color = 'white';
-  lowerBtn.style.fontWeight = 'bold';
-  lowerBtn.style.cursor = 'pointer';
-  lowerBtn.style.border = 'none';
-  lowerBtn.style.borderRadius = '10px';
-  lowerBtn.style.transition = 'all 0.2s';
-  lowerBtn.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.4)';
-  lowerBtn.style.position = 'relative';
-  lowerBtn.style.zIndex = '10';
-  lowerBtn.onmouseenter = () => {
-    lowerBtn.style.transform = 'scale(1.05)';
-    lowerBtn.style.boxShadow = '0 6px 20px rgba(231, 76, 60, 0.6)';
-  };
-  lowerBtn.onmouseleave = () => {
-    lowerBtn.style.transform = 'scale(1)';
-    lowerBtn.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.4)';
-  };
-  lowerBtn.onclick = () => this.makeGuess('lower');
-  buttonContainer.appendChild(lowerBtn);
-  
-  gameBoard.appendChild(buttonContainer);
-  
-  // Result message (if exists)
-  if (this.state.lastResult) {
+  renderComparison(gameBoard, isMobile, cardWidth, cardHeight) {
+    // Title
+    const title = document.createElement('h2');
+    title.textContent = 'Comparing Cards...';
+    title.style.color = '#00ffcc';
+    title.style.margin = '0 0 30px 0';
+    title.style.fontSize = isMobile ? '1.3rem' : '1.8rem';
+    title.style.textAlign = 'center';
+    gameBoard.appendChild(title);
+    
+    // Cards side by side
+    const cardsContainer = document.createElement('div');
+    cardsContainer.style.display = 'flex';
+    cardsContainer.style.gap = isMobile ? '15px' : '30px';
+    cardsContainer.style.justifyContent = 'center';
+    cardsContainer.style.alignItems = 'flex-start';
+    cardsContainer.style.margin = '0 0 30px 0';
+    
+    // Current card
+    const currentContainer = document.createElement('div');
+    currentContainer.style.display = 'flex';
+    currentContainer.style.flexDirection = 'column';
+    currentContainer.style.alignItems = 'center';
+    currentContainer.style.gap = '10px';
+    
+    const currentLabel = document.createElement('div');
+    currentLabel.textContent = 'Current Card';
+    currentLabel.style.fontSize = isMobile ? '0.9rem' : '1rem';
+    currentLabel.style.color = '#fff';
+    currentLabel.style.fontWeight = 'bold';
+    currentContainer.appendChild(currentLabel);
+    
+    const currentCardEl = this.engine.renderCard(this.state.currentCard, true);
+    currentCardEl.style.width = cardWidth;
+    currentCardEl.style.height = cardHeight;
+    if (isMobile) this.scaleCardForMobile(currentCardEl);
+    currentContainer.appendChild(currentCardEl);
+    
+    const currentValue = document.createElement('div');
+    currentValue.textContent = `Value: ${this.cardValues[this.state.currentCard.rank]}`;
+    currentValue.style.fontSize = isMobile ? '0.9rem' : '1rem';
+    currentValue.style.color = '#ffd700';
+    currentContainer.appendChild(currentValue);
+    
+    cardsContainer.appendChild(currentContainer);
+    
+    // Next card
+    const nextContainer = document.createElement('div');
+    nextContainer.style.display = 'flex';
+    nextContainer.style.flexDirection = 'column';
+    nextContainer.style.alignItems = 'center';
+    nextContainer.style.gap = '10px';
+    
+    const nextLabel = document.createElement('div');
+    nextLabel.textContent = 'Next Card';
+    nextLabel.style.fontSize = isMobile ? '0.9rem' : '1rem';
+    nextLabel.style.color = '#fff';
+    nextLabel.style.fontWeight = 'bold';
+    nextContainer.appendChild(nextLabel);
+    
+    const nextCardEl = this.engine.renderCard(this.state.nextCard, true);
+    nextCardEl.style.width = cardWidth;
+    nextCardEl.style.height = cardHeight;
+    if (isMobile) this.scaleCardForMobile(nextCardEl);
+    nextContainer.appendChild(nextCardEl);
+    
+    const nextValue = document.createElement('div');
+    nextValue.textContent = `Value: ${this.cardValues[this.state.nextCard.rank]}`;
+    nextValue.style.fontSize = isMobile ? '0.9rem' : '1rem';
+    nextValue.style.color = '#ffd700';
+    nextContainer.appendChild(nextValue);
+    
+    cardsContainer.appendChild(nextContainer);
+    gameBoard.appendChild(cardsContainer);
+    
+    // Result message
     const resultMsg = document.createElement('div');
     resultMsg.textContent = this.state.lastResult;
     resultMsg.style.margin = '0';
     resultMsg.style.padding = isMobile ? '12px 20px' : '15px 30px';
     resultMsg.style.borderRadius = '8px';
-    resultMsg.style.fontSize = isMobile ? '0.95rem' : '1.1rem';
+    resultMsg.style.fontSize = isMobile ? '1rem' : '1.2rem';
     resultMsg.style.fontWeight = 'bold';
     resultMsg.style.textAlign = 'center';
     resultMsg.style.maxWidth = '90%';
-    
-    if (this.state.lastResult.includes('Correct')) {
-      resultMsg.style.background = 'rgba(0, 255, 0, 0.2)';
-      resultMsg.style.color = '#90ee90';
-      resultMsg.style.border = '2px solid #90ee90';
-    }
-    
+    resultMsg.style.background = 'rgba(0, 255, 0, 0.2)';
+    resultMsg.style.color = '#90ee90';
+    resultMsg.style.border = '2px solid #90ee90';
     gameBoard.appendChild(resultMsg);
   }
-}  
-  renderGameOver(gameBoard, isMobile) {
+  
+  renderGameOver(gameBoard, isMobile, cardWidth, cardHeight) {
     const container = document.createElement('div');
     container.style.textAlign = 'center';
-    container.style.padding = isMobile ? '20px' : '40px'; // ✅ ADD responsive padding
-    container.style.maxWidth = '100%'; // ✅ ADD to prevent overflow
+    container.style.padding = isMobile ? '20px' : '40px';
+    container.style.maxWidth = '100%';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.alignItems = 'center';
+    container.style.gap = '20px';
     
     const title = document.createElement('h2');
     title.textContent = '❌ Game Over!';
     title.style.color = '#e74c3c';
-    title.style.fontSize = isMobile ? '2rem' : '2.5rem'; // ✅ ADD responsive font
-    title.style.marginBottom = '20px';
+    title.style.fontSize = isMobile ? '2rem' : '2.5rem';
+    title.style.margin = '0';
     container.appendChild(title);
     
     const streakMsg = document.createElement('div');
     streakMsg.textContent = `Final Streak: ${this.state.streak}`;
-    streakMsg.style.fontSize = isMobile ? '1.2rem' : '1.5rem'; // ✅ ADD responsive font
+    streakMsg.style.fontSize = isMobile ? '1.2rem' : '1.5rem';
     streakMsg.style.color = '#00ffcc';
-    streakMsg.style.marginBottom = '10px';
+    streakMsg.style.margin = '0';
     container.appendChild(streakMsg);
     
     const bestMsg = document.createElement('div');
     bestMsg.textContent = `Best Streak: ${this.state.bestStreak}`;
-    bestMsg.style.fontSize = isMobile ? '1rem' : '1.2rem'; // ✅ ADD responsive font
+    bestMsg.style.fontSize = isMobile ? '1rem' : '1.2rem';
     bestMsg.style.color = '#ffd700';
-    bestMsg.style.marginBottom = '30px';
+    bestMsg.style.margin = '0';
     container.appendChild(bestMsg);
     
-    // Show the card that ended the game
-    if (this.state.currentIndex < this.state.cards.length) {
-      const nextCard = this.state.cards[this.state.currentIndex];
-      const cardElement = this.engine.renderCard(nextCard, true);
-      const cardWidth = isMobile ? '100px' : '150px';
-      const cardHeight = isMobile ? '140px' : '210px';
-      cardElement.style.width = cardWidth;
-      cardElement.style.height = cardHeight;
-      cardElement.style.margin = '20px auto';
-      
-      // ✅ ADD: Mobile scaling
-      if (isMobile) {
-        this.scaleCardForMobile(cardElement);
-      }
-      
-      container.appendChild(cardElement);
-      
+    // Show comparison
+    if (this.state.nextCard) {
       const explanation = document.createElement('div');
-      explanation.textContent = `You guessed ${this.state.lastGuess.toUpperCase()}, but the card was ${this.cardValues[nextCard.rank]}`;
+      const currentValue = this.cardValues[this.state.currentCard.rank];
+      const nextValue = this.cardValues[this.state.nextCard.rank];
+      explanation.textContent = `You guessed ${this.state.lastGuess.toUpperCase()}, but ${nextValue} is not ${this.state.lastGuess} than ${currentValue}`;
       explanation.style.color = '#ccc';
-      explanation.style.marginTop = '10px';
-      explanation.style.fontSize = isMobile ? '0.9rem' : '1rem'; // ✅ ADD responsive font
-      explanation.style.padding = '0 10px'; // ✅ ADD padding for mobile
+      explanation.style.fontSize = isMobile ? '0.9rem' : '1rem';
+      explanation.style.padding = '0 10px';
+      explanation.style.margin = '0';
       container.appendChild(explanation);
+      
+      // Show both cards
+      const cardsContainer = document.createElement('div');
+      cardsContainer.style.display = 'flex';
+      cardsContainer.style.gap = isMobile ? '15px' : '30px';
+      cardsContainer.style.justifyContent = 'center';
+      cardsContainer.style.marginTop = '20px';
+      
+      const currentCardEl = this.engine.renderCard(this.state.currentCard, true);
+      currentCardEl.style.width = cardWidth;
+      currentCardEl.style.height = cardHeight;
+      if (isMobile) this.scaleCardForMobile(currentCardEl);
+      cardsContainer.appendChild(currentCardEl);
+      
+      const nextCardEl = this.engine.renderCard(this.state.nextCard, true);
+      nextCardEl.style.width = cardWidth;
+      nextCardEl.style.height = cardHeight;
+      if (isMobile) this.scaleCardForMobile(nextCardEl);
+      cardsContainer.appendChild(nextCardEl);
+      
+      container.appendChild(cardsContainer);
     }
     
-    const playAgainBtn = document.createElement('button');
-    playAgainBtn.textContent = '🔄 Play Again';
-    playAgainBtn.className = 'btn-game-control';
-    playAgainBtn.style.fontSize = isMobile ? '1rem' : '1.2rem'; // ✅ ADD responsive font
-    playAgainBtn.style.padding = isMobile ? '12px 30px' : '15px 40px'; // ✅ ADD responsive padding
+    const playAgainBtn = this.createButton('🔄 Play Again', '#00ffcc', () => this.setup(), isMobile);
+    playAgainBtn.style.marginTop = '10px';
     playAgainBtn.style.background = '#00ffcc';
     playAgainBtn.style.color = '#000';
-    playAgainBtn.style.fontWeight = 'bold';
-    playAgainBtn.style.marginTop = '30px';
-    playAgainBtn.style.cursor = 'pointer';
-    playAgainBtn.style.border = 'none';
-    playAgainBtn.style.borderRadius = '8px';
-    playAgainBtn.onclick = () => this.setup();
     container.appendChild(playAgainBtn);
     
     gameBoard.appendChild(container);
   }
   
+  createButton(text, bgColor, onClick, isMobile) {
+    const btn = document.createElement('button');
+    btn.innerHTML = text;
+    btn.className = 'btn-game-control';
+    btn.style.fontSize = isMobile ? '1rem' : '1.3rem';
+    btn.style.padding = isMobile ? '15px 30px' : '18px 45px';
+    btn.style.background = bgColor;
+    btn.style.color = 'white';
+    btn.style.fontWeight = 'bold';
+    btn.style.cursor = 'pointer';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '10px';
+    btn.style.transition = 'all 0.2s';
+    btn.style.boxShadow = `0 4px 15px ${bgColor}66`;
+    btn.onmouseenter = () => {
+      btn.style.transform = 'scale(1.05)';
+      btn.style.boxShadow = `0 6px 20px ${bgColor}99`;
+    };
+    btn.onmouseleave = () => {
+      btn.style.transform = 'scale(1)';
+      btn.style.boxShadow = `0 4px 15px ${bgColor}66`;
+    };
+    btn.onclick = onClick;
+    return btn;
+  }
+  
   makeGuess(guess) {
-    if (this.state.gameOver) return;
+    if (this.state.gameOver || this.state.showingComparison) return;
     if (this.state.currentIndex >= this.state.cards.length - 1) {
       this.endGame('No more cards!');
       return;
@@ -338,11 +384,12 @@ render() {
     const nextValue = this.cardValues[nextCard.rank];
     
     this.state.lastGuess = guess;
+    this.state.nextCard = nextCard;
     
     let correct = false;
     if (nextValue === currentValue) {
-      correct = true; // Equal is considered a win
-      this.state.lastResult = `✅ Correct! Same value (${nextValue})`;
+      correct = true;
+      this.state.lastResult = `✅ It's a Match! Both cards are ${nextValue}`;
     } else if (guess === 'higher' && nextValue > currentValue) {
       correct = true;
       this.state.lastResult = `✅ Correct! ${nextValue} is higher than ${currentValue}`;
@@ -352,17 +399,23 @@ render() {
     }
     
     if (correct) {
-      this.state.streak++;
-      this.state.currentIndex++;
-      this.state.currentCard = nextCard;
-      
-      if (this.state.streak > this.state.bestStreak) {
-        this.state.bestStreak = this.state.streak;
-        localStorage.setItem('higherLowerBestStreak', this.state.bestStreak.toString());
-      }
-      
-      this.updateStats();
+      this.state.showingComparison = true;
       this.render();
+      
+      setTimeout(() => {
+        this.state.streak++;
+        this.state.currentIndex++;
+        this.state.currentCard = nextCard;
+        this.state.showingComparison = false;
+        
+        if (this.state.streak > this.state.bestStreak) {
+          this.state.bestStreak = this.state.streak;
+          localStorage.setItem('higherLowerBestStreak', this.state.bestStreak.toString());
+        }
+        
+        this.updateStats();
+        this.render();
+      }, 2000);
     } else {
       this.endGame();
     }
@@ -382,7 +435,6 @@ render() {
     // Higher/Lower doesn't need pause
   }
   
-  // ✅ ADD: Cleanup method
   cleanup() {
     if (this.resizeHandler) {
       window.removeEventListener('resize', this.resizeHandler);
