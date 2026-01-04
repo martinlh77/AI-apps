@@ -61,7 +61,7 @@
             transform: scale(1.02);
         }
         
-        #fileInput {
+        #fileInput, #convertFileInput {
             display: none;
         }
         
@@ -216,7 +216,7 @@
             cursor: not-allowed;
         }
         
-        #formatSelect {
+        #formatSelect, #convertFormatSelect {
             padding: 12px;
             border-radius: 8px;
             border: 2px solid #667eea;
@@ -228,11 +228,11 @@
             min-width: 150px;
         }
         
-        #formatSelect:hover {
+        #formatSelect:hover, #convertFormatSelect:hover {
             border-color: #764ba2;
         }
         
-        #formatSelect:focus {
+        #formatSelect:focus, #convertFormatSelect:focus {
             border-color: #764ba2;
         }
         
@@ -356,7 +356,7 @@
                 flex-direction: column;
             }
             
-            #formatSelect {
+            #formatSelect, #convertFormatSelect {
                 width: 100%;
             }
             
@@ -480,7 +480,13 @@
                 this.FFmpeg = FFmpeg;
                 this.fetchFile = fetchFile;
                 this.toBlobURL = toBlobURL;
-                this.init();
+                
+                // Wait for DOM to be ready
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => this.init());
+                } else {
+                    this.init();
+                }
             }
             
             init() {
@@ -504,7 +510,11 @@
                 const clearConvertBtn = document.getElementById('clearConvertBtn');
                 
                 // Concatenate mode handlers
-                uploadArea.addEventListener('click', () => fileInput.click());
+                uploadArea.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    fileInput.click();
+                });
+                
                 fileInput.addEventListener('change', (e) => {
                     this.handleFiles(e.target.files);
                 });
@@ -542,9 +552,15 @@
                 clearBtn.addEventListener('click', () => this.clearAll());
                 
                 // Convert mode handlers
-                convertUploadArea.addEventListener('click', () => convertFileInput.click());
+                convertUploadArea.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    convertFileInput.click();
+                });
+                
                 convertFileInput.addEventListener('change', (e) => {
-                    this.handleConvertFile(e.target.files[0]);
+                    if (e.target.files.length > 0) {
+                        this.handleConvertFile(e.target.files[0]);
+                    }
                 });
                 
                 convertUploadArea.addEventListener('dragover', (e) => {
@@ -710,7 +726,6 @@
                         }
                     });
                     
-                    // Use toBlobURL to avoid CORS issues
                     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
                     const coreURL = await this.toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
                     const wasmURL = await this.toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
@@ -840,7 +855,7 @@
                 const url = input.value.trim();
                 
                 if (!url) {
-                    this.showStatus('Please enter a URL, genius', 'error');
+                    this.showStatus('Please enter a URL', 'error');
                     return;
                 }
                 
@@ -1009,6 +1024,7 @@
                 this.hideStatus();
                 document.getElementById('previewVideo').style.display = 'none';
                 document.getElementById('videoUrlInput').value = '';
+                document.getElementById('fileInput').value = '';
             }
             
             updateCombineButton() {
@@ -1021,7 +1037,7 @@
                 const totalVideos = this.files.length + this.urlVideos.length;
                 
                 if (totalVideos < 2) {
-                    this.showStatus('Add at least 2 videos, genius', 'error');
+                    this.showStatus('Add at least 2 videos', 'error');
                     return;
                 }
                 
@@ -1075,7 +1091,7 @@
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const audioDestination = audioCtx.createMediaStreamDestination();
                 
-                const fileItems = document.querySelectorAll('.file-item');
+                const fileItems = document.querySelectorAll('#fileList .file-item');
                 const orderedVideos = [];
                 
                 fileItems.forEach(item => {
