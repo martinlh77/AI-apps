@@ -280,6 +280,18 @@
             color: #721c24;
             display: block;
         }
+
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            display: block;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            display: block;
+        }
         
         .preview-video {
             width: 100%;
@@ -350,6 +362,13 @@
             background: #f8f9fa;
             border-radius: 8px;
             margin: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .video-info-details {
+            flex: 1;
         }
 
         .video-info p {
@@ -359,6 +378,30 @@
 
         .video-info strong {
             color: #333;
+        }
+
+        .ffmpeg-notice {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #0d47a1;
+        }
+
+        .ffmpeg-notice strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #1565c0;
+        }
+
+        .ffmpeg-notice ul {
+            margin: 10px 0 0 20px;
+        }
+
+        .ffmpeg-notice li {
+            margin: 5px 0;
         }
         
         @media (max-width: 600px) {
@@ -390,6 +433,12 @@
             .tab {
                 text-align: left;
             }
+
+            .video-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -406,6 +455,12 @@
 
         <!-- Concatenate Tab -->
         <div id="concatTab" class="tab-content active">
+            <div class="ffmpeg-notice">
+                <strong>📦 MP4 Export Notice:</strong>
+                When selecting MP4 format, FFmpeg will be loaded (~31MB download, one-time only). 
+                This may take a moment on first use. Processing will be slower than WebM but produces true MP4/H.264 output.
+            </div>
+
             <div class="upload-area" id="uploadArea">
                 <div style="font-size: 48px; margin-bottom: 10px;">📹</div>
                 <p style="font-size: 18px; margin-bottom: 5px;">Click or drag videos here</p>
@@ -436,11 +491,11 @@
                 <div class="format-options">
                     <div class="format-option">
                         <input type="radio" id="formatWebM" name="outputFormat" value="webm" checked>
-                        <label for="formatWebM">WebM</label>
+                        <label for="formatWebM">WebM (Fast)</label>
                     </div>
                     <div class="format-option">
                         <input type="radio" id="formatMP4" name="outputFormat" value="mp4">
-                        <label for="formatMP4">MP4</label>
+                        <label for="formatMP4">MP4 (Slower)</label>
                     </div>
                 </div>
             </div>
@@ -467,6 +522,11 @@
 
         <!-- Convert Tab -->
         <div id="convertTab" class="tab-content">
+            <div class="ffmpeg-notice">
+                <strong>📦 MP4 Conversion Notice:</strong>
+                MP4 conversion uses FFmpeg (~31MB download, one-time only). Processing is slower than WebM but produces true MP4/H.264 output compatible with all platforms.
+            </div>
+
             <div class="upload-area" id="convertUploadArea">
                 <div style="font-size: 48px; margin-bottom: 10px;">🔄</div>
                 <p style="font-size: 18px; margin-bottom: 5px;">Click or drag a video to convert</p>
@@ -491,9 +551,12 @@
             </div>
 
             <div class="video-info" id="convertVideoInfo" style="display: none;">
-                <p><strong>File:</strong> <span id="convertFileName"></span></p>
-                <p><strong>Size:</strong> <span id="convertFileSize"></span></p>
-                <p><strong>Duration:</strong> <span id="convertFileDuration"></span></p>
+                <div class="video-info-details">
+                    <p><strong>File:</strong> <span id="convertFileName"></span></p>
+                    <p><strong>Size:</strong> <span id="convertFileSize"></span></p>
+                    <p><strong>Duration:</strong> <span id="convertFileDuration"></span></p>
+                </div>
+                <button class="remove-btn" id="convertRemoveBtn">Remove</button>
             </div>
 
             <div class="format-selector">
@@ -501,11 +564,11 @@
                 <div class="format-options">
                     <div class="format-option">
                         <input type="radio" id="convertFormatWebM" name="convertFormat" value="webm" checked>
-                        <label for="convertFormatWebM">WebM</label>
+                        <label for="convertFormatWebM">WebM (Fast)</label>
                     </div>
                     <div class="format-option">
                         <input type="radio" id="convertFormatMP4" name="convertFormat" value="mp4">
-                        <label for="convertFormatMP4">MP4</label>
+                        <label for="convertFormatMP4">MP4 (Slower)</label>
                     </div>
                 </div>
             </div>
@@ -531,8 +594,15 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.6/dist/umd/ffmpeg.js"></script>
-    <script>
+    <script type="module">
+        import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/ffmpeg.js';
+        import { fetchFile, toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
+
+        // Make FFmpeg available globally
+        window.FFmpegLib = { FFmpeg, fetchFile, toBlobURL };
+        window.ffmpegInstance = null;
+        window.ffmpegLoaded = false;
+
         // Tab switching
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -545,32 +615,52 @@
             });
         });
 
+        // Shared FFmpeg loader
+        async function loadFFmpeg(statusCallback) {
+            if (window.ffmpegLoaded) {
+                return window.ffmpegInstance;
+            }
+
+            try {
+                statusCallback('Loading FFmpeg (~31MB, one-time download)...', 'info');
+                
+                const ffmpeg = new window.FFmpegLib.FFmpeg();
+                
+                ffmpeg.on('log', ({ message }) => {
+                    console.log('FFmpeg:', message);
+                });
+
+                ffmpeg.on('progress', ({ progress, time }) => {
+                    const percent = Math.round(progress * 100);
+                    if (percent > 0) {
+                        statusCallback(`Processing: ${percent}%`, 'info');
+                    }
+                });
+
+                const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+                await ffmpeg.load({
+                    coreURL: await window.FFmpegLib.toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                    wasmURL: await window.FFmpegLib.toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                });
+
+                window.ffmpegInstance = ffmpeg;
+                window.ffmpegLoaded = true;
+                
+                statusCallback('FFmpeg loaded successfully!', 'success');
+                return ffmpeg;
+            } catch (error) {
+                console.error('FFmpeg load error:', error);
+                throw new Error('Failed to load FFmpeg: ' + error.message);
+            }
+        }
+
         // Video Concatenator
         class VideoConcatenator {
             constructor() {
                 this.files = [];
                 this.urlVideos = [];
                 this.isProcessing = false;
-                this.ffmpeg = null;
-                this.ffmpegLoaded = false;
                 this.init();
-            }
-            
-            async loadFFmpeg() {
-                if (this.ffmpegLoaded) return;
-                
-                try {
-                    const { FFmpeg } = FFmpegWASM;
-                    this.ffmpeg = new FFmpeg();
-                    await this.ffmpeg.load({
-                        coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.4/dist/umd/ffmpeg-core.js',
-                    });
-                    this.ffmpegLoaded = true;
-                    console.log('FFmpeg loaded successfully');
-                } catch (error) {
-                    console.error('FFmpeg load error:', error);
-                    throw new Error('Failed to load FFmpeg. MP4 conversion requires FFmpeg.');
-                }
             }
             
             init() {
@@ -616,7 +706,7 @@
                 const url = input.value.trim();
                 
                 if (!url) {
-                    this.showStatus('Please enter a URL, genius', 'error');
+                    this.showStatus('Please enter a URL', 'error');
                     return;
                 }
                 
@@ -627,7 +717,7 @@
                     return;
                 }
                 
-                this.showStatus('Loading video from URL...', 'success');
+                this.showStatus('Loading video from URL...', 'info');
                 
                 try {
                     const testVideo = document.createElement('video');
@@ -791,7 +881,7 @@
                 const totalVideos = this.files.length + this.urlVideos.length;
                 
                 if (totalVideos < 2) {
-                    this.showStatus('Add at least 2 videos, genius', 'error');
+                    this.showStatus('Add at least 2 videos', 'error');
                     return;
                 }
 
@@ -805,12 +895,8 @@
                     let combinedBlob;
                     
                     if (outputFormat === 'mp4') {
-                        // Use FFmpeg for MP4 (requires WebAssembly)
-                        this.showStatus('Loading FFmpeg for MP4 conversion...', 'success');
-                        await this.loadFFmpeg();
-                        combinedBlob = await this.concatenateWithFFmpeg();
+                        combinedBlob = await this.combineWithFFmpeg();
                     } else {
-                        // Use Canvas/MediaRecorder for WebM
                         combinedBlob = await this.concatenateWithCanvas();
                     }
                     
@@ -839,13 +925,192 @@
                 }
             }
 
-            async concatenateWithFFmpeg() {
-                this.showStatus('⚠️ MP4 concatenation is experimental and may not work in all browsers. WebM is recommended.', 'error');
+            async combineWithFFmpeg() {
+                // First, create intermediate WebM videos
+                this.showStatus('Step 1/2: Creating intermediate videos...', 'info');
+                const fileItems = document.querySelectorAll('#fileList .file-item');
+                const orderedVideos = [];
                 
-                // Note: Full FFmpeg implementation would be very complex
-                // This is a placeholder that falls back to WebM
-                this.showStatus('MP4 export via FFmpeg is not yet fully implemented. Falling back to WebM...', 'error');
-                return await this.concatenateWithCanvas();
+                fileItems.forEach(item => {
+                    const index = parseInt(item.dataset.index);
+                    const type = item.dataset.type;
+                    
+                    if (type === 'file') {
+                        orderedVideos.push({ type: 'file', data: this.files[index] });
+                    } else {
+                        orderedVideos.push({ type: 'url', data: this.urlVideos[index] });
+                    }
+                });
+
+                const webmBlobs = [];
+                for (let i = 0; i < orderedVideos.length; i++) {
+                    this.showStatus(`Creating intermediate video ${i + 1}/${orderedVideos.length}...`, 'info');
+                    const blob = await this.createSingleVideoBlob(orderedVideos[i]);
+                    webmBlobs.push(blob);
+                    this.showProgress(((i + 1) / orderedVideos.length) * 40);
+                }
+
+                // Now use FFmpeg to concatenate and convert to MP4
+                this.showStatus('Step 2/2: Converting to MP4 with FFmpeg...', 'info');
+                const ffmpeg = await loadFFmpeg((msg, type) => this.showStatus(msg, type));
+
+                try {
+                    // Write all videos to FFmpeg filesystem
+                    const fileListContent = [];
+                    for (let i = 0; i < webmBlobs.length; i++) {
+                        const filename = `input${i}.webm`;
+                        await ffmpeg.writeFile(filename, await window.FFmpegLib.fetchFile(webmBlobs[i]));
+                        fileListContent.push(`file '${filename}'`);
+                    }
+
+                    // Create concat demuxer file list
+                    await ffmpeg.writeFile('filelist.txt', fileListContent.join('\n'));
+
+                    // Run FFmpeg concatenation
+                    this.showStatus('Converting to MP4... This may take a while.', 'info');
+                    await ffmpeg.exec([
+                        '-f', 'concat',
+                        '-safe', '0',
+                        '-i', 'filelist.txt',
+                        '-c:v', 'libx264',
+                        '-preset', 'medium',
+                        '-crf', '23',
+                        '-c:a', 'aac',
+                        '-b:a', '128k',
+                        'output.mp4'
+                    ]);
+
+                    // Read the output
+                    const data = await ffmpeg.readFile('output.mp4');
+                    const blob = new Blob([data.buffer], { type: 'video/mp4' });
+
+                    // Cleanup
+                    for (let i = 0; i < webmBlobs.length; i++) {
+                        await ffmpeg.deleteFile(`input${i}.webm`);
+                    }
+                    await ffmpeg.deleteFile('filelist.txt');
+                    await ffmpeg.deleteFile('output.mp4');
+
+                    return blob;
+                } catch (error) {
+                    console.error('FFmpeg error:', error);
+                    throw new Error('FFmpeg conversion failed: ' + error.message);
+                }
+            }
+
+            async createSingleVideoBlob(videoData) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                const video = document.createElement('video');
+                video.crossOrigin = 'anonymous';
+                
+                if (videoData.type === 'file') {
+                    video.src = URL.createObjectURL(videoData.data);
+                } else {
+                    video.src = videoData.data.url;
+                }
+                
+                video.muted = false;
+                
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error('Timeout loading video')), 15000);
+                    video.onloadedmetadata = () => {
+                        clearTimeout(timeout);
+                        resolve();
+                    };
+                    video.onerror = () => {
+                        clearTimeout(timeout);
+                        reject(new Error('Failed to load video'));
+                    };
+                });
+
+                canvas.width = video.videoWidth % 2 === 0 ? video.videoWidth : video.videoWidth + 1;
+                canvas.height = video.videoHeight % 2 === 0 ? video.videoHeight : video.videoHeight + 1;
+
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioDestination = audioCtx.createMediaStreamDestination();
+
+                try {
+                    const source = audioCtx.createMediaElementSource(video);
+                    source.connect(audioDestination);
+                    source.connect(audioCtx.destination);
+                } catch (e) {
+                    console.warn('No audio track:', e.message);
+                }
+
+                const stream = canvas.captureStream(30);
+                const audioTracks = audioDestination.stream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    stream.addTrack(audioTracks[0]);
+                }
+
+                let mimeType = 'video/webm;codecs=vp9,opus';
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                    mimeType = 'video/webm;codecs=vp8,opus';
+                }
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                    mimeType = 'video/webm';
+                }
+
+                const mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: mimeType,
+                    videoBitsPerSecond: 5000000,
+                    audioBitsPerSecond: 128000
+                });
+
+                const chunks = [];
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) chunks.push(e.data);
+                };
+
+                mediaRecorder.start(100);
+
+                await new Promise((resolve) => {
+                    let animationId;
+
+                    const drawFrame = () => {
+                        if (!video.paused && !video.ended) {
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            animationId = requestAnimationFrame(drawFrame);
+                        }
+                    };
+
+                    video.onended = () => {
+                        cancelAnimationFrame(animationId);
+                        video.pause();
+                        resolve();
+                    };
+
+                    video.onerror = () => {
+                        cancelAnimationFrame(animationId);
+                        resolve();
+                    };
+
+                    video.currentTime = 0;
+                    video.play().then(() => drawFrame()).catch(() => resolve());
+                });
+
+                mediaRecorder.stop();
+
+                const blob = await new Promise((resolve) => {
+                    mediaRecorder.onstop = () => {
+                        resolve(new Blob(chunks, { type: mimeType }));
+                    };
+                    setTimeout(() => {
+                        if (chunks.length > 0) {
+                            resolve(new Blob(chunks, { type: mimeType }));
+                        }
+                    }, 1000);
+                });
+
+                if (videoData.type === 'file') {
+                    URL.revokeObjectURL(video.src);
+                }
+                video.src = '';
+                audioCtx.close();
+
+                return blob;
             }
             
             async concatenateWithCanvas() {
@@ -856,7 +1121,7 @@
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const audioDestination = audioCtx.createMediaStreamDestination();
                 
-                const fileItems = document.querySelectorAll('.file-item');
+                const fileItems = document.querySelectorAll('#fileList .file-item');
                 const orderedVideos = [];
                 
                 fileItems.forEach(item => {
@@ -1105,6 +1370,7 @@
                 const convertFileInput = document.getElementById('convertFileInput');
                 const convertBtn = document.getElementById('convertBtn');
                 const convertClearBtn = document.getElementById('convertClearBtn');
+                const convertRemoveBtn = document.getElementById('convertRemoveBtn');
                 const convertAddUrlBtn = document.getElementById('convertAddUrlBtn');
                 const convertVideoUrlInput = document.getElementById('convertVideoUrlInput');
 
@@ -1140,6 +1406,7 @@
 
                 convertBtn.addEventListener('click', () => this.convertVideo());
                 convertClearBtn.addEventListener('click', () => this.clear());
+                convertRemoveBtn.addEventListener('click', () => this.clear());
             }
 
             async handleUrl() {
@@ -1158,7 +1425,7 @@
                     return;
                 }
 
-                this.showStatus('Loading video from URL...', 'success');
+                this.showStatus('Loading video from URL...', 'info');
 
                 try {
                     const testVideo = document.createElement('video');
@@ -1228,7 +1495,7 @@
             }
 
             showVideoInfo(name, size, duration) {
-                document.getElementById('convertVideoInfo').style.display = 'block';
+                document.getElementById('convertVideoInfo').style.display = 'flex';
                 document.getElementById('convertFileName').textContent = name;
                 document.getElementById('convertFileSize').textContent = size;
                 document.getElementById('convertFileDuration').textContent = this.formatDuration(duration);
@@ -1266,7 +1533,13 @@
                 this.showProgress(0);
 
                 try {
-                    const convertedBlob = await this.performConversion(outputFormat);
+                    let convertedBlob;
+                    
+                    if (outputFormat === 'mp4') {
+                        convertedBlob = await this.convertWithFFmpeg();
+                    } else {
+                        convertedBlob = await this.performConversion();
+                    }
 
                     this.showProgress(100);
 
@@ -1293,7 +1566,43 @@
                 }
             }
 
-            async performConversion(outputFormat) {
+            async convertWithFFmpeg() {
+                // First create WebM
+                this.showStatus('Step 1/2: Creating intermediate video...', 'info');
+                const webmBlob = await this.performConversion();
+
+                // Load FFmpeg and convert to MP4
+                this.showStatus('Step 2/2: Converting to MP4 with FFmpeg...', 'info');
+                const ffmpeg = await loadFFmpeg((msg, type) => this.showStatus(msg, type));
+
+                try {
+                    await ffmpeg.writeFile('input.webm', await window.FFmpegLib.fetchFile(webmBlob));
+
+                    this.showStatus('Converting to MP4... This may take a while.', 'info');
+                    await ffmpeg.exec([
+                        '-i', 'input.webm',
+                        '-c:v', 'libx264',
+                        '-preset', 'medium',
+                        '-crf', '23',
+                        '-c:a', 'aac',
+                        '-b:a', '128k',
+                        'output.mp4'
+                    ]);
+
+                    const data = await ffmpeg.readFile('output.mp4');
+                    const blob = new Blob([data.buffer], { type: 'video/mp4' });
+
+                    await ffmpeg.deleteFile('input.webm');
+                    await ffmpeg.deleteFile('output.mp4');
+
+                    return blob;
+                } catch (error) {
+                    console.error('FFmpeg error:', error);
+                    throw new Error('FFmpeg conversion failed: ' + error.message);
+                }
+            }
+
+            async performConversion() {
                 const video = document.createElement('video');
                 video.crossOrigin = 'anonymous';
 
@@ -1320,13 +1629,11 @@
                     };
                 });
 
-                // Create canvas
                 const canvas = document.createElement('canvas');
                 canvas.width = video.videoWidth % 2 === 0 ? video.videoWidth : video.videoWidth + 1;
                 canvas.height = video.videoHeight % 2 === 0 ? video.videoHeight : video.videoHeight + 1;
                 const ctx = canvas.getContext('2d');
 
-                // Audio setup
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const audioDestination = audioCtx.createMediaStreamDestination();
 
@@ -1338,24 +1645,13 @@
                     console.warn('No audio track:', e.message);
                 }
 
-                // Create stream
                 const stream = canvas.captureStream(30);
                 const audioTracks = audioDestination.stream.getAudioTracks();
                 if (audioTracks.length > 0) {
                     stream.addTrack(audioTracks[0]);
                 }
 
-                // Determine mime type
-                let mimeType;
-                if (outputFormat === 'mp4') {
-                    // Note: True MP4 export requires FFmpeg or server-side processing
-                    // Falling back to WebM
-                    this.showStatus('⚠️ Direct MP4 export not available. Using WebM format.', 'error');
-                    mimeType = 'video/webm;codecs=vp9,opus';
-                } else {
-                    mimeType = 'video/webm;codecs=vp9,opus';
-                }
-
+                let mimeType = 'video/webm;codecs=vp9,opus';
                 if (!MediaRecorder.isTypeSupported(mimeType)) {
                     mimeType = 'video/webm;codecs=vp8,opus';
                 }
@@ -1376,7 +1672,6 @@
 
                 mediaRecorder.start(100);
 
-                // Record video
                 await new Promise((resolve) => {
                     let animationId;
 
@@ -1441,6 +1736,7 @@
                 document.getElementById('convertVideoInfo').style.display = 'none';
                 document.getElementById('convertPreviewVideo').style.display = 'none';
                 document.getElementById('convertVideoUrlInput').value = '';
+                document.getElementById('convertFileInput').value = '';
                 this.updateConvertButton();
                 this.hideStatus();
             }
