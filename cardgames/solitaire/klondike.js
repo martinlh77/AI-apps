@@ -138,7 +138,7 @@ class KlondikeSolitaire {
     this.state.startY = e.clientY;
     
     const isMobile = window.innerWidth < 700;
-    const cardOverlap = isMobile ? 20 : 30;
+    const cardOverlap = isMobile ? 15 : 30;
     
     const container = document.createElement('div');
     container.id = 'drag-proxy';
@@ -150,7 +150,7 @@ class KlondikeSolitaire {
       
       cardsToMove.forEach((cardData, index) => {
         const cardEl = this.createCardElement(cardData, 
-          isMobile ? { w: 60, h: 84 } : { w: 100, h: 140 }, 
+          isMobile ? { w: 45, h: 63 } : { w: 100, h: 140 }, 
           false
         );
         cardEl.style.position = 'absolute';
@@ -161,7 +161,7 @@ class KlondikeSolitaire {
     } else {
       // Single card from waste
       const cardEl = this.createCardElement(card, 
-        isMobile ? { w: 60, h: 84 } : { w: 100, h: 140 }, 
+        isMobile ? { w: 45, h: 63 } : { w: 100, h: 140 }, 
         false
       );
       container.appendChild(cardEl);
@@ -192,18 +192,34 @@ class KlondikeSolitaire {
     
     if (dragEl) dragEl.remove();
 
+    // Get all elements under the mouse - prioritize actual card elements
     const targets = document.elementsFromPoint(e.clientX, e.clientY);
-    const dropZone = targets.find(t => t.dataset.zoneType);
+    
+    // First try to find a card element (for tableau drops on cards)
+    let dropZone = targets.find(t => t.dataset.cardCol !== undefined);
+    
+    // If no card found, look for zone markers (for empty columns or foundations)
+    if (!dropZone) {
+      dropZone = targets.find(t => t.dataset.zoneType);
+    }
 
     let moved = false;
     if (dropZone) {
-      const zoneType = dropZone.dataset.zoneType;
-      const zoneIdx = parseInt(dropZone.dataset.zoneIdx);
-      
-      if (zoneType === 'foundation') {
-        moved = this.moveToFoundation(zoneIdx);
-      } else if (zoneType === 'tableau') {
-        moved = this.moveToTableau(zoneIdx);
+      // If it's a card in a tableau column
+      if (dropZone.dataset.cardCol !== undefined) {
+        const colIdx = parseInt(dropZone.dataset.cardCol);
+        moved = this.moveToTableau(colIdx);
+      } 
+      // If it's a zone marker (empty column or foundation)
+      else {
+        const zoneType = dropZone.dataset.zoneType;
+        const zoneIdx = parseInt(dropZone.dataset.zoneIdx);
+        
+        if (zoneType === 'foundation') {
+          moved = this.moveToFoundation(zoneIdx);
+        } else if (zoneType === 'tableau') {
+          moved = this.moveToTableau(zoneIdx);
+        }
       }
     }
 
@@ -351,9 +367,9 @@ class KlondikeSolitaire {
     gameBoard.appendChild(wrapper);
 
     const isMobile = window.innerWidth < 700;
-    const cardSize = isMobile ? { w: 60, h: 84 } : { w: 100, h: 140 };
-    const gap = isMobile ? 8 : 20;
-    const cardOverlap = isMobile ? 20 : 30;
+    const cardSize = isMobile ? { w: 45, h: 63 } : { w: 100, h: 140 };
+    const gap = isMobile ? 5 : 20;
+    const cardOverlap = isMobile ? 15 : 30;
 
     const content = document.createElement('div');
     content.style.cssText = 'display:flex; flex-direction:column; align-items:center; width:100%; padding-top:20px;';
@@ -361,7 +377,7 @@ class KlondikeSolitaire {
 
     // Top Row
     const topRow = document.createElement('div');
-    topRow.style.cssText = `display:flex; justify-content:space-between; width:100%; max-width:900px; margin-bottom:${gap*2}px; padding:0 10px;`;
+    topRow.style.cssText = `display:flex; justify-content:space-between; width:100%; max-width:${isMobile ? '350px' : '900px'}; margin-bottom:${gap*2}px; padding:0 10px;`;
     
     const stockWaste = document.createElement('div');
     stockWaste.style.display = 'flex';
@@ -372,7 +388,8 @@ class KlondikeSolitaire {
     stock.style.cursor = 'pointer';
     stock.onclick = () => this.drawFromStock();
     if (this.state.stock.length > 0) {
-      const cardBack = this.createCardElement(null, cardSize, true);
+      const stockCard = this.state.stock[this.state.stock.length - 1];
+      const cardBack = this.createCardElement(stockCard, cardSize, true);
       stock.appendChild(cardBack);
     }
     stockWaste.appendChild(stock);
@@ -408,7 +425,7 @@ class KlondikeSolitaire {
     
     // Tableau
     const tableau = document.createElement('div');
-    tableau.style.cssText = `display:flex; gap:${gap}px; justify-content:center; width:100%; max-width:900px;`;
+    tableau.style.cssText = `display:flex; gap:${gap}px; justify-content:center; width:100%; max-width:${isMobile ? '350px' : '900px'};`;
     
     for (let i = 0; i < 7; i++) {
       const col = document.createElement('div');
@@ -426,6 +443,9 @@ class KlondikeSolitaire {
         cardEl.style.position = 'absolute';
         cardEl.style.top = `${idx * cardOverlap}px`;
         cardEl.style.left = '0px';
+        
+        // Add data attribute to mark this card as belonging to column i
+        cardEl.dataset.cardCol = i;
         
         if (card.faceUp) {
           cardEl.style.cursor = 'grab';
@@ -451,11 +471,20 @@ class KlondikeSolitaire {
 
   createCardElement(card, size, faceDown) {
     if (faceDown) {
+      // Create a card showing the back
+      const div = document.createElement('div');
+      div.style.cssText = `width:${size.w}px; height:${size.h}px; border-radius:8px; background-size:cover; background-position:center; background-repeat:no-repeat; border:1px solid #ccc;`;
+      
       // Use the deck's back image
-      const backCard = this.engine.renderCard(card || {backImage: this.deck.backImage}, false);
-      backCard.style.width = `${size.w}px`;
-      backCard.style.height = `${size.h}px`;
-      return backCard;
+      if (this.deck.backImage) {
+        div.style.backgroundImage = `url(${this.deck.backImage})`;
+      } else {
+        // Fallback gradient if no back image
+        div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        div.style.border = '2px solid #fff';
+      }
+      
+      return div;
     } else if (card) {
       // Use the engine's renderCard method to display the actual deck card
       const cardEl = this.engine.renderCard(card, true);
@@ -465,18 +494,18 @@ class KlondikeSolitaire {
       // Scale fonts for mobile
       const isMobile = window.innerWidth < 700;
       if (isMobile) {
-        cardEl.style.fontSize = '0.7rem';
+        cardEl.style.fontSize = '0.6rem';
         
         cardEl.querySelectorAll('.rank').forEach(el => {
-          el.style.fontSize = '0.85rem';
+          el.style.fontSize = '0.75rem';
         });
         
         cardEl.querySelectorAll('.mini-pip').forEach(el => {
-          el.style.fontSize = '0.7rem';
+          el.style.fontSize = '0.6rem';
         });
         
         cardEl.querySelectorAll('.pip').forEach(pip => {
-          pip.style.fontSize = pip.classList.contains('large') ? '2rem' : '0.98rem';
+          pip.style.fontSize = pip.classList.contains('large') ? '1.5rem' : '0.8rem';
         });
       }
       
