@@ -23,7 +23,9 @@ class KlondikeSolitaire {
       dragElement: null,
       startX: 0, 
       startY: 0, 
-      originalElement: null
+      originalElement: null,
+      dragOffsetX: 0,
+      dragOffsetY: 0
     };
     this.resizeHandler = null;
     this.cardValues = { 
@@ -123,27 +125,46 @@ class KlondikeSolitaire {
 
     this.state.isDragging = true;
     this.state.dragData = { type, colIdx, cardIdx };
-    this.state.startX = e.clientX;
-    this.state.startY = e.clientY;
     this.state.originalElement = e.currentTarget;
 
     const rect = e.currentTarget.getBoundingClientRect();
+    
+    // Calculate offset from mouse to top-left of card
+    this.state.dragOffsetX = e.clientX - rect.left;
+    this.state.dragOffsetY = e.clientY - rect.top;
+    
+    // Store the initial mouse position
+    this.state.startX = e.clientX;
+    this.state.startY = e.clientY;
+    
+    const isMobile = window.innerWidth < 700;
+    const cardOverlap = isMobile ? 20 : 30;
     
     const container = document.createElement('div');
     container.id = 'drag-proxy';
     container.style.cssText = `position:fixed; left:${rect.left}px; top:${rect.top}px; pointer-events:none; z-index:10000; transition:none;`;
     
     if (type === 'tableau') {
-      const colEl = e.currentTarget.parentElement;
-      const siblings = Array.from(colEl.children).slice(cardIdx);
-      siblings.forEach(sib => {
-        const clone = sib.cloneNode(true);
-        clone.style.position = 'relative';
-        clone.style.top = sib.style.top;
-        container.appendChild(clone);
+      // Get all cards from this card down in the column
+      const cardsToMove = this.state.tableau[colIdx].slice(cardIdx);
+      
+      cardsToMove.forEach((cardData, index) => {
+        const cardEl = this.createCardElement(cardData, 
+          isMobile ? { w: 60, h: 84 } : { w: 100, h: 140 }, 
+          false
+        );
+        cardEl.style.position = 'absolute';
+        cardEl.style.top = `${index * cardOverlap}px`;
+        cardEl.style.left = '0px';
+        container.appendChild(cardEl);
       });
     } else {
-      container.appendChild(e.currentTarget.cloneNode(true));
+      // Single card from waste
+      const cardEl = this.createCardElement(card, 
+        isMobile ? { w: 60, h: 84 } : { w: 100, h: 140 }, 
+        false
+      );
+      container.appendChild(cardEl);
     }
     
     document.body.appendChild(container);
@@ -153,9 +174,12 @@ class KlondikeSolitaire {
 
   handlePointerMove(e) {
     if (this.state.isDragging && this.state.dragElement) {
-      const dx = e.clientX - this.state.startX;
-      const dy = e.clientY - this.state.startY;
-      this.state.dragElement.style.transform = `translate(${dx}px, ${dy}px)`;
+      // Position the drag proxy so the card stays under the cursor
+      const x = e.clientX - this.state.dragOffsetX;
+      const y = e.clientY - this.state.dragOffsetY;
+      
+      this.state.dragElement.style.left = `${x}px`;
+      this.state.dragElement.style.top = `${y}px`;
     }
   }
 
@@ -329,6 +353,7 @@ class KlondikeSolitaire {
     const isMobile = window.innerWidth < 700;
     const cardSize = isMobile ? { w: 60, h: 84 } : { w: 100, h: 140 };
     const gap = isMobile ? 8 : 20;
+    const cardOverlap = isMobile ? 20 : 30;
 
     const content = document.createElement('div');
     content.style.cssText = 'display:flex; flex-direction:column; align-items:center; width:100%; padding-top:20px;';
@@ -399,7 +424,8 @@ class KlondikeSolitaire {
       this.state.tableau[i].forEach((card, idx) => {
         const cardEl = this.createCardElement(card, cardSize, !card.faceUp);
         cardEl.style.position = 'absolute';
-        cardEl.style.top = `${idx * (isMobile ? 20 : 30)}px`;
+        cardEl.style.top = `${idx * cardOverlap}px`;
+        cardEl.style.left = '0px';
         
         if (card.faceUp) {
           cardEl.style.cursor = 'grab';
