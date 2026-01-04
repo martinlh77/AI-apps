@@ -103,130 +103,148 @@ class HigherLower {
     }
   }
   
-  render() {
-    const gameBoard = document.getElementById('game-board');
-    gameBoard.innerHTML = '';
-    gameBoard.style.display = 'flex';
-    gameBoard.style.flexDirection = 'column';
-    gameBoard.style.alignItems = 'center';
-    gameBoard.style.justifyContent = 'flex-start'; // ✅ CHANGED from 'center' to prevent overlap
-    gameBoard.style.gap = '20px'; // ✅ CHANGED from 30px to 20px for tighter spacing
-    gameBoard.style.minHeight = '600px';
-    gameBoard.style.padding = '20px'; // ✅ ADD padding
-    gameBoard.style.paddingTop = '40px'; // ✅ ADD extra top padding
-    gameBoard.style.overflowY = 'auto'; // ✅ ADD scrolling for mobile
-    
-    // ✅ ADD: Detect mobile
-    const isMobile = window.innerWidth < 700;
-    const cardWidth = isMobile ? '100px' : '150px';
-    const cardHeight = isMobile ? '140px' : '210px';
-    
-    if (this.state.gameOver) {
-      this.renderGameOver(gameBoard, isMobile);
-      return;
-    }
-    
-    // Title
-    const title = document.createElement('h2');
-    title.textContent = 'Will the next card be...';
-    title.style.color = '#00ffcc';
-    title.style.marginBottom = '10px'; // ✅ CHANGED from 20px
-    title.style.fontSize = isMobile ? '1.3rem' : '1.8rem'; // ✅ ADD responsive font
-    title.style.textAlign = 'center';
-    gameBoard.appendChild(title);
-    
-    // Current card
-    const cardContainer = document.createElement('div');
-    cardContainer.style.position = 'relative';
-    cardContainer.style.marginBottom = '10px'; // ✅ ADD margin
-    
-    const cardElement = this.engine.renderCard(this.state.currentCard, true);
-    cardElement.style.width = cardWidth;
-    cardElement.style.height = cardHeight;
-    cardElement.classList.add('card-dealing');
-    
-    // ✅ ADD: Mobile scaling
-    if (isMobile) {
-      this.scaleCardForMobile(cardElement);
-    }
-    
-    cardContainer.appendChild(cardElement);
-    gameBoard.appendChild(cardContainer);
-    
-    // Card value display
-    const valueDisplay = document.createElement('div');
-    valueDisplay.textContent = `Current Value: ${this.cardValues[this.state.currentCard.rank]}`;
-    valueDisplay.style.fontSize = isMobile ? '1rem' : '1.2rem'; // ✅ ADD responsive font
-    valueDisplay.style.color = '#ccc';
-    valueDisplay.style.marginTop = '5px'; // ✅ CHANGED from 10px
-    valueDisplay.style.marginBottom = '15px'; // ✅ ADD margin
-    gameBoard.appendChild(valueDisplay);
-    
-    // Buttons
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.gap = isMobile ? '10px' : '20px'; // ✅ ADD responsive gap
-    buttonContainer.style.marginTop = '10px'; // ✅ CHANGED from 30px
-    buttonContainer.style.marginBottom = '20px'; // ✅ ADD bottom margin
-    buttonContainer.style.zIndex = '10'; // ✅ ADD to ensure buttons stay on top
-    
-    const higherBtn = document.createElement('button');
-    higherBtn.textContent = '⬆️ HIGHER';
-    higherBtn.className = 'btn-game-control';
-    higherBtn.style.fontSize = isMobile ? '1rem' : '1.2rem'; // ✅ ADD responsive font
-    higherBtn.style.padding = isMobile ? '12px 25px' : '15px 40px'; // ✅ ADD responsive padding
-    higherBtn.style.background = '#00b894';
-    higherBtn.style.color = 'white';
-    higherBtn.style.fontWeight = 'bold';
-    higherBtn.style.cursor = 'pointer';
-    higherBtn.style.border = 'none';
-    higherBtn.style.borderRadius = '8px';
-    higherBtn.style.transition = 'transform 0.2s';
-    higherBtn.onmouseenter = () => higherBtn.style.transform = 'scale(1.05)';
-    higherBtn.onmouseleave = () => higherBtn.style.transform = 'scale(1)';
-    higherBtn.onclick = () => this.makeGuess('higher');
-    buttonContainer.appendChild(higherBtn);
-    
-    const lowerBtn = document.createElement('button');
-    lowerBtn.textContent = '⬇️ LOWER';
-    lowerBtn.className = 'btn-game-control';
-    lowerBtn.style.fontSize = isMobile ? '1rem' : '1.2rem'; // ✅ ADD responsive font
-    lowerBtn.style.padding = isMobile ? '12px 25px' : '15px 40px'; // ✅ ADD responsive padding
-    lowerBtn.style.background = '#e74c3c';
-    lowerBtn.style.color = 'white';
-    lowerBtn.style.fontWeight = 'bold';
-    lowerBtn.style.cursor = 'pointer';
-    lowerBtn.style.border = 'none';
-    lowerBtn.style.borderRadius = '8px';
-    lowerBtn.style.transition = 'transform 0.2s';
-    lowerBtn.onmouseenter = () => lowerBtn.style.transform = 'scale(1.05)';
-    lowerBtn.onmouseleave = () => lowerBtn.style.transform = 'scale(1)';
-    lowerBtn.onclick = () => this.makeGuess('lower');
-    buttonContainer.appendChild(lowerBtn);
-    
-    gameBoard.appendChild(buttonContainer);
-    
-    // Result message
-    if (this.state.lastResult) {
-      const resultMsg = document.createElement('div');
-      resultMsg.textContent = this.state.lastResult;
-      resultMsg.style.marginTop = '10px'; // ✅ CHANGED from 20px
-      resultMsg.style.padding = isMobile ? '10px 20px' : '15px 30px'; // ✅ ADD responsive padding
-      resultMsg.style.borderRadius = '8px';
-      resultMsg.style.fontSize = isMobile ? '0.9rem' : '1.1rem'; // ✅ ADD responsive font
-      resultMsg.style.fontWeight = 'bold';
-      resultMsg.style.textAlign = 'center';
-      resultMsg.style.maxWidth = '90%'; // ✅ ADD to prevent overflow
-      
-      if (this.state.lastResult.includes('Correct')) {
-        resultMsg.style.background = 'rgba(0, 255, 0, 0.2)';
-        resultMsg.style.color = '#90ee90';
-        resultMsg.style.border = '2px solid #90ee90';
-      }
-      
-      gameBoard.appendChild(resultMsg);
-    }
+render() {
+  const gameBoard = document.getElementById('game-board');
+  gameBoard.innerHTML = '';
+  gameBoard.style.display = 'flex';
+  gameBoard.style.flexDirection = 'column';
+  gameBoard.style.alignItems = 'center';
+  gameBoard.style.justifyContent = 'flex-start';
+  gameBoard.style.gap = '25px';
+  gameBoard.style.minHeight = '600px';
+  gameBoard.style.padding = '30px 20px';
+  gameBoard.style.paddingTop = '40px';
+  gameBoard.style.overflowY = 'auto';
+  
+  // Detect mobile
+  const isMobile = window.innerWidth < 700;
+  const cardWidth = isMobile ? '100px' : '150px';
+  const cardHeight = isMobile ? '140px' : '210px';
+  
+  if (this.state.gameOver) {
+    this.renderGameOver(gameBoard, isMobile);
+    return;
   }
+  
+  // Title
+  const title = document.createElement('h2');
+  title.textContent = 'Will the next card be...';
+  title.style.color = '#00ffcc';
+  title.style.marginBottom = '20px';
+  title.style.fontSize = isMobile ? '1.3rem' : '1.8rem';
+  title.style.textAlign = 'center';
+  gameBoard.appendChild(title);
+  
+  // Current card container
+  const cardContainer = document.createElement('div');
+  cardContainer.style.display = 'flex';
+  cardContainer.style.flexDirection = 'column';
+  cardContainer.style.alignItems = 'center';
+  cardContainer.style.gap = '15px';
+  cardContainer.style.marginBottom = '10px';
+  
+  const cardElement = this.engine.renderCard(this.state.currentCard, true);
+  cardElement.style.width = cardWidth;
+  cardElement.style.height = cardHeight;
+  cardElement.classList.add('card-dealing');
+  
+  if (isMobile) {
+    this.scaleCardForMobile(cardElement);
+  }
+  
+  cardContainer.appendChild(cardElement);
+  
+  // Card value display (below the card)
+  const valueDisplay = document.createElement('div');
+  valueDisplay.textContent = `Current Value: ${this.cardValues[this.state.currentCard.rank]}`;
+  valueDisplay.style.fontSize = isMobile ? '1rem' : '1.2rem';
+  valueDisplay.style.color = '#ffd700';
+  valueDisplay.style.fontWeight = 'bold';
+  valueDisplay.style.textAlign = 'center';
+  cardContainer.appendChild(valueDisplay);
+  
+  gameBoard.appendChild(cardContainer);
+  
+  // Buttons (well separated from card)
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.display = 'flex';
+  buttonContainer.style.gap = isMobile ? '15px' : '30px';
+  buttonContainer.style.marginTop = '20px';
+  buttonContainer.style.marginBottom = '20px';
+  buttonContainer.style.zIndex = '10';
+  
+  const higherBtn = document.createElement('button');
+  higherBtn.innerHTML = '⬆️ HIGHER';
+  higherBtn.className = 'btn-game-control';
+  higherBtn.style.fontSize = isMobile ? '1rem' : '1.3rem';
+  higherBtn.style.padding = isMobile ? '15px 30px' : '18px 45px';
+  higherBtn.style.background = '#00b894';
+  higherBtn.style.color = 'white';
+  higherBtn.style.fontWeight = 'bold';
+  higherBtn.style.cursor = 'pointer';
+  higherBtn.style.border = 'none';
+  higherBtn.style.borderRadius = '10px';
+  higherBtn.style.transition = 'all 0.2s';
+  higherBtn.style.boxShadow = '0 4px 15px rgba(0, 184, 148, 0.4)';
+  higherBtn.onmouseenter = () => {
+    higherBtn.style.transform = 'scale(1.05)';
+    higherBtn.style.boxShadow = '0 6px 20px rgba(0, 184, 148, 0.6)';
+  };
+  higherBtn.onmouseleave = () => {
+    higherBtn.style.transform = 'scale(1)';
+    higherBtn.style.boxShadow = '0 4px 15px rgba(0, 184, 148, 0.4)';
+  };
+  higherBtn.onclick = () => this.makeGuess('higher');
+  buttonContainer.appendChild(higherBtn);
+  
+  const lowerBtn = document.createElement('button');
+  lowerBtn.innerHTML = '⬇️ LOWER';
+  lowerBtn.className = 'btn-game-control';
+  lowerBtn.style.fontSize = isMobile ? '1rem' : '1.3rem';
+  lowerBtn.style.padding = isMobile ? '15px 30px' : '18px 45px';
+  lowerBtn.style.background = '#e74c3c';
+  lowerBtn.style.color = 'white';
+  lowerBtn.style.fontWeight = 'bold';
+  lowerBtn.style.cursor = 'pointer';
+  lowerBtn.style.border = 'none';
+  lowerBtn.style.borderRadius = '10px';
+  lowerBtn.style.transition = 'all 0.2s';
+  lowerBtn.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.4)';
+  lowerBtn.onmouseenter = () => {
+    lowerBtn.style.transform = 'scale(1.05)';
+    lowerBtn.style.boxShadow = '0 6px 20px rgba(231, 76, 60, 0.6)';
+  };
+  lowerBtn.onmouseleave = () => {
+    lowerBtn.style.transform = 'scale(1)';
+    lowerBtn.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.4)';
+  };
+  lowerBtn.onclick = () => this.makeGuess('lower');
+  buttonContainer.appendChild(lowerBtn);
+  
+  gameBoard.appendChild(buttonContainer);
+  
+  // Result message (if exists)
+  if (this.state.lastResult) {
+    const resultMsg = document.createElement('div');
+    resultMsg.textContent = this.state.lastResult;
+    resultMsg.style.marginTop = '10px';
+    resultMsg.style.padding = isMobile ? '12px 20px' : '15px 30px';
+    resultMsg.style.borderRadius = '8px';
+    resultMsg.style.fontSize = isMobile ? '0.95rem' : '1.1rem';
+    resultMsg.style.fontWeight = 'bold';
+    resultMsg.style.textAlign = 'center';
+    resultMsg.style.maxWidth = '90%';
+    resultMsg.style.animation = 'fadeIn 0.3s ease-in';
+    
+    if (this.state.lastResult.includes('Correct')) {
+      resultMsg.style.background = 'rgba(0, 255, 0, 0.2)';
+      resultMsg.style.color = '#90ee90';
+      resultMsg.style.border = '2px solid #90ee90';
+    }
+    
+    gameBoard.appendChild(resultMsg);
+  }
+}
   
   renderGameOver(gameBoard, isMobile) {
     const container = document.createElement('div');
@@ -367,4 +385,5 @@ class HigherLower {
 // Register the game
 window.GameModules = window.GameModules || {};
 window.GameModules['casual-higher-lower-v1'] = HigherLower;
+
 
