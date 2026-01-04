@@ -493,9 +493,17 @@ class FreeCellSolitaire {
     content.style.cssText = 'display:flex; flex-direction:column; align-items:center; width:100%; padding:20px 10px;';
     wrapper.appendChild(content);
 
+    // Calculate total width for proper alignment
+    const totalTableauWidth = (cardSize.w * 8) + (gap * 7);
+
     // Top row: Free Cells and Foundations
     const topRow = document.createElement('div');
-    topRow.style.cssText = `display:flex; justify-content:space-between; width:100%; max-width:${isMobile ? '400px' : '900px'}; margin-bottom:${gap * 2}px;`;
+    topRow.style.cssText = `
+      display:flex; 
+      justify-content:space-between; 
+      width:${totalTableauWidth}px; 
+      margin-bottom:${gap * 2}px;
+    `;
 
     // Free Cells
     const freeCellsContainer = document.createElement('div');
@@ -535,9 +543,14 @@ class FreeCellSolitaire {
     topRow.appendChild(foundationsContainer);
     content.appendChild(topRow);
 
-    // Tableau
+    // Tableau - now perfectly aligned
     const tableau = document.createElement('div');
-    tableau.style.cssText = `display:flex; gap:${gap}px; justify-content:center; width:100%; max-width:${isMobile ? '400px' : '900px'};`;
+    tableau.style.cssText = `
+      display:flex; 
+      gap:${gap}px; 
+      justify-content:flex-start;
+      width:${totalTableauWidth}px;
+    `;
 
     for (let i = 0; i < 8; i++) {
       const col = document.createElement('div');
