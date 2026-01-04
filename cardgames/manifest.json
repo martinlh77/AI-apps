@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "lastUpdated": "2025-01-15T14:30:00Z",
+  "version": "1.2.0",
+  "lastUpdated": "2025-01-15T18:00:00Z",
   "games": [
     {
       "id": "memory-classic-v1",
@@ -31,6 +31,22 @@
       "configPath": "cardgames/solitaire/freecell.json",
       "modulePath": "cardgames/solitaire/freecell.js",
       "thumbnail": "cardgames/solitaire/freecell-thumb.png",
+      "featured": true,
+      "addedDate": "2025-01-15"
+    },
+    {
+      "id": "solitaire-meeting-garden-v1",
+      "configPath": "cardgames/solitaire/meeting-garden.json",
+      "modulePath": "cardgames/solitaire/meeting-garden.js",
+      "thumbnail": "cardgames/solitaire/meeting-garden-thumb.png",
+      "featured": true,
+      "addedDate": "2025-01-15"
+    },
+    {
+      "id": "solitaire-royal-marriage-v1",
+      "configPath": "cardgames/solitaire/royal-marriage.json",
+      "modulePath": "cardgames/solitaire/royal-marriage.js",
+      "thumbnail": "cardgames/solitaire/royal-marriage-thumb.png",
       "featured": true,
       "addedDate": "2025-01-15"
     },
