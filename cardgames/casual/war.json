@@ -1,0 +1,104 @@
+{
+  "gameId": "casual-war-v1",
+  
+  "metadata": {
+    "name": "War",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Classic two-player card battle game. Higher card wins the round!",
+    "category": "casual",
+    "difficulty": "easy",
+    "estimatedPlayTime": "5-10 minutes",
+    "thumbnail": "cardgames/casual/war-thumb.png",
+    "tags": ["casual", "single-player", "quick", "simple", "battle"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52,
+      "note": "Standard 52-card deck split evenly between player and computer"
+    }
+  },
+  
+  "instructions": {
+    "overview": "Battle against the computer in the classic card game War. Each round, both players flip their top card - highest card wins both cards! The goal is to capture all 52 cards.",
+    
+    "setup": [
+      "The deck is shuffled and split evenly",
+      "You receive 26 cards face-down",
+      "The computer receives 26 cards face-down",
+      "Cards are placed in your respective draw piles"
+    ],
+    
+    "gameplay": [
+      "Click 'Battle!' to start a round",
+      "Both you and the computer flip your top card",
+      "Cards are compared - highest value wins",
+      "Winner takes both cards and adds them to bottom of their deck",
+      "Card values: Ace (highest) = 14, King = 13, Queen = 12, Jack = 11, 10-2 = face value",
+      "If cards tie, both cards are removed from play (simplified War rules)",
+      "Continue until one player runs out of cards"
+    ],
+    
+    "winning": "Win by capturing all cards from your opponent. You lose if you run out of cards first.",
+    
+    "examples": [
+      {
+        "title": "You Win Round",
+        "description": "Your King (13) beats Computer's 8",
+        "cards": ["hearts-king", "clubs-8"]
+      },
+      {
+        "title": "Computer Wins Round",
+        "description": "Computer's Ace (14) beats your Queen (12)",
+        "cards": ["diamonds-queen", "spades-ace"]
+      },
+      {
+        "title": "Tie - Cards Removed",
+        "description": "Both players have Jack (11) - both cards discarded",
+        "cards": ["hearts-jack", "clubs-jack"]
+      }
+    ]
+  },
+  
+  "ui": {
+    "layout": "simple",
+    "zones": [
+      {
+        "id": "player-deck",
+        "type": "pile",
+        "position": {"x": "left", "y": "bottom"}
+      },
+      {
+        "id": "computer-deck",
+        "type": "pile",
+        "position": {"x": "right", "y": "top"}
+      },
+      {
+        "id": "battle-zone",
+        "type": "pile",
+        "position": {"x": "center", "y": "center"}
+      }
+    ],
+    "animations": {
+      "dealSpeed": 300,
+      "flipSpeed": 400,
+      "celebrationOnWin": true
+    }
+  },
+  
+  "gameLogicModule": "cardgames/casual/war.js"
+}
