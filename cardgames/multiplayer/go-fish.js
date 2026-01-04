@@ -1,6 +1,6 @@
 /**
  * Go Fish - Classic Card Matching Game
- * Completely rebuilt with proper spacing, visibility, and mobile support
+ * Fixed layout with proper card hand display
  */
 
 class GoFish {
@@ -243,13 +243,18 @@ class GoFish {
       });
     }
     
+    // Sort hands by rank
+    this.state.players.forEach(player => {
+      this.sortHand(player);
+    });
+    
     // Check for initial sets
     this.state.players.forEach(player => {
       this.checkAndRemoveSets(player);
     });
     
     this.state.currentPlayerIndex = 0;
-    this.state.message = "Your turn! Select a rank from your hand, then click an opponent.";
+    this.state.message = "Your turn! Click a card to select its rank, then click an opponent.";
     
     this.render();
     
@@ -257,6 +262,11 @@ class GoFish {
     if (!this.state.players[0].isHuman) {
       setTimeout(() => this.executeCPUTurn(), 1500);
     }
+  }
+  
+  sortHand(player) {
+    const rankOrder = {'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13};
+    player.hand.sort((a, b) => rankOrder[a.rank] - rankOrder[b.rank]);
   }
   
   checkAndRemoveSets(player) {
@@ -277,6 +287,8 @@ class GoFish {
         });
       }
     });
+    
+    this.sortHand(player);
   }
   
   render() {
@@ -288,12 +300,14 @@ class GoFish {
       display: flex;
       flex-direction: column;
       padding: 15px;
-      gap: 20px;
+      gap: 15px;
       overflow-y: auto;
       max-height: 100vh;
+      align-items: center;
     `;
     
     const isMobile = window.innerWidth < 700;
+    const containerWidth = Math.min(window.innerWidth - 40, 1200);
     
     // Message bar
     const messageBar = document.createElement('div');
@@ -303,10 +317,12 @@ class GoFish {
       border-radius: 10px;
       padding: ${isMobile ? '12px' : '15px'};
       text-align: center;
-      font-size: ${isMobile ? '1rem' : '1.3rem'};
+      font-size: ${isMobile ? '0.95rem' : '1.2rem'};
       font-weight: bold;
       color: #ffd700;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: ${containerWidth}px;
     `;
     messageBar.textContent = this.state.message;
     gameBoard.appendChild(messageBar);
@@ -321,10 +337,12 @@ class GoFish {
       padding: 10px;
       background: rgba(0,0,0,0.3);
       border-radius: 10px;
+      width: 100%;
+      max-width: ${containerWidth}px;
     `;
     
     this.state.players.forEach((player, index) => {
-      if (index !== 0) { // Skip human player
+      if (index !== 0) {
         opponentsSection.appendChild(this.createOpponentDisplay(player, index, isMobile));
       }
     });
@@ -334,13 +352,15 @@ class GoFish {
     const centerSection = document.createElement('div');
     centerSection.style.cssText = `
       display: flex;
-      gap: ${isMobile ? '15px' : '30px'};
+      gap: ${isMobile ? '20px' : '40px'};
       justify-content: center;
       align-items: center;
-      padding: 20px;
+      padding: 15px;
       background: rgba(0,0,0,0.3);
       border-radius: 10px;
       flex-wrap: wrap;
+      width: 100%;
+      max-width: ${containerWidth}px;
     `;
     
     // Draw pile
@@ -360,8 +380,8 @@ class GoFish {
     if (this.state.drawPile.length > 0) {
       const pileCard = this.engine.renderCard(this.state.drawPile[0], false);
       pileCard.style.cssText = `
-        width: ${isMobile ? '70px' : '100px'};
-        height: ${isMobile ? '98px' : '140px'};
+        width: ${isMobile ? '60px' : '80px'};
+        height: ${isMobile ? '84px' : '112px'};
       `;
       pileContainer.appendChild(pileCard);
     }
@@ -371,7 +391,7 @@ class GoFish {
     const setsDisplay = document.createElement('div');
     setsDisplay.style.cssText = `
       text-align: center;
-      font-size: ${isMobile ? '1.2rem' : '1.5rem'};
+      font-size: ${isMobile ? '1.1rem' : '1.4rem'};
       color: #ffd700;
       font-weight: bold;
     `;
@@ -380,60 +400,82 @@ class GoFish {
     
     gameBoard.appendChild(centerSection);
     
-    // Current player's hand
+    // Current player's hand - FIXED LAYOUT
     const humanPlayer = this.state.players[0];
     const handSection = document.createElement('div');
     handSection.style.cssText = `
-      background: ${this.state.currentPlayerIndex === 0 ? 'rgba(0,255,200,0.2)' : 'rgba(0,0,0,0.3)'};
+      background: ${this.state.currentPlayerIndex === 0 ? 'rgba(0,255,200,0.15)' : 'rgba(0,0,0,0.3)'};
       border: 3px solid ${this.state.currentPlayerIndex === 0 ? '#00ffcc' : '#444'};
       border-radius: 15px;
       padding: ${isMobile ? '15px' : '20px'};
+      width: 100%;
+      max-width: ${containerWidth}px;
     `;
     
     const handHeader = document.createElement('div');
     handHeader.style.cssText = `
       text-align: center;
-      font-size: ${isMobile ? '1.2rem' : '1.5rem'};
+      font-size: ${isMobile ? '1.1rem' : '1.3rem'};
       font-weight: bold;
       color: #00ff88;
-      margin-bottom: 15px;
+      margin-bottom: 20px;
     `;
     handHeader.textContent = `Your Hand (${humanPlayer.hand.length} cards) - ${humanPlayer.sets} sets`;
     handSection.appendChild(handHeader);
     
-    // Cards display
-    const cardsContainer = document.createElement('div');
-    cardsContainer.style.cssText = `
-      display: flex;
-      gap: ${isMobile ? '8px' : '12px'};
-      justify-content: center;
-      flex-wrap: wrap;
-      padding: 10px;
-    `;
-    
+    // Cards display - CASCADING FAN LAYOUT
     if (humanPlayer.hand.length === 0) {
       const emptyMsg = document.createElement('div');
       emptyMsg.style.cssText = `
         color: #888;
         font-size: ${isMobile ? '1rem' : '1.2rem'};
-        padding: 20px;
+        padding: 40px;
+        text-align: center;
       `;
       emptyMsg.textContent = 'No cards - waiting for game to end';
-      cardsContainer.appendChild(emptyMsg);
+      handSection.appendChild(emptyMsg);
     } else {
-      humanPlayer.hand.forEach(card => {
+      // Create container for cascading cards
+      const cardsContainer = document.createElement('div');
+      cardsContainer.style.cssText = `
+        position: relative;
+        height: ${isMobile ? '140px' : '200px'};
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+      `;
+      
+      const cardWidth = isMobile ? 70 : 100;
+      const cardHeight = isMobile ? 98 : 140;
+      const overlap = isMobile ? 40 : 60; // Cards overlap by this amount
+      const totalWidth = (humanPlayer.hand.length - 1) * overlap + cardWidth;
+      
+      const cardsWrapper = document.createElement('div');
+      cardsWrapper.style.cssText = `
+        position: relative;
+        width: ${totalWidth}px;
+        height: ${cardHeight}px;
+      `;
+      
+      humanPlayer.hand.forEach((card, index) => {
         const cardEl = this.engine.renderCard(card, true);
         const isSelected = this.state.selectedRank === card.rank;
         const canSelect = this.state.currentPlayerIndex === 0 && !this.state.turnInProgress;
         
         cardEl.style.cssText = `
-          width: ${isMobile ? '70px' : '100px'};
-          height: ${isMobile ? '98px' : '140px'};
+          position: absolute;
+          left: ${index * overlap}px;
+          bottom: 0;
+          width: ${cardWidth}px;
+          height: ${cardHeight}px;
           cursor: ${canSelect ? 'pointer' : 'default'};
-          border: 3px solid ${isSelected ? '#ffd700' : 'transparent'};
+          border: 3px solid ${isSelected ? '#ffd700' : '#333'};
           border-radius: 8px;
-          transition: all 0.2s;
-          box-shadow: ${isSelected ? '0 0 20px rgba(255,215,0,0.6)' : 'none'};
+          transition: all 0.3s ease;
+          box-shadow: ${isSelected ? '0 0 25px rgba(255,215,0,0.8)' : '0 4px 8px rgba(0,0,0,0.5)'};
+          z-index: ${isSelected ? 1000 : 100 + index};
+          transform: ${isSelected ? 'translateY(-30px) scale(1.1)' : 'translateY(0) scale(1)'};
         `;
         
         if (isMobile) {
@@ -441,56 +483,60 @@ class GoFish {
         }
         
         if (canSelect) {
-          cardEl.onmouseover = () => {
+          cardEl.onmouseenter = () => {
             if (!isSelected) {
-              cardEl.style.transform = 'translateY(-10px) scale(1.05)';
-              cardEl.style.boxShadow = '0 10px 20px rgba(0,255,200,0.4)';
+              cardEl.style.transform = 'translateY(-20px) scale(1.05)';
+              cardEl.style.zIndex = '999';
+              cardEl.style.boxShadow = '0 8px 20px rgba(0,255,200,0.6)';
             }
           };
-          cardEl.onmouseout = () => {
+          cardEl.onmouseleave = () => {
             if (!isSelected) {
               cardEl.style.transform = 'translateY(0) scale(1)';
-              cardEl.style.boxShadow = 'none';
+              cardEl.style.zIndex = String(100 + index);
+              cardEl.style.boxShadow = '0 4px 8px rgba(0,0,0,0.5)';
             }
           };
           cardEl.onclick = () => this.selectRank(card.rank);
         }
         
-        cardsContainer.appendChild(cardEl);
+        cardsWrapper.appendChild(cardEl);
       });
+      
+      cardsContainer.appendChild(cardsWrapper);
+      handSection.appendChild(cardsContainer);
     }
     
-    handSection.appendChild(cardsContainer);
     gameBoard.appendChild(handSection);
     
-    // Action button
+    // Action button - BELOW THE CARDS
     if (this.state.currentPlayerIndex === 0 && !this.state.turnInProgress && humanPlayer.hand.length > 0) {
       const actionBtn = document.createElement('button');
       const canAsk = this.state.selectedRank && this.state.selectedOpponent !== null;
-      actionBtn.textContent = canAsk ? '🎣 Ask for Cards!' : 'Select rank & opponent';
+      actionBtn.textContent = canAsk ? `🎣 Ask for ${this.state.selectedRank}s!` : 'Select rank & opponent first';
       actionBtn.disabled = !canAsk;
       actionBtn.style.cssText = `
-        padding: ${isMobile ? '15px 30px' : '18px 40px'};
-        font-size: ${isMobile ? '1.1rem' : '1.3rem'};
+        padding: ${isMobile ? '15px 30px' : '18px 50px'};
+        font-size: ${isMobile ? '1.1rem' : '1.4rem'};
         font-weight: bold;
         background: ${canAsk ? 'linear-gradient(135deg, #00ff88, #00ccff)' : '#555'};
         color: ${canAsk ? '#000' : '#888'};
-        border: none;
-        border-radius: 10px;
+        border: ${canAsk ? '3px solid #00ff88' : '3px solid #333'};
+        border-radius: 12px;
         cursor: ${canAsk ? 'pointer' : 'not-allowed'};
-        margin: 0 auto;
-        display: block;
         transition: all 0.2s;
+        box-shadow: ${canAsk ? '0 4px 15px rgba(0,255,136,0.4)' : 'none'};
+        margin-top: 20px;
       `;
       
       if (canAsk) {
         actionBtn.onmouseover = () => {
           actionBtn.style.transform = 'scale(1.05)';
-          actionBtn.style.boxShadow = '0 5px 20px rgba(0,255,200,0.5)';
+          actionBtn.style.boxShadow = '0 6px 25px rgba(0,255,136,0.6)';
         };
         actionBtn.onmouseout = () => {
           actionBtn.style.transform = 'scale(1)';
-          actionBtn.style.boxShadow = 'none';
+          actionBtn.style.boxShadow = '0 4px 15px rgba(0,255,136,0.4)';
         };
         actionBtn.onclick = () => this.executePlayerAsk();
       }
@@ -508,24 +554,28 @@ class GoFish {
                       this.state.selectedRank && player.hand.length > 0;
     
     oppBox.style.cssText = `
-      background: ${isSelected ? 'rgba(255,215,0,0.2)' : 'rgba(0,0,0,0.5)'};
+      background: ${isSelected ? 'rgba(255,215,0,0.25)' : 'rgba(0,0,0,0.6)'};
       border: 3px solid ${isSelected ? '#ffd700' : '#00ffcc'};
-      border-radius: 10px;
-      padding: ${isMobile ? '10px' : '15px'};
-      min-width: ${isMobile ? '120px' : '160px'};
+      border-radius: 12px;
+      padding: ${isMobile ? '12px' : '15px'};
+      min-width: ${isMobile ? '130px' : '180px'};
       cursor: ${canSelect ? 'pointer' : 'default'};
-      transition: all 0.2s;
-      box-shadow: ${isSelected ? '0 0 20px rgba(255,215,0,0.5)' : 'none'};
+      transition: all 0.3s;
+      box-shadow: ${isSelected ? '0 0 25px rgba(255,215,0,0.6)' : '0 4px 12px rgba(0,0,0,0.4)'};
     `;
     
     if (canSelect) {
-      oppBox.onmouseover = () => {
+      oppBox.onmouseenter = () => {
         oppBox.style.transform = 'scale(1.05)';
         oppBox.style.borderColor = '#ffd700';
+        oppBox.style.boxShadow = '0 6px 20px rgba(255,215,0,0.5)';
       };
-      oppBox.onmouseout = () => {
+      oppBox.onmouseleave = () => {
         oppBox.style.transform = 'scale(1)';
-        if (!isSelected) oppBox.style.borderColor = '#00ffcc';
+        if (!isSelected) {
+          oppBox.style.borderColor = '#00ffcc';
+          oppBox.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+        }
       };
       oppBox.onclick = () => this.selectOpponent(index);
     }
@@ -533,10 +583,10 @@ class GoFish {
     const nameLabel = document.createElement('div');
     nameLabel.style.cssText = `
       text-align: center;
-      font-size: ${isMobile ? '1rem' : '1.2rem'};
+      font-size: ${isMobile ? '1.05rem' : '1.3rem'};
       font-weight: bold;
       color: #ff8800;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     `;
     nameLabel.textContent = player.name;
     oppBox.appendChild(nameLabel);
@@ -544,8 +594,8 @@ class GoFish {
     const statsLabel = document.createElement('div');
     statsLabel.style.cssText = `
       text-align: center;
-      font-size: ${isMobile ? '0.85rem' : '1rem'};
-      color: #fff;
+      font-size: ${isMobile ? '0.9rem' : '1.05rem'};
+      color: #ccc;
       margin-bottom: 10px;
     `;
     statsLabel.textContent = `${player.hand.length} cards | ${player.sets} sets`;
@@ -555,29 +605,30 @@ class GoFish {
     const cardsRow = document.createElement('div');
     cardsRow.style.cssText = `
       display: flex;
-      gap: 3px;
+      gap: 4px;
       justify-content: center;
       flex-wrap: wrap;
     `;
     
-    const numToShow = Math.min(player.hand.length, 5);
+    const numToShow = Math.min(player.hand.length, 6);
     for (let i = 0; i < numToShow; i++) {
       const cardBack = this.engine.renderCard(player.hand[0], false);
       cardBack.style.cssText = `
-        width: ${isMobile ? '25px' : '35px'};
-        height: ${isMobile ? '35px' : '49px'};
+        width: ${isMobile ? '22px' : '30px'};
+        height: ${isMobile ? '31px' : '42px'};
       `;
       cardsRow.appendChild(cardBack);
     }
     
-    if (player.hand.length > 5) {
+    if (player.hand.length > 6) {
       const moreLabel = document.createElement('div');
       moreLabel.style.cssText = `
         color: #fff;
-        font-size: ${isMobile ? '0.8rem' : '1rem'};
-        line-height: ${isMobile ? '35px' : '49px'};
+        font-size: ${isMobile ? '0.85rem' : '1rem'};
+        line-height: ${isMobile ? '31px' : '42px'};
+        font-weight: bold;
       `;
-      moreLabel.textContent = `+${player.hand.length - 5}`;
+      moreLabel.textContent = `+${player.hand.length - 6}`;
       cardsRow.appendChild(moreLabel);
     }
     
@@ -592,9 +643,9 @@ class GoFish {
     
     if (this.state.selectedOpponent !== null) {
       const opp = this.state.players[this.state.selectedOpponent];
-      this.state.message = `Ready to ask ${opp.name} for ${rank}s. Click "Ask for Cards!"`;
+      this.state.message = `Ready! Click the button to ask ${opp.name} for ${rank}s.`;
     } else {
-      this.state.message = `Selected ${rank}s. Now click an opponent to ask.`;
+      this.state.message = `${rank}s selected. Now click an opponent to ask.`;
     }
     
     this.render();
@@ -610,7 +661,7 @@ class GoFish {
     
     this.state.selectedOpponent = index;
     const opp = this.state.players[index];
-    this.state.message = `Ready to ask ${opp.name} for ${this.state.selectedRank}s. Click "Ask for Cards!"`;
+    this.state.message = `Ready! Click the button to ask ${opp.name} for ${this.state.selectedRank}s.`;
     this.render();
   }
   
@@ -638,6 +689,7 @@ class GoFish {
         this.state.players[0].hand.push(card);
       });
       
+      this.sortHand(this.state.players[0]);
       this.state.message = `${opponent.name} had ${matchingCards.length} ${rank}${matchingCards.length > 1 ? 's' : ''}! You get another turn.`;
       this.checkAndRemoveSets(this.state.players[0]);
       
@@ -647,7 +699,7 @@ class GoFish {
       
       setTimeout(() => {
         if (!this.checkGameEnd()) {
-          this.state.message = "Your turn! Select another rank.";
+          this.state.message = "Your turn again! Select a rank.";
           this.render();
         }
       }, 2000);
@@ -660,6 +712,7 @@ class GoFish {
         if (this.state.drawPile.length > 0) {
           const drawn = this.state.drawPile.pop();
           this.state.players[0].hand.push(drawn);
+          this.sortHand(this.state.players[0]);
           
           if (drawn.rank === rank) {
             this.state.message = `Lucky! You drew the ${rank} you asked for! Another turn.`;
@@ -718,6 +771,7 @@ class GoFish {
           cpu.hand.push(card);
         });
         
+        this.sortHand(cpu);
         this.state.message = `${cpu.name} got ${matchingCards.length} ${rank}${matchingCards.length > 1 ? 's' : ''}!`;
         this.checkAndRemoveSets(cpu);
         this.state.turnInProgress = false;
@@ -737,6 +791,7 @@ class GoFish {
           if (this.state.drawPile.length > 0) {
             const drawn = this.state.drawPile.pop();
             cpu.hand.push(drawn);
+            this.sortHand(cpu);
             
             if (drawn.rank === rank) {
               this.state.message = `${cpu.name} drew the ${rank} they wanted!`;
@@ -807,7 +862,7 @@ class GoFish {
     if (this.checkGameEnd()) return;
     
     this.state.message = current.isHuman ? 
-      "Your turn! Select a rank and opponent." :
+      "Your turn! Click a card to select its rank." :
       `${current.name}'s turn...`;
     
     this.render();
@@ -842,15 +897,15 @@ class GoFish {
   }
   
   scaleCardForMobile(cardElement) {
-    cardElement.style.fontSize = '0.6rem';
+    cardElement.style.fontSize = '0.65rem';
     cardElement.querySelectorAll('.rank').forEach(el => {
-      el.style.fontSize = '0.75rem';
+      el.style.fontSize = '0.8rem';
     });
     cardElement.querySelectorAll('.mini-pip').forEach(el => {
-      el.style.fontSize = '0.6rem';
+      el.style.fontSize = '0.65rem';
     });
     cardElement.querySelectorAll('.pip').forEach(pip => {
-      pip.style.fontSize = pip.classList.contains('large') ? '1.5rem' : '0.8rem';
+      pip.style.fontSize = pip.classList.contains('large') ? '1.6rem' : '0.85rem';
     });
   }
   
