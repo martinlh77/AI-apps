@@ -105,11 +105,12 @@ class HigherLower {
     gameBoard.style.flexDirection = 'column';
     gameBoard.style.alignItems = 'center';
     gameBoard.style.justifyContent = 'flex-start';
-    gameBoard.style.gap = '0';
+    gameBoard.style.gap = '20px';
     gameBoard.style.minHeight = '600px';
     gameBoard.style.padding = '30px 20px';
     gameBoard.style.paddingTop = '40px';
     gameBoard.style.overflowY = 'auto';
+    gameBoard.style.position = 'relative';
     
     const isMobile = window.innerWidth < 700;
     const cardWidth = isMobile ? '100px' : '150px';
@@ -129,9 +130,11 @@ class HigherLower {
     const title = document.createElement('h2');
     title.textContent = 'Will the next card be...';
     title.style.color = '#00ffcc';
-    title.style.margin = '0 0 30px 0';
+    title.style.margin = '0';
     title.style.fontSize = isMobile ? '1.3rem' : '1.8rem';
     title.style.textAlign = 'center';
+    title.style.position = 'relative';
+    title.style.zIndex = '1';
     gameBoard.appendChild(title);
     
     // Current card container
@@ -140,11 +143,14 @@ class HigherLower {
     cardContainer.style.flexDirection = 'column';
     cardContainer.style.alignItems = 'center';
     cardContainer.style.gap = '15px';
-    cardContainer.style.margin = '0 0 30px 0';
+    cardContainer.style.position = 'relative';
+    cardContainer.style.zIndex = '1';
     
     const cardElement = this.engine.renderCard(this.state.currentCard, true);
     cardElement.style.width = cardWidth;
     cardElement.style.height = cardHeight;
+    cardElement.style.position = 'relative';
+    cardElement.style.zIndex = '1';
     cardElement.classList.add('card-dealing');
     
     if (isMobile) {
@@ -161,17 +167,22 @@ class HigherLower {
     valueDisplay.style.fontWeight = 'bold';
     valueDisplay.style.textAlign = 'center';
     valueDisplay.style.margin = '0';
+    valueDisplay.style.position = 'relative';
+    valueDisplay.style.zIndex = '2';
     cardContainer.appendChild(valueDisplay);
     
     gameBoard.appendChild(cardContainer);
     
-    // Buttons - NOW BELOW THE CARD
+    // Buttons - BELOW THE CARD with higher z-index
     const buttonContainer = document.createElement('div');
     buttonContainer.style.display = 'flex';
     buttonContainer.style.gap = isMobile ? '15px' : '30px';
     buttonContainer.style.margin = '0';
     buttonContainer.style.width = '100%';
+    buttonContainer.style.maxWidth = '500px';
     buttonContainer.style.justifyContent = 'center';
+    buttonContainer.style.position = 'relative';
+    buttonContainer.style.zIndex = '10';
     
     const higherBtn = this.createButton('⬆️ HIGHER', '#00b894', () => this.makeGuess('higher'), isMobile);
     const lowerBtn = this.createButton('⬇️ LOWER', '#e74c3c', () => this.makeGuess('lower'), isMobile);
@@ -186,9 +197,11 @@ class HigherLower {
     const title = document.createElement('h2');
     title.textContent = 'Comparing Cards...';
     title.style.color = '#00ffcc';
-    title.style.margin = '0 0 30px 0';
+    title.style.margin = '0';
     title.style.fontSize = isMobile ? '1.3rem' : '1.8rem';
     title.style.textAlign = 'center';
+    title.style.position = 'relative';
+    title.style.zIndex = '1';
     gameBoard.appendChild(title);
     
     // Cards side by side
@@ -197,7 +210,9 @@ class HigherLower {
     cardsContainer.style.gap = isMobile ? '15px' : '30px';
     cardsContainer.style.justifyContent = 'center';
     cardsContainer.style.alignItems = 'flex-start';
-    cardsContainer.style.margin = '0 0 30px 0';
+    cardsContainer.style.flexWrap = 'wrap';
+    cardsContainer.style.position = 'relative';
+    cardsContainer.style.zIndex = '1';
     
     // Current card
     const currentContainer = document.createElement('div');
@@ -205,17 +220,23 @@ class HigherLower {
     currentContainer.style.flexDirection = 'column';
     currentContainer.style.alignItems = 'center';
     currentContainer.style.gap = '10px';
+    currentContainer.style.position = 'relative';
+    currentContainer.style.zIndex = '1';
     
     const currentLabel = document.createElement('div');
     currentLabel.textContent = 'Current Card';
     currentLabel.style.fontSize = isMobile ? '0.9rem' : '1rem';
     currentLabel.style.color = '#fff';
     currentLabel.style.fontWeight = 'bold';
+    currentLabel.style.position = 'relative';
+    currentLabel.style.zIndex = '2';
     currentContainer.appendChild(currentLabel);
     
     const currentCardEl = this.engine.renderCard(this.state.currentCard, true);
     currentCardEl.style.width = cardWidth;
     currentCardEl.style.height = cardHeight;
+    currentCardEl.style.position = 'relative';
+    currentCardEl.style.zIndex = '1';
     if (isMobile) this.scaleCardForMobile(currentCardEl);
     currentContainer.appendChild(currentCardEl);
     
@@ -223,6 +244,8 @@ class HigherLower {
     currentValue.textContent = `Value: ${this.cardValues[this.state.currentCard.rank]}`;
     currentValue.style.fontSize = isMobile ? '0.9rem' : '1rem';
     currentValue.style.color = '#ffd700';
+    currentValue.style.position = 'relative';
+    currentValue.style.zIndex = '2';
     currentContainer.appendChild(currentValue);
     
     cardsContainer.appendChild(currentContainer);
@@ -233,17 +256,23 @@ class HigherLower {
     nextContainer.style.flexDirection = 'column';
     nextContainer.style.alignItems = 'center';
     nextContainer.style.gap = '10px';
+    nextContainer.style.position = 'relative';
+    nextContainer.style.zIndex = '1';
     
     const nextLabel = document.createElement('div');
     nextLabel.textContent = 'Next Card';
     nextLabel.style.fontSize = isMobile ? '0.9rem' : '1rem';
     nextLabel.style.color = '#fff';
     nextLabel.style.fontWeight = 'bold';
+    nextLabel.style.position = 'relative';
+    nextLabel.style.zIndex = '2';
     nextContainer.appendChild(nextLabel);
     
     const nextCardEl = this.engine.renderCard(this.state.nextCard, true);
     nextCardEl.style.width = cardWidth;
     nextCardEl.style.height = cardHeight;
+    nextCardEl.style.position = 'relative';
+    nextCardEl.style.zIndex = '1';
     if (isMobile) this.scaleCardForMobile(nextCardEl);
     nextContainer.appendChild(nextCardEl);
     
@@ -251,12 +280,14 @@ class HigherLower {
     nextValue.textContent = `Value: ${this.cardValues[this.state.nextCard.rank]}`;
     nextValue.style.fontSize = isMobile ? '0.9rem' : '1rem';
     nextValue.style.color = '#ffd700';
+    nextValue.style.position = 'relative';
+    nextValue.style.zIndex = '2';
     nextContainer.appendChild(nextValue);
     
     cardsContainer.appendChild(nextContainer);
     gameBoard.appendChild(cardsContainer);
     
-    // Result message
+    // Result message - BELOW cards with higher z-index
     const resultMsg = document.createElement('div');
     resultMsg.textContent = this.state.lastResult;
     resultMsg.style.margin = '0';
@@ -269,6 +300,8 @@ class HigherLower {
     resultMsg.style.background = 'rgba(0, 255, 0, 0.2)';
     resultMsg.style.color = '#90ee90';
     resultMsg.style.border = '2px solid #90ee90';
+    resultMsg.style.position = 'relative';
+    resultMsg.style.zIndex = '10';
     gameBoard.appendChild(resultMsg);
   }
   
@@ -281,12 +314,15 @@ class HigherLower {
     container.style.flexDirection = 'column';
     container.style.alignItems = 'center';
     container.style.gap = '20px';
+    container.style.position = 'relative';
     
     const title = document.createElement('h2');
     title.textContent = '❌ Game Over!';
     title.style.color = '#e74c3c';
     title.style.fontSize = isMobile ? '2rem' : '2.5rem';
     title.style.margin = '0';
+    title.style.position = 'relative';
+    title.style.zIndex = '1';
     container.appendChild(title);
     
     const streakMsg = document.createElement('div');
@@ -294,6 +330,8 @@ class HigherLower {
     streakMsg.style.fontSize = isMobile ? '1.2rem' : '1.5rem';
     streakMsg.style.color = '#00ffcc';
     streakMsg.style.margin = '0';
+    streakMsg.style.position = 'relative';
+    streakMsg.style.zIndex = '1';
     container.appendChild(streakMsg);
     
     const bestMsg = document.createElement('div');
@@ -301,6 +339,8 @@ class HigherLower {
     bestMsg.style.fontSize = isMobile ? '1rem' : '1.2rem';
     bestMsg.style.color = '#ffd700';
     bestMsg.style.margin = '0';
+    bestMsg.style.position = 'relative';
+    bestMsg.style.zIndex = '1';
     container.appendChild(bestMsg);
     
     // Show comparison
@@ -312,7 +352,9 @@ class HigherLower {
       explanation.style.color = '#ccc';
       explanation.style.fontSize = isMobile ? '0.9rem' : '1rem';
       explanation.style.padding = '0 10px';
-      explanation.style.margin = '0 0 20px 0';
+      explanation.style.margin = '0';
+      explanation.style.position = 'relative';
+      explanation.style.zIndex = '2';
       container.appendChild(explanation);
       
       // Show both cards
@@ -320,28 +362,37 @@ class HigherLower {
       cardsContainer.style.display = 'flex';
       cardsContainer.style.gap = isMobile ? '15px' : '30px';
       cardsContainer.style.justifyContent = 'center';
-      cardsContainer.style.margin = '0 0 30px 0';
+      cardsContainer.style.flexWrap = 'wrap';
+      cardsContainer.style.margin = '0';
+      cardsContainer.style.position = 'relative';
+      cardsContainer.style.zIndex = '1';
       
       const currentCardEl = this.engine.renderCard(this.state.currentCard, true);
       currentCardEl.style.width = cardWidth;
       currentCardEl.style.height = cardHeight;
+      currentCardEl.style.position = 'relative';
+      currentCardEl.style.zIndex = '1';
       if (isMobile) this.scaleCardForMobile(currentCardEl);
       cardsContainer.appendChild(currentCardEl);
       
       const nextCardEl = this.engine.renderCard(this.state.nextCard, true);
       nextCardEl.style.width = cardWidth;
       nextCardEl.style.height = cardHeight;
+      nextCardEl.style.position = 'relative';
+      nextCardEl.style.zIndex = '1';
       if (isMobile) this.scaleCardForMobile(nextCardEl);
       cardsContainer.appendChild(nextCardEl);
       
       container.appendChild(cardsContainer);
     }
     
-    // Play Again button - NOW CLEARLY BELOW CARDS
+    // Play Again button - BELOW cards with highest z-index
     const playAgainBtn = this.createButton('🔄 Play Again', '#00ffcc', () => this.setup(), isMobile);
     playAgainBtn.style.marginTop = '0';
     playAgainBtn.style.background = '#00ffcc';
     playAgainBtn.style.color = '#000';
+    playAgainBtn.style.position = 'relative';
+    playAgainBtn.style.zIndex = '100';
     container.appendChild(playAgainBtn);
     
     gameBoard.appendChild(container);
@@ -361,6 +412,8 @@ class HigherLower {
     btn.style.borderRadius = '10px';
     btn.style.transition = 'all 0.2s';
     btn.style.boxShadow = `0 4px 15px ${bgColor}66`;
+    btn.style.position = 'relative';
+    btn.style.zIndex = '100';
     btn.onmouseenter = () => {
       btn.style.transform = 'scale(1.05)';
       btn.style.boxShadow = `0 6px 20px ${bgColor}99`;
