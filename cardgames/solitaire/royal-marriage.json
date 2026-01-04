@@ -1,0 +1,89 @@
+{
+  "gameId": "solitaire-royal-marriage-v1",
+  "metadata": {
+    "name": "Royal Marriage",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Classic linear solitaire where the King of Hearts works his way through the deck to meet the Queen of Hearts.",
+    "category": "solitaire",
+    "difficulty": "easy",
+    "estimatedPlayTime": "5-10 minutes",
+    "thumbnail": "cardgames/solitaire/royal-marriage-thumb.png",
+    "tags": ["solitaire", "romantic", "linear", "classic", "quick"]
+  },
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52,
+      "note": "King and Queen of Hearts are the protagonists"
+    }
+  },
+  "instructions": {
+    "overview": "Help the King of Hearts navigate through a line of cards to reach the Queen of Hearts. Remove cards between them to bring them together.",
+    "setup": [
+      "The King of Hearts is placed at the beginning of the deck",
+      "The Queen of Hearts is placed at the end of the deck",
+      "All 50 remaining cards are shuffled and placed between them in a single row"
+    ],
+    "gameplay": [
+      "Cards are laid out in a single horizontal row",
+      "You can remove cards if they match by SUIT or RANK",
+      "Matching cards must be separated by exactly ONE or TWO other cards",
+      "When cards are removed, the remaining cards stay in position (gaps appear)",
+      "As gaps form, the King and Queen move closer together",
+      "Mobile Controls: Pinch with two fingers to zoom. Drag with two fingers to pan the board.",
+      "The game continues until the King and Queen are adjacent or no more moves are possible"
+    ],
+    "winning": "Remove all cards between the King and Queen of Hearts so they end up side-by-side with no other cards remaining.",
+    "examples": [
+      {
+        "title": "Valid Match - One Card Between",
+        "description": "Two 7s with exactly one card between them can be removed",
+        "cards": ["hearts-7", "clubs-3", "diamonds-7"]
+      },
+      {
+        "title": "Valid Match - Two Cards Between",
+        "description": "Two Spades with exactly two cards between them can be removed",
+        "cards": ["spades-king", "hearts-5", "diamonds-2", "spades-ace"]
+      },
+      {
+        "title": "Valid Match - Same Rank",
+        "description": "Two Queens separated by one card",
+        "cards": ["diamonds-queen", "clubs-8", "spades-queen"]
+      },
+      {
+        "title": "The Wedding",
+        "description": "Victory! The King and Queen of Hearts are side-by-side",
+        "cards": ["hearts-king", "hearts-queen"]
+      }
+    ]
+  },
+  "ui": {
+    "layout": "simple",
+    "zones": [
+      {
+        "id": "card-row",
+        "type": "pile",
+        "position": {"x": "center", "y": "center"}
+      }
+    ],
+    "animations": {
+      "dealSpeed": 100,
+      "flipSpeed": 150,
+      "celebrationOnWin": true
+    }
+  },
+  "gameLogicModule": "cardgames/solitaire/royal-marriage.js"
+}

@@ -1,0 +1,101 @@
+{
+  "gameId": "solitaire-meeting-garden-v1",
+  "metadata": {
+    "name": "Meeting in the Garden",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "A romantic solitaire where the King and Queen of Hearts navigate a garden maze to find each other.",
+    "category": "solitaire",
+    "difficulty": "medium",
+    "estimatedPlayTime": "10-15 minutes",
+    "thumbnail": "cardgames/solitaire/meeting-garden-thumb.png",
+    "tags": ["solitaire", "romantic", "grid-based", "strategic", "royal-marriage"]
+  },
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52,
+      "note": "King and Queen of Hearts are the protagonists"
+    }
+  },
+  "instructions": {
+    "overview": "Help the King of Hearts navigate through a garden maze to meet the Queen of Hearts. Remove matching cards to clear the path and bring the royal couple together.",
+    "setup": [
+      "Choose your garden size (5×5 or 6×6 grid)",
+      "The King of Hearts is placed in the top-left corner",
+      "The Queen of Hearts is placed in the bottom-right corner",
+      "All other spaces are filled with cards from the shuffled deck",
+      "The remaining cards form a stock pile for refilling"
+    ],
+    "gameplay": [
+      "Remove pairs of cards that match by SUIT or RANK",
+      "Matching cards must be adjacent (horizontally, vertically, or diagonally) OR separated by exactly one card",
+      "When you remove cards, empty spaces are immediately filled from the stock pile",
+      "Once the stock is empty, the grid compresses: all cards (including King and Queen) slide toward the top-left to fill gaps",
+      "This compression physically moves the King and Queen closer together",
+      "Mobile Controls: Pinch with two fingers to zoom. Drag with two fingers to pan the board.",
+      "Optional Suitor Rule: Other Kings and Queens can 'block' the meeting if they end up adjacent to your protagonists"
+    ],
+    "winning": "Remove all cards from the garden until only the King and Queen of Hearts remain, positioned adjacent to each other.",
+    "examples": [
+      {
+        "title": "Valid Match - Same Suit",
+        "description": "Two Spades cards that are adjacent can be removed",
+        "cards": ["spades-7", "spades-jack"]
+      },
+      {
+        "title": "Valid Match - Same Rank",
+        "description": "Two 5s that are touching can be removed",
+        "cards": ["hearts-5", "clubs-5"]
+      },
+      {
+        "title": "Valid Match - One Card Between",
+        "description": "Two Queens with exactly one card separating them",
+        "cards": ["diamonds-queen", "hearts-3", "spades-queen"]
+      },
+      {
+        "title": "The Meeting",
+        "description": "Victory! The King and Queen of Hearts are the only cards left",
+        "cards": ["hearts-king", "hearts-queen"]
+      },
+      {
+        "title": "Suitor Blocking (Variant)",
+        "description": "King of Spades blocks the path - must be removed first",
+        "cards": ["hearts-king", "spades-king", "hearts-queen"]
+      }
+    ]
+  },
+  "ui": {
+    "layout": "grid",
+    "zones": [
+      {
+        "id": "garden-grid",
+        "type": "grid",
+        "position": {"x": "center", "y": "center"}
+      },
+      {
+        "id": "stock-pile",
+        "type": "pile",
+        "position": {"x": "right", "y": "top"}
+      }
+    ],
+    "animations": {
+      "dealSpeed": 200,
+      "flipSpeed": 150,
+      "celebrationOnWin": true
+    }
+  },
+  "gameLogicModule": "cardgames/solitaire/meeting-garden.js"
+}
