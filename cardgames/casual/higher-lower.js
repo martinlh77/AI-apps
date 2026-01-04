@@ -110,7 +110,7 @@ render() {
   gameBoard.style.flexDirection = 'column';
   gameBoard.style.alignItems = 'center';
   gameBoard.style.justifyContent = 'flex-start';
-  gameBoard.style.gap = '25px';
+  gameBoard.style.gap = '0'; // Remove gap, use explicit margins instead
   gameBoard.style.minHeight = '600px';
   gameBoard.style.padding = '30px 20px';
   gameBoard.style.paddingTop = '40px';
@@ -130,7 +130,7 @@ render() {
   const title = document.createElement('h2');
   title.textContent = 'Will the next card be...';
   title.style.color = '#00ffcc';
-  title.style.marginBottom = '20px';
+  title.style.margin = '0 0 30px 0';
   title.style.fontSize = isMobile ? '1.3rem' : '1.8rem';
   title.style.textAlign = 'center';
   gameBoard.appendChild(title);
@@ -141,11 +141,15 @@ render() {
   cardContainer.style.flexDirection = 'column';
   cardContainer.style.alignItems = 'center';
   cardContainer.style.gap = '15px';
-  cardContainer.style.marginBottom = '10px';
+  cardContainer.style.margin = '0 0 40px 0'; // Large bottom margin
+  cardContainer.style.position = 'relative';
+  cardContainer.style.zIndex = '1';
   
   const cardElement = this.engine.renderCard(this.state.currentCard, true);
   cardElement.style.width = cardWidth;
   cardElement.style.height = cardHeight;
+  cardElement.style.position = 'relative';
+  cardElement.style.zIndex = '1';
   cardElement.classList.add('card-dealing');
   
   if (isMobile) {
@@ -161,6 +165,7 @@ render() {
   valueDisplay.style.color = '#ffd700';
   valueDisplay.style.fontWeight = 'bold';
   valueDisplay.style.textAlign = 'center';
+  valueDisplay.style.margin = '0';
   cardContainer.appendChild(valueDisplay);
   
   gameBoard.appendChild(cardContainer);
@@ -169,9 +174,11 @@ render() {
   const buttonContainer = document.createElement('div');
   buttonContainer.style.display = 'flex';
   buttonContainer.style.gap = isMobile ? '15px' : '30px';
-  buttonContainer.style.marginTop = '20px';
-  buttonContainer.style.marginBottom = '20px';
+  buttonContainer.style.margin = '0 0 20px 0';
+  buttonContainer.style.position = 'relative';
   buttonContainer.style.zIndex = '10';
+  buttonContainer.style.width = '100%';
+  buttonContainer.style.justifyContent = 'center';
   
   const higherBtn = document.createElement('button');
   higherBtn.innerHTML = '⬆️ HIGHER';
@@ -186,6 +193,8 @@ render() {
   higherBtn.style.borderRadius = '10px';
   higherBtn.style.transition = 'all 0.2s';
   higherBtn.style.boxShadow = '0 4px 15px rgba(0, 184, 148, 0.4)';
+  higherBtn.style.position = 'relative';
+  higherBtn.style.zIndex = '10';
   higherBtn.onmouseenter = () => {
     higherBtn.style.transform = 'scale(1.05)';
     higherBtn.style.boxShadow = '0 6px 20px rgba(0, 184, 148, 0.6)';
@@ -210,6 +219,8 @@ render() {
   lowerBtn.style.borderRadius = '10px';
   lowerBtn.style.transition = 'all 0.2s';
   lowerBtn.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.4)';
+  lowerBtn.style.position = 'relative';
+  lowerBtn.style.zIndex = '10';
   lowerBtn.onmouseenter = () => {
     lowerBtn.style.transform = 'scale(1.05)';
     lowerBtn.style.boxShadow = '0 6px 20px rgba(231, 76, 60, 0.6)';
@@ -227,14 +238,13 @@ render() {
   if (this.state.lastResult) {
     const resultMsg = document.createElement('div');
     resultMsg.textContent = this.state.lastResult;
-    resultMsg.style.marginTop = '10px';
+    resultMsg.style.margin = '0';
     resultMsg.style.padding = isMobile ? '12px 20px' : '15px 30px';
     resultMsg.style.borderRadius = '8px';
     resultMsg.style.fontSize = isMobile ? '0.95rem' : '1.1rem';
     resultMsg.style.fontWeight = 'bold';
     resultMsg.style.textAlign = 'center';
     resultMsg.style.maxWidth = '90%';
-    resultMsg.style.animation = 'fadeIn 0.3s ease-in';
     
     if (this.state.lastResult.includes('Correct')) {
       resultMsg.style.background = 'rgba(0, 255, 0, 0.2)';
@@ -244,8 +254,7 @@ render() {
     
     gameBoard.appendChild(resultMsg);
   }
-}
-  
+}  
   renderGameOver(gameBoard, isMobile) {
     const container = document.createElement('div');
     container.style.textAlign = 'center';
@@ -385,5 +394,3 @@ render() {
 // Register the game
 window.GameModules = window.GameModules || {};
 window.GameModules['casual-higher-lower-v1'] = HigherLower;
-
-
