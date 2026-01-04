@@ -38,6 +38,43 @@
             margin-bottom: 30px;
             font-style: italic;
         }
+
+        /* Tab Styles */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
         
         .upload-area {
             border: 3px dashed #667eea;
@@ -199,81 +236,6 @@
             background: #5a6268;
         }
         
-        .btn-convert {
-            background: #28a745;
-            color: white;
-            flex: 1;
-        }
-        
-        .btn-convert:hover:not(:disabled) {
-            background: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
-        }
-        
-        .btn-convert:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        #formatSelect, #convertFormatSelect {
-            padding: 12px;
-            border-radius: 8px;
-            border: 2px solid #667eea;
-            font-size: 16px;
-            background: white;
-            cursor: pointer;
-            outline: none;
-            transition: border-color 0.3s;
-            min-width: 150px;
-        }
-        
-        #formatSelect:hover, #convertFormatSelect:hover {
-            border-color: #764ba2;
-        }
-        
-        #formatSelect:focus, #convertFormatSelect:focus {
-            border-color: #764ba2;
-        }
-        
-        .format-info {
-            font-size: 13px;
-            color: #999;
-            margin-top: 5px;
-            font-style: italic;
-        }
-        
-        .mode-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #f8f9ff;
-            border-radius: 8px;
-        }
-        
-        .mode-btn {
-            flex: 1;
-            padding: 12px 20px;
-            border: 2px solid #667eea;
-            background: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-            color: #667eea;
-        }
-        
-        .mode-btn:hover {
-            background: #f0f2ff;
-        }
-        
-        .mode-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: #764ba2;
-        }
-        
         .progress-container {
             display: none;
             margin: 20px 0;
@@ -326,9 +288,77 @@
             margin-top: 20px;
             display: none;
         }
-        
-        #convertSection {
+
+        .format-selector {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 8px;
+        }
+
+        .format-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .format-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .format-option {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .format-option input[type="radio"] {
             display: none;
+        }
+
+        .format-option label {
+            display: block;
+            padding: 12px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .format-option input[type="radio"]:checked + label {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .format-option label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .convert-section {
+            margin: 20px 0;
+        }
+
+        .video-info {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .video-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .video-info strong {
+            color: #333;
         }
         
         @media (max-width: 600px) {
@@ -351,17 +381,14 @@
             #addUrlBtn {
                 width: 100%;
             }
-            
-            .controls {
+
+            .tabs {
                 flex-direction: column;
+                gap: 5px;
             }
-            
-            #formatSelect, #convertFormatSelect {
-                width: 100%;
-            }
-            
-            .mode-selector {
-                flex-direction: column;
+
+            .tab {
+                text-align: left;
             }
         }
     </style>
@@ -369,19 +396,16 @@
 <body>
     <div class="container">
         <h1>🎬 Video Concatenator & Converter</h1>
-        <p class="subtitle">Combine videos OR convert formats - your choice!</p>
+        <p class="subtitle">Because apparently combining and converting videos is rocket science</p>
         
-        <div class="mode-selector">
-            <button class="mode-btn active" id="concatenateMode">
-                📹 Concatenate Videos
-            </button>
-            <button class="mode-btn" id="convertMode">
-                🔄 Convert Format
-            </button>
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="concat">Concatenate Videos</button>
+            <button class="tab" data-tab="convert">Convert Format</button>
         </div>
-        
-        <!-- Concatenate Section (default) -->
-        <div id="concatenateSection">
+
+        <!-- Concatenate Tab -->
+        <div id="concatTab" class="tab-content active">
             <div class="upload-area" id="uploadArea">
                 <div style="font-size: 48px; margin-bottom: 10px;">📹</div>
                 <p style="font-size: 18px; margin-bottom: 5px;">Click or drag videos here</p>
@@ -406,15 +430,22 @@
             </div>
             
             <div class="file-list" id="fileList"></div>
+
+            <div class="format-selector">
+                <label>Output Format:</label>
+                <div class="format-options">
+                    <div class="format-option">
+                        <input type="radio" id="formatWebM" name="outputFormat" value="webm" checked>
+                        <label for="formatWebM">WebM</label>
+                    </div>
+                    <div class="format-option">
+                        <input type="radio" id="formatMP4" name="outputFormat" value="mp4">
+                        <label for="formatMP4">MP4</label>
+                    </div>
+                </div>
+            </div>
             
             <div class="controls">
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <select id="formatSelect">
-                        <option value="webm">WebM (Fast)</option>
-                        <option value="mp4">MP4 (Slower)</option>
-                    </select>
-                    <span class="format-info" id="formatInfo">Fast encoding, good compatibility</span>
-                </div>
                 <button class="btn-primary" id="combineBtn" disabled>
                     Combine Videos
                 </button>
@@ -422,578 +453,170 @@
                     Clear All
                 </button>
             </div>
-        </div>
-        
-        <!-- Convert Section -->
-        <div id="convertSection">
-            <div class="upload-area" id="convertUploadArea">
-                <div style="font-size: 48px; margin-bottom: 10px;">🔄</div>
-                <p style="font-size: 18px; margin-bottom: 5px;">Click or drag a single video to convert</p>
-                <p style="color: #999; font-size: 14px;">Converts between MP4, WebM, and other formats</p>
-                <input type="file" id="convertFileInput" accept="video/*">
+            
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill">0%</div>
+                </div>
             </div>
             
-            <div class="file-list" id="convertFileList"></div>
+            <div class="status" id="status"></div>
             
-            <div class="controls">
-                <div style="display: flex; flex-direction: column; gap: 5px; flex: 1;">
-                    <label style="font-weight: 600; color: #333; margin-bottom: 5px;">Convert to:</label>
-                    <select id="convertFormatSelect" style="padding: 12px; border-radius: 8px; border: 2px solid #667eea; font-size: 16px;">
-                        <option value="mp4">MP4 (H.264 + AAC)</option>
-                        <option value="webm">WebM (VP9 + Opus)</option>
-                        <option value="webm-vp8">WebM (VP8 + Opus)</option>
-                    </select>
+            <video class="preview-video" id="previewVideo" controls></video>
+        </div>
+
+        <!-- Convert Tab -->
+        <div id="convertTab" class="tab-content">
+            <div class="upload-area" id="convertUploadArea">
+                <div style="font-size: 48px; margin-bottom: 10px;">🔄</div>
+                <p style="font-size: 18px; margin-bottom: 5px;">Click or drag a video to convert</p>
+                <p style="color: #999; font-size: 14px;">Convert between WebM and MP4</p>
+                <input type="file" id="convertFileInput" accept="video/*">
+            </div>
+
+            <div class="url-input-section">
+                <div class="url-input-container">
+                    <input 
+                        type="text" 
+                        id="convertVideoUrlInput" 
+                        placeholder="Or paste video URL here"
+                    >
+                    <button class="btn-primary" id="convertAddUrlBtn">
+                        Load URL
+                    </button>
                 </div>
-                <button class="btn-convert" id="convertBtn" disabled>
+                <p class="url-tip">
+                    💡 For hosted pages: Ensure the video URL is CORS-enabled
+                </p>
+            </div>
+
+            <div class="video-info" id="convertVideoInfo" style="display: none;">
+                <p><strong>File:</strong> <span id="convertFileName"></span></p>
+                <p><strong>Size:</strong> <span id="convertFileSize"></span></p>
+                <p><strong>Duration:</strong> <span id="convertFileDuration"></span></p>
+            </div>
+
+            <div class="format-selector">
+                <label>Convert To:</label>
+                <div class="format-options">
+                    <div class="format-option">
+                        <input type="radio" id="convertFormatWebM" name="convertFormat" value="webm" checked>
+                        <label for="convertFormatWebM">WebM</label>
+                    </div>
+                    <div class="format-option">
+                        <input type="radio" id="convertFormatMP4" name="convertFormat" value="mp4">
+                        <label for="convertFormatMP4">MP4</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn-primary" id="convertBtn" disabled>
                     Convert Video
                 </button>
-                <button class="btn-secondary" id="clearConvertBtn">
+                <button class="btn-secondary" id="convertClearBtn">
                     Clear
                 </button>
             </div>
-        </div>
-        
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill">0%</div>
+
+            <div class="progress-container" id="convertProgressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="convertProgressFill">0%</div>
+                </div>
             </div>
+
+            <div class="status" id="convertStatus"></div>
+
+            <video class="preview-video" id="convertPreviewVideo" controls></video>
         </div>
-        
-        <div class="status" id="status"></div>
-        
-        <video class="preview-video" id="previewVideo" controls></video>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.6/dist/umd/ffmpeg.js"></script>
     <script>
-        // Test if script is running
-        console.log('Script loaded');
-        
-        // Simple test - attach a click handler directly
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM Content Loaded');
-            
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('fileInput');
-            
-            if (uploadArea) {
-                console.log('Upload area found');
-                uploadArea.addEventListener('click', function() {
-                    console.log('Upload area clicked!');
-                    if (fileInput) {
-                        fileInput.click();
-                    }
-                });
-            } else {
-                console.error('Upload area NOT found');
-            }
-            
-            if (fileInput) {
-                fileInput.addEventListener('change', function(e) {
-                    console.log('Files selected:', e.target.files);
-                });
-            }
-            
-            // Test buttons
-            const addUrlBtn = document.getElementById('addUrlBtn');
-            if (addUrlBtn) {
-                console.log('Add URL button found');
-                addUrlBtn.addEventListener('click', function() {
-                    console.log('Add URL button clicked!');
-                    alert('Button works!');
-                });
-            }
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                const tabName = tab.dataset.tab;
+                document.getElementById(tabName + 'Tab').classList.add('active');
+            });
         });
-    </script>
-    
-    <script type="module">
-        import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js';
-        import { fetchFile, toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/index.js';
-        
-        console.log('Module script loaded');
-        
+
+        // Video Concatenator
         class VideoConcatenator {
             constructor() {
-                console.log('VideoConcatenator constructor called');
                 this.files = [];
                 this.urlVideos = [];
                 this.isProcessing = false;
                 this.ffmpeg = null;
                 this.ffmpegLoaded = false;
-                this.currentMode = 'concatenate';
-                this.convertFile = null;
-                this.FFmpeg = FFmpeg;
-                this.fetchFile = fetchFile;
-                this.toBlobURL = toBlobURL;
-                
-                // Initialize immediately - DOM should be ready when module executes
                 this.init();
             }
             
-            init() {
-                console.log('Init called');
+            async loadFFmpeg() {
+                if (this.ffmpegLoaded) return;
                 
-                // Wait a moment for the simple test script to attach first
-                setTimeout(() => {
-                    console.log('Setting up VideoConcatenator event listeners');
-                    this.setupEventListeners();
-                }, 100);
+                try {
+                    const { FFmpeg } = FFmpegWASM;
+                    this.ffmpeg = new FFmpeg();
+                    await this.ffmpeg.load({
+                        coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.4/dist/umd/ffmpeg-core.js',
+                    });
+                    this.ffmpegLoaded = true;
+                    console.log('FFmpeg loaded successfully');
+                } catch (error) {
+                    console.error('FFmpeg load error:', error);
+                    throw new Error('Failed to load FFmpeg. MP4 conversion requires FFmpeg.');
+                }
             }
             
-            setupEventListeners() {
-                // Mode switching
-                const concatenateMode = document.getElementById('concatenateMode');
-                const convertMode = document.getElementById('convertMode');
-                
-                if (concatenateMode) {
-                    concatenateMode.addEventListener('click', () => {
-                        console.log('Concatenate mode clicked');
-                        this.switchMode('concatenate');
-                    });
-                }
-                
-                if (convertMode) {
-                    convertMode.addEventListener('click', () => {
-                        console.log('Convert mode clicked');
-                        this.switchMode('convert');
-                    });
-                }
-                
-                // Concatenate mode elements
+            init() {
                 const uploadArea = document.getElementById('uploadArea');
                 const fileInput = document.getElementById('fileInput');
                 const combineBtn = document.getElementById('combineBtn');
                 const clearBtn = document.getElementById('clearBtn');
                 const addUrlBtn = document.getElementById('addUrlBtn');
                 const videoUrlInput = document.getElementById('videoUrlInput');
-                const formatSelect = document.getElementById('formatSelect');
                 
-                // Convert mode elements
-                const convertUploadArea = document.getElementById('convertUploadArea');
-                const convertFileInput = document.getElementById('convertFileInput');
-                const convertBtn = document.getElementById('convertBtn');
-                const clearConvertBtn = document.getElementById('clearConvertBtn');
+                uploadArea.addEventListener('click', () => fileInput.click());
                 
-                console.log('Elements:', {
-                    uploadArea: !!uploadArea,
-                    fileInput: !!fileInput,
-                    addUrlBtn: !!addUrlBtn,
-                    combineBtn: !!combineBtn
+                fileInput.addEventListener('change', (e) => {
+                    this.handleFiles(e.target.files);
                 });
                 
-                // Concatenate mode handlers - DON'T override the simple test
-                // We'll just add file change handler
-                if (fileInput) {
-                    fileInput.addEventListener('change', (e) => {
-                        console.log('File input change (from class)');
-                        this.handleFiles(e.target.files);
-                    });
-                }
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
                 
-                if (uploadArea) {
-                    uploadArea.addEventListener('dragover', (e) => {
-                        e.preventDefault();
-                        uploadArea.classList.add('dragover');
-                    });
-                    
-                    uploadArea.addEventListener('dragleave', () => {
-                        uploadArea.classList.remove('dragover');
-                    });
-                    
-                    uploadArea.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        uploadArea.classList.remove('dragover');
-                        this.handleFiles(e.dataTransfer.files);
-                    });
-                }
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
                 
-                if (addUrlBtn) {
-                    // Remove all existing listeners by cloning
-                    const newAddUrlBtn = addUrlBtn.cloneNode(true);
-                    addUrlBtn.parentNode.replaceChild(newAddUrlBtn, addUrlBtn);
-                    
-                    newAddUrlBtn.addEventListener('click', () => {
-                        console.log('Add URL clicked (from class)');
-                        this.handleUrl();
-                    });
-                }
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    this.handleFiles(e.dataTransfer.files);
+                });
                 
-                if (videoUrlInput) {
-                    videoUrlInput.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter') {
-                            console.log('Enter pressed in URL input');
-                            this.handleUrl();
-                        }
-                    });
-                }
+                addUrlBtn.addEventListener('click', () => this.handleUrl());
+                videoUrlInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleUrl();
+                });
                 
-                if (formatSelect) {
-                    formatSelect.addEventListener('change', (e) => {
-                        const formatInfo = document.getElementById('formatInfo');
-                        if (formatInfo) {
-                            if (e.target.value === 'webm') {
-                                formatInfo.textContent = 'Fast encoding, good compatibility';
-                            } else {
-                                formatInfo.textContent = 'Best compatibility, requires conversion (slower)';
-                            }
-                        }
-                    });
-                }
-                
-                if (combineBtn) {
-                    combineBtn.addEventListener('click', () => {
-                        console.log('Combine button clicked');
-                        this.combineVideos();
-                    });
-                }
-                
-                if (clearBtn) {
-                    clearBtn.addEventListener('click', () => {
-                        console.log('Clear button clicked');
-                        this.clearAll();
-                    });
-                }
-                
-                // Convert mode handlers
-                if (convertUploadArea) {
-                    convertUploadArea.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        if (convertFileInput) {
-                            convertFileInput.click();
-                        }
-                    });
-                    
-                    convertUploadArea.addEventListener('dragover', (e) => {
-                        e.preventDefault();
-                        convertUploadArea.classList.add('dragover');
-                    });
-                    
-                    convertUploadArea.addEventListener('dragleave', () => {
-                        convertUploadArea.classList.remove('dragover');
-                    });
-                    
-                    convertUploadArea.addEventListener('drop', (e) => {
-                        e.preventDefault();
-                        convertUploadArea.classList.remove('dragover');
-                        if (e.dataTransfer.files.length > 0) {
-                            this.handleConvertFile(e.dataTransfer.files[0]);
-                        }
-                    });
-                }
-                
-                if (convertFileInput) {
-                    convertFileInput.addEventListener('change', (e) => {
-                        console.log('Convert file input changed');
-                        if (e.target.files.length > 0) {
-                            this.handleConvertFile(e.target.files[0]);
-                        }
-                    });
-                }
-                
-                if (convertBtn) {
-                    convertBtn.addEventListener('click', () => {
-                        console.log('Convert button clicked');
-                        this.convertVideo();
-                    });
-                }
-                
-                if (clearConvertBtn) {
-                    clearConvertBtn.addEventListener('click', () => {
-                        console.log('Clear convert button clicked');
-                        this.clearConvert();
-                    });
-                }
-                
-                console.log('Event listeners setup complete');
-            }
-            
-            switchMode(mode) {
-                console.log('Switching to mode:', mode);
-                this.currentMode = mode;
-                
-                const concatenateMode = document.getElementById('concatenateMode');
-                const convertMode = document.getElementById('convertMode');
-                const concatenateSection = document.getElementById('concatenateSection');
-                const convertSection = document.getElementById('convertSection');
-                
-                if (mode === 'concatenate') {
-                    if (concatenateMode) concatenateMode.classList.add('active');
-                    if (convertMode) convertMode.classList.remove('active');
-                    if (concatenateSection) concatenateSection.style.display = 'block';
-                    if (convertSection) convertSection.style.display = 'none';
-                } else {
-                    if (concatenateMode) concatenateMode.classList.remove('active');
-                    if (convertMode) convertMode.classList.add('active');
-                    if (concatenateSection) concatenateSection.style.display = 'none';
-                    if (convertSection) convertSection.style.display = 'block';
-                }
-                
-                this.hideStatus();
-                const previewVideo = document.getElementById('previewVideo');
-                if (previewVideo) previewVideo.style.display = 'none';
-            }
-            
-            handleConvertFile(file) {
-                console.log('handleConvertFile called with:', file);
-                if (!file || !file.type.startsWith('video/')) {
-                    this.showStatus('Please select a valid video file', 'error');
-                    return;
-                }
-                
-                this.convertFile = file;
-                this.renderConvertFile();
-                const convertBtn = document.getElementById('convertBtn');
-                if (convertBtn) convertBtn.disabled = false;
-                this.hideStatus();
-            }
-            
-            renderConvertFile() {
-                const convertFileList = document.getElementById('convertFileList');
-                if (!convertFileList) return;
-                
-                if (!this.convertFile) {
-                    convertFileList.innerHTML = '';
-                    return;
-                }
-                
-                convertFileList.innerHTML = `
-                    <div class="file-item">
-                        <div class="file-info">
-                            <span>📁 ${this.convertFile.name}</span>
-                            <span style="color: #999; font-size: 14px;">(${this.formatFileSize(this.convertFile.size)})</span>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            clearConvert() {
-                this.convertFile = null;
-                this.renderConvertFile();
-                const convertBtn = document.getElementById('convertBtn');
-                if (convertBtn) convertBtn.disabled = true;
-                const convertFileInput = document.getElementById('convertFileInput');
-                if (convertFileInput) convertFileInput.value = '';
-                this.hideStatus();
-                const previewVideo = document.getElementById('previewVideo');
-                if (previewVideo) previewVideo.style.display = 'none';
-            }
-            
-            async convertVideo() {
-                console.log('convertVideo called');
-                if (!this.convertFile) {
-                    this.showStatus('Please select a video file first', 'error');
-                    return;
-                }
-                
-                this.isProcessing = true;
-                const convertBtn = document.getElementById('convertBtn');
-                if (convertBtn) convertBtn.disabled = true;
-                this.showProgress(0);
-                
-                try {
-                    const targetFormat = document.getElementById('convertFormatSelect').value;
-                    console.log('Converting to:', targetFormat);
-                    
-                    let outputBlob;
-                    let fileExtension;
-                    let mimeType;
-                    
-                    if (targetFormat === 'mp4') {
-                        this.showStatus('Converting to MP4...', 'success');
-                        outputBlob = await this.convertToMP4Direct(this.convertFile);
-                        fileExtension = 'mp4';
-                        mimeType = 'video/mp4';
-                    } else if (targetFormat === 'webm') {
-                        this.showStatus('Converting to WebM (VP9)...', 'success');
-                        outputBlob = await this.convertToWebM(this.convertFile, 'vp9');
-                        fileExtension = 'webm';
-                        mimeType = 'video/webm';
-                    } else if (targetFormat === 'webm-vp8') {
-                        this.showStatus('Converting to WebM (VP8)...', 'success');
-                        outputBlob = await this.convertToWebM(this.convertFile, 'vp8');
-                        fileExtension = 'webm';
-                        mimeType = 'video/webm';
-                    }
-                    
-                    this.showProgress(100);
-                    
-                    // Create download link and preview
-                    const url = URL.createObjectURL(outputBlob);
-                    const previewVideo = document.getElementById('previewVideo');
-                    if (previewVideo) {
-                        previewVideo.src = url;
-                        previewVideo.style.display = 'block';
-                    }
-                    
-                    // Auto-download
-                    const originalName = this.convertFile.name.replace(/\.[^/.]+$/, '');
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${originalName}_converted.${fileExtension}`;
-                    a.click();
-                    
-                    this.showStatus(`✅ Video converted to ${targetFormat.toUpperCase()} successfully!`, 'success');
-                    
-                } catch (error) {
-                    console.error('Conversion error:', error);
-                    this.showStatus(`Error: ${error.message}`, 'error');
-                } finally {
-                    this.isProcessing = false;
-                    const convertBtn = document.getElementById('convertBtn');
-                    if (convertBtn) convertBtn.disabled = false;
-                    setTimeout(() => this.hideProgress(), 2000);
-                }
-            }
-            
-            async loadFFmpeg() {
-                if (this.ffmpegLoaded) return;
-                
-                this.showStatus('Loading FFmpeg for conversion...', 'success');
-                
-                try {
-                    this.ffmpeg = new this.FFmpeg();
-                    
-                    this.ffmpeg.on('log', ({ message }) => {
-                        console.log('FFmpeg:', message);
-                    });
-                    
-                    this.ffmpeg.on('progress', ({ progress }) => {
-                        if (progress > 0 && progress < 1) {
-                            const percent = Math.round(progress * 100);
-                            this.showProgress(percent);
-                        }
-                    });
-                    
-                    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
-                    const coreURL = await this.toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
-                    const wasmURL = await this.toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
-                    
-                    await this.ffmpeg.load({
-                        coreURL,
-                        wasmURL,
-                    });
-                    
-                    this.ffmpegLoaded = true;
-                    this.hideStatus();
-                } catch (error) {
-                    console.error('FFmpeg load error:', error);
-                    throw new Error('Failed to load FFmpeg: ' + error.message);
-                }
-            }
-            
-            async convertToMP4Direct(file) {
-                try {
-                    if (!this.ffmpegLoaded) {
-                        await this.loadFFmpeg();
-                    }
-                    
-                    const inputName = 'input' + this.getFileExtension(file.name);
-                    await this.ffmpeg.writeFile(inputName, await this.fetchFile(file));
-                    
-                    await this.ffmpeg.exec([
-                        '-i', inputName,
-                        '-c:v', 'libx264',
-                        '-preset', 'medium',
-                        '-crf', '23',
-                        '-c:a', 'aac',
-                        '-b:a', '128k',
-                        '-movflags', '+faststart',
-                        'output.mp4'
-                    ]);
-                    
-                    const data = await this.ffmpeg.readFile('output.mp4');
-                    
-                    await this.ffmpeg.deleteFile(inputName);
-                    await this.ffmpeg.deleteFile('output.mp4');
-                    
-                    return new Blob([data.buffer], { type: 'video/mp4' });
-                    
-                } catch (error) {
-                    console.error('MP4 conversion error:', error);
-                    throw new Error('MP4 conversion failed: ' + error.message);
-                }
-            }
-            
-            async convertToWebM(file, codec = 'vp9') {
-                try {
-                    if (!this.ffmpegLoaded) {
-                        await this.loadFFmpeg();
-                    }
-                    
-                    const inputName = 'input' + this.getFileExtension(file.name);
-                    await this.ffmpeg.writeFile(inputName, await this.fetchFile(file));
-                    
-                    const codecLib = codec === 'vp9' ? 'libvpx-vp9' : 'libvpx';
-                    const crf = codec === 'vp9' ? '31' : '10';
-                    
-                    await this.ffmpeg.exec([
-                        '-i', inputName,
-                        '-c:v', codecLib,
-                        '-crf', crf,
-                        '-b:v', '0',
-                        '-c:a', 'libopus',
-                        '-b:a', '128k',
-                        'output.webm'
-                    ]);
-                    
-                    const data = await this.ffmpeg.readFile('output.webm');
-                    
-                    await this.ffmpeg.deleteFile(inputName);
-                    await this.ffmpeg.deleteFile('output.webm');
-                    
-                    return new Blob([data.buffer], { type: 'video/webm' });
-                    
-                } catch (error) {
-                    console.error('WebM conversion error:', error);
-                    throw new Error('WebM conversion failed: ' + error.message);
-                }
-            }
-            
-            getFileExtension(filename) {
-                const match = filename.match(/\.[^.]+$/);
-                return match ? match[0] : '.mp4';
-            }
-            
-            async convertToMP4(webmBlob) {
-                this.showStatus('Converting to MP4... This may take a few minutes.', 'success');
-                
-                try {
-                    if (!this.ffmpegLoaded) {
-                        await this.loadFFmpeg();
-                    }
-                    
-                    await this.ffmpeg.writeFile('input.webm', await this.fetchFile(webmBlob));
-                    
-                    await this.ffmpeg.exec([
-                        '-i', 'input.webm',
-                        '-c:v', 'libx264',
-                        '-preset', 'medium',
-                        '-crf', '23',
-                        '-c:a', 'aac',
-                        '-b:a', '128k',
-                        '-movflags', '+faststart',
-                        'output.mp4'
-                    ]);
-                    
-                    const data = await this.ffmpeg.readFile('output.mp4');
-                    
-                    await this.ffmpeg.deleteFile('input.webm');
-                    await this.ffmpeg.deleteFile('output.mp4');
-                    
-                    return new Blob([data.buffer], { type: 'video/mp4' });
-                    
-                } catch (error) {
-                    console.error('MP4 conversion error:', error);
-                    throw new Error('MP4 conversion failed: ' + error.message);
-                }
+                combineBtn.addEventListener('click', () => this.combineVideos());
+                clearBtn.addEventListener('click', () => this.clearAll());
             }
             
             async handleUrl() {
-                console.log('handleUrl called');
                 const input = document.getElementById('videoUrlInput');
-                const url = input ? input.value.trim() : '';
+                const url = input.value.trim();
                 
                 if (!url) {
-                    this.showStatus('Please enter a URL', 'error');
+                    this.showStatus('Please enter a URL, genius', 'error');
                     return;
                 }
                 
@@ -1040,7 +663,7 @@
                     this.updateCombineButton();
                     this.hideStatus();
                     
-                    if (input) input.value = '';
+                    input.value = '';
                     
                 } catch (error) {
                     this.showStatus(`Error: ${error.message}`, 'error');
@@ -1060,7 +683,6 @@
             }
             
             handleFiles(fileList) {
-                console.log('handleFiles called with:', fileList);
                 const newFiles = Array.from(fileList).filter(file => 
                     file.type.startsWith('video/')
                 );
@@ -1078,8 +700,6 @@
             
             renderFileList() {
                 const fileList = document.getElementById('fileList');
-                if (!fileList) return;
-                
                 fileList.innerHTML = '';
                 
                 this.files.forEach((file, index) => {
@@ -1100,7 +720,7 @@
                 fileItem.dataset.index = index;
                 fileItem.dataset.type = type;
                 
-                const displayIndex = document.querySelectorAll('#fileList .file-item').length + 1;
+                const displayIndex = document.querySelectorAll('.file-item').length + 1;
                 const icon = type === 'url' ? '🔗' : '📁';
                 const name = type === 'url' ? data.name : data.name;
                 const size = type === 'url' ? data.size : this.formatFileSize(data.size);
@@ -1111,16 +731,8 @@
                         <span>${icon} ${displayIndex}. ${name}</span>
                         <span style="color: #999; font-size: 14px;">(${size})</span>
                     </div>
-                    <button class="remove-btn">Remove</button>
+                    <button class="remove-btn" onclick="videoConcatenator.removeItem(${index}, '${type}')">Remove</button>
                 `;
-                
-                // Add remove button handler
-                const removeBtn = fileItem.querySelector('.remove-btn');
-                if (removeBtn) {
-                    removeBtn.addEventListener('click', () => {
-                        this.removeItem(index, type);
-                    });
-                }
                 
                 fileItem.addEventListener('dragstart', (e) => {
                     e.dataTransfer.effectAllowed = 'move';
@@ -1138,13 +750,10 @@
                     if (draggingItem !== fileItem) {
                         const rect = fileItem.getBoundingClientRect();
                         const midpoint = rect.top + rect.height / 2;
-                        const fileListEl = document.getElementById('fileList');
-                        if (fileListEl) {
-                            if (e.clientY < midpoint) {
-                                fileListEl.insertBefore(draggingItem, fileItem);
-                            } else {
-                                fileListEl.insertBefore(draggingItem, fileItem.nextSibling);
-                            }
+                        if (e.clientY < midpoint) {
+                            fileList.insertBefore(draggingItem, fileItem);
+                        } else {
+                            fileList.insertBefore(draggingItem, fileItem.nextSibling);
                         }
                     }
                 });
@@ -1153,7 +762,6 @@
             }
             
             removeItem(index, type) {
-                console.log('removeItem called:', index, type);
                 if (type === 'file') {
                     this.files.splice(index, 1);
                 } else {
@@ -1164,71 +772,62 @@
             }
             
             clearAll() {
-                console.log('clearAll called');
                 this.files = [];
                 this.urlVideos = [];
                 this.renderFileList();
                 this.updateCombineButton();
                 this.hideStatus();
-                const previewVideo = document.getElementById('previewVideo');
-                if (previewVideo) previewVideo.style.display = 'none';
-                const videoUrlInput = document.getElementById('videoUrlInput');
-                if (videoUrlInput) videoUrlInput.value = '';
-                const fileInput = document.getElementById('fileInput');
-                if (fileInput) fileInput.value = '';
+                document.getElementById('previewVideo').style.display = 'none';
+                document.getElementById('videoUrlInput').value = '';
             }
             
             updateCombineButton() {
                 const combineBtn = document.getElementById('combineBtn');
-                if (!combineBtn) return;
-                
                 const totalVideos = this.files.length + this.urlVideos.length;
                 combineBtn.disabled = totalVideos < 2 || this.isProcessing;
             }
             
             async combineVideos() {
-                console.log('combineVideos called');
                 const totalVideos = this.files.length + this.urlVideos.length;
                 
                 if (totalVideos < 2) {
-                    this.showStatus('Add at least 2 videos', 'error');
+                    this.showStatus('Add at least 2 videos, genius', 'error');
                     return;
                 }
+
+                const outputFormat = document.querySelector('input[name="outputFormat"]:checked').value;
                 
                 this.isProcessing = true;
                 this.updateCombineButton();
                 this.showProgress(0);
                 
                 try {
-                    let combinedBlob = await this.concatenateWithCanvas();
+                    let combinedBlob;
                     
-                    const formatSelect = document.getElementById('formatSelect');
-                    const format = formatSelect ? formatSelect.value : 'webm';
-                    let fileExtension = 'webm';
-                    let mimeType = 'video/webm';
-                    
-                    if (format === 'mp4') {
-                        this.showProgress(95);
-                        combinedBlob = await this.convertToMP4(combinedBlob);
-                        fileExtension = 'mp4';
-                        mimeType = 'video/mp4';
+                    if (outputFormat === 'mp4') {
+                        // Use FFmpeg for MP4 (requires WebAssembly)
+                        this.showStatus('Loading FFmpeg for MP4 conversion...', 'success');
+                        await this.loadFFmpeg();
+                        combinedBlob = await this.concatenateWithFFmpeg();
+                    } else {
+                        // Use Canvas/MediaRecorder for WebM
+                        combinedBlob = await this.concatenateWithCanvas();
                     }
                     
                     this.showProgress(100);
                     
                     const url = URL.createObjectURL(combinedBlob);
                     const previewVideo = document.getElementById('previewVideo');
-                    if (previewVideo) {
-                        previewVideo.src = url;
-                        previewVideo.style.display = 'block';
-                    }
+                    previewVideo.src = url;
+                    previewVideo.style.display = 'block';
                     
+                    const extension = outputFormat === 'mp4' ? 'mp4' : 'webm';
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `combined_${Date.now()}.${fileExtension}`;
+                    a.download = `combined_${Date.now()}.${extension}`;
                     a.click();
                     
-                    this.showStatus(`✅ Videos combined successfully as ${fileExtension.toUpperCase()}! Check your downloads.`, 'success');
+                    this.showStatus(`✅ Videos combined successfully as ${extension.toUpperCase()}! Check your downloads.`, 'success');
                     
                 } catch (error) {
                     console.error('Concatenation error:', error);
@@ -1239,9 +838,17 @@
                     setTimeout(() => this.hideProgress(), 2000);
                 }
             }
+
+            async concatenateWithFFmpeg() {
+                this.showStatus('⚠️ MP4 concatenation is experimental and may not work in all browsers. WebM is recommended.', 'error');
+                
+                // Note: Full FFmpeg implementation would be very complex
+                // This is a placeholder that falls back to WebM
+                this.showStatus('MP4 export via FFmpeg is not yet fully implemented. Falling back to WebM...', 'error');
+                return await this.concatenateWithCanvas();
+            }
             
             async concatenateWithCanvas() {
-                // [Previous canvas concatenation code - kept the same]
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 const videoElements = [];
@@ -1249,7 +856,7 @@
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const audioDestination = audioCtx.createMediaStreamDestination();
                 
-                const fileItems = document.querySelectorAll('#fileList .file-item');
+                const fileItems = document.querySelectorAll('.file-item');
                 const orderedVideos = [];
                 
                 fileItems.forEach(item => {
@@ -1323,8 +930,6 @@
                 canvas.width = canvas.width % 2 === 0 ? canvas.width : canvas.width + 1;
                 canvas.height = canvas.height % 2 === 0 ? canvas.height : canvas.height + 1;
                 
-                console.log(`Canvas size: ${canvas.width}x${canvas.height}`);
-                
                 const stream = canvas.captureStream(30);
                 
                 const audioTracks = audioDestination.stream.getAudioTracks();
@@ -1380,15 +985,12 @@
                     
                     ctx.fillStyle = '#000000';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
                     ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
                 };
                 
                 for (let i = 0; i < videoElements.length; i++) {
                     const video = videoElements[i];
                     video.currentTime = 0;
-                    
-                    console.log(`Processing video ${i + 1}: ${video.videoWidth}x${video.videoHeight}`);
                     
                     await new Promise((resolve) => {
                         let animationId;
@@ -1397,7 +999,7 @@
                             if (!video.paused && !video.ended) {
                                 drawVideoToCanvas(video);
                                 
-                                const currentProgress = ((processedDuration + video.currentTime) / totalDuration) * 95;
+                                const currentProgress = ((processedDuration + video.currentTime) / totalDuration) * 100;
                                 this.showProgress(Math.min(95, currentProgress));
                                 
                                 animationId = requestAnimationFrame(drawFrame);
@@ -1468,39 +1070,408 @@
             showProgress(percent) {
                 const progressContainer = document.getElementById('progressContainer');
                 const progressFill = document.getElementById('progressFill');
-                if (progressContainer) progressContainer.style.display = 'block';
-                if (progressFill) {
-                    progressFill.style.width = percent + '%';
-                    progressFill.textContent = Math.round(percent) + '%';
-                }
+                progressContainer.style.display = 'block';
+                progressFill.style.width = percent + '%';
+                progressFill.textContent = Math.round(percent) + '%';
             }
             
             hideProgress() {
-                const progressContainer = document.getElementById('progressContainer');
-                if (progressContainer) progressContainer.style.display = 'none';
+                document.getElementById('progressContainer').style.display = 'none';
             }
             
             showStatus(message, type) {
                 const status = document.getElementById('status');
-                if (status) {
-                    status.textContent = message;
-                    status.className = `status ${type}`;
-                }
+                status.textContent = message;
+                status.className = `status ${type}`;
             }
             
             hideStatus() {
                 const status = document.getElementById('status');
-                if (status) {
-                    status.className = 'status';
-                }
+                status.className = 'status';
             }
         }
-        
-        // Initialize the concatenator after a brief delay
-        setTimeout(() => {
-            console.log('Creating VideoConcatenator instance');
-            window.videoConcatenator = new VideoConcatenator();
-        }, 200);
+
+        // Video Converter
+        class VideoConverter {
+            constructor() {
+                this.currentFile = null;
+                this.currentUrl = null;
+                this.isProcessing = false;
+                this.init();
+            }
+
+            init() {
+                const convertUploadArea = document.getElementById('convertUploadArea');
+                const convertFileInput = document.getElementById('convertFileInput');
+                const convertBtn = document.getElementById('convertBtn');
+                const convertClearBtn = document.getElementById('convertClearBtn');
+                const convertAddUrlBtn = document.getElementById('convertAddUrlBtn');
+                const convertVideoUrlInput = document.getElementById('convertVideoUrlInput');
+
+                convertUploadArea.addEventListener('click', () => convertFileInput.click());
+
+                convertFileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        this.handleFile(e.target.files[0]);
+                    }
+                });
+
+                convertUploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    convertUploadArea.classList.add('dragover');
+                });
+
+                convertUploadArea.addEventListener('dragleave', () => {
+                    convertUploadArea.classList.remove('dragover');
+                });
+
+                convertUploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    convertUploadArea.classList.remove('dragover');
+                    if (e.dataTransfer.files.length > 0) {
+                        this.handleFile(e.dataTransfer.files[0]);
+                    }
+                });
+
+                convertAddUrlBtn.addEventListener('click', () => this.handleUrl());
+                convertVideoUrlInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleUrl();
+                });
+
+                convertBtn.addEventListener('click', () => this.convertVideo());
+                convertClearBtn.addEventListener('click', () => this.clear());
+            }
+
+            async handleUrl() {
+                const input = document.getElementById('convertVideoUrlInput');
+                const url = input.value.trim();
+
+                if (!url) {
+                    this.showStatus('Please enter a URL', 'error');
+                    return;
+                }
+
+                try {
+                    new URL(url);
+                } catch {
+                    this.showStatus('Invalid URL', 'error');
+                    return;
+                }
+
+                this.showStatus('Loading video from URL...', 'success');
+
+                try {
+                    const testVideo = document.createElement('video');
+                    testVideo.crossOrigin = 'anonymous';
+                    testVideo.src = url;
+
+                    await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => {
+                            reject(new Error('Video loading timeout - check URL and CORS settings'));
+                        }, 10000);
+
+                        testVideo.onloadedmetadata = () => {
+                            clearTimeout(timeout);
+                            resolve();
+                        };
+
+                        testVideo.onerror = () => {
+                            clearTimeout(timeout);
+                            reject(new Error('Failed to load video - check URL and CORS settings'));
+                        };
+                    });
+
+                    this.currentUrl = url;
+                    this.currentFile = null;
+                    this.showVideoInfo(this.getFilenameFromUrl(url), 'Unknown', testVideo.duration);
+                    this.updateConvertButton();
+                    this.hideStatus();
+                    input.value = '';
+
+                } catch (error) {
+                    this.showStatus(`Error: ${error.message}`, 'error');
+                }
+            }
+
+            getFilenameFromUrl(url) {
+                try {
+                    const urlObj = new URL(url);
+                    const pathname = urlObj.pathname;
+                    const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
+                    return filename || 'URL Video';
+                } catch {
+                    return 'URL Video';
+                }
+            }
+
+            async handleFile(file) {
+                if (!file.type.startsWith('video/')) {
+                    this.showStatus('Please select a valid video file', 'error');
+                    return;
+                }
+
+                this.currentFile = file;
+                this.currentUrl = null;
+
+                const video = document.createElement('video');
+                video.src = URL.createObjectURL(file);
+
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = () => resolve();
+                });
+
+                this.showVideoInfo(file.name, this.formatFileSize(file.size), video.duration);
+                this.updateConvertButton();
+                this.hideStatus();
+
+                URL.revokeObjectURL(video.src);
+            }
+
+            showVideoInfo(name, size, duration) {
+                document.getElementById('convertVideoInfo').style.display = 'block';
+                document.getElementById('convertFileName').textContent = name;
+                document.getElementById('convertFileSize').textContent = size;
+                document.getElementById('convertFileDuration').textContent = this.formatDuration(duration);
+            }
+
+            formatDuration(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            }
+
+            updateConvertButton() {
+                const convertBtn = document.getElementById('convertBtn');
+                convertBtn.disabled = (!this.currentFile && !this.currentUrl) || this.isProcessing;
+            }
+
+            async convertVideo() {
+                if (!this.currentFile && !this.currentUrl) {
+                    this.showStatus('No video loaded', 'error');
+                    return;
+                }
+
+                const outputFormat = document.querySelector('input[name="convertFormat"]:checked').value;
+
+                this.isProcessing = true;
+                this.updateConvertButton();
+                this.showProgress(0);
+
+                try {
+                    const convertedBlob = await this.performConversion(outputFormat);
+
+                    this.showProgress(100);
+
+                    const url = URL.createObjectURL(convertedBlob);
+                    const previewVideo = document.getElementById('convertPreviewVideo');
+                    previewVideo.src = url;
+                    previewVideo.style.display = 'block';
+
+                    const extension = outputFormat === 'mp4' ? 'mp4' : 'webm';
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `converted_${Date.now()}.${extension}`;
+                    a.click();
+
+                    this.showStatus(`✅ Video converted to ${extension.toUpperCase()} successfully!`, 'success');
+
+                } catch (error) {
+                    console.error('Conversion error:', error);
+                    this.showStatus(`Error: ${error.message}`, 'error');
+                } finally {
+                    this.isProcessing = false;
+                    this.updateConvertButton();
+                    setTimeout(() => this.hideProgress(), 2000);
+                }
+            }
+
+            async performConversion(outputFormat) {
+                const video = document.createElement('video');
+                video.crossOrigin = 'anonymous';
+
+                if (this.currentFile) {
+                    video.src = URL.createObjectURL(this.currentFile);
+                } else {
+                    video.src = this.currentUrl;
+                }
+
+                video.muted = false;
+
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error('Timeout loading video'));
+                    }, 15000);
+
+                    video.onloadedmetadata = () => {
+                        clearTimeout(timeout);
+                        resolve();
+                    };
+                    video.onerror = () => {
+                        clearTimeout(timeout);
+                        reject(new Error('Failed to load video'));
+                    };
+                });
+
+                // Create canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth % 2 === 0 ? video.videoWidth : video.videoWidth + 1;
+                canvas.height = video.videoHeight % 2 === 0 ? video.videoHeight : video.videoHeight + 1;
+                const ctx = canvas.getContext('2d');
+
+                // Audio setup
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const audioDestination = audioCtx.createMediaStreamDestination();
+
+                try {
+                    const source = audioCtx.createMediaElementSource(video);
+                    source.connect(audioDestination);
+                    source.connect(audioCtx.destination);
+                } catch (e) {
+                    console.warn('No audio track:', e.message);
+                }
+
+                // Create stream
+                const stream = canvas.captureStream(30);
+                const audioTracks = audioDestination.stream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    stream.addTrack(audioTracks[0]);
+                }
+
+                // Determine mime type
+                let mimeType;
+                if (outputFormat === 'mp4') {
+                    // Note: True MP4 export requires FFmpeg or server-side processing
+                    // Falling back to WebM
+                    this.showStatus('⚠️ Direct MP4 export not available. Using WebM format.', 'error');
+                    mimeType = 'video/webm;codecs=vp9,opus';
+                } else {
+                    mimeType = 'video/webm;codecs=vp9,opus';
+                }
+
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                    mimeType = 'video/webm;codecs=vp8,opus';
+                }
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                    mimeType = 'video/webm';
+                }
+
+                const mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: mimeType,
+                    videoBitsPerSecond: 5000000,
+                    audioBitsPerSecond: 128000
+                });
+
+                const chunks = [];
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) chunks.push(e.data);
+                };
+
+                mediaRecorder.start(100);
+
+                // Record video
+                await new Promise((resolve) => {
+                    let animationId;
+
+                    const drawFrame = () => {
+                        if (!video.paused && !video.ended) {
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                            const progress = (video.currentTime / video.duration) * 100;
+                            this.showProgress(Math.min(95, progress));
+
+                            animationId = requestAnimationFrame(drawFrame);
+                        }
+                    };
+
+                    video.onended = () => {
+                        cancelAnimationFrame(animationId);
+                        video.pause();
+                        resolve();
+                    };
+
+                    video.onerror = (e) => {
+                        cancelAnimationFrame(animationId);
+                        console.error('Video playback error:', e);
+                        resolve();
+                    };
+
+                    video.currentTime = 0;
+                    video.play().then(() => {
+                        drawFrame();
+                    }).catch(err => {
+                        console.error('Play error:', err);
+                        resolve();
+                    });
+                });
+
+                mediaRecorder.stop();
+
+                const blob = await new Promise((resolve) => {
+                    mediaRecorder.onstop = () => {
+                        resolve(new Blob(chunks, { type: mimeType }));
+                    };
+
+                    setTimeout(() => {
+                        if (chunks.length > 0) {
+                            resolve(new Blob(chunks, { type: mimeType }));
+                        }
+                    }, 1000);
+                });
+
+                if (this.currentFile) {
+                    URL.revokeObjectURL(video.src);
+                }
+                video.src = '';
+                audioCtx.close();
+
+                return blob;
+            }
+
+            clear() {
+                this.currentFile = null;
+                this.currentUrl = null;
+                document.getElementById('convertVideoInfo').style.display = 'none';
+                document.getElementById('convertPreviewVideo').style.display = 'none';
+                document.getElementById('convertVideoUrlInput').value = '';
+                this.updateConvertButton();
+                this.hideStatus();
+            }
+
+            showProgress(percent) {
+                const progressContainer = document.getElementById('convertProgressContainer');
+                const progressFill = document.getElementById('convertProgressFill');
+                progressContainer.style.display = 'block';
+                progressFill.style.width = percent + '%';
+                progressFill.textContent = Math.round(percent) + '%';
+            }
+
+            hideProgress() {
+                document.getElementById('convertProgressContainer').style.display = 'none';
+            }
+
+            showStatus(message, type) {
+                const status = document.getElementById('convertStatus');
+                status.textContent = message;
+                status.className = `status ${type}`;
+            }
+
+            hideStatus() {
+                const status = document.getElementById('convertStatus');
+                status.className = 'status';
+            }
+        }
+
+        // Initialize both
+        const videoConcatenator = new VideoConcatenator();
+        const videoConverter = new VideoConverter();
     </script>
 </body>
 </html>
