@@ -1,6 +1,6 @@
 {
-  "version": "1.0.0",
-  "lastUpdated": "2025-01-15T12:00:00Z",
+  "version": "1.1.0",
+  "lastUpdated": "2025-01-15T14:30:00Z",
   "games": [
     {
       "id": "memory-classic-v1",
@@ -40,6 +40,14 @@
       "modulePath": "cardgames/casual/higher-lower.js",
       "thumbnail": "cardgames/casual/higher-lower-thumb.png",
       "featured": false,
+      "addedDate": "2025-01-15"
+    },
+    {
+      "id": "casual-war-v1",
+      "configPath": "cardgames/casual/war.json",
+      "modulePath": "cardgames/casual/war.js",
+      "thumbnail": "cardgames/casual/war-thumb.png",
+      "featured": true,
       "addedDate": "2025-01-15"
     },
     {
