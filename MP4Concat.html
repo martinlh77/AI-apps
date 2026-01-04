@@ -464,9 +464,14 @@
         <video class="preview-video" id="previewVideo" controls></video>
     </div>
 
-    <!-- FFmpeg.wasm -->
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/index.js"></script>
+    <!-- FFmpeg.wasm - Using unpkg CDN with proper CORS headers -->
+    <script type="module">
+        import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js';
+        import { fetchFile, toBlobURL } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/index.js';
+        
+        // Make FFmpeg available globally
+        window.FFmpegModule = { FFmpeg, fetchFile, toBlobURL };
+    </script>
 
     <script>
         class VideoConcatenator {
@@ -478,7 +483,17 @@
                 this.ffmpegLoaded = false;
                 this.currentMode = 'concatenate';
                 this.convertFile = null;
-                this.init();
+                
+                // Wait for FFmpeg module to load
+                this.waitForFFmpeg().then(() => {
+                    this.init();
+                });
+            }
+            
+            async waitForFFmpeg() {
+                while (!window.FFmpegModule) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
             }
             
             init() {
@@ -695,7 +710,7 @@
                 this.showStatus('Loading FFmpeg for conversion...', 'success');
                 
                 try {
-                    const { FFmpeg } = FFmpegWASM;
+                    const { FFmpeg, toBlobURL } = window.FFmpegModule;
                     this.ffmpeg = new FFmpeg();
                     
                     this.ffmpeg.on('log', ({ message }) => {
@@ -709,9 +724,14 @@
                         }
                     });
                     
+                    // Use toBlobURL to avoid CORS issues
+                    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+                    const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
+                    const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+                    
                     await this.ffmpeg.load({
-                        coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-                        wasmURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
+                        coreURL,
+                        wasmURL,
                     });
                     
                     this.ffmpegLoaded = true;
@@ -728,7 +748,7 @@
                         await this.loadFFmpeg();
                     }
                     
-                    const { fetchFile } = FFmpegUtil;
+                    const { fetchFile } = window.FFmpegModule;
                     
                     const inputName = 'input' + this.getFileExtension(file.name);
                     await this.ffmpeg.writeFile(inputName, await fetchFile(file));
@@ -763,7 +783,7 @@
                         await this.loadFFmpeg();
                     }
                     
-                    const { fetchFile } = FFmpegUtil;
+                    const { fetchFile } = window.FFmpegModule;
                     
                     const inputName = 'input' + this.getFileExtension(file.name);
                     await this.ffmpeg.writeFile(inputName, await fetchFile(file));
@@ -807,7 +827,7 @@
                         await this.loadFFmpeg();
                     }
                     
-                    const { fetchFile } = FFmpegUtil;
+                    const { fetchFile } = window.FFmpegModule;
                     
                     await this.ffmpeg.writeFile('input.webm', await fetchFile(webmBlob));
                     
