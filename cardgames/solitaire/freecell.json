@@ -1,0 +1,96 @@
+{
+  "gameId": "solitaire-freecell-v1",
+  "metadata": {
+    "name": "FreeCell Solitaire",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Classic FreeCell with strategic gameplay. Use free cells wisely to build foundations.",
+    "category": "solitaire",
+    "difficulty": "medium",
+    "estimatedPlayTime": "10-20 minutes",
+    "thumbnail": "cardgames/solitaire/freecell-thumb.png",
+    "tags": ["solitaire", "strategy", "mobile-optimized", "freecell"]
+  },
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52,
+      "note": "Standard 52-card deck dealt into 8 columns"
+    }
+  },
+  "instructions": {
+    "overview": "Move all cards to the four foundation piles by suit, from Ace to King. Use the four free cells strategically to temporarily store cards.",
+    "setup": [
+      "All 52 cards are dealt face-up into 8 tableau columns",
+      "First 4 columns get 7 cards each, last 4 columns get 6 cards each",
+      "Four free cells available for temporary card storage",
+      "Four foundation piles start empty"
+    ],
+    "gameplay": [
+      "Tableau: Build down in alternating colors (red-black-red, etc.)",
+      "Only the top card of each column can be moved",
+      "Multiple cards can be moved if you have enough free cells/empty columns",
+      "Free Cells: Store any single card temporarily",
+      "Foundations: Build up by suit from Ace to King (A-2-3-...-K)",
+      "Double-click any card to auto-move it to foundations or free cells",
+      "Mobile: Pinch to zoom, two-finger drag to pan the board",
+      "Desktop: Drag and drop cards between columns, cells, and foundations"
+    ],
+    "winning": "Move all 52 cards to the four foundation piles, completing each suit from Ace to King",
+    "examples": [
+      {
+        "title": "Valid Tableau Move",
+        "description": "Black 8 can be placed on Red 9",
+        "cards": ["clubs-8", "hearts-9"]
+      },
+      {
+        "title": "Foundation Building",
+        "description": "Build foundations from Ace up by suit",
+        "cards": ["hearts-ace", "hearts-2", "hearts-3"]
+      },
+      {
+        "title": "Using Free Cells",
+        "description": "Store a King temporarily to access cards below",
+        "cards": ["spades-king"]
+      }
+    ]
+  },
+  "ui": {
+    "layout": "grid",
+    "zones": [
+      {
+        "id": "free-cells",
+        "type": "pile",
+        "position": {"x": "left", "y": "top"}
+      },
+      {
+        "id": "foundations",
+        "type": "pile",
+        "position": {"x": "right", "y": "top"}
+      },
+      {
+        "id": "tableau",
+        "type": "grid",
+        "position": {"x": "center", "y": "center"}
+      }
+    ],
+    "animations": {
+      "dealSpeed": 200,
+      "flipSpeed": 150,
+      "celebrationOnWin": true
+    }
+  },
+  "gameLogicModule": "cardgames/solitaire/freecell.js"
+}
