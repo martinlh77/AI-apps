@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2025-01-15T00:00:00Z",
+  "lastUpdated": "2025-01-15T12:00:00Z",
   "games": [
     {
       "id": "memory-classic-v1",
@@ -19,13 +19,21 @@
       "addedDate": "2025-01-15"
     },
     {
-  "id": "solitaire-klondike-v1",
-  "configPath": "cardgames/solitaire/klondike.json",
-  "modulePath": "cardgames/solitaire/klondike.js",
-  "thumbnail": "cardgames/solitaire/klondike-thumb.png",
-  "featured": true,
-  "addedDate": "2025-01-04"
-},
+      "id": "solitaire-klondike-v1",
+      "configPath": "cardgames/solitaire/klondike.json",
+      "modulePath": "cardgames/solitaire/klondike.js",
+      "thumbnail": "cardgames/solitaire/klondike-thumb.png",
+      "featured": true,
+      "addedDate": "2025-01-04"
+    },
+    {
+      "id": "solitaire-freecell-v1",
+      "configPath": "cardgames/solitaire/freecell.json",
+      "modulePath": "cardgames/solitaire/freecell.js",
+      "thumbnail": "cardgames/solitaire/freecell-thumb.png",
+      "featured": true,
+      "addedDate": "2025-01-15"
+    },
     {
       "id": "casual-higher-lower-v1",
       "configPath": "cardgames/casual/higher-lower.json",
