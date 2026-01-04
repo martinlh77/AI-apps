@@ -14,7 +14,7 @@ class KlondikeSolitaire {
       zoom: 1.0, panX: 0, panY: 0,
       // Drag State
       isDragging: false, dragData: null, dragElement: null,
-      startX: 0, startY: 0
+      startX: 0, startY: 0, originalElement: null
     };
     this.resizeHandler = null;
     this.cardValues = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
@@ -52,7 +52,7 @@ class KlondikeSolitaire {
 
   setupUI() {
     const board = document.getElementById('game-board');
-    board.style.touchAction = 'none'; // Essential for custom gestures
+    board.style.touchAction = 'none';
     if (!document.getElementById('solitaire-ctrl')) {
       const ctrl = document.createElement('div');
       ctrl.id = 'solitaire-ctrl';
@@ -83,20 +83,31 @@ class KlondikeSolitaire {
   }
 
   handlePointerDown(e, type, colIdx, cardIdx) {
-    if (e.buttons !== 1) return; // Only left click / single touch
+    if (e.button !== 0 && e.pointerType === 'mouse') return; // Only left click
     
-    // Prevent dragging facedown cards (unless it's the top one which auto-flips)
-    const card = type === 'tableau' ? this.state.tableau[colIdx][cardIdx] : this.state.waste[this.state.waste.length-1];
-    if (!card.faceUp) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Get the card
+    let card;
+    if (type === 'tableau') {
+      card = this.state.tableau[colIdx][cardIdx];
+    } else if (type === 'waste') {
+      card = this.state.waste[this.state.waste.length - 1];
+    } else {
+      return;
+    }
+
+    if (!card || !card.faceUp) return;
 
     this.state.isDragging = true;
     this.state.dragData = { type, colIdx, cardIdx };
     this.state.startX = e.clientX;
     this.state.startY = e.clientY;
+    this.state.originalElement = e.currentTarget;
 
     // Create visual drag proxy
-    const originalEl = e.currentTarget;
-    const rect = originalEl.getBoundingClientRect();
+    const rect = e.currentTarget.getBoundingClientRect();
     
     const container = document.createElement('div');
     container.id = 'drag-proxy';
@@ -104,7 +115,7 @@ class KlondikeSolitaire {
     
     // If tableau, grab the card and everything below it
     if (type === 'tableau') {
-      const colEl = originalEl.parentElement;
+      const colEl = e.currentTarget.parentElement;
       const siblings = Array.from(colEl.children).slice(cardIdx);
       siblings.forEach(sib => {
         const clone = sib.cloneNode(true);
@@ -113,12 +124,12 @@ class KlondikeSolitaire {
         container.appendChild(clone);
       });
     } else {
-      container.appendChild(originalEl.cloneNode(true));
+      container.appendChild(e.currentTarget.cloneNode(true));
     }
     
     document.body.appendChild(container);
     this.state.dragElement = container;
-    originalEl.style.opacity = '0'; // Hide original
+    e.currentTarget.style.opacity = '0.3'; // Semi-transparent original
   }
 
   handlePointerMove(e) {
@@ -143,29 +154,156 @@ class KlondikeSolitaire {
     const targets = document.elementsFromPoint(e.clientX, e.clientY);
     const dropZone = targets.find(t => t.dataset.zoneType);
 
+    let moved = false;
     if (dropZone) {
       const zoneType = dropZone.dataset.zoneType;
       const zoneIdx = parseInt(dropZone.dataset.zoneIdx);
       
-      if (zoneType === 'foundation') this.moveFound(zoneIdx);
-      else if (zoneType === 'tableau') this.moveTab(zoneIdx);
-      else this.render();
-    } else {
-      this.render(); // Reset positions
+      if (zoneType === 'foundation') {
+        moved = this.moveToFoundation(zoneIdx);
+      } else if (zoneType === 'tableau') {
+        moved = this.moveToTableau(zoneIdx);
+      }
     }
+
+    if (!moved && this.state.originalElement) {
+      this.state.originalElement.style.opacity = '1';
+    }
+    
+    this.state.originalElement = null;
+    this.render();
   }
 
   handleDblClick(type, colIdx, cardIdx) {
     // Attempt to auto-collect to foundations
-    const cards = this.getSelCards(type, colIdx, cardIdx);
+    const cards = this.getSelectedCards(type, colIdx, cardIdx);
     if (cards.length !== 1) return;
 
     for (let i = 0; i < 4; i++) {
       if (this.isValidFoundationMove(cards[0], i)) {
         this.state.dragData = { type, colIdx, cardIdx };
-        this.moveFound(i);
+        this.moveToFoundation(i);
         return;
       }
+    }
+  }
+
+  // --- HELPER METHODS ---
+
+  getSelectedCards(type, colIdx, cardIdx) {
+    if (type === 'waste') {
+      return this.state.waste.length > 0 ? [this.state.waste[this.state.waste.length - 1]] : [];
+    } else if (type === 'tableau') {
+      return this.state.tableau[colIdx].slice(cardIdx);
+    }
+    return [];
+  }
+
+  isValidFoundationMove(card, foundIdx) {
+    const foundation = this.state.foundations[foundIdx];
+    if (foundation.length === 0) {
+      return this.cardValues[card.value] === 1; // Must be Ace
+    }
+    const topCard = foundation[foundation.length - 1];
+    return card.suit === topCard.suit && this.cardValues[card.value] === this.cardValues[topCard.value] + 1;
+  }
+
+  isValidTableauMove(cards, destIdx) {
+    const destCol = this.state.tableau[destIdx];
+    const movingCard = cards[0];
+    
+    if (destCol.length === 0) {
+      return this.cardValues[movingCard.value] === 13; // Must be King
+    }
+    
+    const destCard = destCol[destCol.length - 1];
+    if (!destCard.faceUp) return false;
+    
+    const isRed = (suit) => suit === '♥' || suit === '♦';
+    const colorDifferent = isRed(movingCard.suit) !== isRed(destCard.suit);
+    const valueCorrect = this.cardValues[movingCard.value] === this.cardValues[destCard.value] - 1;
+    
+    return colorDifferent && valueCorrect;
+  }
+
+  moveToFoundation(foundIdx) {
+    const { type, colIdx, cardIdx } = this.state.dragData;
+    const cards = this.getSelectedCards(type, colIdx, cardIdx);
+    
+    if (cards.length !== 1) return false;
+    if (!this.isValidFoundationMove(cards[0], foundIdx)) return false;
+    
+    // Remove from source
+    if (type === 'waste') {
+      this.state.waste.pop();
+    } else if (type === 'tableau') {
+      this.state.tableau[colIdx].splice(cardIdx, 1);
+      if (this.state.tableau[colIdx].length > 0) {
+        this.state.tableau[colIdx][this.state.tableau[colIdx].length - 1].faceUp = true;
+      }
+    }
+    
+    // Add to foundation
+    this.state.foundations[foundIdx].push(cards[0]);
+    this.state.moves++;
+    this.state.score += 10;
+    this.updateStats();
+    this.checkWin();
+    return true;
+  }
+
+  moveToTableau(destIdx) {
+    const { type, colIdx, cardIdx } = this.state.dragData;
+    const cards = this.getSelectedCards(type, colIdx, cardIdx);
+    
+    if (cards.length === 0) return false;
+    if (!this.isValidTableauMove(cards, destIdx)) return false;
+    
+    // Remove from source
+    if (type === 'waste') {
+      this.state.waste.pop();
+    } else if (type === 'tableau') {
+      this.state.tableau[colIdx].splice(cardIdx);
+      if (this.state.tableau[colIdx].length > 0) {
+        this.state.tableau[colIdx][this.state.tableau[colIdx].length - 1].faceUp = true;
+      }
+    }
+    
+    // Add to destination
+    this.state.tableau[destIdx].push(...cards);
+    this.state.moves++;
+    this.updateStats();
+    return true;
+  }
+
+  drawFromStock() {
+    if (this.state.stock.length === 0) {
+      // Recycle waste to stock
+      if (this.state.waste.length === 0) return;
+      this.state.stock = this.state.waste.reverse().map(c => ({...c, faceUp: false}));
+      this.state.waste = [];
+    } else {
+      const count = Math.min(this.state.drawCount, this.state.stock.length);
+      for (let i = 0; i < count; i++) {
+        const card = this.state.stock.pop();
+        card.faceUp = true;
+        this.state.waste.push(card);
+      }
+    }
+    this.render();
+  }
+
+  checkWin() {
+    const allInFoundations = this.state.foundations.every(f => f.length === 13);
+    if (allInFoundations) {
+      setTimeout(() => alert('🎉 You won! Moves: ' + this.state.moves), 100);
+    }
+  }
+
+  updateStats() {
+    const statsEl = document.getElementById('game-stats');
+    if (statsEl) {
+      statsEl.textContent = `Moves: ${this.state.moves} | Score: ${this.state.score}`;
     }
   }
 
@@ -197,3 +335,105 @@ class KlondikeSolitaire {
     
     // Stock
     const stock = this.createSlot(cardSize, 'stock', 0);
+    stock.style.cursor = 'pointer';
+    stock.onclick = () => this.drawFromStock();
+    if (this.state.stock.length > 0) {
+      const cardBack = this.createCard(null, cardSize, true);
+      stock.appendChild(cardBack);
+    }
+    stockWaste.appendChild(stock);
+    
+    // Waste
+    const waste = this.createSlot(cardSize, 'waste', 0);
+    if (this.state.waste.length > 0) {
+      const topCard = this.state.waste[this.state.waste.length - 1];
+      const cardEl = this.createCard(topCard, cardSize, false);
+      cardEl.onpointerdown = (e) => this.handlePointerDown(e, 'waste', 0, this.state.waste.length - 1);
+      cardEl.ondblclick = () => this.handleDblClick('waste', 0, this.state.waste.length - 1);
+      waste.appendChild(cardEl);
+    }
+    stockWaste.appendChild(waste);
+    
+    topRow.appendChild(stockWaste);
+    
+    // Foundations
+    const foundations = document.createElement('div');
+    foundations.style.display = 'flex';
+    foundations.style.gap = `${gap}px`;
+    for (let i = 0; i < 4; i++) {
+      const slot = this.createSlot(cardSize, 'foundation', i);
+      if (this.state.foundations[i].length > 0) {
+        const topCard = this.state.foundations[i][this.state.foundations[i].length - 1];
+        slot.appendChild(this.createCard(topCard, cardSize, false));
+      }
+      foundations.appendChild(slot);
+    }
+    topRow.appendChild(foundations);
+    content.appendChild(topRow);
+    
+    // --- Tableau ---
+    const tableau = document.createElement('div');
+    tableau.style.cssText = `display:flex; gap:${gap}px; justify-content:center; width:100%; max-width:900px;`;
+    
+    for (let i = 0; i < 7; i++) {
+      const col = document.createElement('div');
+      col.style.cssText = `position:relative; width:${cardSize.w}px;`;
+      col.dataset.zoneType = 'tableau';
+      col.dataset.zoneIdx = i;
+      
+      // Make empty column a drop zone
+      if (this.state.tableau[i].length === 0) {
+        const emptySlot = this.createSlot(cardSize, 'tableau', i);
+        col.appendChild(emptySlot);
+      }
+      
+      this.state.tableau[i].forEach((card, idx) => {
+        const cardEl = this.createCard(card, cardSize, !card.faceUp);
+        cardEl.style.position = 'absolute';
+        cardEl.style.top = `${idx * (isMobile ? 20 : 30)}px`;
+        
+        if (card.faceUp) {
+          cardEl.style.cursor = 'grab';
+          cardEl.onpointerdown = (e) => this.handlePointerDown(e, 'tableau', i, idx);
+          cardEl.ondblclick = () => this.handleDblClick('tableau', i, idx);
+        }
+        
+        col.appendChild(cardEl);
+      });
+      
+      tableau.appendChild(col);
+    }
+    content.appendChild(tableau);
+  }
+
+  createSlot(size, zoneType, zoneIdx) {
+    const slot = document.createElement('div');
+    slot.style.cssText = `width:${size.w}px; height:${size.h}px; border:2px dashed rgba(255,255,255,0.3); border-radius:8px; position:relative;`;
+    slot.dataset.zoneType = zoneType;
+    slot.dataset.zoneIdx = zoneIdx;
+    return slot;
+  }
+
+  createCard(card, size, faceDown) {
+    const div = document.createElement('div');
+    div.style.cssText = `width:${size.w}px; height:${size.h}px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:bold; user-select:none; transition:opacity 0.2s;`;
+    
+    if (faceDown) {
+      div.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      div.style.border = '2px solid #fff';
+    } else if (card) {
+      const isRed = card.suit === '♥' || card.suit === '♦';
+      div.style.background = 'white';
+      div.style.color = isRed ? '#e74c3c' : '#2c3e50';
+      div.style.border = '2px solid #ddd';
+      div.innerHTML = `<div style="text-align:center; font-size:${size.w < 60 ? '12px' : '18px'};">${card.value}<br>${card.suit}</div>`;
+    }
+    
+    return div;
+  }
+}
+
+// Export for use
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = KlondikeSolitaire;
+}
