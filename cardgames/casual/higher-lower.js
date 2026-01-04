@@ -140,7 +140,7 @@ class HigherLower {
     cardContainer.style.flexDirection = 'column';
     cardContainer.style.alignItems = 'center';
     cardContainer.style.gap = '15px';
-    cardContainer.style.margin = '0 0 40px 0';
+    cardContainer.style.margin = '0 0 30px 0';
     
     const cardElement = this.engine.renderCard(this.state.currentCard, true);
     cardElement.style.width = cardWidth;
@@ -165,11 +165,11 @@ class HigherLower {
     
     gameBoard.appendChild(cardContainer);
     
-    // Buttons
+    // Buttons - NOW BELOW THE CARD
     const buttonContainer = document.createElement('div');
     buttonContainer.style.display = 'flex';
     buttonContainer.style.gap = isMobile ? '15px' : '30px';
-    buttonContainer.style.margin = '0 0 20px 0';
+    buttonContainer.style.margin = '0';
     buttonContainer.style.width = '100%';
     buttonContainer.style.justifyContent = 'center';
     
@@ -312,7 +312,7 @@ class HigherLower {
       explanation.style.color = '#ccc';
       explanation.style.fontSize = isMobile ? '0.9rem' : '1rem';
       explanation.style.padding = '0 10px';
-      explanation.style.margin = '0';
+      explanation.style.margin = '0 0 20px 0';
       container.appendChild(explanation);
       
       // Show both cards
@@ -320,7 +320,7 @@ class HigherLower {
       cardsContainer.style.display = 'flex';
       cardsContainer.style.gap = isMobile ? '15px' : '30px';
       cardsContainer.style.justifyContent = 'center';
-      cardsContainer.style.marginTop = '20px';
+      cardsContainer.style.margin = '0 0 30px 0';
       
       const currentCardEl = this.engine.renderCard(this.state.currentCard, true);
       currentCardEl.style.width = cardWidth;
@@ -337,8 +337,9 @@ class HigherLower {
       container.appendChild(cardsContainer);
     }
     
+    // Play Again button - NOW CLEARLY BELOW CARDS
     const playAgainBtn = this.createButton('🔄 Play Again', '#00ffcc', () => this.setup(), isMobile);
-    playAgainBtn.style.marginTop = '10px';
+    playAgainBtn.style.marginTop = '0';
     playAgainBtn.style.background = '#00ffcc';
     playAgainBtn.style.color = '#000';
     container.appendChild(playAgainBtn);
