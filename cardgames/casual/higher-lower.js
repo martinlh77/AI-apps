@@ -366,4 +366,5 @@ class HigherLower {
 
 // Register the game
 window.GameModules = window.GameModules || {};
-window.GameModules['higher-lower-v1'] = HigherLower;
+window.GameModules['casual-higher-lower-v1'] = HigherLower;
+
