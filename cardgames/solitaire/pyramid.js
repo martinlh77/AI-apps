@@ -10,7 +10,7 @@ class PyramidSolitaire {
     this.state = {
       pyramid: [], // 7 rows
       stock: [],
-      waste: null,
+      waste: [],
       selectedCard: null,
       selectedLocation: null,
       moves: 0,
@@ -25,7 +25,6 @@ class PyramidSolitaire {
     
     this.resizeHandler = null;
     
-    // ✅ ADD: Touch/zoom state for mobile
     this.touchState = {
       scale: 1,
       minScale: 0.5,
@@ -63,7 +62,7 @@ class PyramidSolitaire {
     
     // Remaining cards to stock
     this.state.stock = shuffled.slice(28);
-    this.state.waste = null;
+    this.state.waste = [];
     this.state.selectedCard = null;
     this.state.selectedLocation = null;
     this.state.moves = 0;
@@ -119,25 +118,21 @@ class PyramidSolitaire {
     if (cardFront) {
       cardFront.style.fontSize = '0.7rem';
       
-      // Scale rank display (corner numbers/letters)
       const rankDisplays = cardFront.querySelectorAll('.card-rank');
       rankDisplays.forEach(rank => {
         rank.style.fontSize = '0.85rem';
       });
       
-      // Scale mini suit icons in corners
       const miniPips = cardFront.querySelectorAll('.mini-pip');
       miniPips.forEach(pip => {
         pip.style.fontSize = '0.7rem';
       });
       
-      // Scale center suit emoji
       const suitCenter = cardFront.querySelector('.card-suit-center');
       if (suitCenter) {
         suitCenter.style.fontSize = '2rem';
       }
       
-      // Scale center pips (for numbered cards)
       const pips = cardFront.querySelectorAll('.pip');
       pips.forEach(pip => {
         if (pip.classList.contains('large')) {
@@ -147,7 +142,6 @@ class PyramidSolitaire {
         }
       });
       
-      // Scale face card windows (J, Q, K)
       const faceWindow = cardFront.querySelector('.face-card-window');
       if (faceWindow) {
         faceWindow.style.top = '20px';
@@ -162,11 +156,9 @@ class PyramidSolitaire {
     }
   }
   
-  // ✅ ADD: Setup touch event handlers for mobile zoom/pan
   setupTouchHandlers(gameBoard, isMobile) {
     if (!isMobile) return;
     
-    // Remove existing listeners
     gameBoard.ontouchstart = null;
     gameBoard.ontouchmove = null;
     gameBoard.ontouchend = null;
@@ -176,10 +168,8 @@ class PyramidSolitaire {
     gameBoard.ontouchend = (e) => this.handleTouchEnd(e);
   }
   
-  // ✅ ADD: Handle touch start
   handleTouchStart(e, gameBoard) {
     if (e.touches.length === 2) {
-      // Two fingers - prepare for pinch zoom
       e.preventDefault();
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
@@ -192,21 +182,18 @@ class PyramidSolitaire {
     }
   }
   
-  // ✅ ADD: Handle touch move
   handleTouchMove(e, gameBoard) {
     if (e.touches.length === 2) {
       e.preventDefault();
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
       
-      // Calculate pinch zoom
       const currentDistance = this.getTouchDistance(touch1, touch2);
       const scaleChange = currentDistance / this.touchState.lastTouchDistance;
       
       let newScale = this.touchState.scale * scaleChange;
       newScale = Math.max(this.touchState.minScale, Math.min(this.touchState.maxScale, newScale));
       
-      // Calculate pan
       const currentCenter = this.getTouchCenter(touch1, touch2);
       const deltaX = currentCenter.x - this.touchState.lastTouchCenter.x;
       const deltaY = currentCenter.y - this.touchState.lastTouchCenter.y;
@@ -218,26 +205,22 @@ class PyramidSolitaire {
       this.touchState.lastTouchDistance = currentDistance;
       this.touchState.lastTouchCenter = currentCenter;
       
-      // Apply transform
       this.applyTransform(gameBoard);
     }
   }
   
-  // ✅ ADD: Handle touch end
   handleTouchEnd(e) {
     if (e.touches.length < 2) {
       this.touchState.isPanning = false;
     }
   }
   
-  // ✅ ADD: Calculate distance between two touches
   getTouchDistance(touch1, touch2) {
     const dx = touch2.clientX - touch1.clientX;
     const dy = touch2.clientY - touch1.clientY;
     return Math.sqrt(dx * dx + dy * dy);
   }
   
-  // ✅ ADD: Calculate center point between two touches
   getTouchCenter(touch1, touch2) {
     return {
       x: (touch1.clientX + touch2.clientX) / 2,
@@ -245,7 +228,6 @@ class PyramidSolitaire {
     };
   }
   
-  // ✅ ADD: Apply transform to game board
   applyTransform(gameBoard) {
     const pyramidContainer = gameBoard.querySelector('.pyramid-container');
     if (pyramidContainer) {
@@ -266,16 +248,13 @@ class PyramidSolitaire {
     gameBoard.style.padding = '20px';
     gameBoard.style.minHeight = '600px';
     
-    // Determine if we're on mobile
     const isMobile = window.innerWidth < 700;
     
-    // ✅ ADD: Enable overflow and touch handling on mobile
     if (isMobile) {
       gameBoard.style.overflow = 'hidden';
-      gameBoard.style.touchAction = 'none'; // Prevent default touch behaviors
+      gameBoard.style.touchAction = 'none';
       gameBoard.style.position = 'relative';
       
-      // Add helper text
       const helperText = document.createElement('div');
       helperText.textContent = '🤏 Pinch to zoom • ✌️ Two fingers to pan';
       helperText.style.position = 'absolute';
@@ -297,7 +276,6 @@ class PyramidSolitaire {
     const cardHeight = isMobile ? '84px' : '140px';
     const cardGap = isMobile ? '4px' : '10px';
     
-    // ✅ CHANGED: Wrap pyramid in container for transform
     const pyramidWrapper = document.createElement('div');
     pyramidWrapper.className = 'pyramid-wrapper';
     pyramidWrapper.style.width = '100%';
@@ -307,7 +285,6 @@ class PyramidSolitaire {
     pyramidWrapper.style.flex = '1';
     pyramidWrapper.style.overflow = isMobile ? 'visible' : 'visible';
     
-    // Render pyramid
     const pyramidContainer = document.createElement('div');
     pyramidContainer.className = 'pyramid-container';
     pyramidContainer.style.display = 'flex';
@@ -315,7 +292,6 @@ class PyramidSolitaire {
     pyramidContainer.style.alignItems = 'center';
     pyramidContainer.style.gap = cardGap;
     
-    // ✅ ADD: Apply current transform state if on mobile
     if (isMobile) {
       pyramidContainer.style.transform = 
         `translate(${this.touchState.translateX}px, ${this.touchState.translateY}px) scale(${this.touchState.scale})`;
@@ -350,7 +326,6 @@ class PyramidSolitaire {
           this.scaleCardForMobile(cardElement);
         }
         
-        // Highlight if selected
         if (this.state.selectedLocation?.type === 'pyramid' &&
             this.state.selectedLocation?.row === rowIndex &&
             this.state.selectedLocation?.col === colIndex) {
@@ -362,7 +337,6 @@ class PyramidSolitaire {
         if (!card.covered) {
           cardElement.onclick = () => this.handlePyramidCardClick(rowIndex, colIndex);
           
-          // Add hover effect (not on mobile during zoom/pan)
           if (!isMobile) {
             cardElement.onmouseenter = () => {
               if (!card.covered) {
@@ -393,8 +367,8 @@ class PyramidSolitaire {
     bottomArea.style.display = 'flex';
     bottomArea.style.gap = isMobile ? '15px' : '30px';
     bottomArea.style.alignItems = 'center';
-    bottomArea.style.zIndex = '100'; // Keep above pyramid
-    bottomArea.style.background = 'rgba(26, 26, 46, 0.95)'; // ✅ ADD background so it's visible
+    bottomArea.style.zIndex = '100';
+    bottomArea.style.background = 'rgba(26, 26, 46, 0.95)';
     bottomArea.style.padding = isMobile ? '10px 15px' : '15px 20px';
     bottomArea.style.borderRadius = '12px';
     bottomArea.style.boxShadow = '0 -2px 10px rgba(0,0,0,0.5)';
@@ -403,11 +377,15 @@ class PyramidSolitaire {
     const stockDiv = document.createElement('div');
     stockDiv.style.width = cardWidth;
     stockDiv.style.height = cardHeight;
-    stockDiv.style.cursor = this.state.stock.length > 0 ? 'pointer' : 'default';
+    // ✅ CHANGED: Make stock clickable even when empty (for recycling)
+    stockDiv.style.cursor = 'pointer';
     stockDiv.style.position = 'relative';
     
     if (this.state.stock.length > 0) {
-      const stockCard = this.engine.renderCard(this.state.stock[0], false);
+      // Show back of top card
+      const topCard = {...this.state.stock[this.state.stock.length - 1]};
+      topCard.faceUp = false;
+      const stockCard = this.engine.renderCard(topCard, false);
       stockCard.style.width = '100%';
       stockCard.style.height = '100%';
       stockCard.onclick = () => this.drawFromStock();
@@ -433,7 +411,28 @@ class PyramidSolitaire {
       counter.style.border = '2px solid #00ffcc';
       stockDiv.appendChild(counter);
     } else {
-      stockDiv.innerHTML = `<div style="width:100%;height:100%;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:${isMobile ? '0.7rem' : '0.9rem'};">Empty</div>`;
+      // ✅ CHANGED: Show recycle icon when stock is empty but waste has cards
+      const emptyDiv = document.createElement('div');
+      emptyDiv.style.width = '100%';
+      emptyDiv.style.height = '100%';
+      emptyDiv.style.border = '2px dashed #666';
+      emptyDiv.style.borderRadius = '8px';
+      emptyDiv.style.display = 'flex';
+      emptyDiv.style.flexDirection = 'column';
+      emptyDiv.style.alignItems = 'center';
+      emptyDiv.style.justifyContent = 'center';
+      emptyDiv.style.color = this.state.waste.length > 0 ? '#00ffcc' : '#666';
+      emptyDiv.style.fontSize = isMobile ? '0.7rem' : '0.9rem';
+      emptyDiv.style.cursor = this.state.waste.length > 0 ? 'pointer' : 'default';
+      
+      if (this.state.waste.length > 0) {
+        emptyDiv.innerHTML = `<div style="font-size: ${isMobile ? '1.5rem' : '2rem'};">♻️</div><div style="margin-top: 5px;">Recycle</div>`;
+        emptyDiv.onclick = () => this.drawFromStock();
+      } else {
+        emptyDiv.textContent = 'Empty';
+      }
+      
+      stockDiv.appendChild(emptyDiv);
     }
     
     bottomArea.appendChild(stockDiv);
@@ -443,8 +442,9 @@ class PyramidSolitaire {
     wasteDiv.style.width = cardWidth;
     wasteDiv.style.height = cardHeight;
     
-    if (this.state.waste) {
-      const wasteCard = this.engine.renderCard(this.state.waste, true);
+    if (this.state.waste.length > 0) {
+      const topWasteCard = this.state.waste[this.state.waste.length - 1];
+      const wasteCard = this.engine.renderCard(topWasteCard, true);
       wasteCard.style.width = '100%';
       wasteCard.style.height = '100%';
       wasteCard.style.cursor = 'pointer';
@@ -470,7 +470,6 @@ class PyramidSolitaire {
     bottomArea.appendChild(wasteDiv);
     gameBoard.appendChild(bottomArea);
     
-    // ✅ ADD: Setup touch handlers after rendering
     if (isMobile) {
       this.setupTouchHandlers(gameBoard, isMobile);
     }
@@ -482,7 +481,6 @@ class PyramidSolitaire {
     
     const cardValue = this.cardValues[card.rank];
     
-    // Special case: King can be removed alone
     if (cardValue === 13) {
       this.removeCard({ type: 'pyramid', row, col });
       this.state.moves++;
@@ -495,7 +493,6 @@ class PyramidSolitaire {
       return;
     }
     
-    // If no card selected, select this one
     if (!this.state.selectedCard) {
       this.state.selectedCard = card;
       this.state.selectedLocation = { type: 'pyramid', row, col };
@@ -503,7 +500,6 @@ class PyramidSolitaire {
       return;
     }
     
-    // If same card clicked, deselect
     if (this.state.selectedLocation?.type === 'pyramid' &&
         this.state.selectedLocation?.row === row &&
         this.state.selectedLocation?.col === col) {
@@ -513,18 +509,17 @@ class PyramidSolitaire {
       return;
     }
     
-    // Try to match with selected card
     this.tryMatch(card, { type: 'pyramid', row, col });
   }
   
   handleWasteCardClick() {
-    if (!this.state.waste) return;
+    if (this.state.waste.length === 0) return;
     
-    const cardValue = this.cardValues[this.state.waste.rank];
+    const topCard = this.state.waste[this.state.waste.length - 1];
+    const cardValue = this.cardValues[topCard.rank];
     
-    // Special case: King can be removed alone
     if (cardValue === 13) {
-      this.state.waste = null;
+      this.state.waste.pop();
       this.state.moves++;
       this.state.score += 10;
       this.state.selectedCard = null;
@@ -535,15 +530,13 @@ class PyramidSolitaire {
       return;
     }
     
-    // If no card selected, select waste
     if (!this.state.selectedCard) {
-      this.state.selectedCard = this.state.waste;
+      this.state.selectedCard = topCard;
       this.state.selectedLocation = { type: 'waste' };
       this.render();
       return;
     }
     
-    // If waste already selected, deselect
     if (this.state.selectedLocation?.type === 'waste') {
       this.state.selectedCard = null;
       this.state.selectedLocation = null;
@@ -551,8 +544,7 @@ class PyramidSolitaire {
       return;
     }
     
-    // Try to match with selected card
-    this.tryMatch(this.state.waste, { type: 'waste' });
+    this.tryMatch(topCard, { type: 'waste' });
   }
   
   tryMatch(card2, location2) {
@@ -560,9 +552,7 @@ class PyramidSolitaire {
     const value1 = this.cardValues[card1.rank];
     const value2 = this.cardValues[card2.rank];
     
-    // Check if sum is 13
     if (value1 + value2 === 13) {
-      // Valid match!
       this.removeCard(this.state.selectedLocation);
       this.removeCard(location2);
       this.state.moves++;
@@ -573,7 +563,6 @@ class PyramidSolitaire {
       this.checkWinCondition();
       this.render();
     } else {
-      // Invalid match - select the new card instead
       this.state.selectedCard = card2;
       this.state.selectedLocation = location2;
       this.render();
@@ -585,15 +574,33 @@ class PyramidSolitaire {
       this.state.pyramid[location.row][location.col] = null;
       this.updateCoveredStatus();
     } else if (location.type === 'waste') {
-      this.state.waste = null;
+      this.state.waste.pop();
     }
   }
   
+  // ✅ CHANGED: Added recycling functionality
   drawFromStock() {
+    // If stock is empty but waste has cards, recycle them
+    if (this.state.stock.length === 0 && this.state.waste.length > 0) {
+      // Move all waste cards back to stock (in reverse order)
+      this.state.stock = [...this.state.waste].reverse();
+      this.state.waste = [];
+      
+      // Clear selection when recycling
+      this.state.selectedCard = null;
+      this.state.selectedLocation = null;
+      
+      this.render();
+      return;
+    }
+    
+    // Normal draw - if stock is empty and waste is also empty, do nothing
     if (this.state.stock.length === 0) return;
     
-    this.state.waste = this.state.stock.shift();
-    this.state.waste.faceUp = true;
+    // Remove card from stock and add to waste
+    const drawnCard = this.state.stock.pop();
+    drawnCard.faceUp = true;
+    this.state.waste.push(drawnCard);
     
     // Clear any selection when drawing a new card
     this.state.selectedCard = null;
@@ -603,7 +610,6 @@ class PyramidSolitaire {
   }
   
   checkWinCondition() {
-    // Check if pyramid is empty
     let pyramidEmpty = true;
     for (let row of this.state.pyramid) {
       for (let card of row) {
@@ -638,7 +644,6 @@ class PyramidSolitaire {
       this.resizeHandler = null;
     }
     
-    // ✅ ADD: Clean up touch handlers
     const gameBoard = document.getElementById('game-board');
     if (gameBoard) {
       gameBoard.ontouchstart = null;
