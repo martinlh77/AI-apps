@@ -1365,14 +1365,111 @@
 <body>
     <!-- Main Tab Navigation -->
     <div class="main-tabs">
-        <button class="main-tab active" onclick="switchMainTab('designer')">🎨 Design Deck</button>
+        <button class="main-tab active" onclick="switchMainTab('play')">🎮 Play Games</button>
+        <button class="main-tab" onclick="switchMainTab('designer')">🎨 Design Deck</button>
         <button class="main-tab" onclick="switchMainTab('generator')">🤖 AI Generator</button>
         <button class="main-tab" onclick="switchMainTab('manage')">💾 Manage Decks</button>
-        <button class="main-tab" onclick="switchMainTab('play')">🎮 Play Games</button>
+    </div>
+
+    <!-- Play Games Tab -->
+    <div id="play-tab" class="tab-content active">
+        <div class="sidebar-overlay" id="game-sidebar-overlay" onclick="toggleGameSidebar()"></div>
+        <button class="sidebar-toggle" id="game-sidebar-toggle" onclick="toggleGameSidebar()">🎮</button>
+        <div class="game-browser-container">
+            <!-- Sidebar: Game Selection -->
+            <aside class="game-sidebar" id="game-sidebar">
+                <h2>🎮 Available Games</h2>
+                
+                <div class="game-filters">
+    <label>Category:</label>
+    <select id="game-category-filter" onchange="filterGames()">
+        <option value="all">All Games</option>
+    </select>
+    
+    <label>Players:</label>
+                    <select id="game-players-filter" onchange="filterGames()">
+                        <option value="all">Any</option>
+                        <option value="1">Single Player</option>
+                        <option value="2+">2+ Players</option>
+                    </select>
+                </div>
+                
+                <div id="game-list" class="game-list">
+                    <div style="padding: 20px; text-align: center; color: #888;">
+                        <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 10px;"></div>
+                        <p>Loading games...</p>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Main Area: Game Display -->
+            <main class="game-main-area">
+                <!-- No game selected state -->
+                <div id="no-game-selected" class="game-placeholder">
+                    <div class="placeholder-content">
+                        <h2>🎴 Choose a Game</h2>
+                        <p>Select a game from the sidebar to view instructions and start playing</p>
+                        <div class="placeholder-icon">🃏</div>
+                    </div>
+                </div>
+                
+                <!-- Game selected: Show instructions/setup -->
+                <div id="game-instructions" class="game-instructions" style="display:none;">
+                    <div class="game-header">
+                        <h1 id="game-title"></h1>
+                        <div class="game-meta">
+                            <span class="game-players" id="game-players"></span>
+                            <span class="game-time" id="game-time"></span>
+                            <span class="game-difficulty" id="game-difficulty"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="instructions-tabs">
+                        <button class="ins-tab active" onclick="switchInstructionTab('overview')">Overview</button>
+                        <button class="ins-tab" onclick="switchInstructionTab('rules')">Rules</button>
+                        <button class="ins-tab" onclick="switchInstructionTab('examples')">Examples</button>
+                    </div>
+                    
+                    <div id="instructions-content" class="instructions-content">
+                        <!-- Populated dynamically -->
+                    </div>
+                    
+                    <div class="deck-selection">
+                        <h3>Select Deck(s)</h3>
+                        <div id="deck-selector">
+                            <!-- Populated from saved decks -->
+                        </div>
+                        <button class="btn btn-primary btn-large" onclick="startGame()">
+                            🎮 Start Game
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Active game play area -->
+                <div id="game-play-area" class="game-play-area" style="display:none;">
+                    <div class="game-controls">
+                        <button class="btn-game-control" onclick="pauseGame()">⏸️ Pause</button>
+                        <button class="btn-game-control" onclick="showGameRules()">❓ Rules</button>
+                        <button class="btn-game-control" onclick="restartGame()">🔄 Restart</button>
+                        <button class="btn-game-control" onclick="exitGame()">🚪 Exit</button>
+                        
+                        <div class="game-stats">
+                            <span id="game-moves">Moves: 0</span>
+                            <span id="game-time-elapsed">Time: 0:00</span>
+                            <span id="game-score">Score: 0</span>
+                        </div>
+                    </div>
+                    
+                    <div id="game-board" class="game-board">
+                        <!-- Game-specific board rendered here -->
+                    </div>
+                </div>
+            </main>
+        </div>
     </div>
 
     <!-- Designer Tab -->
-    <div id="designer-tab" class="tab-content active">
+    <div id="designer-tab" class="tab-content">
         <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
         <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">⚙️</button>
         <div class="app-container">
@@ -1486,7 +1583,7 @@
 
             <main class="main-content">
                 <h1>Playing Card Designer</h1>
-                <p class="subtitle">Design custom playing cards with your own emojis and artwork</p>
+                <p class="subtitle">Design custom playing cards with your own emojis and artwork! Save the deck to use it!</p>
 
                 <div class="tabs">
                     <div class="tab active" data-tab="all" onclick="switchTab('all')">All Cards</div>
@@ -1633,103 +1730,6 @@
         </div>
     </div>
 
-    <!-- Play Games Tab -->
-    <div id="play-tab" class="tab-content">
-        <div class="sidebar-overlay" id="game-sidebar-overlay" onclick="toggleGameSidebar()"></div>
-        <button class="sidebar-toggle" id="game-sidebar-toggle" onclick="toggleGameSidebar()">🎮</button>
-        <div class="game-browser-container">
-            <!-- Sidebar: Game Selection -->
-            <aside class="game-sidebar" id="game-sidebar">
-                <h2>🎮 Available Games</h2>
-                
-                <div class="game-filters">
-    <label>Category:</label>
-    <select id="game-category-filter" onchange="filterGames()">
-        <option value="all">All Games</option>
-    </select>
-    
-    <label>Players:</label>
-                    <select id="game-players-filter" onchange="filterGames()">
-                        <option value="all">Any</option>
-                        <option value="1">Single Player</option>
-                        <option value="2+">2+ Players</option>
-                    </select>
-                </div>
-                
-                <div id="game-list" class="game-list">
-                    <div style="padding: 20px; text-align: center; color: #888;">
-                        <div class="spinner" style="width: 40px; height: 40px; margin: 0 auto 10px;"></div>
-                        <p>Loading games...</p>
-                    </div>
-                </div>
-            </aside>
-            
-            <!-- Main Area: Game Display -->
-            <main class="game-main-area">
-                <!-- No game selected state -->
-                <div id="no-game-selected" class="game-placeholder">
-                    <div class="placeholder-content">
-                        <h2>🎴 Choose a Game</h2>
-                        <p>Select a game from the sidebar to view instructions and start playing</p>
-                        <div class="placeholder-icon">🃏</div>
-                    </div>
-                </div>
-                
-                <!-- Game selected: Show instructions/setup -->
-                <div id="game-instructions" class="game-instructions" style="display:none;">
-                    <div class="game-header">
-                        <h1 id="game-title"></h1>
-                        <div class="game-meta">
-                            <span class="game-players" id="game-players"></span>
-                            <span class="game-time" id="game-time"></span>
-                            <span class="game-difficulty" id="game-difficulty"></span>
-                        </div>
-                    </div>
-                    
-                    <div class="instructions-tabs">
-                        <button class="ins-tab active" onclick="switchInstructionTab('overview')">Overview</button>
-                        <button class="ins-tab" onclick="switchInstructionTab('rules')">Rules</button>
-                        <button class="ins-tab" onclick="switchInstructionTab('examples')">Examples</button>
-                    </div>
-                    
-                    <div id="instructions-content" class="instructions-content">
-                        <!-- Populated dynamically -->
-                    </div>
-                    
-                    <div class="deck-selection">
-                        <h3>Select Deck(s)</h3>
-                        <div id="deck-selector">
-                            <!-- Populated from saved decks -->
-                        </div>
-                        <button class="btn btn-primary btn-large" onclick="startGame()">
-                            🎮 Start Game
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Active game play area -->
-                <div id="game-play-area" class="game-play-area" style="display:none;">
-                    <div class="game-controls">
-                        <button class="btn-game-control" onclick="pauseGame()">⏸️ Pause</button>
-                        <button class="btn-game-control" onclick="showGameRules()">❓ Rules</button>
-                        <button class="btn-game-control" onclick="restartGame()">🔄 Restart</button>
-                        <button class="btn-game-control" onclick="exitGame()">🚪 Exit</button>
-                        
-                        <div class="game-stats">
-                            <span id="game-moves">Moves: 0</span>
-                            <span id="game-time-elapsed">Time: 0:00</span>
-                            <span id="game-score">Score: 0</span>
-                        </div>
-                    </div>
-                    
-                    <div id="game-board" class="game-board">
-                        <!-- Game-specific board rendered here -->
-                    </div>
-                </div>
-            </main>
-        </div>
-    </div>
-
     <script>
         // ============================================
         // Global State
@@ -1862,9 +1862,11 @@
         // Designer Functions
         // ============================================
         
-        document.addEventListener('DOMContentLoaded', () => {
-            loadThemesFromJSON();
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadThemesFromJSON();
+            await checkAndLoadDefaultDeck();
             renderAllCards();
+            loadGamesManifest();
             
             // Check for recent upload
             const recentUpload = localStorage.getItem('recentUpload');
@@ -1882,6 +1884,48 @@
                 }
             }
         });
+
+        async function checkAndLoadDefaultDeck() {
+            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+            
+            if (savedDecks.length === 0) {
+                try {
+                    const response = await fetch('https://martinlh77.github.io/AI-apps/DefaultFaceCards.json');
+                    if (!response.ok) throw new Error('Failed to load default decks');
+                    
+                    const defaultThemes = await response.json();
+                    const themeKeys = Object.keys(defaultThemes);
+                    
+                    if (themeKeys.length > 0) {
+                        const randomKey = themeKeys[Math.floor(Math.random() * themeKeys.length)];
+                        const randomTheme = defaultThemes[randomKey];
+                        
+                        cardImages.back = randomTheme.back;
+                        Object.keys(randomTheme.cards).forEach(key => {
+                            cardImages[key] = randomTheme.cards[key];
+                        });
+                        
+                        if (randomTheme.suits) {
+                            Object.keys(randomTheme.suits).forEach(suit => {
+                                currentEmojis[suit] = randomTheme.suits[suit];
+                                document.getElementById(`${suit}-emoji`).value = randomTheme.suits[suit];
+                                document.getElementById(`${suit}-preview`).textContent = randomTheme.suits[suit];
+                            });
+                        }
+                        
+                        if (randomTheme.borderStyle) {
+                            document.getElementById('border-style').value = randomTheme.borderStyle;
+                        }
+                        
+                        selectedDeckForGame = -1;
+                    }
+                } catch (error) {
+                    console.error('Error loading default deck:', error);
+                }
+            } else {
+                selectedDeckForGame = 0;
+            }
+        }
 
         function createCard(suit, rank, isLarge = false) {
             const color = suitColors[suit];
@@ -2208,11 +2252,9 @@
                 });
                 
                 showStatus('Themes loaded successfully', 'success');
-                renderAllCards();
             } catch (error) {
                 console.error('Error loading themes:', error);
                 showStatus('Failed to load themes from server', 'error');
-                renderAllCards();
             }
         }
 
@@ -3338,6 +3380,25 @@ function renderGameList() {
             const selector = document.getElementById('deck-selector');
             const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
             
+            if (savedDecks.length === 0 && selectedDeckForGame === -1) {
+                selector.innerHTML = `
+                    <div style="grid-column: 1 / -1; padding: 20px; text-align: center;">
+                        <div class="deck-option selected" style="max-width: 300px; margin: 0 auto;">
+                            <div class="deck-option-thumb">
+                                ${cardImages.back ? 
+                                    `<img src="${cardImages.back}" alt="Default Deck" onerror="this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;color:#666;\\'>🃏</div>'">` :
+                                    `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#666;">🃏</div>`
+                                }
+                            </div>
+                            <div style="margin-top: 8px; font-size: 0.85rem; color: var(--accent);">
+                                Default Deck (Ready to Play)
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
             if (savedDecks.length === 0) {
                 selector.innerHTML = `
                     <div style="grid-column: 1 / -1; padding: 20px; text-align: center; color: #888;">
@@ -3382,17 +3443,21 @@ function renderGameList() {
                 return;
             }
             
-            if (selectedDeckForGame === null) {
+            let deckData;
+            
+            if (selectedDeckForGame === -1) {
+                deckData = createDeckDataStructure('Default Deck');
+            } else if (selectedDeckForGame === null) {
                 alert('Please select a deck to play with');
                 return;
-            }
-            
-            const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
-            const deckData = savedDecks[selectedDeckForGame];
-            
-            if (!deckData) {
-                alert('Selected deck not found');
-                return;
+            } else {
+                const savedDecks = JSON.parse(localStorage.getItem('savedDecks') || '[]');
+                deckData = savedDecks[selectedDeckForGame];
+                
+                if (!deckData) {
+                    alert('Selected deck not found');
+                    return;
+                }
             }
             
             try {
