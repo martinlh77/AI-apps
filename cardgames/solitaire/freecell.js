@@ -1,6 +1,7 @@
 /**
  * FreeCell Solitaire v1.0
  * Features: Drag & Drop, Double-Click Auto-Move, Pinch-to-Zoom, Two-Finger Pan
+ * FIXED: Proper card overlap to show BOTH rank and suit (which are stacked vertically)
  */
 
 class FreeCellSolitaire {
@@ -206,7 +207,10 @@ class FreeCellSolitaire {
 
     const isMobile = window.innerWidth < 700;
     const cardSize = isMobile ? { w: 50, h: 70 } : { w: 100, h: 140 };
-    const overlap = isMobile ? 18 : 30;
+    // FIXED: Show ~40% of card (rank + suit below it)
+    // Mobile: 70px * 0.6 = 42px overlap, 28px visible (40%)
+    // Desktop: 140px * 0.6 = 84px overlap, 56px visible (40%)
+    const overlap = isMobile ? 42 : 84;
 
     const container = document.createElement('div');
     container.id = 'drag-proxy';
@@ -487,7 +491,10 @@ class FreeCellSolitaire {
     const isMobile = window.innerWidth < 700;
     const cardSize = isMobile ? { w: 50, h: 70 } : { w: 100, h: 140 };
     const gap = isMobile ? 5 : 15;
-    const overlap = isMobile ? 18 : 30;
+    // FIXED: Show ~40% of card (rank + suit stacked vertically)
+    // Mobile: 42px overlap leaves 28px visible (40% of 70px)
+    // Desktop: 84px overlap leaves 56px visible (40% of 140px)
+    const overlap = isMobile ? 42 : 84;
 
     const content = document.createElement('div');
     content.style.cssText = 'display:flex; flex-direction:column; align-items:center; width:100%; padding:20px 10px;';
