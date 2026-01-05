@@ -43,11 +43,11 @@ class CardProbabilityRandomizer {
             modeParams: {},
             
             // Card selection mode
-            selectionMode: 'all', // 'all', 'suit', 'rank', 'individual', 'deck'
+            selectionMode: 'all',
             selectedSuits: ['hearts', 'diamonds', 'clubs', 'spades'],
             selectedRanks: ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'],
             selectedIndividualCards: [],
-            selectedDecks: [0],
+            selectedDecks: [0, 1, 2, 3, 4, 5, 6, 7], // All deck indexes by default
             
             // Target card for specific selection
             targetCard: null,
@@ -107,7 +107,8 @@ class CardProbabilityRandomizer {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             color: #f0f0f0;
             font-family: 'Segoe UI', system-ui, sans-serif;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
         `;
 
         gameBoard.innerHTML = `
@@ -310,12 +311,19 @@ class CardProbabilityRandomizer {
     }
 
     injectStyles() {
+        // Remove any existing style element for this game
+        const existingStyle = document.getElementById('card-randomizer-styles');
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+
         const style = document.createElement('style');
+        style.id = 'card-randomizer-styles';
         style.textContent = `
             /* Settings Gear */
             .settings-gear {
                 position: fixed;
-                top: 15px;
+                top: 75px;
                 right: 15px;
                 font-size: 28px;
                 cursor: pointer;
@@ -328,10 +336,10 @@ class CardProbabilityRandomizer {
             /* Settings Modal */
             .settings-modal {
                 position: fixed;
-                top: 0;
+                top: 60px;
                 left: 0;
                 width: 100%;
-                height: 100%;
+                height: calc(100% - 60px);
                 background: rgba(0,0,0,0.9);
                 z-index: 1000;
                 overflow-y: auto;
@@ -960,13 +968,6 @@ class CardProbabilityRandomizer {
                     margin-right: 10%;
                 }
             }
-            
-            /* Zoom/Pan Container */
-            .zoomable-container {
-                overflow: auto;
-                touch-action: pan-x pan-y pinch-zoom;
-                -webkit-overflow-scrolling: touch;
-            }
         `;
         document.head.appendChild(style);
     }
@@ -997,6 +998,8 @@ class CardProbabilityRandomizer {
         document.getElementById('num-decks').onchange = (e) => {
             this.state.numDecks = Math.max(1, Math.min(8, parseInt(e.target.value) || 1));
             e.target.value = this.state.numDecks;
+            this.state.selectedDecks = Array.from({length: this.state.numDecks}, (_, i) => i);
+            this.updateSelectionOptions();
             this.updateWorkingDeck();
         };
         
@@ -1012,9 +1015,12 @@ class CardProbabilityRandomizer {
             this.currentModel = e.target.value;
         };
         
-        // Tab navigation
+        // Tab navigation - FIX: Stop propagation to prevent main tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.onclick = () => this.switchTab(btn.dataset.tab);
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                this.switchTab(btn.dataset.tab);
+            };
         });
         
         // Experiment controls
@@ -1064,13 +1070,14 @@ class CardProbabilityRandomizer {
     }
 
     switchTab(tabName) {
+        this.state.currentTab = tabName;
+        
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tabName);
         });
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.toggle('active', content.id === `${tabName}-tab`);
         });
-        this.state.currentTab = tabName;
     }
 
     updateSelectionOptions() {
@@ -1083,7 +1090,7 @@ class CardProbabilityRandomizer {
                     <div class="checkbox-grid">
                         ${this.SUITS.map(suit => `
                             <div class="checkbox-item">
-                                <input type="checkbox" id="suit-${suit}" checked data-suit="${suit}">
+                                <input type="checkbox" id="suit-${suit}" ${this.state.selectedSuits.includes(suit) ? 'checked' : ''} data-suit="${suit}">
                                 <label for="suit-${suit}">${this.getSuitEmoji(suit)} ${suit}</label>
                             </div>
                         `).join('')}
@@ -1103,7 +1110,7 @@ class CardProbabilityRandomizer {
                     <div class="checkbox-grid">
                         ${this.RANKS.map(rank => `
                             <div class="checkbox-item">
-                                <input type="checkbox" id="rank-${rank}" checked data-rank="${rank}">
+                                <input type="checkbox" id="rank-${rank}" ${this.state.selectedRanks.includes(rank) ? 'checked' : ''} data-rank="${rank}">
                                 <label for="rank-${rank}">${rank}</label>
                             </div>
                         `).join('')}
@@ -1123,7 +1130,7 @@ class CardProbabilityRandomizer {
                     <div class="checkbox-grid">
                         ${Array.from({length: this.state.numDecks}, (_, i) => `
                             <div class="checkbox-item">
-                                <input type="checkbox" id="deck-${i}" checked data-deck="${i}">
+                                <input type="checkbox" id="deck-${i}" ${this.state.selectedDecks.includes(i) ? 'checked' : ''} data-deck="${i}">
                                 <label for="deck-${i}">Deck ${i + 1}</label>
                             </div>
                         `).join('')}
@@ -1528,7 +1535,7 @@ class CardProbabilityRandomizer {
         switch (this.state.probabilityMode) {
             case 'even-odd':
                 if (card.rank === 'Joker' || ['J', 'Q', 'K', 'A'].includes(card.rank)) {
-                    return value % 2 === 0 ? 0 : 1; // Treat A, J as odd (1, 11), Q, K as even (12, 13)
+                    return value % 2 === 0 ? 0 : 1;
                 }
                 return value % 2 === 0 ? 0 : 1;
                 
@@ -1973,6 +1980,12 @@ class CardProbabilityRandomizer {
             this.resizeHandler = null;
         }
         this.stopAutoFlip();
+        
+        // Remove injected styles
+        const styleElement = document.getElementById('card-randomizer-styles');
+        if (styleElement) {
+            styleElement.remove();
+        }
     }
 }
 
