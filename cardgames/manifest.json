@@ -73,9 +73,22 @@
       "thumbnail": "cardgames/multiplayer/go-fish-thumb.png",
       "featured": true,
       "addedDate": "2025-01-15"
+    },
+    {
+      "id": "probability-card-randomizer-v1",
+      "configPath": "cardgames/probability/card-randomizer.json",
+      "modulePath": "cardgames/probability/card-randomizer.js",
+      "thumbnail": "cardgames/probability/card-randomizer-thumb.png",
+      "featured": true,
+      "addedDate": "2025-01-15"
     }
   ],
   "categories": [
+    {
+      "id": "probability",
+      "name": "Probability & Math",
+      "icon": "📊"
+    },
     {
       "id": "solitaire",
       "name": "Solitaire Games",
