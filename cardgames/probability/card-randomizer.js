@@ -1,4 +1,3 @@
-// cardgames/probability/card-randomizer.js
 /**
  * Card Probability Randomizer
  * Interactive probability simulator using playing cards
