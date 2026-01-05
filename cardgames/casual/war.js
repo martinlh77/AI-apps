@@ -33,7 +33,8 @@ class WarGame {
       lastTouchDistance: 0,
       lastTouchCenter: { x: 0, y: 0 },
       isPinching: false,
-      isPanning: false
+      isPanning: false,
+      hintShown: false
     };
     
     this.resizeHandler = null;
@@ -59,10 +60,20 @@ class WarGame {
       message: 'Click Battle! to start'
     };
     
-    // Reset touch controls
-    this.touchControls.scale = 1;
-    this.touchControls.translateX = 0;
-    this.touchControls.translateY = 0;
+    // Reset touch controls but keep hintShown state
+    const hintWasShown = this.touchControls.hintShown;
+    this.touchControls = {
+      scale: 1,
+      minScale: 0.5,
+      maxScale: 3,
+      translateX: 0,
+      translateY: 0,
+      lastTouchDistance: 0,
+      lastTouchCenter: { x: 0, y: 0 },
+      isPinching: false,
+      isPanning: false,
+      hintShown: hintWasShown
+    };
     
     // Create and shuffle deck
     const allCards = this.engine.createCardArray(this.deck);
@@ -158,9 +169,10 @@ class WarGame {
     container.appendChild(content);
     gameBoard.appendChild(container);
     
-    // Show zoom controls hint on mobile
-    if (isMobile) {
+    // Show zoom controls hint on mobile (only once per session)
+    if (isMobile && !this.touchControls.hintShown) {
       this.showZoomHint(container);
+      this.touchControls.hintShown = true;
     }
   }
   
@@ -270,15 +282,19 @@ class WarGame {
     hint.textContent = '👆 Pinch to zoom • Pan with 2 fingers • Double-tap to reset';
     
     // Add fade-out animation
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes fadeOut {
-        0% { opacity: 1; }
-        70% { opacity: 1; }
-        100% { opacity: 0; }
-      }
-    `;
-    document.head.appendChild(style);
+    const styleId = 'war-game-fade-animation';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        @keyframes fadeOut {
+          0% { opacity: 1; }
+          70% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
     
     container.appendChild(hint);
     setTimeout(() => hint.remove(), 4000);
