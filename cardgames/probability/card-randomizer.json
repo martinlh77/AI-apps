@@ -5,12 +5,12 @@
     "name": "Card Probability Randomizer",
     "version": "1.0.0",
     "author": "Card Game Engine",
-    "description": "Interactive probability simulator using playing cards. Explore theoretical and experimental probability with customizable experiments.",
+    "description": "Interactive probability simulator using playing cards. Explore theoretical and experimental probability with customizable experiments supporting 1-8 decks.",
     "category": "probability",
     "difficulty": "medium",
     "estimatedPlayTime": "Unlimited",
     "thumbnail": "cardgames/probability/card-randomizer-thumb.png",
-    "tags": ["probability", "educational", "math", "statistics", "randomizer", "7th-grade", "interactive"]
+    "tags": ["probability", "educational", "math", "statistics", "randomizer", "7th-grade", "interactive", "multi-deck"]
   },
   
   "requirements": {
@@ -23,50 +23,111 @@
       "allowDuplicates": true,
       "requiresStandardDeck": true,
       "customDecksAllowed": true,
-      "maxDecks": 8
+      "maxDecks": 8,
+      "deckSelection": "Users can select from 1-8 decks and choose specific cards from each"
     },
     "cards": {
       "includeJokers": true,
       "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "Joker"],
       "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
       "totalCardsNeeded": 56,
-      "note": "Supports up to 56 cards per deck (52 standard + 4 jokers). Multiple decks can be combined."
+      "maxCardsInPlay": 448,
+      "note": "Supports 1-8 decks. Each deck has 52 standard cards + 4 jokers (one per suit). Maximum 448 cards (8 decks × 56 cards)."
     }
   },
   
   "instructions": {
-    "overview": "Explore probability concepts using playing cards. Run experiments, track results, and compare experimental probability to theoretical probability. Features an AI tutor to help explain concepts at a 7th-grade math level.",
+    "overview": "Explore probability concepts using playing cards. Run experiments with 1-8 decks, track results, and compare experimental probability to theoretical probability. Features an AI tutor to help explain concepts at a 7th-grade math level.",
     "setup": [
+      "Open Settings (⚙️) to configure your experiment",
       "Select how many decks to use (1-8)",
-      "Choose which cards to include in your experiment",
+      "Choose whether to include jokers",
+      "Select which cards to include using the Card Selection options:",
+      "  • All Cards - Use every card from selected decks",
+      "  • By Suit - Choose specific suits (hearts, diamonds, clubs, spades)",
+      "  • By Rank - Choose specific ranks (A, 2-10, J, Q, K)",
+      "  • By Deck - Select which of the 8 decks to use",
+      "  • Individual Cards - Pick specific cards from the target card grid",
       "Select a probability mode or preset experiment",
-      "Set the number of cards to flip and trials to run"
+      "Set the number of cards to flip per trial and total trials to run"
     ],
     "gameplay": [
-      "Use presets to explore common probability scenarios",
-      "Flip cards manually or run automated simulations",
-      "View results in the probability chart",
+      "Click 'Flip Cards' to manually draw cards one at a time",
+      "Click 'Auto Flip' to run multiple automated trials",
+      "Use 'Stop' button to halt auto-flip experiments",
+      "View real-time results in the probability chart at the bottom",
+      "Click 'New Round' to start tracking a new experimental round",
+      "Click 'Clear Results' to reset all data and start fresh",
+      "Click 'Shuffle Deck' to randomize the card order",
+      "Use Presets tab to explore common probability scenarios",
       "Ask the AI Tutor questions about your results",
-      "Use the AI Demo tab to see probability concepts explained visually"
+      "Use the AI Demo tab to see probability concepts explained visually",
+      "Compare your experimental results to the theoretical probability shown"
     ],
-    "winning": "This is an educational tool - there is no win condition. Success is measured by understanding probability concepts!",
+    "winning": "This is an educational tool - there is no win condition. Success is measured by understanding probability concepts and seeing how experimental results approach theoretical predictions!",
     "examples": [
       {
-        "title": "Even vs Odd",
-        "description": "What is the probability of drawing an even-numbered card?",
+        "title": "Single Deck - Even vs Odd",
+        "description": "What is the probability of drawing an even-numbered card? Use 1 deck to see basic probability.",
         "cards": ["hearts-2", "hearts-4", "hearts-6", "hearts-8", "hearts-10"]
       },
       {
-        "title": "Face Cards",
-        "description": "Probability of drawing a Jack, Queen, or King",
-        "cards": ["spades-jack", "spades-queen", "spades-king"]
+        "title": "Multi-Deck - Face Cards",
+        "description": "With 4 decks, what's the probability of drawing J, Q, or K? See how multiple decks affect outcomes.",
+        "cards": ["spades-jack", "spades-queen", "spades-king", "hearts-jack", "diamonds-queen"]
       },
       {
-        "title": "Specific Suit",
-        "description": "Probability of drawing a heart",
+        "title": "Deck Selection - Specific Suit",
+        "description": "Select only Deck 1 and Deck 3, then calculate probability of drawing hearts.",
         "cards": ["hearts-ace", "hearts-5", "hearts-10", "hearts-king"]
+      },
+      {
+        "title": "Multiple Decks - Red vs Black",
+        "description": "Use 8 decks to run a large experiment: what percentage are red cards?",
+        "cards": ["hearts-ace", "diamonds-queen", "clubs-king", "spades-jack"]
       }
     ]
+  },
+  
+  "features": {
+    "multiDeck": {
+      "enabled": true,
+      "minDecks": 1,
+      "maxDecks": 8,
+      "deckTracking": "Each card tracks which deck it came from",
+      "filtering": "Filter by specific deck numbers (e.g., only use decks 1, 3, and 5)"
+    },
+    "cardSelection": {
+      "modes": [
+        "all - Use all cards from all selected decks",
+        "suit - Filter by suit (hearts, diamonds, clubs, spades)",
+        "rank - Filter by rank (A, 2-10, J, Q, K, Joker)",
+        "deck - Choose which deck numbers to include",
+        "individual - Select specific cards using the target grid"
+      ]
+    },
+    "probabilityModes": [
+      "basic - Track individual card ranks",
+      "even-odd - Compare even-numbered vs odd-numbered cards",
+      "prime-composite - Identify prime vs composite number cards",
+      "face-nonface - Track face cards (J, Q, K) vs numbered cards",
+      "joker-nonjoker - Track jokers vs regular cards",
+      "suit - Compare all four suits",
+      "color - Red (hearts, diamonds) vs Black (clubs, spades)",
+      "high-low - High cards (8-K) vs Low cards (A-7)",
+      "specific - Track a specific target card"
+    ],
+    "aiFeatures": {
+      "tutor": "Ask probability questions and get 7th-grade level explanations",
+      "demo": "AI demonstrates probability concepts visually with cards",
+      "models": ["nova-micro", "qwen-coder", "mistral", "gemini-fast", "openai-fast", "grok"]
+    },
+    "dataTracking": {
+      "rounds": "Track multiple experimental rounds",
+      "percentages": "Automatic calculation of experimental probabilities",
+      "comparison": "Compare experimental results to theoretical probability",
+      "grandTotals": "Cumulative statistics across all rounds"
+    }
   },
   
   "ui": {
@@ -75,43 +136,77 @@
       {
         "id": "deck-area",
         "type": "pile",
-        "position": {"x": "left", "y": "top"}
+        "position": {"x": "left", "y": "top"},
+        "description": "Shows remaining cards in deck with count"
       },
       {
         "id": "flip-area",
         "type": "grid",
-        "position": {"x": "center", "y": "center"}
+        "position": {"x": "center", "y": "center"},
+        "description": "Displays flipped cards with animations"
       },
       {
         "id": "results-area",
-        "type": "grid",
-        "position": {"x": "right", "y": "top"}
+        "type": "table",
+        "position": {"x": "bottom", "y": "full-width"},
+        "description": "Real-time probability results table"
+      },
+      {
+        "id": "settings-modal",
+        "type": "overlay",
+        "description": "Configuration panel for deck and card selection"
       }
     ],
+    "tabs": [
+      "experiment - Main probability experiment interface",
+      "presets - Pre-configured probability scenarios",
+      "ai-demo - AI-powered probability demonstrations",
+      "tutor - Interactive AI math tutor for questions"
+    ],
     "animations": {
-      "dealSpeed": 200,
+      "dealSpeed": 300,
       "flipSpeed": 300,
+      "autoFlipDelay": 100,
       "celebrationOnWin": false
     }
   },
   
-  "probabilityModes": [
-    "even-odd",
-    "prime-composite",
-    "face-nonface",
-    "joker-nonjoker",
-    "suit",
-    "rank",
-    "straight",
-    "flush",
-    "pairs",
-    "three-of-kind",
-    "four-of-kind",
-    "consecutive",
-    "and-condition",
-    "or-condition",
-    "not-condition"
-  ],
+  "educationalStandards": {
+    "gradeLevel": "7th Grade",
+    "mathTopics": [
+      "Theoretical vs Experimental Probability",
+      "Sample Space",
+      "Independent Events",
+      "Law of Large Numbers",
+      "Fractions and Percentages",
+      "Data Collection and Analysis"
+    ],
+    "learningObjectives": [
+      "Understand the difference between theoretical and experimental probability",
+      "Calculate probabilities using fractions and percentages",
+      "Recognize how sample size affects experimental results",
+      "Apply probability concepts to real-world scenarios",
+      "Analyze data from multiple trials",
+      "Compare predictions to actual outcomes"
+    ]
+  },
+  
+  "technicalDetails": {
+    "api": {
+      "provider": "Pollinations.ai",
+      "endpoint": "https://gen.pollinations.ai/text",
+      "defaultKey": "pk_OIQlw5rh71ylmlqV",
+      "rateLimit": "Free tier with reasonable use"
+    },
+    "storage": {
+      "chatHistory": "localStorage (up to 4096 tokens)",
+      "experimentData": "In-memory (cleared on page refresh)"
+    },
+    "browser": {
+      "compatibility": "Modern browsers (Chrome, Firefox, Safari, Edge)",
+      "mobileSupport": "Responsive design with mobile optimizations"
+    }
+  },
   
   "gameLogicModule": "cardgames/probability/card-randomizer.js"
 }
