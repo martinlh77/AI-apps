@@ -1,6 +1,6 @@
 {
-  "version": "1.2.0",
-  "lastUpdated": "2025-01-15T18:00:00Z",
+  "version": "1.3.0",
+  "lastUpdated": "2025-01-15T20:00:00Z",
   "games": [
     {
       "id": "memory-classic-v1",
@@ -75,10 +75,42 @@
       "addedDate": "2025-01-15"
     },
     {
-      "id": "probability-card-randomizer-v1",
-      "configPath": "cardgames/probability/card-randomizer.json",
-      "modulePath": "cardgames/probability/card-randomizer.js",
-      "thumbnail": "cardgames/probability/card-randomizer-thumb.png",
+      "id": "probability-basic-experiment-v1",
+      "configPath": "cardgames/probability/basic-probability.json",
+      "modulePath": "cardgames/probability/basic-probability.js",
+      "thumbnail": "cardgames/probability/basic-experiment-thumb.png",
+      "featured": true,
+      "addedDate": "2025-01-15"
+    },
+    {
+      "id": "probability-presets-explorer-v1",
+      "configPath": "cardgames/probability/presets-explorer.json",
+      "modulePath": "cardgames/probability/presets-explorer.js",
+      "thumbnail": "cardgames/probability/presets-explorer-thumb.png",
+      "featured": true,
+      "addedDate": "2025-01-15"
+    },
+    {
+      "id": "probability-ai-demonstrator-v1",
+      "configPath": "cardgames/probability/ai-demonstrator.json",
+      "modulePath": "cardgames/probability/ai-demonstrator.js",
+      "thumbnail": "cardgames/probability/ai-demonstrator-thumb.png",
+      "featured": true,
+      "addedDate": "2025-01-15"
+    },
+    {
+      "id": "probability-ai-tutor-v1",
+      "configPath": "cardgames/probability/ai-tutor.json",
+      "modulePath": "cardgames/probability/ai-tutor.js",
+      "thumbnail": "cardgames/probability/ai-tutor-thumb.png",
+      "featured": true,
+      "addedDate": "2025-01-15"
+    },
+    {
+      "id": "probability-advanced-analyzer-v1",
+      "configPath": "cardgames/probability/advanced-analyzer.json",
+      "modulePath": "cardgames/probability/advanced-analyzer.js",
+      "thumbnail": "cardgames/probability/advanced-analyzer-thumb.png",
       "featured": true,
       "addedDate": "2025-01-15"
     }
