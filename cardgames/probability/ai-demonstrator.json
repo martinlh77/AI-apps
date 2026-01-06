@@ -1,0 +1,194 @@
+{
+  "gameId": "probability-ai-demonstrator-v1",
+  
+  "metadata": {
+    "name": "AI Probability Demonstrator",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Ask probability questions in natural language and watch the AI demonstrate the answer with actual cards. Perfect for visual learners!",
+    "category": "probability",
+    "difficulty": "easy",
+    "estimatedPlayTime": "Unlimited",
+    "thumbnail": "cardgames/probability/ai-demonstrator-thumb.png",
+    "tags": ["probability", "educational", "AI", "visual", "7th-grade", "interactive", "demo"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": false,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true
+    },
+    "cards": {
+      "includeJokers": true,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "Joker"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 56,
+      "note": "Uses AI to demonstrate probability concepts visually with cards"
+    }
+  },
+  
+  "instructions": {
+    "overview": "Type any probability question about playing cards and the AI will show you the relevant cards and explain the probability step-by-step at a 7th-grade level.",
+    "setup": [
+      "Choose an AI model (Nova Micro is fastest)",
+      "Look at the example questions for inspiration",
+      "Type your own probability question in the text box"
+    ],
+    "gameplay": [
+      "Type a probability question (e.g., 'What is the probability of drawing a red card?')",
+      "Click 'Demonstrate' to let the AI process your question",
+      "Watch as relevant cards appear on screen",
+      "Read the step-by-step explanation",
+      "See the theoretical probability calculation",
+      "Click 'Try This Experiment' to run it yourself",
+      "Click 'New Question' to start over"
+    ],
+    "winning": "Learn by asking questions! Success means understanding probability concepts through visual demonstrations and clear explanations.",
+    "examples": [
+      {
+        "title": "Simple Question",
+        "description": "What is the probability of drawing a red card?",
+        "cards": ["hearts-ace", "diamonds-queen"]
+      },
+      {
+        "title": "Specific Cards",
+        "description": "How likely am I to draw a face card?",
+        "cards": ["spades-jack", "hearts-queen", "diamonds-king"]
+      },
+      {
+        "title": "Complex Scenario",
+        "description": "If I draw 2 cards, what's the chance they're the same suit?",
+        "cards": ["hearts-2", "hearts-7", "hearts-king"]
+      },
+      {
+        "title": "Complement Event",
+        "description": "What's the probability of NOT drawing a spade?",
+        "cards": ["hearts-ace", "diamonds-5", "clubs-10"]
+      }
+    ]
+  },
+  
+  "features": {
+    "aiPowered": {
+      "provider": "Pollinations.ai",
+      "models": [
+        "Nova Micro (Fast)",
+        "Qwen Coder",
+        "Mistral",
+        "Gemini Fast",
+        "OpenAI Fast",
+        "Grok"
+      ],
+      "capabilities": [
+        "Natural language understanding",
+        "Card identification",
+        "Step-by-step explanations",
+        "7th-grade appropriate language"
+      ]
+    },
+    "visualDemonstration": {
+      "cardDisplay": "Shows up to 10 relevant cards visually",
+      "animation": "Cards appear one by one with smooth animations",
+      "highlighting": "Relevant cards are displayed prominently"
+    },
+    "explanations": {
+      "level": "7th grade mathematics",
+      "format": "Step-by-step with bold key terms",
+      "style": "Encouraging and friendly",
+      "examples": "Real-world analogies"
+    },
+    "exampleQuestions": [
+      "What is the probability of drawing a red card?",
+      "How likely am I to draw a face card?",
+      "What are my chances of getting an ace?",
+      "If I draw 2 cards, what's the chance they're the same suit?",
+      "What's the probability of NOT drawing a spade?",
+      "What's the chance of drawing a heart or a diamond?",
+      "How often will I draw an even-numbered card?",
+      "What's the probability of drawing a king?",
+      "What are the odds of drawing a card higher than 7?",
+      "How likely is it to draw a black face card?"
+    ]
+  },
+  
+  "ui": {
+    "layout": "single-column",
+    "zones": [
+      {
+        "id": "input-area",
+        "type": "textarea",
+        "description": "Large text input for questions"
+      },
+      {
+        "id": "demo-area",
+        "type": "display",
+        "description": "Visual card demonstration"
+      },
+      {
+        "id": "explanation-area",
+        "type": "text",
+        "description": "Step-by-step explanation"
+      },
+      {
+        "id": "probability-area",
+        "type": "calculation",
+        "description": "Theoretical probability display"
+      }
+    ],
+    "animations": {
+      "cardAppear": 400,
+      "fadeIn": 500,
+      "hover": 300
+    }
+  },
+  
+  "educationalStandards": {
+    "gradeLevel": "7th Grade",
+    "mathTopics": [
+      "Natural Language to Math Translation",
+      "Visual Probability Representation",
+      "Theoretical Probability Calculation",
+      "Favorable vs Total Outcomes",
+      "Fraction to Percentage Conversion",
+      "Real-World Probability Applications"
+    ],
+    "learningObjectives": [
+      "Ask probability questions in natural language",
+      "Understand visual representations of probability",
+      "See connections between cards and probability",
+      "Learn step-by-step probability calculations",
+      "Build intuition through AI demonstrations",
+      "Explore 'what if' scenarios freely"
+    ],
+    "aiLiteracy": [
+      "Understand how AI interprets questions",
+      "Learn to phrase questions clearly",
+      "See how AI explains mathematical concepts",
+      "Develop critical thinking about AI responses"
+    ]
+  },
+  
+  "technicalDetails": {
+    "api": {
+      "provider": "Pollinations.ai",
+      "endpoint": "https://gen.pollinations.ai/text",
+      "defaultKey": "pk_OIQlw5rh71ylmlqV",
+      "timeout": 30000,
+      "jsonMode": true
+    },
+    "errorHandling": {
+      "timeout": "30 second timeout with user-friendly message",
+      "parsing": "Attempts multiple JSON extraction methods",
+      "validation": "Checks for required fields in AI response",
+      "suggestions": "Provides example questions on error"
+    }
+  },
+  
+  "gameLogicModule": "cardgames/probability/ai-demonstrator.js"
+}

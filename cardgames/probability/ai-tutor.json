@@ -1,0 +1,197 @@
+{
+  "gameId": "probability-ai-tutor-v1",
+  
+  "metadata": {
+    "name": "AI Math Tutor (Probability)",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Your personal AI tutor for probability questions. Patient, encouraging, and always ready to explain concepts in different ways until they make sense!",
+    "category": "probability",
+    "difficulty": "easy",
+    "estimatedPlayTime": "Unlimited",
+    "thumbnail": "cardgames/probability/ai-tutor-thumb.png",
+    "tags": ["probability", "educational", "AI", "tutor", "chat", "7th-grade", "help"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 0,
+      "allowDuplicates": false,
+      "requiresStandardDeck": false,
+      "customDecksAllowed": false,
+      "note": "No deck needed - pure chat interface"
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": [],
+      "requiredSuits": [],
+      "totalCardsNeeded": 0,
+      "note": "This is a conversational AI tutor - no cards are used"
+    }
+  },
+  
+  "instructions": {
+    "overview": "Chat with an AI tutor who specializes in probability. Ask questions, get explanations, and learn at your own pace with a patient, encouraging tutor.",
+    "setup": [
+      "Choose an AI model (Nova Micro is fastest)",
+      "Look at the starter prompts for inspiration",
+      "Type your question in the chat box"
+    ],
+    "gameplay": [
+      "Type any probability question or concept you want to understand",
+      "Press Enter or click Send to ask your question",
+      "Read the tutor's response",
+      "Ask follow-up questions if you need more help",
+      "Copy responses if you want to save them",
+      "Click 'New Chat' to start a fresh conversation",
+      "Watch the token counter - start a new chat if it gets close to the limit"
+    ],
+    "winning": "Success means understanding probability concepts! The tutor will explain things in multiple ways until you get it. Don't be afraid to say 'I still don't understand' - that's what tutors are for!",
+    "examples": [
+      {
+        "title": "Basic Question",
+        "description": "What is probability?",
+        "cards": []
+      },
+      {
+        "title": "Specific Help",
+        "description": "How do I calculate probability with cards?",
+        "cards": []
+      },
+      {
+        "title": "Clarification",
+        "description": "I don't understand the difference between theoretical and experimental probability",
+        "cards": []
+      },
+      {
+        "title": "Deep Dive",
+        "description": "Can you explain sample space using a deck of cards?",
+        "cards": []
+      }
+    ]
+  },
+  
+  "features": {
+    "conversational": {
+      "contextWindow": "Remembers last 6 messages (3 exchanges)",
+      "maxTokens": 4096,
+      "tokenTracking": "Real-time token counter with warnings",
+      "personality": "Patient, encouraging, 7th-grade appropriate"
+    },
+    "aiCapabilities": {
+      "models": [
+        "Nova Micro (Fast)",
+        "Qwen Coder",
+        "Mistral",
+        "Gemini Fast",
+        "OpenAI Fast",
+        "Grok"
+      ],
+      "specialties": [
+        "Breaking down complex concepts",
+        "Multiple explanation approaches",
+        "Real-world analogies",
+        "Step-by-step guidance",
+        "Encouraging feedback"
+      ]
+    },
+    "interface": {
+      "welcomeScreen": "Starter prompts and feature highlights",
+      "chatHistory": "Full conversation display with timestamps",
+      "copyResponses": "Copy button on all tutor messages",
+      "formatting": "Bold, emphasis, and code formatting support",
+      "mobileOptimized": "Responsive design for all devices"
+    },
+    "starterPrompts": [
+      "What is probability?",
+      "How do I calculate probability with cards?",
+      "What's the difference between theoretical and experimental probability?",
+      "Explain sample space using a deck of cards",
+      "What are independent events?",
+      "How do I know if two events are dependent?",
+      "What does 'or' mean in probability?",
+      "What does 'and' mean in probability?",
+      "Why do we use fractions in probability?",
+      "How do I simplify probability fractions?"
+    ]
+  },
+  
+  "ui": {
+    "layout": "chat",
+    "zones": [
+      {
+        "id": "header",
+        "type": "controls",
+        "description": "Token counter, model selector, new chat button"
+      },
+      {
+        "id": "chat-area",
+        "type": "messages",
+        "description": "Scrollable conversation history"
+      },
+      {
+        "id": "input-area",
+        "type": "textarea",
+        "description": "Message input with send button"
+      }
+    ],
+    "animations": {
+      "messageSlide": 300,
+      "typing": 1400,
+      "bounce": 2000
+    }
+  },
+  
+  "educationalStandards": {
+    "gradeLevel": "7th Grade",
+    "mathTopics": [
+      "All probability concepts",
+      "Conversational learning",
+      "Adaptive explanations",
+      "Personalized help",
+      "Concept clarification",
+      "Problem-solving guidance"
+    ],
+    "learningObjectives": [
+      "Ask questions freely without judgment",
+      "Get patient, step-by-step explanations",
+      "Understand concepts at your own pace",
+      "Build confidence in probability",
+      "Develop mathematical communication skills",
+      "Learn to articulate confusion and ask for help"
+    ],
+    "teachingApproach": {
+      "socratic": "Asks checking questions to ensure understanding",
+      "multimodal": "Explains concepts in multiple ways",
+      "encouraging": "Celebrates progress and effort",
+      "patient": "Never rushes or makes students feel bad",
+      "adaptive": "Adjusts explanation style based on student needs"
+    }
+  },
+  
+  "technicalDetails": {
+    "api": {
+      "provider": "Pollinations.ai",
+      "endpoint": "https://gen.pollinations.ai/text",
+      "defaultKey": "pk_OIQlw5rh71ylmlqV",
+      "timeout": 30000
+    },
+    "tokenManagement": {
+      "estimation": "4 characters ≈ 1 token",
+      "warningAt": 3000,
+      "criticalAt": 3500,
+      "maxLimit": 4096,
+      "contextWindow": 6
+    },
+    "storage": {
+      "chatHistory": "In-memory (cleared on new chat)",
+      "persistence": "None (for privacy)"
+    }
+  },
+  
+  "gameLogicModule": "cardgames/probability/ai-tutor.js"
+}

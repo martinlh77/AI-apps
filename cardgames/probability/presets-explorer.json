@@ -1,0 +1,155 @@
+{
+  "gameId": "probability-presets-explorer-v1",
+  
+  "metadata": {
+    "name": "Probability Presets Explorer",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Explore 12+ pre-configured probability scenarios with one click. Perfect for 7th-grade students learning probability concepts through hands-on experiments.",
+    "category": "probability",
+    "difficulty": "easy",
+    "estimatedPlayTime": "Unlimited",
+    "thumbnail": "cardgames/probability/presets-explorer-thumb.png",
+    "tags": ["probability", "educational", "math", "7th-grade", "presets", "experiments"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": true,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true,
+      "maxDecks": 8
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52,
+      "note": "Different presets use different deck configurations. Some presets include jokers."
+    }
+  },
+  
+  "instructions": {
+    "overview": "Explore common probability scenarios with pre-configured experiments. Each preset automatically sets up the experiment for you - just click and start flipping cards!",
+    "setup": [
+      "Browse the preset cards on the left side",
+      "Each preset shows its difficulty level (Easy, Medium, Hard)",
+      "Click any preset card to load that experiment",
+      "Read the description and 'Why This Matters' sections",
+      "Look at the example cards to see what you're looking for"
+    ],
+    "gameplay": [
+      "Click 'Flip 1 Card' to draw one card at a time",
+      "Click 'Flip 10 Cards' to quickly run 10 trials",
+      "Click 'Flip 50 Cards' to run a larger experiment",
+      "Watch your results update in real-time",
+      "Compare your experimental results to the theoretical probability",
+      "Click 'Reset' to start the experiment over",
+      "Try different presets to explore various probability concepts"
+    ],
+    "winning": "Learn by exploring! Success means understanding how experimental results approach theoretical predictions. The more cards you flip, the closer you get to the expected probability!",
+    "examples": [
+      {
+        "title": "Even vs Odd",
+        "description": "Perfect for beginners - explore a simple 38.5% probability",
+        "cards": ["hearts-2", "hearts-4", "hearts-6"]
+      },
+      {
+        "title": "Face Cards",
+        "description": "See how rare J, Q, K cards are in the deck",
+        "cards": ["spades-jack", "spades-queen", "spades-king"]
+      },
+      {
+        "title": "Red OR Face",
+        "description": "Advanced concept - when EITHER condition is true",
+        "cards": ["hearts-2", "diamonds-queen", "clubs-jack"]
+      },
+      {
+        "title": "Multi-Deck",
+        "description": "See how probability stays the same even with more decks!",
+        "cards": ["hearts-ace", "diamonds-ace", "clubs-ace", "spades-ace"]
+      }
+    ]
+  },
+  
+  "features": {
+    "presets": [
+      "Even vs Odd Numbers",
+      "Prime Numbers",
+      "Face Cards (J, Q, K)",
+      "Red vs Black",
+      "Specific Suit (Hearts)",
+      "Drawing an Ace",
+      "High Cards (8-K)",
+      "Drawing a Joker",
+      "NOT a Face Card",
+      "Hearts AND Face Card",
+      "Red OR Face Card",
+      "Multi-Deck Experiment"
+    ],
+    "quickFlip": {
+      "options": [1, 10, 50],
+      "description": "Flip 1, 10, or 50 cards with a single click"
+    },
+    "visualResults": {
+      "bars": "Color-coded bar charts show your results",
+      "comparison": "Real-time comparison to theoretical probability",
+      "accuracy": "Encouraging messages based on how close you are"
+    },
+    "educational": {
+      "whyItMatters": "Each preset explains why the concept is important",
+      "realWorld": "Real-world examples for every probability scenario",
+      "exampleCards": "Visual examples of what to look for",
+      "difficulty": "Color-coded difficulty levels (Easy/Medium/Hard)"
+    }
+  },
+  
+  "ui": {
+    "layout": "split-panel",
+    "zones": [
+      {
+        "id": "presets-panel",
+        "type": "list",
+        "position": "left",
+        "description": "Scrollable list of preset experiments"
+      },
+      {
+        "id": "experiment-panel",
+        "type": "active",
+        "position": "right",
+        "description": "Active experiment with controls and results"
+      }
+    ],
+    "animations": {
+      "cardFlip": 300,
+      "resultUpdate": 500,
+      "presetHover": 200
+    }
+  },
+  
+  "educationalStandards": {
+    "gradeLevel": "7th Grade",
+    "mathTopics": [
+      "Theoretical vs Experimental Probability",
+      "Sample Space and Outcomes",
+      "Compound Events (AND/OR)",
+      "Complement (NOT) Events",
+      "Law of Large Numbers",
+      "Fractions and Percentages"
+    ],
+    "learningObjectives": [
+      "Understand pre-defined probability scenarios",
+      "Compare experimental results to theoretical predictions",
+      "See how trial count affects accuracy",
+      "Explore real-world applications of probability",
+      "Build intuition about rare vs common events"
+    ]
+  },
+  
+  "gameLogicModule": "cardgames/probability/presets-explorer.js"
+}

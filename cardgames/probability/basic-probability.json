@@ -1,0 +1,101 @@
+{
+  "gameId": "probability-basic-experiment-v1",
+  
+  "metadata": {
+    "name": "Basic Probability Experiment",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Simple probability simulator for 7th-grade students. Explore experimental vs theoretical probability with customizable experiments.",
+    "category": "probability",
+    "difficulty": "easy",
+    "estimatedPlayTime": "Unlimited",
+    "thumbnail": "cardgames/probability/basic-experiment-thumb.png",
+    "tags": ["probability", "educational", "math", "7th-grade", "experiment"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": true,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true,
+      "maxDecks": 8
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52,
+      "note": "Supports 1-8 decks. Jokers optional."
+    }
+  },
+  
+  "instructions": {
+    "overview": "Run probability experiments using playing cards. Track results and compare experimental probability to theoretical predictions. Perfect for 7th-grade math students!",
+    "setup": [
+      "Click the Settings ⚙️ button to configure your experiment",
+      "Choose how many decks to use (1-8)",
+      "Decide whether to include jokers",
+      "Select a probability mode",
+      "Set how many cards to flip per trial"
+    ],
+    "gameplay": [
+      "Click 'Flip Cards' to manually draw cards",
+      "Click 'Auto Flip' to run multiple trials automatically",
+      "Watch as results appear in the table at the bottom",
+      "Compare your results to the theoretical probability",
+      "Click 'New Round' to start tracking a new round",
+      "Click 'Clear Results' to reset all data",
+      "Click 'Shuffle' to randomize the deck"
+    ],
+    "winning": "This is an educational tool with no win condition. Success is understanding how experimental results approach theoretical predictions with more trials!",
+    "examples": [
+      {
+        "title": "Even vs Odd",
+        "description": "What's the probability of drawing an even-numbered card?",
+        "cards": ["hearts-2", "hearts-4", "hearts-6", "hearts-8", "hearts-10"]
+      },
+      {
+        "title": "Face Cards",
+        "description": "How likely are you to draw a Jack, Queen, or King?",
+        "cards": ["spades-jack", "spades-queen", "spades-king"]
+      },
+      {
+        "title": "Red vs Black",
+        "description": "Compare red and black card frequencies",
+        "cards": ["hearts-ace", "diamonds-queen", "clubs-king", "spades-jack"]
+      }
+    ]
+  },
+  
+  "ui": {
+    "layout": "custom",
+    "zones": [
+      {
+        "id": "deck-area",
+        "type": "pile",
+        "description": "Shows remaining cards"
+      },
+      {
+        "id": "flip-area",
+        "type": "grid",
+        "description": "Displays flipped cards"
+      },
+      {
+        "id": "results-area",
+        "type": "table",
+        "description": "Real-time probability results"
+      }
+    ],
+    "animations": {
+      "flipSpeed": 300,
+      "celebrationOnWin": false
+    }
+  },
+  
+  "gameLogicModule": "cardgames/probability/basic-probability.js"
+}

@@ -1,0 +1,228 @@
+{
+  "gameId": "probability-advanced-analyzer-v1",
+  
+  "metadata": {
+    "name": "Advanced Multi-Deck Analyzer",
+    "version": "1.0.0",
+    "author": "Card Game Engine",
+    "description": "Professional-grade probability analysis tool supporting 1-8 decks with advanced filtering, statistics, and data export. For serious probability exploration.",
+    "category": "probability",
+    "difficulty": "hard",
+    "estimatedPlayTime": "Unlimited",
+    "thumbnail": "cardgames/probability/advanced-analyzer-thumb.png",
+    "tags": ["probability", "educational", "advanced", "multi-deck", "statistics", "analysis", "export", "professional"]
+  },
+  
+  "requirements": {
+    "playerCount": {
+      "min": 1,
+      "max": 1
+    },
+    "decks": {
+      "count": 1,
+      "allowDuplicates": true,
+      "requiresStandardDeck": true,
+      "customDecksAllowed": true,
+      "maxDecks": 8
+    },
+    "cards": {
+      "includeJokers": false,
+      "requiredCards": ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"],
+      "requiredSuits": ["hearts", "diamonds", "clubs", "spades"],
+      "totalCardsNeeded": 52,
+      "maxCardsInPlay": 448,
+      "note": "Supports 1-8 decks with advanced filtering and tracking. Maximum 448 cards (8 decks × 56 cards with jokers)."
+    }
+  },
+  
+  "instructions": {
+    "overview": "The most powerful probability tool in the suite. Configure multiple decks, apply complex filters, track detailed statistics, and export your experimental data. Perfect for advanced students ready to dig deep into probability.",
+    "setup": [
+      "Configure your experiment in the left sidebar",
+      "Select how many decks to use (1-8)",
+      "Choose which specific decks to include",
+      "Apply filters (by suit, rank, deck, or individual cards)",
+      "Select a probability tracking mode",
+      "Toggle Expert Mode for advanced features"
+    ],
+    "gameplay": [
+      "Click 'Flip' to manually draw cards",
+      "Use 'Auto Flip' to run automated experiments",
+      "Adjust speed (Slow/Medium/Fast) for auto-flip",
+      "Use Pause/Resume during auto-flip experiments",
+      "Click 'New Round' to start tracking a new experimental round",
+      "Watch deck-source badges on cards (shows which deck each card came from)",
+      "Monitor the results table for real-time statistics",
+      "In Expert Mode: view deck source charts, streak analysis, and statistical tests",
+      "Export your data as CSV or JSON for further analysis"
+    ],
+    "winning": "Master probability analysis! Success means understanding complex multi-deck scenarios, interpreting statistical data, and drawing valid conclusions from your experiments.",
+    "examples": [
+      {
+        "title": "8-Deck Casino Simulation",
+        "description": "Use all 8 decks to simulate casino blackjack shoe. Track Ace probability.",
+        "cards": ["hearts-ace", "diamonds-ace", "clubs-ace", "spades-ace"]
+      },
+      {
+        "title": "Deck Comparison",
+        "description": "Use decks 1 and 3 only. Filter for face cards. Compare theoretical vs experimental.",
+        "cards": ["hearts-jack", "diamonds-queen", "clubs-king"]
+      },
+      {
+        "title": "Individual Card Tracking",
+        "description": "Track specific target cards across multiple decks. See which deck they come from.",
+        "cards": ["spades-ace", "hearts-ace"]
+      },
+      {
+        "title": "Statistical Analysis",
+        "description": "Run 1000+ trials. Use Expert Mode to see chi-square test and confidence intervals.",
+        "cards": ["hearts-2", "diamonds-5", "clubs-9", "spades-king"]
+      }
+    ]
+  },
+  
+  "features": {
+    "multiDeck": {
+      "maxDecks": 8,
+      "deckSelection": "Select specific deck numbers to include",
+      "deckTracking": "Each card displays which deck it came from",
+      "deckVisualization": "Separate deck piles with color-coding",
+      "deckSourceAnalysis": "Chart showing which decks cards are coming from"
+    },
+    "advancedFiltering": {
+      "modes": [
+        "All Cards - Use everything from selected decks",
+        "By Suit - Filter to specific suits",
+        "By Rank - Filter to specific ranks",
+        "By Deck - Select which deck numbers to use",
+        "Individual Cards - Select specific cards from target grid",
+        "Custom Filter - Define your own filtering rules"
+      ],
+      "combinations": "Apply multiple filters simultaneously"
+    },
+    "probabilityModes": [
+      "Basic (Individual Ranks)",
+      "Even vs Odd",
+      "Prime vs Composite",
+      "Face Cards vs Non-Face",
+      "Jokers vs Non-Jokers",
+      "By Suit",
+      "Red vs Black",
+      "High (8-K) vs Low (A-7)",
+      "By Deck Source (tracks which deck)",
+      "Custom Categories"
+    ],
+    "tracking": {
+      "multipleRounds": "Track separate experimental rounds",
+      "grandTotals": "Cumulative statistics across all rounds",
+      "roundByRound": "Individual round breakdown",
+      "realTime": "Live updating as you flip cards"
+    },
+    "expertMode": {
+      "deckSourceChart": "Visualize which decks cards are coming from",
+      "streakAnalysis": "Identify and track streaks in results",
+      "statisticalTests": "Chi-square test for deck fairness",
+      "confidenceIntervals": "Statistical confidence in results",
+      "targetCardTracking": "Follow specific cards across decks"
+    },
+    "dataExport": {
+      "csv": "Export results table to CSV for Excel/Sheets",
+      "json": "Export complete experiment data with metadata",
+      "screenshot": "Capture results table as image",
+      "metadata": "Includes experiment configuration in exports"
+    },
+    "performance": {
+      "speedControl": "Slow/Medium/Fast auto-flip speeds",
+      "pauseResume": "Pause and resume long experiments",
+      "efficientRendering": "Handles 10,000+ flips smoothly",
+      "cardLimit": "Shows last 20 flipped cards to prevent clutter"
+    }
+  },
+  
+  "ui": {
+    "layout": "three-panel",
+    "zones": [
+      {
+        "id": "left-sidebar",
+        "type": "configuration",
+        "collapsible": true,
+        "description": "Deck configuration and filtering options"
+      },
+      {
+        "id": "center-panel",
+        "type": "experiment",
+        "description": "Main experiment interface with controls"
+      },
+      {
+        "id": "right-panel",
+        "type": "analytics",
+        "expertOnly": true,
+        "description": "Advanced analytics and export tools"
+      },
+      {
+        "id": "results-table",
+        "type": "data",
+        "sticky": true,
+        "description": "Comprehensive results table at bottom"
+      }
+    ],
+    "animations": {
+      "cardFlip": 300,
+      "autoFlipSlow": 300,
+      "autoFlipMedium": 100,
+      "autoFlipFast": 30
+    }
+  },
+  
+  "educationalStandards": {
+    "gradeLevel": "7th-8th Grade (Advanced)",
+    "mathTopics": [
+      "Multi-Deck Probability",
+      "Complex Sample Spaces",
+      "Statistical Analysis",
+      "Chi-Square Tests",
+      "Confidence Intervals",
+      "Data Collection and Analysis",
+      "Experimental Design",
+      "Independent vs Dependent Events"
+    ],
+    "learningObjectives": [
+      "Understand how multiple decks affect probability",
+      "Design and execute complex probability experiments",
+      "Apply advanced filtering to isolate specific scenarios",
+      "Interpret statistical tests and results",
+      "Export and analyze data in external tools",
+      "Compare multi-deck to single-deck probabilities",
+      "Track card sources in multi-deck scenarios",
+      "Draw valid conclusions from large datasets"
+    ],
+    "advancedConcepts": {
+      "deckDependency": "How drawing from deck 1 vs deck 2 affects results",
+      "sampleSizeEffects": "Law of large numbers with massive datasets",
+      "statisticalSignificance": "When results are meaningful vs random",
+      "experimentalDesign": "Planning complex multi-variable experiments"
+    }
+  },
+  
+  "technicalDetails": {
+    "performance": {
+      "maxCards": 448,
+      "maxFlipsPerSession": 100000,
+      "efficientRendering": "Only displays last 20 cards",
+      "memoryManagement": "Efficient storage of large datasets"
+    },
+    "dataStructures": {
+      "deckTracking": "Each card has deckIndex and deckColor",
+      "roundStorage": "Array of round objects with category counts",
+      "statistics": "Object tracking streaks, sources, time-series"
+    },
+    "export": {
+      "csvFormat": "Standard CSV with headers",
+      "jsonFormat": "Complete experiment state with metadata",
+      "encoding": "UTF-8",
+      "fileNaming": "probability-experiment-[timestamp]"
+    }
+  },
+  
+  "gameLogicModule": "cardgames/probability/advanced-analyzer.js"
+}
