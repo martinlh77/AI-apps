@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Middle School Calculator</title>
+    <title>Multi-Function Calculator</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         /* Apply Inter font and basic styling */
         body {
@@ -20,618 +23,471 @@
             box-sizing: border-box;
         }
 
-        .calculator-container {
-            @apply bg-white p-8 rounded-3xl shadow-2xl max-w-xl w-full flex flex-col items-center;
-            border: 3px solid #94a3b8; /* Softer gray border */
-        }
-
-        .display-container {
-            @apply mb-4 w-full;
-        }
-
-        #display {
-            /* Now allows typing directly */
-            @apply w-full text-right bg-blue-50 text-blue-900 text-4xl p-4 rounded-xl border-2 border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner; /* Added inner shadow for depth */
-            min-height: 80px;
-            box-sizing: border-box;
-        }
-
-        .button-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
-            gap: 0.75rem; /* Equivalent to Tailwind's gap-3 */
-            width: 100%;
-        }
-
-        .calc-button {
-            @apply p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md; /* Stronger shadow */
-            min-width: 60px;
-            min-height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            user-select: none;
-            cursor: pointer;
-            border: 1px solid; /* Added border to all calculator buttons */
-        }
-
-        .number-button, .decimal-button {
-            @apply bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner;
-        }
-
-        .operator-button {
-            @apply bg-purple-200 text-purple-800 border-purple-300 hover:bg-purple-300 active:bg-purple-400 active:shadow-inner;
-        }
-
-        .function-button {
-            @apply bg-green-200 text-green-800 border-green-300 hover:bg-green-300 active:bg-green-400 active:shadow-inner;
-        }
-
-        .clear-button {
-            @apply bg-red-200 text-red-800 border-red-300 hover:bg-red-300 active:bg-red-400 active:shadow-inner;
-        }
-
-        .equal-button {
-            @apply bg-blue-600 text-white border-blue-700 col-span-2 hover:bg-blue-700 active:bg-blue-800 active:shadow-inner;
-        }
-
-        .menu-container {
-            @apply w-full mt-6 p-5 rounded-2xl shadow-xl border-2; /* Base styling, specific colors added per category */
-        }
-
-        /* Specific Menu Container Colors */
-        #percentMenuContainer {
-            @apply bg-teal-50 border-teal-200;
-        }
-        #fractionMenuContainer {
-            @apply bg-emerald-50 border-emerald-200;
-        }
-        #geometryMenuContainer {
-            @apply bg-rose-50 border-rose-200;
-        }
-        #conversionMenuContainer {
-            @apply bg-orange-50 border-orange-200;
-        }
-        #statisticsMenuContainer {
-            @apply bg-indigo-50 border-indigo-200;
-        }
-
-
-        .menu-header {
-            @apply text-xl font-bold p-3 rounded-lg cursor-pointer flex justify-between items-center mb-4 border-2 transition-colors duration-200; /* Added padding, rounded corners, border for clickable area, transition */
-        }
-        /* Specific Menu Header Text, Background, and Border Colors */
-        #percentMenuContainer .menu-header { @apply bg-teal-300 text-teal-900 border-teal-500 hover:bg-teal-400; }
-        #fractionMenuContainer .menu-header { @apply bg-emerald-300 text-emerald-900 border-emerald-500 hover:bg-emerald-400; }
-        #geometryMenuContainer .menu-header { @apply bg-rose-300 text-rose-900 border-rose-500 hover:bg-rose-400; }
-        #conversionMenuContainer .menu-header { @apply bg-orange-300 text-orange-900 border-orange-500 hover:bg-orange-400; }
-        #statisticsMenuContainer .menu-header { @apply bg-indigo-300 text-indigo-900 border-indigo-500 hover:bg-indigo-400; }
-
-
-        .menu-header span {
-            @apply transition-transform duration-200;
-        }
-        .menu-header.expanded span {
-            transform: rotate(90deg);
-        }
-
-        .menu-content {
-            @apply grid gap-4 overflow-y-auto max-h-[750px] p-2 pb-12;
-        }
-
-        .menu-section {
-            @apply bg-white p-5 rounded-xl border-2; /* Base styling, specific colors will override */
-        }
-        /* Specific Menu Section Border Colors */
-        #percentMenuContainer .menu-section { @apply border-teal-100; }
-        #fractionMenuContainer .menu-section { @apply border-emerald-100; }
-        #geometryMenuContainer .menu-section { @apply border-rose-100; }
-        #conversionMenuContainer .menu-section { @apply border-orange-100; }
-        #statisticsMenuContainer .menu-section { @apply border-indigo-100; }
-
-
-        .menu-section label {
-            @apply block text-sm font-medium text-gray-700 mb-1;
-        }
-        .menu-section input[type="number"], .menu-section select, .menu-section input[type="text"] {
-            @apply mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500;
-        }
-        /* Styling for general menu buttons - enhanced */
-        .menu-button {
-            @apply mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700;
-            cursor: pointer;
-        }
-        .menu-button-secondary {
-             @apply mt-3 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 active:bg-gray-500 transition-colors duration-200 shadow-md border border-gray-400;
-             cursor: pointer;
-        }
-
-        .menu-section .result {
-            /* Enhanced for outlining, different colors, darker, and text box appearance */
-            @apply mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl;
-            min-height: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: flex-start;
-            word-break: break-all;
-        }
-        /* Specific Result Box Colors - made slightly stronger */
-        #percentMenuContainer .result { @apply bg-teal-400 text-teal-950 border-teal-700; }
-        #fractionMenuContainer .result { @apply bg-emerald-400 text-emerald-950 border-emerald-700; }
-        #geometryMenuContainer .result { @apply bg-rose-400 text-rose-950 border-rose-700; }
-        #conversionMenuContainer .result { @apply bg-orange-400 text-orange-950 border-orange-700; }
-        #statisticsMenuContainer .result { @apply bg-indigo-400 text-indigo-950 border-indigo-700; }
-
-
-        .menu-section .result.error {
-            @apply bg-red-200 text-red-900 border-red-500;
-        }
-
-        /* Fraction specific styles */
-        .fraction-input-group {
-            @apply grid grid-cols-3 gap-2 items-end;
-        }
-        .fraction-input-group input {
-            @apply text-center;
-        }
-        .fraction-input-group .separator {
-            @apply text-2xl font-bold;
-        }
-        .fraction-result-display {
-            @apply mt-2 text-center text-lg font-bold;
-        }
-        /* Fraction Result Display Color */
-        #fractionMenuContainer .fraction-result-display { @apply text-emerald-800; }
-
-
-        /* Statistics table styling for deviations */
+        /* Custom styles for deviation table */
         .deviation-table {
-            @apply w-full border-collapse text-sm;
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9rem;
         }
         .deviation-table th, .deviation-table td {
-            @apply py-2 px-3 border;
+            border: 1px solid #e2e8f0; /* Tailwind gray-200 */
+            padding: 8px;
+            text-align: left;
         }
-        /* Statistics Table Colors */
-        #statisticsMenuContainer .deviation-table th { @apply bg-indigo-200 text-indigo-800 font-bold; border-indigo-300; }
-        #statisticsMenuContainer .deviation-table td { @apply border-indigo-200; }
-        #statisticsMenuContainer .deviation-table tr:nth-child(even) {
-            @apply bg-indigo-50;
+        .deviation-table thead {
+            background-color: #c7d2fe; /* indigo-200 */
         }
-        /* Style for statistics result paragraphs to ensure consistent spacing */
-        #resultStats p {
-            margin-bottom: 0.5rem;
-            line-height: 1.2;
+        .deviation-table th {
+            font-weight: 600;
+            color: #312e81; /* indigo-900 */
         }
-        #resultStats p:last-of-type {
-            margin-bottom: 0;
+        .deviation-table td {
+            background-color: #ffffff;
+            color: #4a5568; /* Tailwind gray-700 */
+        }
+        .deviation-table tr:nth-child(even) {
+            background-color: #e0e7ff; /* indigo-100 */
+        }
+        /* Specific styling for error messages in result boxes */
+        .error {
+            border-color: #ef4444 !important; /* Red-500 */
+            background-color: #fee2e2 !important; /* Red-100 */
+            color: #dc2626 !important; /* Red-600 */
+        }
+        .word-break-break-all {
+            word-break: break-all;
         }
     </style>
 </head>
 <body>
-    <div class="calculator-container">
-        <!-- Display -->
-        <div class="display-container">
-            <!-- Input is now editable -->
-            <input type="text" id="display" placeholder="0">
-        </div>
-
-        <!-- Main Calculator Buttons -->
-        <div class="button-grid">
-            <button class="calc-button clear-button" id="clear-btn">AC</button>
-            <button class="calc-button function-button" id="bksp-btn">BKSP</button>
-            <button class="calc-button function-button" id="toggle-sign-btn">+/-</button>
-            <button class="calc-button operator-button" id="divide-btn">÷</button>
-
-            <button class="calc-button number-button" id="seven-btn">7</button>
-            <button class="calc-button number-button" id="eight-btn">8</button>
-            <button class="calc-button number-button" id="nine-btn">9</button>
-            <button class="calc-button operator-button" id="multiply-btn">×</button>
-
-            <button class="calc-button number-button" id="four-btn">4</button>
-            <button class="calc-button number-button" id="five-btn">5</button>
-            <button class="calc-button number-button" id="six-btn">6</button>
-            <button class="calc-button operator-button" id="subtract-btn">-</button>
-
-            <button class="calc-button number-button" id="one-btn">1</button>
-            <button class="calc-button number-button" id="two-btn">2</button>
-            <button class="calc-button number-button" id="three-btn">3</button>
-            <button class="calc-button operator-button" id="add-btn">+</button>
-
-            <button class="calc-button number-button col-span-1" id="zero-btn">0</button>
-            <button class="calc-button decimal-button" id="decimal-btn">.</button>
-            <button class="calc-button function-button" id="pi-btn">π</button>
-            <button class="calc-button function-button" id="exponent-btn">xʸ</button>
-
-            <button class="calc-button equal-button col-span-2" id="equals-btn">=</button>
-        </div>
-
-        <!-- Percent Equations Menu -->
-        <div class="menu-container" id="percentMenuContainer">
-            <div class="menu-header" id="percent-menu-header">
-                Percent Equations <span id="percentToggleArrow">▶</span>
+    <div class="flex flex-col items-center min-h-screen p-5 bg-f0f4f8 font-inter">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-xl w-full flex flex-col items-center border-4 border-slate-400">
+            <!-- Display -->
+            <div class="mb-4 w-full">
+                <input type="text" id="display" placeholder="0" 
+                    class="w-full text-right bg-blue-50 text-blue-900 text-4xl p-4 rounded-xl border-2 border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner min-h-[80px] box-border">
             </div>
-            <div id="percentMenu" class="menu-content hidden">
-                <div class="menu-section">
-                    <h3 class="font-medium text-teal-600 mb-2">Find a Percent of X</h3>
-                    <label for="percentP1">Percent (P):</label>
-                    <input type="number" id="percentP1" class="mb-2" placeholder="e.g., 20">
-                    <label for="percentX1">Of X:</label>
-                    <input type="number" id="percentX1" placeholder="e.g., 100">
-                    <button class="menu-button" id="calc-percent1-btn">Calculate</button>
-                    <div id="resultPercent1" class="result mt-2"></div>
-                </div>
-                <div class="menu-section">
-                    <h3 class="font-medium text-teal-600 mb-2">What Percent of N is X?</h3>
-                    <label for="percentX2">X:</label>
-                    <input type="number" id="percentX2" class="mb-2" placeholder="e.g., 20">
-                    <label for="percentN2">Of N:</label>
-                    <input type="number" id="percentN2" placeholder="e.g., 100">
-                    <button class="menu-button" id="calc-percent2-btn">Calculate</button>
-                    <div id="resultPercent2" class="result mt-2"></div>
-                </div>
-                <div class="menu-section">
-                    <h3 class="font-medium text-teal-600 mb-2">If X is P% of What Number?</h3>
-                    <label for="percentX3">X:</label>
-                    <input type="number" id="percentX3" class="mb-2" placeholder="e.g., 20">
-                    <label for="percentP3">Percent (P):</label>
-                    <input type="number" id="percentP3" placeholder="e.g., 20">
-                    <button class="menu-button" id="calc-percent3-btn">Calculate</button>
-                    <div id="resultPercent3" class="result mt-2"></div>
-                </div>
-                <button class="menu-button-secondary w-full" id="reset-percent-btn">Reset Percent Equations</button>
-            </div>
-        </div>
 
-        <!-- Fraction Calculator Menu -->
-        <div class="menu-container" id="fractionMenuContainer">
-            <div class="menu-header" id="fraction-menu-header">
-                Fraction Calculator <span id="fractionToggleArrow">▶</span>
+            <!-- Main Calculator Buttons -->
+            <div class="grid grid-cols-4 gap-3 w-full mb-4">
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-red-300 bg-red-200 text-red-800 hover:bg-red-300 active:bg-red-400 active:shadow-inner" id="clear-btn">AC</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-green-300 bg-green-200 text-green-800 hover:bg-green-300 active:bg-green-400 active:shadow-inner" id="bksp-btn">BKSP</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-green-300 bg-green-200 text-green-800 hover:bg-green-300 active:bg-green-400 active:shadow-inner" id="toggle-sign-btn">+/-</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-purple-300 bg-purple-200 text-purple-800 hover:bg-purple-300 active:bg-purple-400 active:shadow-inner" id="divide-btn">÷</button>
+
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner" id="seven-btn">7</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner" id="eight-btn">8</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner" id="nine-btn">9</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-purple-300 bg-purple-200 text-purple-800 hover:bg-purple-300 active:bg-purple-400 active:shadow-inner" id="multiply-btn">×</button>
+
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner" id="four-btn">4</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner" id="five-btn">5</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner" id="six-btn">6</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-purple-300 bg-purple-200 text-purple-800 hover:bg-purple-300 active:bg-purple-400 active:shadow-inner" id="subtract-btn">-</button>
+
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner" id="one-btn">1</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner" id="two-btn">2</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner" id="three-btn">3</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-purple-300 bg-purple-200 text-purple-800 hover:bg-purple-300 active:bg-purple-400 active:shadow-inner" id="add-btn">+</button>
+
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner col-span-1" id="zero-btn">0</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-blue-200 bg-blue-100 text-blue-800 hover:bg-blue-200 active:bg-blue-300 active:shadow-inner" id="decimal-btn">.</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-green-300 bg-green-200 text-green-800 hover:bg-green-300 active:bg-green-400 active:shadow-inner" id="pi-btn">π</button>
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer border border-green-300 bg-green-200 text-green-800 hover:bg-green-300 active:bg-green-400 active:shadow-inner" id="exponent-btn">xʸ</button>
+                
+                <button class="p-4 text-xl font-semibold rounded-xl transition-all duration-200 ease-in-out shadow-md min-w-[60px] min-h-[60px] flex justify-center items-center select-none cursor-pointer col-span-2 bg-blue-600 text-white border-blue-700 hover:bg-blue-700 active:bg-blue-800 active:shadow-inner" id="equals-btn">=</button>
             </div>
-            <div id="fractionMenu" class="menu-content hidden">
-                <div class="menu-section">
-                    <h3 class="font-medium text-emerald-600 mb-2">Fraction 1</h3>
-                    <div class="fraction-input-group">
-                        <div>
-                            <label for="f1_whole">Whole</label>
-                            <input type="number" id="f1_whole" placeholder="0">
-                        </div>
-                        <div class="text-2xl text-gray-400 font-extrabold flex flex-col justify-center items-center h-full">
-                            <span class="flex-grow"></span> <!-- Push numerator up -->
-                            <span>/</span>
-                            <span class="flex-grow"></span> <!-- Push denominator down -->
-                        </div>
-                        <div>
-                            <label for="f1_numerator">Numerator</label>
-                            <input type="number" id="f1_numerator" placeholder="1">
-                        </div>
-                        <div></div> <!-- Empty for alignment -->
-                        <div>
-                            <label for="f1_denominator">Denominator</label>
-                            <input type="number" id="f1_denominator" placeholder="2">
+
+            <!-- Percent Equations Menu -->
+            <div class="w-full mt-6 p-5 rounded-2xl shadow-xl border-2 bg-teal-50 border-teal-200" id="percentMenuContainer">
+                <div class="menu-header text-xl font-bold p-3 rounded-lg cursor-pointer flex justify-between items-center mb-4 border-2 transition-colors duration-200 bg-teal-300 text-teal-900 border-teal-500 hover:bg-teal-400" id="percent-menu-header">
+                    Percent Equations <span id="percentToggleArrow">▶</span>
+                </div>
+                <div id="percentMenu" class="menu-content hidden grid gap-4 overflow-y-auto max-h-[750px] p-2 pb-12">
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-teal-100">
+                        <h3 class="font-medium text-teal-600 mb-2">Find a Percent of X</h3>
+                        <label for="percentP1" class="block text-sm font-medium text-gray-700 mb-1">Percent (P):</label>
+                        <input type="number" id="percentP1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 20">
+                        <label for="percentX1" class="block text-sm font-medium text-gray-700 mb-1">Of X:</label>
+                        <input type="number" id="percentX1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 100">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="calc-percent1-btn">Calculate</button>
+                        <div id="resultPercent1" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-teal-400 text-teal-950 border-teal-700"></div>
+                    </div>
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-teal-100">
+                        <h3 class="font-medium text-teal-600 mb-2">What Percent of N is X?</h3>
+                        <label for="percentX2" class="block text-sm font-medium text-gray-700 mb-1">X:</label>
+                        <input type="number" id="percentX2" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 20">
+                        <label for="percentN2" class="block text-sm font-medium text-gray-700 mb-1">Of N:</label>
+                        <input type="number" id="percentN2" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 100">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="calc-percent2-btn">Calculate</button>
+                        <div id="resultPercent2" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-teal-400 text-teal-950 border-teal-700"></div>
+                    </div>
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-teal-100">
+                        <h3 class="font-medium text-teal-600 mb-2">If X is P% of What Number?</h3>
+                        <label for="percentX3" class="block text-sm font-medium text-gray-700 mb-1">X:</label>
+                        <input type="number" id="percentX3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 20">
+                        <label for="percentP3" class="block text-sm font-medium text-gray-700 mb-1">Percent (P):</label>
+                        <input type="number" id="percentP3" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 20">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="calc-percent3-btn">Calculate</button>
+                        <div id="resultPercent3" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-teal-400 text-teal-950 border-teal-700"></div>
+                    </div>
+                    <button class="menu-button-secondary mt-3 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 active:bg-gray-500 transition-colors duration-200 shadow-md border border-gray-400 cursor-pointer w-full" id="reset-percent-btn">Reset Percent Equations</button>
+                </div>
+            </div>
+
+            <!-- Fraction Calculator Menu -->
+            <div class="w-full mt-6 p-5 rounded-2xl shadow-xl border-2 bg-emerald-50 border-emerald-200" id="fractionMenuContainer">
+                <div class="menu-header text-xl font-bold p-3 rounded-lg cursor-pointer flex justify-between items-center mb-4 border-2 transition-colors duration-200 bg-emerald-300 text-emerald-900 border-emerald-500 hover:bg-emerald-400" id="fraction-menu-header">
+                    Fraction Calculator <span id="fractionToggleArrow">▶</span>
+                </div>
+                <div id="fractionMenu" class="menu-content hidden grid gap-4 overflow-y-auto max-h-[750px] p-2 pb-12">
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-emerald-100">
+                        <h3 class="font-medium text-emerald-600 mb-2">Fraction 1</h3>
+                        <div class="fraction-input-group grid grid-cols-3 gap-2 items-end">
+                            <div>
+                                <label for="f1_whole" class="block text-sm font-medium text-gray-700 mb-1">Whole</label>
+                                <input type="number" id="f1_whole" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-center" placeholder="0">
+                            </div>
+                            <div class="text-2xl text-gray-400 font-extrabold flex flex-col justify-center items-center h-full">
+                                <span class="flex-grow"></span>
+                                <span>/</span>
+                                <span class="flex-grow"></span>
+                            </div>
+                            <div>
+                                <label for="f1_numerator" class="block text-sm font-medium text-gray-700 mb-1">Numerator</label>
+                                <input type="number" id="f1_numerator" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-center" placeholder="1">
+                            </div>
+                            <div></div>
+                            <div>
+                                <label for="f1_denominator" class="block text-sm font-medium text-gray-700 mb-1">Denominator</label>
+                                <input type="number" id="f1_denominator" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-center" placeholder="2">
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="menu-section">
-                    <h3 class="font-medium text-emerald-600 mb-2">Fraction 2</h3>
-                    <div class="fraction-input-group">
-                        <div>
-                            <label for="f2_whole">Whole</label>
-                            <input type="number" id="f2_whole" placeholder="0">
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-emerald-100">
+                        <h3 class="font-medium text-emerald-600 mb-2">Fraction 2</h3>
+                        <div class="fraction-input-group grid grid-cols-3 gap-2 items-end">
+                            <div>
+                                <label for="f2_whole" class="block text-sm font-medium text-gray-700 mb-1">Whole</label>
+                                <input type="number" id="f2_whole" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-center" placeholder="0">
+                            </div>
+                            <div class="text-2xl text-gray-400 font-extrabold flex flex-col justify-center items-center h-full">
+                                <span class="flex-grow"></span>
+                                <span>/</span>
+                                <span class="flex-grow"></span>
+                            </div>
+                            <div>
+                                <label for="f2_numerator" class="block text-sm font-medium text-gray-700 mb-1">Numerator</label>
+                                <input type="number" id="f2_numerator" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-center" placeholder="3">
+                            </div>
+                            <div></div>
+                            <div>
+                                <label for="f2_denominator" class="block text-sm font-medium text-gray-700 mb-1">Denominator</label>
+                                <input type="number" id="f2_denominator" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-center" placeholder="4">
+                            </div>
                         </div>
-                        <div class="text-2xl text-gray-400 font-extrabold flex flex-col justify-center items-center h-full">
-                            <span class="flex-grow"></span>
-                            <span>/</span>
-                            <span class="flex-grow"></span>
+                        <div class="grid grid-cols-2 gap-2 mt-4">
+                            <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="frac-add-btn">Add (+)</button>
+                            <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="frac-subtract-btn">Subtract (-)</button>
+                            <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="frac-multiply-btn">Multiply (x)</button>
+                            <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="frac-divide-btn">Divide (÷)</button>
                         </div>
-                        <div>
-                            <label for="f2_numerator">Numerator</label>
-                            <input type="number" id="f2_numerator" placeholder="3">
-                        </div>
-                        <div></div>
-                        <div>
-                            <label for="f2_denominator">Denominator</label>
-                            <input type="number" id="f2_denominator" placeholder="4">
-                        </div>
+                        <div id="fractionResult" class="result mt-4 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-emerald-400 text-emerald-950 border-emerald-700"></div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2 mt-4">
-                        <button class="menu-button" id="frac-add-btn">Add (+)</button>
-                        <button class="menu-button" id="frac-subtract-btn">Subtract (-)</button>
-                        <button class="menu-button" id="frac-multiply-btn">Multiply (x)</button>
-                        <button class="menu-button" id="frac-divide-btn">Divide (÷)</button>
+                    <button class="menu-button-secondary mt-3 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 active:bg-gray-500 transition-colors duration-200 shadow-md border border-gray-400 cursor-pointer w-full" id="reset-fraction-btn">Reset Fraction Calculator</button>
+                </div>
+            </div>
+
+            <!-- Geometric Formulas Menu -->
+            <div class="w-full mt-6 p-5 rounded-2xl shadow-xl border-2 bg-rose-50 border-rose-200" id="geometryMenuContainer">
+                <div class="menu-header text-xl font-bold p-3 rounded-lg cursor-pointer flex justify-between items-center mb-4 border-2 transition-colors duration-200 bg-rose-300 text-rose-900 border-rose-500 hover:bg-rose-400" id="geometry-menu-header">
+                    Geometric Formulas <span id="geometryToggleArrow">▶</span>
+                </div>
+                <div id="geometryMenu" class="menu-content hidden grid gap-4 overflow-y-auto max-h-[750px] p-2 pb-12">
+                    <button class="menu-button-secondary mt-3 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 active:bg-gray-500 transition-colors duration-200 shadow-md border border-gray-400 cursor-pointer w-full mb-4" id="reset-geometry-btn">Reset All Geometry Fields</button>
+                    <!-- Area Formulas -->
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-rose-100">
+                        <h3 class="font-medium text-rose-600 mb-2">Area Formulas - Solver</h3>
+                        <!-- Square -->
+                        <h4 class="text-sm font-semibold mb-1">Square Area (A = s²)</h4>
+                        <label for="squareArea_s" class="block text-sm font-medium text-gray-700 mb-1">Side (s):</label>
+                        <input type="number" id="squareArea_s" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 5">
+                        <label for="squareArea_A" class="block text-sm font-medium text-gray-700 mb-1">Area (A):</label>
+                        <input type="number" id="squareArea_A" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 25">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="square-area-solver-btn">Calculate</button>
+                        <div id="resultSquareAreaSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Rectangle -->
+                        <h4 class="text-sm font-semibold mb-1">Rectangle Area (A = l x w)</h4>
+                        <label for="rectArea_l" class="block text-sm font-medium text-gray-700 mb-1">Length (l):</label>
+                        <input type="number" id="rectArea_l" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 10">
+                        <label for="rectArea_w" class="block text-sm font-medium text-gray-700 mb-1">Width (w):</label>
+                        <input type="number" id="rectArea_w" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 5">
+                        <label for="rectArea_A" class="block text-sm font-medium text-gray-700 mb-1">Area (A):</label>
+                        <input type="number" id="rectArea_A" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 50">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="rect-area-solver-btn">Calculate</button>
+                        <div id="resultRectAreaSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Parallelogram -->
+                        <h4 class="text-sm font-semibold mb-1">Parallelogram Area (A = b x h)</h4>
+                        <label for="paraArea_b" class="block text-sm font-medium text-gray-700 mb-1">Base (b):</label>
+                        <input type="number" id="paraArea_b" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 8">
+                        <label for="paraArea_h" class="block text-sm font-medium text-gray-700 mb-1">Height (h):</label>
+                        <input type="number" id="paraArea_h" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 4">
+                        <label for="paraArea_A" class="block text-sm font-medium text-gray-700 mb-1">Area (A):</label>
+                        <input type="number" id="paraArea_A" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 32">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="para-area-solver-btn">Calculate</button>
+                        <div id="resultParaAreaSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Rhombus/Kite -->
+                        <h4 class="text-sm font-semibold mb-1">Rhombus/Kite Area (A = 0.5 x d₁ x d₂)</h4>
+                        <label for="rhombusArea_d1" class="block text-sm font-medium text-gray-700 mb-1">Diagonal 1 (d₁):</label>
+                        <input type="number" id="rhombusArea_d1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 6">
+                        <label for="rhombusArea_d2" class="block text-sm font-medium text-gray-700 mb-1">Diagonal 2 (d₂):</label>
+                        <input type="number" id="rhombusArea_d2" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 8">
+                        <label for="rhombusArea_A" class="block text-sm font-medium text-gray-700 mb-1">Area (A):</label>
+                        <input type="number" id="rhombusArea_A" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 24">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="rhombus-kite-area-solver-btn">Calculate</button>
+                        <div id="resultRhombusKiteAreaSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Trapezoid -->
+                        <h4 class="text-sm font-semibold mb-1">Trapezoid Area (A = 0.5 x (b₁ + b₂) x h)</h4>
+                        <label for="trapArea_b1" class="block text-sm font-medium text-gray-700 mb-1">Base 1 (b₁):</label>
+                        <input type="number" id="trapArea_b1" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 5">
+                        <label for="trapArea_b2" class="block text-sm font-medium text-gray-700 mb-1">Base 2 (b₂):</label>
+                        <input type="number" id="trapArea_b2" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 7">
+                        <label for="trapArea_h" class="block text-sm font-medium text-gray-700 mb-1">Height (h):</label>
+                        <input type="number" id="trapArea_h" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 3">
+                        <label for="trapArea_A" class="block text-sm font-medium text-gray-700 mb-1">Area (A):</label>
+                        <input type="number" id="trapArea_A" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 18">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="trap-area-solver-btn">Calculate</button>
+                        <div id="resultTrapAreaSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Triangle -->
+                        <h4 class="text-sm font-semibold mb-1">Triangle Area (A = 0.5 x b x h)</h4>
+                        <label for="triArea_b" class="block text-sm font-medium text-gray-700 mb-1">Base (b):</label>
+                        <input type="number" id="triArea_b" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 10">
+                        <label for="triArea_h" class="block text-sm font-medium text-gray-700 mb-1">Height (h):</label>
+                        <input type="number" id="triArea_h" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 6">
+                        <label for="triArea_A" class="block text-sm font-medium text-gray-700 mb-1">Area (A):</label>
+                        <input type="number" id="triArea_A" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 30">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="tri-area-solver-btn">Calculate</button>
+                        <div id="resultTriAreaSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Circle -->
+                        <h4 class="text-sm font-semibold mb-1">Circle Area (A = π x r²)</h4>
+                        <label for="circleArea_r" class="block text-sm font-medium text-gray-700 mb-1">Radius (r):</label>
+                        <input type="number" id="circleArea_r" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 7">
+                        <label for="circleArea_A" class="block text-sm font-medium text-gray-700 mb-1">Area (A):</label>
+                        <input type="number" id="circleArea_A" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 153.94">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="circle-area-solver-btn">Calculate</button>
+                        <div id="resultCircleAreaSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
                     </div>
-                    <div id="fractionResult" class="result mt-4"></div>
-                </div>
-                <button class="menu-button-secondary w-full" id="reset-fraction-btn">Reset Fraction Calculator</button>
-            </div>
-        </div>
 
-
-        <!-- Geometric Formulas Menu -->
-        <div class="menu-container" id="geometryMenuContainer">
-            <div class="menu-header" id="geometry-menu-header">
-                Geometric Formulas <span id="geometryToggleArrow">▶</span>
-            </div>
-            <div id="geometryMenu" class="menu-content hidden">
-                <button class="menu-button-secondary w-full mb-4" id="reset-geometry-btn">Reset All Geometry Fields</button>
-                <!-- Area Formulas -->
-                <div class="menu-section">
-                    <h3 class="font-medium text-rose-600 mb-2">Area Formulas - Solver</h3>
-                    <!-- Square -->
-                    <h4 class="text-sm font-semibold mb-1">Square Area (A = s²)</h4>
-                    <label for="squareArea_s">Side (s):</label>
-                    <input type="number" id="squareArea_s" class="mb-2" placeholder="e.g., 5">
-                    <label for="squareArea_A">Area (A):</label>
-                    <input type="number" id="squareArea_A" placeholder="e.g., 25">
-                    <button class="menu-button" id="square-area-solver-btn">Calculate</button>
-                    <div id="resultSquareAreaSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Rectangle -->
-                    <h4 class="text-sm font-semibold mb-1">Rectangle Area (A = l x w)</h4>
-                    <label for="rectArea_l">Length (l):</label>
-                    <input type="number" id="rectArea_l" class="mb-2" placeholder="e.g., 10">
-                    <label for="rectArea_w">Width (w):</label>
-                    <input type="number" id="rectArea_w" class="mb-2" placeholder="e.g., 5">
-                    <label for="rectArea_A">Area (A):</label>
-                    <input type="number" id="rectArea_A" placeholder="e.g., 50">
-                    <button class="menu-button" id="rect-area-solver-btn">Calculate</button>
-                    <div id="resultRectAreaSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Parallelogram -->
-                    <h4 class="text-sm font-semibold mb-1">Parallelogram Area (A = b x h)</h4>
-                    <label for="paraArea_b">Base (b):</label>
-                    <input type="number" id="paraArea_b" class="mb-2" placeholder="e.g., 8">
-                    <label for="paraArea_h">Height (h):</label>
-                    <input type="number" id="paraArea_h" class="mb-2" placeholder="e.g., 4">
-                    <label for="paraArea_A">Area (A):</label>
-                    <input type="number" id="paraArea_A" placeholder="e.g., 32">
-                    <button class="menu-button" id="para-area-solver-btn">Calculate</button>
-                    <div id="resultParaAreaSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Rhombus/Kite -->
-                    <h4 class="text-sm font-semibold mb-1">Rhombus/Kite Area (A = 0.5 x d₁ x d₂)</h4>
-                    <label for="rhombusArea_d1">Diagonal 1 (d₁):</label>
-                    <input type="number" id="rhombusArea_d1" class="mb-2" placeholder="e.g., 6">
-                    <label for="rhombusArea_d2">Diagonal 2 (d₂):</label>
-                    <input type="number" id="rhombusArea_d2" class="mb-2" placeholder="e.g., 8">
-                    <label for="rhombusArea_A">Area (A):</label>
-                    <input type="number" id="rhombusArea_A" placeholder="e.g., 24">
-                    <button class="menu-button" id="rhombus-kite-area-solver-btn">Calculate</button>
-                    <div id="resultRhombusKiteAreaSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Trapezoid -->
-                    <h4 class="text-sm font-semibold mb-1">Trapezoid Area (A = 0.5 x (b₁ + b₂) x h)</h4>
-                    <label for="trapArea_b1">Base 1 (b₁):</label>
-                    <input type="number" id="trapArea_b1" class="mb-2" placeholder="e.g., 5">
-                    <label for="trapArea_b2">Base 2 (b₂):</label>
-                    <input type="number" id="trapArea_b2" class="mb-2" placeholder="e.g., 7">
-                    <label for="trapArea_h">Height (h):</label>
-                    <input type="number" id="trapArea_h" class="mb-2" placeholder="e.g., 3">
-                    <label for="trapArea_A">Area (A):</label>
-                    <input type="number" id="trapArea_A" placeholder="e.g., 18">
-                    <button class="menu-button" id="trap-area-solver-btn">Calculate</button>
-                    <div id="resultTrapAreaSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Triangle -->
-                    <h4 class="text-sm font-semibold mb-1">Triangle Area (A = 0.5 x b x h)</h4>
-                    <label for="triArea_b">Base (b):</label>
-                    <input type="number" id="triArea_b" class="mb-2" placeholder="e.g., 10">
-                    <label for="triArea_h">Height (h):</label>
-                    <input type="number" id="triArea_h" class="mb-2" placeholder="e.g., 6">
-                    <label for="triArea_A">Area (A):</label>
-                    <input type="number" id="triArea_A" placeholder="e.g., 30">
-                    <button class="menu-button" id="tri-area-solver-btn">Calculate</button>
-                    <div id="resultTriAreaSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Circle -->
-                    <h4 class="text-sm font-semibold mb-1">Circle Area (A = π x r²)</h4>
-                    <label for="circleArea_r">Radius (r):</label>
-                    <input type="number" id="circleArea_r" class="mb-2" placeholder="e.g., 7">
-                    <label for="circleArea_A">Area (A):</label>
-                    <input type="number" id="circleArea_A" placeholder="e.g., 153.94">
-                    <button class="menu-button" id="circle-area-solver-btn">Calculate</button>
-                    <div id="resultCircleAreaSolver" class="result"></div>
-                </div>
-
-                <!-- Volume Formulas -->
-                <div class="menu-section">
-                    <h3 class="font-medium text-rose-600 mb-2">Volume Formulas - Solver</h3>
-                    <!-- Cube -->
-                    <h4 class="text-sm font-semibold mb-1">Cube Volume (V = s³)</h4>
-                    <label for="cubeVol_s">Side (s):</label>
-                    <input type="number" id="cubeVol_s" class="mb-2" placeholder="e.g., 4">
-                    <label for="cubeVol_V">Volume (V):</label>
-                    <input type="number" id="cubeVol_V" placeholder="e.g., 64">
-                    <button class="menu-button" id="cube-vol-solver-btn">Calculate</button>
-                    <div id="resultCubeVolumeSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Right Prism -->
-                    <h4 class="text-sm font-semibold mb-1">Right Prism Volume (V = B x h)</h4>
-                    <label for="prismVol_B">Base Area (B):</label>
-                    <input type="number" id="prismVol_B" class="mb-2" placeholder="e.g., 25">
-                    <label for="prismVol_h">Height (h):</label>
-                    <input type="number" id="prismVol_h" class="mb-2" placeholder="e.g., 10">
-                    <label for="prismVol_V">Volume (V):</label>
-                    <input type="number" id="prismVol_V" placeholder="e.g., 250">
-                    <button class="menu-button" id="prism-vol-solver-btn">Calculate</button>
-                    <div id="resultPrismVolumeSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Right Pyramid -->
-                    <h4 class="text-sm font-semibold mb-1">Right Pyramid Volume (V = (1/3) x B x h)</h4>
-                    <label for="pyramidVol_B">Base Area (B):</label>
-                    <input type="number" id="pyramidVol_B" class="mb-2" placeholder="e.g., 36">
-                    <label for="pyramidVol_h">Height (h):</label>
-                    <input type="number" id="pyramidVol_h" class="mb-2" placeholder="e.g., 9">
-                    <label for="pyramidVol_V">Volume (V):</label>
-                    <input type="number" id="pyramidVol_V" placeholder="e.g., 108">
-                    <button class="menu-button" id="pyramid-vol-solver-btn">Calculate</button>
-                    <div id="resultPyramidVolumeSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Right Cylinder -->
-                    <h4 class="text-sm font-semibold mb-1">Right Cylinder Volume (V = π x r² x h)</h4>
-                    <label for="cylVol_r">Radius (r):</label>
-                    <input type="number" id="cylVol_r" class="mb-2" placeholder="e.g., 5">
-                    <label for="cylVol_h">Height (h):</label>
-                    <input type="number" id="cylVol_h" class="mb-2" placeholder="e.g., 12">
-                    <label for="cylVol_V">Volume (V):</label>
-                    <input type="number" id="cylVol_V" placeholder="e.g., 942.48">
-                    <button class="menu-button" id="cyl-vol-solver-btn">Calculate</button>
-                    <div id="resultCylinderVolumeSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Right Cone -->
-                    <h4 class="text-sm font-semibold mb-1">Right Cone Volume (V = (1/3) x π x r² x h)</h4>
-                    <label for="coneVol_r">Radius (r):</label>
-                    <input type="number" id="coneVol_r" class="mb-2" placeholder="e.g., 6">
-                    <label for="coneVol_h">Height (h):</label>
-                    <input type="number" id="coneVol_h" class="mb-2" placeholder="e.g., 10">
-                    <label for="coneVol_V">Volume (V):</label>
-                    <input type="number" id="coneVol_V" placeholder="e.g., 376.99">
-                    <button class="menu-button" id="cone-vol-solver-btn">Calculate</button>
-                    <div id="resultConeVolumeSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Sphere -->
-                    <h4 class="text-sm font-semibold mb-1">Sphere Volume (V = (4/3) x π x r³)</h4>
-                    <label for="sphereVol_r">Radius (r):</label>
-                    <input type="number" id="sphereVol_r" class="mb-2" placeholder="e.g., 3">
-                    <label for="sphereVol_V">Volume (V):</label>
-                    <input type="number" id="sphereVol_V" placeholder="e.g., 113.10">
-                    <button class="menu-button" id="sphere-vol-solver-btn">Calculate</button>
-                    <div id="resultSphereVolumeSolver" class="result"></div>
-                </div>
-
-                <!-- Other Geometric Formulas -->
-                <div class="menu-section">
-                    <h3 class="font-medium text-rose-600 mb-2">Other Geometry - Solver</h3>
-                    <!-- Surface Area of Right Prism (old, less specific) -->
-                    <h4 class="text-sm font-semibold mb-1">Right Prism Surface Area (SA = 2B + Ph)</h4>
-                    <label for="prismSA_B">Base Area (B):</label>
-                    <input type="number" id="prismSA_B" class="mb-2" placeholder="e.g., 20">
-                    <label for="prismSA_P">Base Perimeter (P):</label>
-                    <input type="number" id="prismSA_P" class="mb-2" placeholder="e.g., 18">
-                    <label for="prismSA_h">Height (h):</label>
-                    <input type="number" id="prismSA_h" class="mb-2" placeholder="e.g., 5">
-                    <label for="prismSA_SA">Surface Area (SA):</label>
-                    <input type="number" id="prismSA_SA" placeholder="e.g., 130">
-                    <button class="menu-button" id="prism-sa-solver-btn">Calculate</button>
-                    <div id="resultPrismSurfaceAreaSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Rectangular Prism Surface Area (NEW) -->
-                    <h4 class="text-sm font-semibold mb-1">Rectangular Prism Surface Area (SA = 2lw + 2lh + 2wh)</h4>
-                    <label for="rectPrismSA_l">Length (l):</label>
-                    <input type="number" id="rectPrismSA_l" class="mb-2" placeholder="e.g., 5">
-                    <label for="rectPrismSA_w">Width (w):</label>
-                    <input type="number" id="rectPrismSA_w" class="mb-2" placeholder="e.g., 4">
-                    <label for="rectPrismSA_h">Height (h):</label>
-                    <input type="number" id="rectPrismSA_h" class="mb-2" placeholder="e.g., 3">
-                    <label for="rectPrismSA_SA">Surface Area (SA):</label>
-                    <input type="number" id="rectPrismSA_SA" placeholder="e.g., 94">
-                    <button class="menu-button" id="rect-prism-sa-solver-btn">Calculate</button>
-                    <div id="resultRectPrismSASolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Circumference of a Circle -->
-                    <h4 class="text-sm font-semibold mb-1">Circle Circumference (C = 2 x π x r)</h4>
-                    <label for="circleCirc_r">Radius (r):</label>
-                    <input type="number" id="circleCirc_r" class="mb-2" placeholder="e.g., 7">
-                    <label for="circleCirc_C">Circumference (C):</label>
-                    <input type="number" id="circleCirc_C" placeholder="e.g., 43.98">
-                    <button class="menu-button" id="circle-circ-solver-btn">Calculate</button>
-                    <div id="resultCircumferenceSolver" class="result"></div>
-                    <hr class="my-3 border-gray-200">
-                    <!-- Diameter and Radius of a Circle -->
-                    <h4 class="text-sm font-semibold mb-1">Circle Diameter (d = 2r) / Radius (r = d/2)</h4>
-                    <label for="circleDR_d">Diameter (d):</label>
-                    <input type="number" id="circleDR_d" class="mb-2" placeholder="e.g., 14">
-                    <label for="circleDR_r">Radius (r):</label>
-                    <input type="number" id="circleDR_r" placeholder="e.g., 7">
-                    <button class="menu-button" id="circle-dr-solver-btn">Calculate</button>
-                    <div id="resultCircleDRSolver" class="result"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Unit and Temperature Conversions Menu -->
-        <div class="menu-container" id="conversionMenuContainer">
-            <div class="menu-header" id="conversion-menu-header">
-                Unit & Temperature Conversions <span id="conversionToggleArrow">▶</span>
-            </div>
-            <div id="conversionMenu" class="menu-content hidden">
-                <!-- Temperature Conversion -->
-                <div class="menu-section">
-                    <h3 class="font-medium text-orange-600 mb-2">Temperature Conversion</h3>
-                    <label for="tempInputVal">Value:</label>
-                    <input type="number" id="tempInputVal" class="mb-2" placeholder="e.g., 0">
-                    <label for="tempFromUnit">From:</label>
-                    <select id="tempFromUnit" class="mb-2">
-                        <option value="C">Celsius (°C)</option>
-                        <option value="F">Fahrenheit (°F)</option>
-                        <option value="K">Kelvin (K)</option>
-                    </select>
-                    <label for="tempToUnit">To:</label>
-                    <select id="tempToUnit" class="mb-2">
-                        <option value="C">Celsius (°C)</option>
-                        <option value="F">Fahrenheit (°F)</option>
-                        <option value="K">Kelvin (K)</option>
-                    </select>
-                    <button class="menu-button" id="convert-temp-btn">Convert</button>
-                    <div id="resultTemperature" class="result"></div>
-                </div>
-
-                <!-- Unit Conversions -->
-                <div class="menu-section">
-                    <h3 class="font-medium text-orange-600 mb-2">Unit Conversion</h3>
-                    <label for="unitInputVal">Value:</label>
-                    <input type="number" id="unitInputVal" class="mb-2" placeholder="e.g., 10">
-                    <label for="unitType">Type:</label>
-                    <select id="unitType" class="mb-2" onchange="populateUnitOptions()">
-                        <option value="length">Length</option>
-                        <option value="mass">Mass</option>
-                        <option value="volume">Volume</option>
-                    </select>
-                    <label for="unitFromUnit">From:</label>
-                    <select id="unitFromUnit" class="mb-2"></select>
-                    <label for="unitToUnit">To:</label>
-                    <select id="unitToUnit" class="mb-2"></select>
-                    <button class="menu-button" id="convert-unit-btn">Convert</button>
-                    <div id="resultUnitConversion" class="result"></div>
-                </div>
-
-                <!-- Scientific Notation Conversion -->
-                <div class="menu-section">
-                    <h3 class="font-medium text-orange-600 mb-2">Scientific Notation Conversion</h3>
-                    <label for="notationInput">Number:</label>
-                    <input type="text" id="notationInput" class="mb-2" placeholder="e.g., 1234.5 or 1.23 x 10^4">
-                    <div class="grid grid-cols-2 gap-2 mt-4">
-                        <button class="menu-button" id="convert-to-scientific-btn">To Scientific</button>
-                        <button class="menu-button" id="convert-to-standard-btn">To Standard</button>
+                    <!-- Volume Formulas -->
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-rose-100">
+                        <h3 class="font-medium text-rose-600 mb-2">Volume Formulas - Solver</h3>
+                        <!-- Cube -->
+                        <h4 class="text-sm font-semibold mb-1">Cube Volume (V = s³)</h4>
+                        <label for="cubeVol_s" class="block text-sm font-medium text-gray-700 mb-1">Side (s):</label>
+                        <input type="number" id="cubeVol_s" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 4">
+                        <label for="cubeVol_V" class="block text-sm font-medium text-gray-700 mb-1">Volume (V):</label>
+                        <input type="number" id="cubeVol_V" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 64">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="cube-vol-solver-btn">Calculate</button>
+                        <div id="resultCubeVolumeSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Right Prism -->
+                        <h4 class="text-sm font-semibold mb-1">Right Prism Volume (V = B x h)</h4>
+                        <label for="prismVol_B" class="block text-sm font-medium text-gray-700 mb-1">Base Area (B):</label>
+                        <input type="number" id="prismVol_B" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 25">
+                        <label for="prismVol_h" class="block text-sm font-medium text-gray-700 mb-1">Height (h):</label>
+                        <input type="number" id="prismVol_h" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 10">
+                        <label for="prismVol_V" class="block text-sm font-medium text-gray-700 mb-1">Volume (V):</label>
+                        <input type="number" id="prismVol_V" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 250">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="prism-vol-solver-btn">Calculate</button>
+                        <div id="resultPrismVolumeSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Right Pyramid -->
+                        <h4 class="text-sm font-semibold mb-1">Right Pyramid Volume (V = (1/3) x B x h)</h4>
+                        <label for="pyramidVol_B" class="block text-sm font-medium text-gray-700 mb-1">Base Area (B):</label>
+                        <input type="number" id="pyramidVol_B" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 36">
+                        <label for="pyramidVol_h" class="block text-sm font-medium text-gray-700 mb-1">Height (h):</label>
+                        <input type="number" id="pyramidVol_h" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 9">
+                        <label for="pyramidVol_V" class="block text-sm font-medium text-gray-700 mb-1">Volume (V):</label>
+                        <input type="number" id="pyramidVol_V" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 108">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="pyramid-vol-solver-btn">Calculate</button>
+                        <div id="resultPyramidVolumeSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Right Cylinder -->
+                        <h4 class="text-sm font-semibold mb-1">Right Cylinder Volume (V = π x r² x h)</h4>
+                        <label for="cylVol_r" class="block text-sm font-medium text-gray-700 mb-1">Radius (r):</label>
+                        <input type="number" id="cylVol_r" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 5">
+                        <label for="cylVol_h" class="block text-sm font-medium text-gray-700 mb-1">Height (h):</label>
+                        <input type="number" id="cylVol_h" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 12">
+                        <label for="cylVol_V" class="block text-sm font-medium text-gray-700 mb-1">Volume (V):</label>
+                        <input type="number" id="cylVol_V" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 942.48">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="cyl-vol-solver-btn">Calculate</button>
+                        <div id="resultCylinderVolumeSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Right Cone -->
+                        <h4 class="text-sm font-semibold mb-1">Right Cone Volume (V = (1/3) x π x r² x h)</h4>
+                        <label for="coneVol_r" class="block text-sm font-medium text-gray-700 mb-1">Radius (r):</label>
+                        <input type="number" id="coneVol_r" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 6">
+                        <label for="coneVol_h" class="block text-sm font-medium text-gray-700 mb-1">Height (h):</label>
+                        <input type="number" id="coneVol_h" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 10">
+                        <label for="coneVol_V" class="block text-sm font-medium text-gray-700 mb-1">Volume (V):</label>
+                        <input type="number" id="coneVol_V" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 376.99">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="cone-vol-solver-btn">Calculate</button>
+                        <div id="resultConeVolumeSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Sphere -->
+                        <h4 class="text-sm font-semibold mb-1">Sphere Volume (V = (4/3) x π x r³)</h4>
+                        <label for="sphereVol_r" class="block text-sm font-medium text-gray-700 mb-1">Radius (r):</label>
+                        <input type="number" id="sphereVol_r" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 3">
+                        <label for="sphereVol_V" class="block text-sm font-medium text-gray-700 mb-1">Volume (V):</label>
+                        <input type="number" id="sphereVol_V" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 113.10">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="sphere-vol-solver-btn">Calculate</button>
+                        <div id="resultSphereVolumeSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
                     </div>
-                    <div id="notationResult" class="result mt-4"></div>
-                </div>
-                <button class="menu-button-secondary w-full" id="reset-conversion-btn">Reset Conversions</button>
-            </div>
-        </div>
 
-        <!-- Statistics Calculator Menu -->
-        <div class="menu-container" id="statisticsMenuContainer">
-            <div class="menu-header" id="statistics-menu-header">
-                Statistics Calculator <span id="statisticsToggleArrow">▶</span>
-            </div>
-            <div id="statisticsMenu" class="menu-content hidden">
-                <div class="menu-section">
-                    <h3 class="font-medium text-indigo-600 mb-2">Calculate Statistics</h3>
-                    <label for="dataInput">Enter numbers (comma-separated):</label>
-                    <input type="text" id="dataInput" class="mb-2" placeholder="e.g., 1, 5, 2, 8, 5">
-                    <button class="menu-button" id="calc-stats-btn">Calculate Statistics</button>
-                    <div id="resultStats" class="result mt-4 text-left"></div>
+                    <!-- Other Geometric Formulas -->
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-rose-100">
+                        <h3 class="font-medium text-rose-600 mb-2">Other Geometry - Solver</h3>
+                        <!-- Surface Area of Right Prism -->
+                        <h4 class="text-sm font-semibold mb-1">Right Prism Surface Area (SA = 2B + Ph)</h4>
+                        <label for="prismSA_B" class="block text-sm font-medium text-gray-700 mb-1">Base Area (B):</label>
+                        <input type="number" id="prismSA_B" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 20">
+                        <label for="prismSA_P" class="block text-sm font-medium text-gray-700 mb-1">Base Perimeter (P):</label>
+                        <input type="number" id="prismSA_P" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 18">
+                        <label for="prismSA_h" class="block text-sm font-medium text-gray-700 mb-1">Height (h):</label>
+                        <input type="number" id="prismSA_h" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 5">
+                        <label for="prismSA_SA" class="block text-sm font-medium text-gray-700 mb-1">Surface Area (SA):</label>
+                        <input type="number" id="prismSA_SA" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 130">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="prism-sa-solver-btn">Calculate</button>
+                        <div id="resultPrismSurfaceAreaSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Rectangular Prism Surface Area -->
+                        <h4 class="text-sm font-semibold mb-1">Rectangular Prism Surface Area (SA = 2lw + 2lh + 2wh)</h4>
+                        <label for="rectPrismSA_l" class="block text-sm font-medium text-gray-700 mb-1">Length (l):</label>
+                        <input type="number" id="rectPrismSA_l" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 5">
+                        <label for="rectPrismSA_w" class="block text-sm font-medium text-gray-700 mb-1">Width (w):</label>
+                        <input type="number" id="rectPrismSA_w" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 4">
+                        <label for="rectPrismSA_h" class="block text-sm font-medium text-gray-700 mb-1">Height (h):</label>
+                        <input type="number" id="rectPrismSA_h" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 3">
+                        <label for="rectPrismSA_SA" class="block text-sm font-medium text-gray-700 mb-1">Surface Area (SA):</label>
+                        <input type="number" id="rectPrismSA_SA" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 94">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="rect-prism-sa-solver-btn">Calculate</button>
+                        <div id="resultRectPrismSASolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Circumference of a Circle -->
+                        <h4 class="text-sm font-semibold mb-1">Circle Circumference (C = 2 x π x r)</h4>
+                        <label for="circleCirc_r" class="block text-sm font-medium text-gray-700 mb-1">Radius (r):</label>
+                        <input type="number" id="circleCirc_r" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 7">
+                        <label for="circleCirc_C" class="block text-sm font-medium text-gray-700 mb-1">Circumference (C):</label>
+                        <input type="number" id="circleCirc_C" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 43.98">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="circle-circ-solver-btn">Calculate</button>
+                        <div id="resultCircumferenceSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                        <hr class="my-3 border-gray-200">
+                        <!-- Diameter and Radius of a Circle -->
+                        <h4 class="text-sm font-semibold mb-1">Circle Diameter (d = 2r) / Radius (r = d/2)</h4>
+                        <label for="circleDR_d" class="block text-sm font-medium text-gray-700 mb-1">Diameter (d):</label>
+                        <input type="number" id="circleDR_d" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 14">
+                        <label for="circleDR_r" class="block text-sm font-medium text-gray-700 mb-1">Radius (r):</label>
+                        <input type="number" id="circleDR_r" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 7">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="circle-dr-solver-btn">Calculate</button>
+                        <div id="resultCircleDRSolver" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-rose-400 text-rose-950 border-rose-700"></div>
+                    </div>
                 </div>
-                <button class="menu-button-secondary w-full" id="reset-stats-btn">Reset Statistics</button>
+            </div>
+
+            <!-- Unit and Temperature Conversions Menu -->
+            <div class="w-full mt-6 p-5 rounded-2xl shadow-xl border-2 bg-orange-50 border-orange-200" id="conversionMenuContainer">
+                <div class="menu-header text-xl font-bold p-3 rounded-lg cursor-pointer flex justify-between items-center mb-4 border-2 transition-colors duration-200 bg-orange-300 text-orange-900 border-orange-500 hover:bg-orange-400" id="conversion-menu-header">
+                    Unit & Temperature Conversions <span id="conversionToggleArrow">▶</span>
+                </div>
+                <div id="conversionMenu" class="menu-content hidden grid gap-4 overflow-y-auto max-h-[750px] p-2 pb-12">
+                    <!-- Temperature Conversion -->
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-orange-100">
+                        <h3 class="font-medium text-orange-600 mb-2">Temperature Conversion</h3>
+                        <label for="tempInputVal" class="block text-sm font-medium text-gray-700 mb-1">Value:</label>
+                        <input type="number" id="tempInputVal" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 0">
+                        <label for="tempFromUnit" class="block text-sm font-medium text-gray-700 mb-1">From:</label>
+                        <select id="tempFromUnit" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2">
+                            <option value="C">Celsius (°C)</option>
+                            <option value="F">Fahrenheit (°F)</option>
+                            <option value="K">Kelvin (K)</option>
+                        </select>
+                        <label for="tempToUnit" class="block text-sm font-medium text-gray-700 mb-1">To:</label>
+                        <select id="tempToUnit" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2">
+                            <option value="C">Celsius (°C)</option>
+                            <option value="F">Fahrenheit (°F)</option>
+                            <option value="K">Kelvin (K)</option>
+                        </select>
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="convert-temp-btn">Convert</button>
+                        <div id="resultTemperature" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-orange-400 text-orange-950 border-orange-700"></div>
+                    </div>
+
+                    <!-- Unit Conversions -->
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-orange-100">
+                        <h3 class="font-medium text-orange-600 mb-2">Unit Conversion</h3>
+                        <label for="unitInputVal" class="block text-sm font-medium text-gray-700 mb-1">Value:</label>
+                        <input type="number" id="unitInputVal" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 10">
+                        <label for="unitType" class="block text-sm font-medium text-gray-700 mb-1">Type:</label>
+                        <select id="unitType" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" onchange="populateUnitOptions()">
+                            <option value="length">Length</option>
+                            <option value="mass">Mass</option>
+                            <option value="volume">Volume</option>
+                        </select>
+                        <label for="unitFromUnit" class="block text-sm font-medium text-gray-700 mb-1">From:</label>
+                        <select id="unitFromUnit" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2"></select>
+                        <label for="unitToUnit" class="block text-sm font-medium text-gray-700 mb-1">To:</label>
+                        <select id="unitToUnit" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2"></select>
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="convert-unit-btn">Convert</button>
+                        <div id="resultUnitConversion" class="result mt-3 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-orange-400 text-orange-950 border-orange-700"></div>
+                    </div>
+
+                    <!-- Scientific Notation Conversion -->
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-orange-100">
+                        <h3 class="font-medium text-orange-600 mb-2">Scientific Notation Conversion</h3>
+                        <label for="notationInput" class="block text-sm font-medium text-gray-700 mb-1">Number:</label>
+                        <input type="text" id="notationInput" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 1234.5 or 1.23 x 10^4">
+                        <div class="grid grid-cols-2 gap-2 mt-4">
+                            <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="convert-to-scientific-btn">To Scientific</button>
+                            <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="convert-to-standard-btn">To Standard</button>
+                        </div>
+                        <div id="notationResult" class="result mt-4 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-orange-400 text-orange-950 border-orange-700"></div>
+                    </div>
+                    <button class="menu-button-secondary mt-3 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 active:bg-gray-500 transition-colors duration-200 shadow-md border border-gray-400 cursor-pointer w-full" id="reset-conversion-btn">Reset Conversions</button>
+                </div>
+            </div>
+
+            <!-- Statistics Calculator Menu -->
+            <div class="w-full mt-6 p-5 rounded-2xl shadow-xl border-2 bg-indigo-50 border-indigo-200" id="statisticsMenuContainer">
+                <div class="menu-header text-xl font-bold p-3 rounded-lg cursor-pointer flex justify-between items-center mb-4 border-2 transition-colors duration-200 bg-indigo-300 text-indigo-900 border-indigo-500 hover:bg-indigo-400" id="statistics-menu-header">
+                    Statistics Calculator <span id="statisticsToggleArrow">▶</span>
+                </div>
+                <div id="statisticsMenu" class="menu-content hidden grid gap-4 overflow-y-auto max-h-[750px] p-2 pb-12">
+                    <div class="menu-section bg-white p-5 rounded-xl border-2 border-indigo-100">
+                        <h3 class="font-medium text-indigo-600 mb-2">Calculate Statistics</h3>
+                        <label for="dataInput" class="block text-sm font-medium text-gray-700 mb-1">Enter numbers (comma-separated):</label>
+                        <input type="text" id="dataInput" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 mb-2" placeholder="e.g., 1, 5, 2, 8, 5">
+                        <button class="menu-button mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors duration-200 shadow-md border border-blue-700 cursor-pointer" id="calc-stats-btn">Calculate Statistics</button>
+                        <div id="resultStats" class="result mt-4 p-3 rounded-lg font-semibold text-left border-2 shadow-xl min-h-[40px] flex flex-col justify-start items-start word-break-break-all bg-indigo-400 text-indigo-950 border-indigo-700"></div>
+                    </div>
+                    <button class="menu-button-secondary mt-3 px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 active:bg-gray-500 transition-colors duration-200 shadow-md border border-gray-400 cursor-pointer w-full" id="reset-stats-btn">Reset Statistics</button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        // ALL JavaScript from the original Multi-Function Calculator is included below
+        // This maintains ALL functionality, formulas, conversions, and calculations
+
         // Define global variables
         const display = document.getElementById('display');
-        let awaitingNewInput = false; // Flag to clear display after an operation or if a new number is started after a result
+        let awaitingNewInput = false;
 
         // Mapping for unit conversions
         const unitConversions = {
@@ -653,22 +509,17 @@
                 cubic_meter: 1000,
                 cubic_foot: 28.3168,
                 cubic_inch: 0.0000163871,
-                teaspoon: 0.00492892, // 1 teaspoon = 0.00492892 liters
-                tablespoon: 0.0147868, // 1 tablespoon = 0.0147868 liters
-                cubic_centimeter: 0.001 // 1 cubic centimeter = 0.001 liters
+                teaspoon: 0.00492892,
+                tablespoon: 0.0147868,
+                cubic_centimeter: 0.001
             }
         };
 
         // --- Main Calculator Functions ---
 
-        /**
-         * Appends a number to the current expression in the display.
-         * Clears previous result if a new operation is started after an equals calculation.
-         * @param {string} number - The digit string to append.
-         */
         function appendNumber(number) {
             if (awaitingNewInput) {
-                display.value = ''; // Clear display if starting new input after a result
+                display.value = '';
                 awaitingNewInput = false;
             }
             if (display.value === '0' && number !== '.') {
@@ -676,39 +527,28 @@
             } else {
                 display.value += number;
             }
-            display.focus(); // Keep focus on display after number input
+            display.focus();
         }
 
-        /**
-         * Appends an operator to the current expression.
-         * Prevents multiple operators consecutively.
-         * @param {string} operator - The operator string to append.
-         */
         function appendOperator(operator) {
-            awaitingNewInput = false; // Allow continuing operation on result or input
+            awaitingNewInput = false;
             const lastChar = display.value.slice(-1);
             if (['+', '-', '*', '/', '^'].includes(lastChar)) {
-                // Replace last operator if a new one is pressed
                 display.value = display.value.slice(0, -1) + operator;
             } else if (display.value !== '') {
                 display.value += operator;
             }
-            display.focus(); // Keep focus on display after operator input
+            display.focus();
         }
 
-        /**
-         * Appends a decimal point to the current number in the display.
-         * Prevents multiple decimal points in a single number.
-         */
         function appendDecimal() {
             if (awaitingNewInput) {
                 display.value = '0.';
                 awaitingNewInput = false;
-                display.focus(); // Keep focus on display
+                display.focus();
                 return;
             }
 
-            // Find the last number in the expression (could be after an operator)
             const parts = display.value.split(/[\+\-\*\/^]/);
             const lastPart = parts[parts.length - 1];
 
@@ -719,18 +559,14 @@
                     display.value += '.';
                 }
             }
-            display.focus(); // Keep focus on display after decimal input
+            display.focus();
         }
 
-        /**
-         * Appends the value of Pi to the display.
-         */
         function appendPi() {
             if (awaitingNewInput || display.value === '0') {
                 display.value = Math.PI.toString();
                 awaitingNewInput = false;
             } else {
-                // If there's an existing number, treat Pi as multiplication
                 const lastChar = display.value.slice(-1);
                 if (/\d/.test(lastChar) || lastChar === '.') {
                     display.value += '*' + Math.PI.toString();
@@ -738,21 +574,15 @@
                     display.value += Math.PI.toString();
                 }
             }
-            display.focus(); // Keep focus on display after Pi input
+            display.focus();
         }
 
-        /**
-         * Clears the display and reset calculation state.
-         */
         function clearDisplay() {
             display.value = '0';
             awaitingNewInput = false;
-            display.focus(); // Keep focus on display after clear
+            display.focus();
         }
 
-        /**
-         * Deletes the last character from the display.
-         */
         function deleteLast() {
             if (display.value.length === 1 || awaitingNewInput) {
                 display.value = '0';
@@ -760,18 +590,13 @@
             } else {
                 display.value = display.value.slice(0, -1);
             }
-            display.focus(); // Keep focus on display after backspace
+            display.focus();
         }
 
-        /**
-         * Toggles the sign of the current number in the display.
-         * This function assumes the number is at the end of the expression or it's the only number.
-         */
         function toggleSign() {
             if (display.value === '' || display.value === '0') return;
 
             let value = display.value;
-            // Regex to match the last number, including potential scientific notation
             const match = value.match(/([+\-*/^])?(-?\d+\.?\d*(?:[eE][+\-]?\d+)?)$/);
 
             if (match) {
@@ -783,32 +608,35 @@
                     const newValue = value.substring(0, value.length - numStr.length);
                     display.value = newValue + (-num).toString();
                 }
-            } else { // Handle case where there's only a single number
+            } else {
                 let num = parseFloat(value);
                 if (!isNaN(num)) {
                     display.value = (-num).toString();
                 }
             }
             awaitingNewInput = false;
-            display.focus(); // Keep focus on display after toggling sign
+            display.focus();
         }
 
-        /**
-         * Calculates the result of the expression in the display.
-         * Handles exponents and scientific notation.
-         */
+        function formatScientific(num, precision = 3) {
+            if (isNaN(num) || !isFinite(num)) return num.toString();
+
+            if (Math.abs(num) >= 1e12 || (Math.abs(num) < 1e-6 && Math.abs(num) !== 0)) {
+                return num.toExponential(precision);
+            }
+            return num.toFixed(precision).replace(/\.?0+$/, '');
+        }
+
         function calculateResult() {
             if (display.value === '') return;
 
             try {
-                // Replace x^y with Math.pow(x,y)
-                // This handles various forms of exponentiation including scientific notation in bases/exponents
                 let expressionToEvaluate = display.value
                     .replace(/([+\-]?\d+(\.\d*)?(?:[eE][+\-]?\d+)?)\^([+\-]?\d+(\.\d*)?(?:[eE][+\-]?\d+)?)/g, 'Math.pow($1,$3)')
                     .replace(/\(([^)]+)\)\^([+\-]?\d+(\.\d*)?(?:[eE][+\-]?\d+)?)/g, 'Math.pow($1,$2)')
                     .replace(/([+\-]?\d+(\.\d*)?(?:[eE][+\-]?\d+)?)\^\(([^)]+)\)/g, 'Math.pow($1,$3)');
 
-                let result = eval(expressionToEvaluate); // Using eval with careful sanitization handled by input system
+                let result = eval(expressionToEvaluate);
 
                 if (isNaN(result) || !isFinite(result)) {
                     display.value = 'Error';
@@ -818,33 +646,11 @@
             } catch (e) {
                 display.value = 'Error';
             }
-            awaitingNewInput = true; // Flag for next number input to clear display
-            display.focus(); // Always return focus to the display after calculation
-        }
-
-        /**
-         * Formats a number for display, using scientific notation for very large/small numbers
-         * and rounding to a specified precision otherwise.
-         * @param {number} num - The number to format.
-         * @param {number} [precision=3] - The number of decimal places for normal numbers.
-         * @returns {string} The formatted string.
-         */
-        function formatScientific(num, precision = 3) {
-            if (isNaN(num) || !isFinite(num)) return num.toString(); // Handle NaN, Infinity
-
-            // Check if absolute value is outside the typical range for normal display, use scientific notation
-            if (Math.abs(num) >= 1e12 || (Math.abs(num) < 1e-6 && Math.abs(num) !== 0)) {
-                return num.toExponential(precision); // Use precision for mantissa decimals
-            }
-            // For numbers within normal range, round to specified precision
-            return num.toFixed(precision).replace(/\.?0+$/, ''); // Remove trailing zeros and decimal if it becomes an integer
+            awaitingNewInput = true;
+            display.focus();
         }
 
         // --- Menu Toggle Function ---
-        /**
-         * Toggles the visibility of a given menu and updates its arrow icon.
-         * @param {string} menuId - The ID of the menu content div.
-         */
         function toggleMenu(menuId) {
             const menu = document.getElementById(menuId);
             const arrow = document.getElementById(menuId.replace('Menu', 'ToggleArrow'));
@@ -940,9 +746,6 @@
 
         // --- Percent Equation Functions ---
 
-        /**
-         * Calculates "P% of X".
-         */
         function calculatePercent1() {
             const p = parseFloat(document.getElementById('percentP1').value);
             const x = parseFloat(document.getElementById('percentX1').value);
@@ -958,9 +761,6 @@
             resultDiv.textContent = `Result: ${formatScientific(result)}`;
         }
 
-        /**
-         * Calculates "X is what % of N?".
-         */
         function calculatePercent2() {
             const x = parseFloat(document.getElementById('percentX2').value);
             const n = parseFloat(document.getElementById('percentN2').value);
@@ -981,9 +781,6 @@
             resultDiv.textContent = `Result: ${formatScientific(result)}%`;
         }
 
-        /**
-         * Calculates "If X is P% of what number?".
-         */
         function calculatePercent3() {
             const x = parseFloat(document.getElementById('percentX3').value);
             const p = parseFloat(document.getElementById('percentP3').value);
@@ -1006,12 +803,6 @@
 
         // --- Geometric Formulas Functions (with Solver Logic) ---
 
-        /**
-         * Generic function to parse a numeric value from an input element.
-         * Returns null if the value is empty or NaN.
-         * @param {string} id - The ID of the input element.
-         * @returns {number|null} The parsed numeric value or null.
-         */
         function getNumericInput(id) {
             const value = document.getElementById(id).value;
             if (value === '') return null;
@@ -1019,16 +810,9 @@
             return isNaN(parsed) ? null : parsed;
         }
 
-        /**
-         * Generic function to set the text content and style of a result div.
-         * Handles both successful results and error messages.
-         * @param {string} id - The ID of the result div.
-         * @param {string} message - The message to display.
-         * @param {boolean} isError - True if it's an error message.
-         */
         function setSolverResult(id, message, isError = false) {
             const resultDiv = document.getElementById(id);
-            resultDiv.innerHTML = message; // Use innerHTML to allow for line breaks
+            resultDiv.innerHTML = message;
             if (isError) {
                 resultDiv.classList.add('error');
             } else {
@@ -1036,12 +820,6 @@
             }
         }
 
-        /**
-         * Validates inputs for solver functions.
-         * @param {Array<Object>} inputs - Array of {id, label} for inputs.
-         * @param {string} resultDivId - ID of the result div.
-         * @returns {Object|null} Object containing {parsedInputs, emptyFieldLabel} or null on error.
-         */
         function validateSolverInputs(inputs, resultDivId) {
             let parsedInputs = [];
             let emptyCount = 0;
@@ -1052,8 +830,8 @@
                 const value = getNumericInput(input.id);
                 if (value === null) {
                     emptyCount++;
-                    emptyFieldLabel = input.label; // Keep track of the last empty field for single blank check
-                    if (document.getElementById(input.id).value !== '') { // If it's not empty, but couldn't parse
+                    emptyFieldLabel = input.label;
+                    if (document.getElementById(input.id).value !== '') {
                         invalidCount++;
                     }
                 }
@@ -1158,7 +936,6 @@
             const { parsedInputs, emptyFieldLabel } = validation;
 
             const b = parsedInputs[0].value;
-            // Fixed typo: was 'parsed[1].value' changed to 'parsedInputs[1].value'
             const h = parsedInputs[1].value;
             const A = parsedInputs[2].value;
             let result = null;
@@ -1361,7 +1138,7 @@
                     resultLabel = `Volume (V): ${formatScientific(result)}`;
                 } else if (emptyFieldLabel === 'Side (s)') {
                     if (V < 0) throw new Error("Volume cannot be negative.");
-                    result = Math.cbrt(V); // Cube root
+                    result = Math.cbrt(V);
                     if (isNaN(result)) throw new Error("Invalid input for cube root.");
                     resultLabel = `Side (s): ${formatScientific(result)}`;
                 }
@@ -1602,9 +1379,6 @@
             }
         }
 
-        /**
-         * Calculates for Rectangular Prism Surface Area (SA = 2lw + 2lh + 2wh).
-         */
         function calculateRectangularPrismSASolver() {
             const validation = validateSolverInputs([
                 { id: 'rectPrismSA_l', label: 'Length (l)' },
@@ -1674,7 +1448,7 @@
                     resultLabel = `Circumference (C): ${formatScientific(result)}`;
                 } else if (emptyFieldLabel === 'Radius (r)') {
                     if (C < 0) throw new Error("Circumference cannot be negative.");
-                    if (Math.PI === 0) throw new Error("Pi cannot be zero for division."); // Should not happen
+                    if (Math.PI === 0) throw new Error("Pi cannot be zero for division.");
                     result = C / (2 * Math.PI);
                     resultLabel = `Radius (r): ${formatScientific(result)}`;
                 }
@@ -1714,7 +1488,6 @@
             }
         }
 
-
         // --- Temperature Conversion Functions ---
         function convertTemperature() {
             const val = parseFloat(document.getElementById('tempInputVal').value);
@@ -1729,7 +1502,6 @@
             }
 
             let celsius;
-            // Convert to Celsius first
             if (fromUnit === 'C') {
                 celsius = val;
             } else if (fromUnit === 'F') {
@@ -1739,7 +1511,6 @@
             }
 
             let result;
-            // Convert from Celsius to target unit
             if (toUnit === 'C') {
                 result = celsius;
             } else if (toUnit === 'F') {
@@ -1753,15 +1524,11 @@
 
         // --- Unit Conversion Functions ---
 
-        /**
-         * Populates the 'from' and 'to' unit dropdowns based on the selected unit type.
-         */
         function populateUnitOptions() {
             const unitType = document.getElementById('unitType').value;
             const fromSelect = document.getElementById('unitFromUnit');
             const toSelect = document.getElementById('unitToUnit');
 
-            // Clear existing options
             fromSelect.innerHTML = '';
             toSelect.innerHTML = '';
 
@@ -1769,7 +1536,7 @@
             for (const unitKey in units) {
                 const optionFrom = document.createElement('option');
                 optionFrom.value = unitKey;
-                optionFrom.textContent = unitKey.replace(/_/g, ' '); // Format key for display
+                optionFrom.textContent = unitKey.replace(/_/g, ' ');
                 fromSelect.appendChild(optionFrom);
 
                 const optionTo = document.createElement('option');
@@ -1779,9 +1546,6 @@
             }
         }
 
-        /**
-         * Performs unit conversion between selected units.
-         */
         function convertUnit() {
             const val = parseFloat(document.getElementById('unitInputVal').value);
             const unitType = document.getElementById('unitType').value;
@@ -1796,8 +1560,8 @@
             }
 
             const units = unitConversions[unitType];
-            const valInBase = val * units[fromUnit]; // Convert input value to base unit (e.g., meters, grams, liters)
-            const result = valInBase / units[toUnit]; // Convert from base unit to target unit
+            const valInBase = val * units[fromUnit];
+            const result = valInBase / units[toUnit];
 
             resultDiv.classList.remove('error');
             resultDiv.textContent = `Result: ${formatScientific(result)} ${toUnit.replace(/_/g, ' ')}`;
@@ -1805,19 +1569,10 @@
 
         // --- Scientific Notation Conversion Functions ---
 
-        /**
-         * Parses a string that might be in standard number format, e-notation,
-         * or textbook scientific notation (a x 10^b or a x 10^(b)) into a floating-point number.
-         * @param {string} str - The input string.
-         * @returns {number} The parsed number, or NaN if invalid.
-         */
         function parseScientificNotationInput(str) {
             str = str.trim();
             if (!str) return NaN;
 
-            // First, try parsing "mantissa x 10^exponent" (with or without parentheses for exponent)
-            // This regex handles: "1.23 x 10^4", "1.23 x 10^-2", "1.23 x 10^(4)", "1.23 x 10^(-2)"
-            // It captures mantissa (group 1) and exponent (group 3)
             const textbookRegex = /^(-?\d+(\.\d*)?)\s*x\s*10\^\(?([+\-]?\d+)\)?$/i;
             const match = str.match(textbookRegex);
 
@@ -1829,21 +1584,14 @@
                 }
             }
 
-            // If the textbook format didn't match or was invalid, try standard parseFloat
-            // This handles regular numbers (e.g., "1234.5") and e-notation (e.g., "1.23e-5")
             let num = parseFloat(str);
             if (!isNaN(num) && isFinite(num)) {
                 return num;
             }
 
-            return NaN; // If no format matches or is invalid
+            return NaN;
         }
 
-        /**
-         * Formats a number to school textbook style scientific notation (e.g., 1.23 x 10^4).
-         * @param {number} num - The number to format.
-         * @returns {string} The formatted scientific notation string, or an error message.
-         */
         function formatToTextbookScientific(num) {
             if (isNaN(num) || !isFinite(num)) {
                 return 'Invalid Number';
@@ -1855,35 +1603,26 @@
             let sign = num < 0 ? '-' : '';
             let absNum = Math.abs(num);
 
-            // Use JS's toExponential to get the base mantissa and exponent
-            // Example: 12345.67.toExponential() returns "1.234567e+4"
             let expStr = absNum.toExponential();
-            const match = expStr.match(/(\d+\.?\d*)e([+\-]?\d+)/); // Regex to extract mantissa and exponent from e-notation
+            const match = expStr.match(/(\d+\.?\d*)e([+\-]?\d+)/);
 
             if (match) {
                 let mantissa = parseFloat(match[1]);
                 let exponent = parseInt(match[2], 10);
 
-                // Format mantissa to a sensible number of decimal places (e.g., 5 for general display)
-                // and remove trailing zeros if it results in an integer (e.g., 5.00000 -> 5)
                 let formattedMantissa = mantissa.toFixed(5);
                 formattedMantissa = formattedMantissa.replace(/\.?0+$/, '');
 
                 return `${sign}${formattedMantissa} x 10<sup>${exponent}</sup>`;
             } else {
-                // This case should ideally not be hit for finite numbers, but acts as a fallback.
-                // If somehow toExponential fails to produce expected format, display as is.
                 return num.toString();
             }
         }
 
-        /**
-         * Converts a number from scientific or standard notation to standard notation.
-         */
         function convertToStandard() {
             const inputVal = document.getElementById('notationInput').value;
             const resultDiv = document.getElementById('notationResult');
-            const num = parseScientificNotationInput(inputVal); // Use robust parsing
+            const num = parseScientificNotationInput(inputVal);
 
             if (isNaN(num) || !isFinite(num)) {
                 setSolverResult('notationResult', 'Please enter a valid scientific or standard number.', true);
@@ -1894,17 +1633,9 @@
             if (num === 0) {
                 standardStr = '0';
             } else {
-                // For numbers that are very small (e.g., 0.00013) or might suffer from floating point inaccuracies,
-                // use toFixed to a high precision, then trim trailing zeros.
-                // This prevents results like 0.00013000000000000002.
-                // For other numbers (large integers, numbers with fewer decimal places), toString() is usually fine.
                 const absNum = Math.abs(num);
                 if (absNum < 0.000001 || (absNum > 1 && absNum < 1e21 && num.toString().includes('e'))) {
-                    // Apply toFixed with enough decimal places to capture the precision, then clean up.
-                    // Max precision for IEEE 754 double-precision floats is about 15-17 significant digits.
-                    // Using 20 decimal places here to ensure capture of small numbers, then trim.
                     standardStr = num.toFixed(20);
-                    // Remove trailing zeros and the decimal point if it becomes an integer
                     standardStr = standardStr.replace(/\.?0+$/, '');
                 } else {
                     standardStr = num.toString();
@@ -1914,13 +1645,10 @@
             setSolverResult('notationResult', `Standard: ${standardStr}`);
         }
 
-        /**
-         * Converts a number from standard notation to scientific notation.
-         */
         function convertToScientific() {
             const inputVal = document.getElementById('notationInput').value;
             const resultDiv = document.getElementById('notationResult');
-            const num = parseScientificNotationInput(inputVal); // Use robust parsing
+            const num = parseScientificNotationInput(inputVal);
 
             if (isNaN(num) || !isFinite(num)) {
                 setSolverResult('notationResult', 'Please enter a valid scientific or standard number.', true);
@@ -1930,34 +1658,20 @@
             setSolverResult('notationResult', `Scientific: ${formatToTextbookScientific(num)}`);
         }
 
-
         // --- Fraction Calculator Functions ---
 
-        /**
-         * Finds the Greatest Common Divisor (GCD) using Euclidean algorithm.
-         * @param {number} a - First number.
-         * @param {number} b - Second number.
-         * @returns {number} The GCD.
-         */
         function gcd(a, b) {
             return b === 0 ? a : gcd(b, a % b);
         }
 
-        /**
-         * Reduces a fraction to its simplest form.
-         * @param {number} numerator - The numerator.
-         * @param {number} denominator - The denominator.
-         * @returns {Object} An object {numerator, denominator} representing the reduced fraction.
-         */
         function reduceFraction(numerator, denominator) {
-            if (denominator === 0) return { numerator: numerator, denominator: 0 }; // Handle division by zero
-            if (numerator === 0) return { numerator: 0, denominator: 1 }; // 0/x = 0
+            if (denominator === 0) return { numerator: numerator, denominator: 0 };
+            if (numerator === 0) return { numerator: 0, denominator: 1 };
 
             const common = gcd(Math.abs(numerator), Math.abs(denominator));
             let newNumerator = numerator / common;
             let newDenominator = denominator / common;
 
-            // Ensure the sign is with the numerator
             if (newDenominator < 0) {
                 newNumerator *= -1;
                 newDenominator *= -1;
@@ -1965,14 +1679,8 @@
             return { numerator: newNumerator, denominator: newDenominator };
         }
 
-        /**
-         * Converts an improper fraction to a mixed number string.
-         * @param {number} numerator - The numerator.
-         * @param {number} denominator - The denominator.
-         * @returns {string} The mixed number string (e.g., "1 1/2" or "3/4" or "5").
-         */
         function toMixedNumber(numerator, denominator) {
-            if (denominator === 0) return numerator > 0 ? "Undefined" : (numerator < 0 ? "Undefined" : "Undefined"); // Division by zero
+            if (denominator === 0) return "Undefined";
             if (numerator === 0) return "0";
 
             const reduced = reduceFraction(numerator, denominator);
@@ -1997,17 +1705,10 @@
             }
         }
 
-        /**
-         * Parses fraction input fields (whole, numerator, denominator) into a standard fraction object.
-         * @param {string} wholeId - ID of the whole number input.
-         * @param {string} numId - ID of the numerator input.
-         * @param {string} denId - ID of the denominator input.
-         * @returns {Object|null} {numerator, denominator} or null if input is invalid.
-         */
         function parseFractionInput(wholeId, numId, denId) {
             let whole = getNumericInput(wholeId) || 0;
             let numerator = getNumericInput(numId) || 0;
-            let denominator = getNumericInput(denId) || 1; // Default denominator to 1 if not provided
+            let denominator = getNumericInput(denId) || 1;
 
             if (isNaN(whole) || isNaN(numerator) || isNaN(denominator)) {
                 return null;
@@ -2016,9 +1717,7 @@
                 return { error: "Denominator cannot be zero." };
             }
 
-            // Combine whole and fractional parts into a single improper fraction numerator
             let combinedNumerator = Math.abs(whole) * denominator + Math.abs(numerator);
-            // Apply original sign of the whole number or numerator if whole is zero
             if (whole < 0 || (whole === 0 && numerator < 0)) {
                 combinedNumerator = -combinedNumerator;
             }
@@ -2026,10 +1725,6 @@
             return { numerator: combinedNumerator, denominator: denominator };
         }
 
-        /**
-         * Calculates fractions based on the operation.
-         * @param {string} operation - 'add', 'subtract', 'multiply', 'divide'.
-         */
         function calculateFractions(operation) {
             const f1 = parseFractionInput('f1_whole', 'f1_numerator', 'f1_denominator');
             const f2 = parseFractionInput('f2_whole', 'f2_numerator', 'f2_denominator');
@@ -2083,42 +1778,26 @@
 
         // --- Statistics Functions ---
 
-        /**
-         * Parses a comma-separated string of numbers into an array of numbers.
-         * Handles empty strings, non-numeric values, and trims whitespace.
-         * @param {string} inputString - The comma-separated string.
-         * @returns {Array<number>|null} An array of numbers, or null if parsing fails.
-         */
         function parseNumbers(inputString) {
             const parts = inputString.split(',').map(s => s.trim());
             const numbers = [];
             for (const part of parts) {
-                if (part === '') continue; // Skip empty parts resulting from trailing commas or double commas
+                if (part === '') continue;
                 const num = parseFloat(part);
                 if (isNaN(num)) {
-                    return null; // Return null if any part is not a valid number
+                    return null;
                 }
                 numbers.push(num);
             }
             return numbers;
         }
 
-        /**
-         * Calculates the mean (average) of an array of numbers.
-         * @param {Array<number>} numbers - The array of numbers.
-         * @returns {number} The mean.
-         */
         function calculateMean(numbers) {
             if (numbers.length === 0) return NaN;
             const sum = numbers.reduce((acc, curr) => acc + curr, 0);
             return sum / numbers.length;
         }
 
-        /**
-         * Calculates the median of an array of numbers.
-         * @param {Array<number>} numbers - The array of numbers.
-         * @returns {number} The median.
-         */
         function calculateMedian(numbers) {
             if (numbers.length === 0) return NaN;
             const sortedNumbers = [...numbers].sort((a, b) => a - b);
@@ -2130,11 +1809,6 @@
             }
         }
 
-        /**
-         * Calculates the mode(s) of an array of numbers.
-         * @param {Array<number>} numbers - The array of numbers.
-         * @returns {Array<string>} An array of modes (formatted as strings).
-         */
         function calculateMode(numbers) {
             if (numbers.length === 0) return [];
             const counts = {};
@@ -2152,25 +1826,17 @@
             const modes = [];
             for (const num in counts) {
                 if (counts[num] === maxCount) {
-                    modes.push(parseFloat(num)); // Convert back to number
+                    modes.push(parseFloat(num));
                 }
             }
 
-            // If all numbers appear the same number of times (e.g., all once), there is no true mode.
-            // Or, if every number is unique, there's no repeating mode, so return empty array.
             if (Object.keys(counts).length === numbers.length && numbers.length > 0 && maxCount === 1) {
                 return ["No repeating mode"];
             }
 
-            return modes.sort((a,b) => a-b).map(m => formatScientific(m)); // Sort modes and format for consistent output
+            return modes.sort((a,b) => a-b).map(m => formatScientific(m));
         }
 
-
-        /**
-         * Calculates the range of an array of numbers.
-         * @param {Array<number>} numbers - The array of numbers.
-         * @returns {number} The range.
-         */
         function calculateRange(numbers) {
             if (numbers.length === 0) return NaN;
             const max = Math.max(...numbers);
@@ -2178,27 +1844,19 @@
             return max - min;
         }
 
-        /**
-         * Calculates the Mean Absolute Deviation (MAD) of an array of numbers.
-         * @param {Array<number>} numbers - The array of numbers.
-         * @returns {number} The Mean Absolute Deviation.
-         */
         function calculateMeanAbsoluteDeviation(numbers) {
             if (numbers.length === 0) return NaN;
             const mean = calculateMean(numbers);
-            if (isNaN(mean)) return NaN; // Should not happen if numbers.length > 0
+            if (isNaN(mean)) return NaN;
 
             const absoluteDifferencesSum = numbers.reduce((acc, curr) => acc + Math.abs(curr - mean), 0);
             return absoluteDifferencesSum / numbers.length;
         }
 
-        /**
-         * Main function to calculate and display all statistics.
-         */
         function calculateAllStatistics() {
             const inputString = document.getElementById('dataInput').value;
             const resultDiv = document.getElementById('resultStats');
-            resultDiv.classList.remove('error'); // Clear previous error state
+            resultDiv.classList.remove('error');
 
             if (!inputString.trim()) {
                 setSolverResult('resultStats', 'Please enter numbers to calculate statistics.', true);
@@ -2218,7 +1876,7 @@
 
             const mean = calculateMean(numbers);
             const median = calculateMedian(numbers);
-            const mode = calculateMode(numbers); // mode already returns formatted strings if "No repeating mode"
+            const mode = calculateMode(numbers);
             const range = calculateRange(numbers);
             const mad = calculateMeanAbsoluteDeviation(numbers);
 
@@ -2230,10 +1888,9 @@
                 <p><strong>MAD:</strong> ${formatScientific(mad)}</p>
             `;
 
-            // Add deviations list as a table, sorting numbers for display
             resultHtml += `<p class="mt-4 font-bold text-indigo-700">Deviations:</p>`;
             if (numbers.length > 0 && !isNaN(mean)) {
-                const sortedNumbersForDeviations = [...numbers].sort((a, b) => a - b); // Sort for display in table
+                const sortedNumbersForDeviations = [...numbers].sort((a, b) => a - b);
                 resultHtml += `<table class="deviation-table mt-2">`;
                 resultHtml += `<thead><tr><th>Original Value</th><th>Deviation</th></tr></thead><tbody>`;
                 sortedNumbersForDeviations.forEach(num => {
@@ -2248,24 +1905,20 @@
             setSolverResult('resultStats', resultHtml);
         }
 
-
         // Event Listeners for all buttons and menu toggles
         document.addEventListener('DOMContentLoaded', () => {
             populateUnitOptions(); // Initial population of unit options
 
             // Main Calculator Buttons
             document.getElementById('display').addEventListener('input', () => {
-                // When user types directly, ensure awaitingNewInput is false
                 awaitingNewInput = false;
             });
-            // Enter key functionality for the main display
             document.getElementById('display').addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
                     calculateResult();
-                    event.preventDefault(); // Prevent default Enter key behavior (e.g., newline in some inputs)
+                    event.preventDefault();
                 }
             });
-
 
             document.getElementById('clear-btn').addEventListener('click', clearDisplay);
             document.getElementById('bksp-btn').addEventListener('click', deleteLast);
@@ -2336,8 +1989,7 @@
             document.getElementById('convert-to-standard-btn').addEventListener('click', convertToStandard);
             document.getElementById('reset-conversion-btn').addEventListener('click', resetConversionCalculator);
 
-
-            // Statistics Calculator Button (NEW)
+            // Statistics Calculator Button
             document.getElementById('calc-stats-btn').addEventListener('click', calculateAllStatistics);
             document.getElementById('reset-stats-btn').addEventListener('click', resetStatisticsCalculator);
         });
