@@ -1,138 +1,130 @@
-/* CoordinateGrid App Styles */
+/* CoordinateGrid App Styles - Enhanced Inline Version */
 
-#app-panel-content .coordinate-grid-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-#app-panel-content svg {
-    display: block;
-    margin: 0 auto;
+/* Inline container in chat messages */
+.coordinate-grid-inline {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    border: 2px solid rgba(212, 175, 55, 0.3);
     max-width: 100%;
-    height: auto;
 }
 
-/* Grid styles */
-.coordinate-grid-container .grid line {
-    pointer-events: none;
-}
-
-.coordinate-grid-container .axes line {
-    pointer-events: none;
-}
-
-/* Point interactivity */
-.coordinate-grid-container circle {
-    cursor: grab;
-    transition: r 0.2s, stroke-width 0.2s;
-}
-
-.coordinate-grid-container circle:hover {
-    r: 7;
-    stroke-width: 2;
-    filter: drop-shadow(0 0 4px rgba(255, 0, 85, 0.8));
-}
-
-.coordinate-grid-container circle:active {
-    cursor: grabbing;
-}
-
-/* Text labels */
-.coordinate-grid-container text {
-    user-select: none;
-    pointer-events: none;
-}
-
-/* Controls panel (optional) */
-.coordinate-grid-controls {
+/* SVG wrapper for proper aspect ratio */
+.coordinate-grid-svg-wrapper {
+    width: 100%;
+    max-width: 700px;
+    margin: 15px auto;
+    aspect-ratio: 1 / 1; /* Force square */
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 6px;
-    padding: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.coordinate-grid-svg-wrapper svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Controls panel */
+.coordinate-grid-controls {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     align-items: center;
-}
-
-.coordinate-grid-controls label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.85rem;
-    color: #ccc;
-}
-
-.coordinate-grid-controls input[type="checkbox"] {
-    accent-color: #d4af37;
-}
-
-.coordinate-grid-controls input[type="number"],
-.coordinate-grid-controls input[type="text"] {
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid #444;
-    background: #1a1a2e;
-    color: #fff;
-    font-size: 0.85rem;
-    width: 60px;
+    margin-bottom: 15px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .coordinate-grid-controls button {
-    padding: 6px 12px;
+    padding: 8px 16px;
     border: none;
-    border-radius: 4px;
-    background: #34495e;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #34495e, #46627f);
     color: white;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
+    white-space: nowrap;
 }
 
 .coordinate-grid-controls button:hover {
-    background: #46627f;
+    background: linear-gradient(135deg, #46627f, #5a7a9a);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Function path styling */
-.coordinate-grid-container path {
-    filter: drop-shadow(0 0 3px rgba(0, 212, 255, 0.5));
+.coordinate-grid-controls button:active {
+    transform: translateY(0);
+}
+
+.coordinate-grid-controls small {
+    flex: 1;
+    min-width: 200px;
+    text-align: right;
+    font-size: 0.85rem;
+    color: #aaa;
+}
+
+/* Grid elements */
+.coordinate-grid-inline .grid line {
+    pointer-events: none;
+}
+
+.coordinate-grid-inline .axes line {
+    pointer-events: none;
+}
+
+/* Point styling - LARGER and more visible */
+.coordinate-grid-inline circle {
+    cursor: pointer;
+    transition: r 0.2s, stroke-width 0.2s;
+    filter: drop-shadow(0 0 4px rgba(255, 0, 85, 0.6));
+}
+
+.coordinate-grid-inline circle:hover {
+    r: 8 !important;
+    stroke-width: 3 !important;
+    filter: drop-shadow(0 0 8px rgba(255, 0, 85, 1));
+}
+
+/* Text labels - LARGER */
+.coordinate-grid-inline text {
+    user-select: none;
+    pointer-events: none;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Function paths - THICKER */
+.coordinate-grid-inline path {
+    filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.5));
 }
 
 /* Inequality shading */
-.coordinate-grid-container path[fill*="rgba"] {
+.coordinate-grid-inline path[fill*="rgba"] {
     filter: none;
+    opacity: 0.3;
 }
 
-/* Legend (for multiple functions) */
-.coordinate-grid-legend {
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.coordinate-grid-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    color: #ccc;
-}
-
-.coordinate-grid-legend-color {
-    width: 20px;
-    height: 3px;
-    border-radius: 2px;
+/* Interactive mode cursor */
+.coordinate-grid-inline svg.interactive {
+    cursor: crosshair !important;
 }
 
 /* Mobile optimizations */
 @media (max-width: 768px) {
-    #app-panel-content svg {
-        width: 100%;
-        height: auto;
+    .coordinate-grid-inline {
+        padding: 10px;
+        margin: 15px 0;
+    }
+
+    .coordinate-grid-svg-wrapper {
+        max-width: 100%;
     }
 
     .coordinate-grid-controls {
@@ -140,46 +132,115 @@
         align-items: stretch;
     }
 
-    .coordinate-grid-controls label {
-        justify-content: space-between;
+    .coordinate-grid-controls button {
+        width: 100%;
+    }
+
+    .coordinate-grid-controls small {
+        text-align: center;
+        margin-top: 8px;
+    }
+
+    /* Larger touch targets on mobile */
+    .coordinate-grid-inline circle {
+        r: 8 !important;
     }
 }
 
-/* Accessibility: High contrast mode */
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .coordinate-grid-svg-wrapper {
+        max-width: 600px;
+    }
+}
+
+/* Desktop - larger display */
+@media (min-width: 1025px) {
+    .coordinate-grid-svg-wrapper {
+        max-width: 700px;
+    }
+}
+
+/* High contrast mode */
 @media (prefers-contrast: high) {
-    .coordinate-grid-container .grid line {
-        stroke: rgba(255, 255, 255, 0.3);
+    .coordinate-grid-inline .grid line {
+        stroke: rgba(255, 255, 255, 0.4) !important;
     }
 
-    .coordinate-grid-container .axes line {
-        stroke: rgba(255, 255, 255, 0.6);
+    .coordinate-grid-inline .axes line {
+        stroke: rgba(255, 255, 255, 0.7) !important;
     }
 
-    .coordinate-grid-container circle {
-        stroke: #ffffff;
-        stroke-width: 2;
+    .coordinate-grid-inline circle {
+        stroke: #ffffff !important;
+        stroke-width: 3 !important;
+    }
+
+    .coordinate-grid-inline text {
+        fill: #ffffff !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 1);
     }
 }
 
 /* Print styles */
 @media print {
-    #app-panel-content svg {
+    .coordinate-grid-inline {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .coordinate-grid-svg-wrapper svg {
         background: white !important;
     }
 
-    .coordinate-grid-container .grid line {
-        stroke: rgba(0, 0, 0, 0.2) !important;
+    .coordinate-grid-inline .grid line {
+        stroke: rgba(0, 0, 0, 0.3) !important;
     }
 
-    .coordinate-grid-container .axes line {
-        stroke: rgba(0, 0, 0, 0.5) !important;
+    .coordinate-grid-inline .axes line {
+        stroke: rgba(0, 0, 0, 0.6) !important;
     }
 
-    .coordinate-grid-container text {
+    .coordinate-grid-inline text {
         fill: #000000 !important;
     }
 
     .coordinate-grid-controls {
         display: none;
     }
+}
+
+/* Animation for point plotting in interactive mode */
+@keyframes plotPoint {
+    0% {
+        r: 0;
+        opacity: 0;
+    }
+    50% {
+        r: 10;
+        opacity: 0.5;
+    }
+    100% {
+        r: 6;
+        opacity: 1;
+    }
+}
+
+.coordinate-grid-inline circle.newly-plotted {
+    animation: plotPoint 0.4s ease-out;
+}
+
+/* Loading state */
+.coordinate-grid-inline.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.coordinate-grid-inline.loading::after {
+    content: "Rendering...";
+    display: block;
+    text-align: center;
+    color: #d4af37;
+    font-size: 0.9rem;
+    margin-top: 10px;
 }
