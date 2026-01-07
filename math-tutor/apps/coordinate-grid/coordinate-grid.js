@@ -1,6 +1,6 @@
 /**
- * CoordinateGrid App
- * Interactive coordinate plane for plotting points, lines, and functions
+ * CoordinateGrid App - Enhanced Version
+ * Interactive coordinate plane with zoom, pan, and inline display
  */
 
 class CoordinateGrid {
@@ -8,11 +8,11 @@ class CoordinateGrid {
         this.container = document.getElementById(containerId);
         this.svgNS = "http://www.w3.org/2000/svg";
         
-        // Default settings
+        // Default settings - LARGER and SQUARE
         this.settings = {
-            width: 500,
-            height: 500,
-            padding: 40,
+            width: 600,
+            height: 600,
+            padding: 50,
             xMin: -10,
             xMax: 10,
             yMin: -10,
@@ -21,30 +21,46 @@ class CoordinateGrid {
             showGrid: true,
             showAxes: true,
             showLabels: true,
-            axisColor: 'rgba(255, 255, 255, 0.3)',
-            gridColor: 'rgba(255, 255, 255, 0.1)',
+            axisColor: 'rgba(255, 255, 255, 0.4)',
+            gridColor: 'rgba(255, 255, 255, 0.15)',
             pointColor: '#ff0055',
             lineColor: '#00d4ff',
             textColor: '#ffffff',
-            backgroundColor: 'rgba(0, 0, 0, 0.3)'
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            fontSize: 14,
+            pointRadius: 6
         };
 
-        this.dragEnabled = false;
+        this.zoomLevel = 1;
+        this.panOffset = { x: 0, y: 0 };
+        this.isPanning = false;
+        this.lastPanPoint = { x: 0, y: 0 };
         this.currentPoints = [];
+        this.interactiveMode = false;
+        this.uniqueId = 'grid-' + Date.now();
     }
 
     /**
-     * Main render function - processes payload and displays visualization
+     * Main render function - INLINE display in chat
      * @param {Object} payload - Configuration from LLM
      * @returns {Object} Status and summary
      */
     async render(payload) {
         try {
-            // Merge payload with defaults
+            // Apply payload settings
             this.applyPayload(payload);
 
-            // Create SVG container
-            this.createSVG();
+            // Check if this should replace existing graph
+            const existingContainer = document.querySelector('.coordinate-grid-inline');
+            if (existingContainer && !payload.keepPrevious) {
+                existingContainer.remove();
+            }
+
+            // Create inline container in CHAT (not popup)
+            const inlineContainer = this.createInlineContainer();
+            
+            // Create SVG with proper aspect ratio
+            this.createSVG(inlineContainer);
 
             // Render based on type
             switch (payload.type) {
@@ -67,7 +83,10 @@ class CoordinateGrid {
                     this.renderPoints(payload.points || []);
             }
 
-            // Add interactivity if requested
+            // Add controls (zoom, pan, interactive)
+            this.addControls(inlineContainer, payload);
+
+            // Enable interactive mode if requested
             if (payload.interactive) {
                 this.enableInteractive();
             }
@@ -80,8 +99,8 @@ class CoordinateGrid {
                 appId: 'CoordinateGrid',
                 summary: summary,
                 output: {
-                    type: 'svg',
-                    containerId: this.container.id
+                    type: 'inline',
+                    containerId: this.uniqueId
                 }
             };
 
@@ -96,7 +115,35 @@ class CoordinateGrid {
     }
 
     /**
-     * Apply payload settings to internal config
+     * Create inline container in the LAST message
+     */
+    createInlineContainer() {
+        // Find the last assistant message
+        const messages = document.querySelectorAll('.message.assistant');
+        const lastMessage = messages[messages.length - 1];
+        
+        if (!lastMessage) {
+            // Fallback: create in messages container
+            const container = document.getElementById('messages-container');
+            const wrapper = document.createElement('div');
+            wrapper.className = 'coordinate-grid-inline';
+            wrapper.id = this.uniqueId;
+            container.appendChild(wrapper);
+            return wrapper;
+        }
+
+        // Insert into the message body
+        const messageBody = lastMessage.querySelector('.msg-body');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'coordinate-grid-inline';
+        wrapper.id = this.uniqueId;
+        messageBody.appendChild(wrapper);
+        
+        return wrapper;
+    }
+
+    /**
+     * Apply payload settings
      */
     applyPayload(payload) {
         if (payload.window) {
@@ -106,29 +153,48 @@ class CoordinateGrid {
             this.settings.yMax = payload.window.yMax ?? this.settings.yMax;
         }
 
+        // Ensure SQUARE aspect ratio
+        const xRange = this.settings.xMax - this.settings.xMin;
+        const yRange = this.settings.yMax - this.settings.yMin;
+        
+        if (xRange !== yRange) {
+            // Adjust to make square
+            const maxRange = Math.max(xRange, yRange);
+            const xCenter = (this.settings.xMax + this.settings.xMin) / 2;
+            const yCenter = (this.settings.yMax + this.settings.yMin) / 2;
+            
+            this.settings.xMin = xCenter - maxRange / 2;
+            this.settings.xMax = xCenter + maxRange / 2;
+            this.settings.yMin = yCenter - maxRange / 2;
+            this.settings.yMax = yCenter + maxRange / 2;
+        }
+
         if (payload.gridSpacing) this.settings.gridSpacing = payload.gridSpacing;
         if (payload.showGrid !== undefined) this.settings.showGrid = payload.showGrid;
         if (payload.showAxes !== undefined) this.settings.showAxes = payload.showAxes;
         if (payload.showLabels !== undefined) this.settings.showLabels = payload.showLabels;
+        
+        this.interactiveMode = payload.interactive || false;
     }
 
     /**
      * Create base SVG element with grid and axes
      */
-    createSVG() {
+    createSVG(container) {
         const { width, height, backgroundColor } = this.settings;
 
-        // Clear container
-        this.container.innerHTML = '';
-
-        // Create SVG
+        // Create SVG with viewBox for responsiveness
         this.svg = document.createElementNS(this.svgNS, 'svg');
-        this.svg.setAttribute('width', width);
-        this.svg.setAttribute('height', height);
+        this.svg.setAttribute('width', '100%');
+        this.svg.setAttribute('height', '100%');
         this.svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        this.svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
         this.svg.style.background = backgroundColor;
         this.svg.style.borderRadius = '8px';
-        this.svg.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+        this.svg.style.border = '2px solid rgba(212, 175, 55, 0.3)';
+        this.svg.style.maxWidth = '100%';
+        this.svg.style.height = 'auto';
+        this.svg.style.cursor = 'default';
 
         // Add grid
         if (this.settings.showGrid) {
@@ -140,11 +206,18 @@ class CoordinateGrid {
             this.drawAxes();
         }
 
-        this.container.appendChild(this.svg);
+        // Create SVG wrapper for proper sizing
+        const svgWrapper = document.createElement('div');
+        svgWrapper.className = 'coordinate-grid-svg-wrapper';
+        svgWrapper.appendChild(this.svg);
+        container.appendChild(svgWrapper);
+
+        // Enable pan on the SVG
+        this.enablePan();
     }
 
     /**
-     * Draw coordinate grid
+     * Draw coordinate grid with LARGER, MORE VISIBLE lines
      */
     drawGrid() {
         const { xMin, xMax, yMin, yMax, gridSpacing, gridColor } = this.settings;
@@ -153,24 +226,24 @@ class CoordinateGrid {
         gridGroup.setAttribute('class', 'grid');
 
         // Vertical lines
-        for (let x = xMin; x <= xMax; x += gridSpacing) {
-            if (x === 0) continue; // Skip axis
+        for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x += gridSpacing) {
+            if (x === 0) continue;
             const x1 = this.toSVGX(x);
-            const y1 = this.toSVGY(yMin);
-            const y2 = this.toSVGY(yMax);
+            const y1 = this.toSVGY(yMax);
+            const y2 = this.toSVGY(yMin);
 
-            const line = this.createLine(x1, y1, x1, y2, gridColor, 1);
+            const line = this.createLine(x1, y1, x1, y2, gridColor, 1.5);
             gridGroup.appendChild(line);
         }
 
         // Horizontal lines
-        for (let y = yMin; y <= yMax; y += gridSpacing) {
-            if (y === 0) continue; // Skip axis
+        for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y += gridSpacing) {
+            if (y === 0) continue;
             const x1 = this.toSVGX(xMin);
             const x2 = this.toSVGX(xMax);
             const y1 = this.toSVGY(y);
 
-            const line = this.createLine(x1, y1, x2, y1, gridColor, 1);
+            const line = this.createLine(x1, y1, x2, y1, gridColor, 1.5);
             gridGroup.appendChild(line);
         }
 
@@ -178,10 +251,10 @@ class CoordinateGrid {
     }
 
     /**
-     * Draw x and y axes
+     * Draw x and y axes with LARGER labels
      */
     drawAxes() {
-        const { xMin, xMax, yMin, yMax, axisColor, textColor, showLabels } = this.settings;
+        const { xMin, xMax, yMin, yMax, axisColor, textColor, showLabels, fontSize } = this.settings;
 
         const axesGroup = document.createElementNS(this.svgNS, 'g');
         axesGroup.setAttribute('class', 'axes');
@@ -191,7 +264,7 @@ class CoordinateGrid {
         const xAxis = this.createLine(
             this.toSVGX(xMin), xAxisY,
             this.toSVGX(xMax), xAxisY,
-            axisColor, 2
+            axisColor, 3
         );
         axesGroup.appendChild(xAxis);
 
@@ -200,40 +273,43 @@ class CoordinateGrid {
         const yAxis = this.createLine(
             yAxisX, this.toSVGY(yMin),
             yAxisX, this.toSVGY(yMax),
-            axisColor, 2
+            axisColor, 3
         );
         axesGroup.appendChild(yAxis);
 
-        // Axis labels
+        // Axis labels - LARGER FONT
         if (showLabels) {
             // X-axis labels
-            for (let x = xMin; x <= xMax; x += this.settings.gridSpacing) {
+            for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x += this.settings.gridSpacing) {
                 if (x === 0) continue;
                 const svgX = this.toSVGX(x);
-                const svgY = this.toSVGY(0) + 15;
+                const svgY = this.toSVGY(0) + 20;
 
-                const text = this.createText(svgX, svgY, x.toString(), textColor, 10);
+                const text = this.createText(svgX, svgY, x.toString(), textColor, fontSize);
+                text.setAttribute('font-weight', 'bold');
                 axesGroup.appendChild(text);
             }
 
             // Y-axis labels
-            for (let y = yMin; y <= yMax; y += this.settings.gridSpacing) {
+            for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y += this.settings.gridSpacing) {
                 if (y === 0) continue;
-                const svgX = this.toSVGX(0) - 15;
-                const svgY = this.toSVGY(y) + 4;
+                const svgX = this.toSVGX(0) - 20;
+                const svgY = this.toSVGY(y) + 5;
 
-                const text = this.createText(svgX, svgY, y.toString(), textColor, 10);
+                const text = this.createText(svgX, svgY, y.toString(), textColor, fontSize);
+                text.setAttribute('font-weight', 'bold');
                 axesGroup.appendChild(text);
             }
 
             // Origin label
             const originText = this.createText(
-                this.toSVGX(0) - 12,
-                this.toSVGY(0) + 15,
+                this.toSVGX(0) - 15,
+                this.toSVGY(0) + 20,
                 '0',
                 textColor,
-                10
+                fontSize
             );
+            originText.setAttribute('font-weight', 'bold');
             axesGroup.appendChild(originText);
         }
 
@@ -241,8 +317,146 @@ class CoordinateGrid {
     }
 
     /**
-     * Render individual points
-     * @param {Array} points - Array of [x, y, label?]
+     * Add zoom and control buttons
+     */
+    addControls(container, payload) {
+        const controlsDiv = document.createElement('div');
+        controlsDiv.className = 'coordinate-grid-controls';
+
+        // Zoom controls
+        const zoomIn = document.createElement('button');
+        zoomIn.textContent = '🔍 Zoom In';
+        zoomIn.onclick = () => this.zoom(0.8);
+
+        const zoomOut = document.createElement('button');
+        zoomOut.textContent = '🔍 Zoom Out';
+        zoomOut.onclick = () => this.zoom(1.25);
+
+        const resetView = document.createElement('button');
+        resetView.textContent = '🔄 Reset View';
+        resetView.onclick = () => this.resetView();
+
+        // Interactive toggle
+        const interactiveBtn = document.createElement('button');
+        interactiveBtn.textContent = this.interactiveMode ? '✏️ Interactive ON' : '✏️ Enable Interactive';
+        interactiveBtn.onclick = () => {
+            this.interactiveMode = !this.interactiveMode;
+            interactiveBtn.textContent = this.interactiveMode ? '✏️ Interactive ON' : '✏️ Enable Interactive';
+            if (this.interactiveMode) {
+                this.enableInteractive();
+            } else {
+                this.disableInteractive();
+            }
+        };
+
+        controlsDiv.appendChild(zoomIn);
+        controlsDiv.appendChild(zoomOut);
+        controlsDiv.appendChild(resetView);
+        controlsDiv.appendChild(interactiveBtn);
+
+        // Info text
+        const infoText = document.createElement('small');
+        infoText.textContent = 'Drag to pan • Click to plot points (interactive mode)';
+        infoText.style.color = '#aaa';
+        infoText.style.marginLeft = '10px';
+        controlsDiv.appendChild(infoText);
+
+        container.insertBefore(controlsDiv, container.firstChild);
+    }
+
+    /**
+     * Zoom in/out
+     */
+    zoom(factor) {
+        const xCenter = (this.settings.xMax + this.settings.xMin) / 2;
+        const yCenter = (this.settings.yMax + this.settings.yMin) / 2;
+        const xRange = (this.settings.xMax - this.settings.xMin) * factor;
+        const yRange = (this.settings.yMax - this.settings.yMin) * factor;
+
+        this.settings.xMin = xCenter - xRange / 2;
+        this.settings.xMax = xCenter + xRange / 2;
+        this.settings.yMin = yCenter - yRange / 2;
+        this.settings.yMax = yCenter + yRange / 2;
+
+        this.redraw();
+    }
+
+    /**
+     * Reset to original view
+     */
+    resetView() {
+        this.settings.xMin = -10;
+        this.settings.xMax = 10;
+        this.settings.yMin = -10;
+        this.settings.yMax = 10;
+        this.zoomLevel = 1;
+        this.panOffset = { x: 0, y: 0 };
+        this.redraw();
+    }
+
+    /**
+     * Enable pan (drag to move)
+     */
+    enablePan() {
+        this.svg.addEventListener('mousedown', (e) => {
+            if (this.interactiveMode) return; // Don't pan in interactive mode
+            this.isPanning = true;
+            this.lastPanPoint = { x: e.clientX, y: e.clientY };
+            this.svg.style.cursor = 'grabbing';
+        });
+
+        this.svg.addEventListener('mousemove', (e) => {
+            if (!this.isPanning) return;
+
+            const dx = e.clientX - this.lastPanPoint.x;
+            const dy = e.clientY - this.lastPanPoint.y;
+            this.lastPanPoint = { x: e.clientX, y: e.clientY };
+
+            const xRange = this.settings.xMax - this.settings.xMin;
+            const yRange = this.settings.yMax - this.settings.yMin;
+            const xShift = -(dx / this.settings.width) * xRange;
+            const yShift = (dy / this.settings.height) * yRange;
+
+            this.settings.xMin += xShift;
+            this.settings.xMax += xShift;
+            this.settings.yMin += yShift;
+            this.settings.yMax += yShift;
+
+            this.redraw();
+        });
+
+        this.svg.addEventListener('mouseup', () => {
+            this.isPanning = false;
+            this.svg.style.cursor = 'default';
+        });
+
+        this.svg.addEventListener('mouseleave', () => {
+            this.isPanning = false;
+            this.svg.style.cursor = 'default';
+        });
+    }
+
+    /**
+     * Redraw the entire graph
+     */
+    redraw() {
+        // Clear SVG
+        while (this.svg.firstChild) {
+            this.svg.removeChild(this.svg.firstChild);
+        }
+
+        // Redraw grid and axes
+        if (this.settings.showGrid) this.drawGrid();
+        if (this.settings.showAxes) this.drawAxes();
+
+        // Redraw points if any
+        if (this.currentPoints.length > 0) {
+            this.renderPoints(this.currentPoints);
+        }
+    }
+
+    /**
+     * Render points with LARGER circles and labels
      */
     renderPoints(points) {
         if (!points || points.length === 0) return;
@@ -255,28 +469,42 @@ class CoordinateGrid {
             const svgX = this.toSVGX(x);
             const svgY = this.toSVGY(y);
 
-            // Draw point
+            // Draw point - LARGER
             const circle = document.createElementNS(this.svgNS, 'circle');
             circle.setAttribute('cx', svgX);
             circle.setAttribute('cy', svgY);
-            circle.setAttribute('r', 5);
+            circle.setAttribute('r', this.settings.pointRadius);
             circle.setAttribute('fill', this.settings.pointColor);
             circle.setAttribute('stroke', '#ffffff');
-            circle.setAttribute('stroke-width', 1.5);
+            circle.setAttribute('stroke-width', 2.5);
             circle.setAttribute('data-point-index', index);
+            circle.setAttribute('data-x', x);
+            circle.setAttribute('data-y', y);
             pointsGroup.appendChild(circle);
 
-            // Draw label
+            // Draw label - LARGER FONT
             if (label || this.settings.showLabels) {
                 const labelText = label || `(${x}, ${y})`;
                 const text = this.createText(
-                    svgX + 8,
-                    svgY - 8,
+                    svgX + 12,
+                    svgY - 12,
                     labelText,
                     this.settings.textColor,
-                    12
+                    this.settings.fontSize + 2
                 );
                 text.setAttribute('font-weight', 'bold');
+                
+                // Background for readability
+                const bbox = text.getBBox();
+                const rect = document.createElementNS(this.svgNS, 'rect');
+                rect.setAttribute('x', bbox.x - 4);
+                rect.setAttribute('y', bbox.y - 2);
+                rect.setAttribute('width', bbox.width + 8);
+                rect.setAttribute('height', bbox.height + 4);
+                rect.setAttribute('fill', 'rgba(0, 0, 0, 0.7)');
+                rect.setAttribute('rx', 4);
+                
+                pointsGroup.appendChild(rect);
                 pointsGroup.appendChild(text);
             }
         });
@@ -286,47 +514,41 @@ class CoordinateGrid {
     }
 
     /**
-     * Render a linear function (line)
-     * @param {number} slope - m in y = mx + b
-     * @param {number} intercept - b in y = mx + b
-     * @param {string} equation - Display equation
+     * Render a linear function (line) with THICKER stroke
      */
     renderLine(slope, intercept, equation) {
         const { xMin, xMax, lineColor } = this.settings;
 
-        // Calculate endpoints
         const x1 = xMin;
         const y1 = slope * x1 + intercept;
         const x2 = xMax;
         const y2 = slope * x2 + intercept;
 
-        // Draw line
         const line = this.createLine(
             this.toSVGX(x1), this.toSVGY(y1),
             this.toSVGX(x2), this.toSVGY(y2),
-            lineColor, 3
+            lineColor, 4
         );
 
         this.svg.appendChild(line);
 
-        // Add equation label
+        // Add equation label with LARGER font
         if (equation && this.settings.showLabels) {
             const labelX = this.toSVGX((xMin + xMax) / 2);
-            const labelY = this.toSVGY(slope * ((xMin + xMax) / 2) + intercept) - 15;
+            const labelY = this.toSVGY(slope * ((xMin + xMax) / 2) + intercept) - 20;
 
-            const text = this.createText(labelX, labelY, equation, this.settings.textColor, 14);
+            const text = this.createText(labelX, labelY, equation, this.settings.textColor, this.settings.fontSize + 4);
             text.setAttribute('font-weight', 'bold');
             text.setAttribute('text-anchor', 'middle');
 
-            // Background for readability
             const bbox = text.getBBox();
             const rect = document.createElementNS(this.svgNS, 'rect');
-            rect.setAttribute('x', bbox.x - 4);
-            rect.setAttribute('y', bbox.y - 2);
-            rect.setAttribute('width', bbox.width + 8);
-            rect.setAttribute('height', bbox.height + 4);
-            rect.setAttribute('fill', 'rgba(0, 0, 0, 0.7)');
-            rect.setAttribute('rx', 4);
+            rect.setAttribute('x', bbox.x - 6);
+            rect.setAttribute('y', bbox.y - 3);
+            rect.setAttribute('width', bbox.width + 12);
+            rect.setAttribute('height', bbox.height + 6);
+            rect.setAttribute('fill', 'rgba(0, 0, 0, 0.8)');
+            rect.setAttribute('rx', 6);
 
             this.svg.appendChild(rect);
             this.svg.appendChild(text);
@@ -334,16 +556,14 @@ class CoordinateGrid {
     }
 
     /**
-     * Render a function (quadratic, exponential, etc.)
-     * @param {string} equation - Function equation
+     * Render a function (quadratic, exponential, etc.) with THICKER stroke
      */
     renderFunction(equation) {
         const { xMin, xMax, lineColor } = this.settings;
 
-        // Parse equation and generate points
         const func = this.parseEquation(equation);
         const points = [];
-        const step = (xMax - xMin) / 200; // 200 points for smooth curve
+        const step = (xMax - xMin) / 300; // More points for smoother curve
 
         for (let x = xMin; x <= xMax; x += step) {
             try {
@@ -351,12 +571,9 @@ class CoordinateGrid {
                 if (isFinite(y) && !isNaN(y)) {
                     points.push([x, y]);
                 }
-            } catch (e) {
-                // Skip invalid points
-            }
+            } catch (e) {}
         }
 
-        // Draw smooth curve
         if (points.length > 1) {
             const pathData = points.map((point, index) => {
                 const [x, y] = point;
@@ -368,7 +585,7 @@ class CoordinateGrid {
             const path = document.createElementNS(this.svgNS, 'path');
             path.setAttribute('d', pathData);
             path.setAttribute('stroke', lineColor);
-            path.setAttribute('stroke-width', 3);
+            path.setAttribute('stroke-width', 4);
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke-linecap', 'round');
 
@@ -377,20 +594,20 @@ class CoordinateGrid {
             // Add equation label
             if (this.settings.showLabels) {
                 const midX = this.toSVGX((xMin + xMax) / 2);
-                const midY = this.toSVGY(func((xMin + xMax) / 2)) - 20;
+                const midY = this.toSVGY(func((xMin + xMax) / 2)) - 25;
 
-                const text = this.createText(midX, midY, equation, this.settings.textColor, 14);
+                const text = this.createText(midX, midY, equation, this.settings.textColor, this.settings.fontSize + 4);
                 text.setAttribute('font-weight', 'bold');
                 text.setAttribute('text-anchor', 'middle');
 
                 const bbox = text.getBBox();
                 const rect = document.createElementNS(this.svgNS, 'rect');
-                rect.setAttribute('x', bbox.x - 4);
-                rect.setAttribute('y', bbox.y - 2);
-                rect.setAttribute('width', bbox.width + 8);
-                rect.setAttribute('height', bbox.height + 4);
-                rect.setAttribute('fill', 'rgba(0, 0, 0, 0.7)');
-                rect.setAttribute('rx', 4);
+                rect.setAttribute('x', bbox.x - 6);
+                rect.setAttribute('y', bbox.y - 3);
+                rect.setAttribute('width', bbox.width + 12);
+                rect.setAttribute('height', bbox.height + 6);
+                rect.setAttribute('fill', 'rgba(0, 0, 0, 0.8)');
+                rect.setAttribute('rx', 6);
 
                 this.svg.appendChild(rect);
                 this.svg.appendChild(text);
@@ -400,22 +617,18 @@ class CoordinateGrid {
 
     /**
      * Render inequality with shaded region
-     * @param {string} equation - Inequality (e.g., "y > 2x + 1")
-     * @param {string} shadeRegion - 'above' or 'below'
      */
     renderInequality(equation, shadeRegion = 'above') {
-        // Parse inequality
         const match = equation.match(/(y)\s*([<>]=?)\s*(.+)/);
         if (!match) return;
 
         const [, , operator, rightSide] = match;
         
-        // Render the boundary line
         const func = this.parseEquation(`y = ${rightSide}`);
         const { xMin, xMax, yMin, yMax } = this.settings;
         
         const points = [];
-        const step = (xMax - xMin) / 100;
+        const step = (xMax - xMin) / 200;
 
         for (let x = xMin; x <= xMax; x += step) {
             try {
@@ -424,7 +637,6 @@ class CoordinateGrid {
             } catch (e) {}
         }
 
-        // Draw dashed boundary line
         if (points.length > 1) {
             const pathData = points.map((point, index) => {
                 const [x, y] = point;
@@ -436,9 +648,9 @@ class CoordinateGrid {
             const path = document.createElementNS(this.svgNS, 'path');
             path.setAttribute('d', pathData);
             path.setAttribute('stroke', this.settings.lineColor);
-            path.setAttribute('stroke-width', 2);
+            path.setAttribute('stroke-width', 3);
             path.setAttribute('fill', 'none');
-            path.setAttribute('stroke-dasharray', operator.includes('=') ? 'none' : '5,5');
+            path.setAttribute('stroke-dasharray', operator.includes('=') ? 'none' : '8,8');
             this.svg.appendChild(path);
 
             // Shade region
@@ -469,7 +681,6 @@ class CoordinateGrid {
 
     /**
      * Render multiple functions
-     * @param {Array} functions - Array of {equation, color}
      */
     renderMultiple(functions) {
         functions.forEach((func, index) => {
@@ -483,21 +694,52 @@ class CoordinateGrid {
     }
 
     /**
+     * Enable interactive mode - click to add points
+     */
+    enableInteractive() {
+        this.interactiveMode = true;
+        this.svg.style.cursor = 'crosshair';
+
+        // Click to add points
+        this.svg.onclick = (e) => {
+            if (this.isPanning) return;
+
+            const rect = this.svg.getBoundingClientRect();
+            const svgX = ((e.clientX - rect.left) / rect.width) * this.settings.width;
+            const svgY = ((e.clientY - rect.top) / rect.height) * this.settings.height;
+
+            const mathX = this.toMathX(svgX);
+            const mathY = this.toMathY(svgY);
+
+            // Round to nearest 0.5
+            const roundedX = Math.round(mathX * 2) / 2;
+            const roundedY = Math.round(mathY * 2) / 2;
+
+            this.currentPoints.push([roundedX, roundedY, `(${roundedX}, ${roundedY})`]);
+            this.redraw();
+        };
+    }
+
+    /**
+     * Disable interactive mode
+     */
+    disableInteractive() {
+        this.interactiveMode = false;
+        this.svg.style.cursor = 'default';
+        this.svg.onclick = null;
+    }
+
+    /**
      * Parse equation string into executable function
-     * @param {string} equation - e.g., "y = x^2 - 4x + 3"
-     * @returns {Function}
      */
     parseEquation(equation) {
-        // Extract right side of equation
         let expr = equation.split('=')[1]?.trim() || equation;
 
-        // Replace common math notation
-        expr = expr.replace(/\^/g, '**');           // Power
-        expr = expr.replace(/(\d)x/g, '$1*x');      // Coefficient
+        expr = expr.replace(/\^/g, '**');
+        expr = expr.replace(/(\d)x/g, '$1*x');
         expr = expr.replace(/\)x/g, ')*x');
         expr = expr.replace(/x\(/g, 'x*(');
 
-        // Create function
         try {
             return new Function('x', `return ${expr};`);
         } catch (e) {
@@ -507,74 +749,23 @@ class CoordinateGrid {
     }
 
     /**
-     * Enable interactive dragging of points
-     */
-    enableInteractive() {
-        this.dragEnabled = true;
-        let dragging = false;
-        let dragIndex = -1;
-
-        this.svg.addEventListener('mousedown', (e) => {
-            const target = e.target;
-            if (target.tagName === 'circle' && target.hasAttribute('data-point-index')) {
-                dragging = true;
-                dragIndex = parseInt(target.getAttribute('data-point-index'));
-                this.svg.style.cursor = 'grabbing';
-            }
-        });
-
-        this.svg.addEventListener('mousemove', (e) => {
-            if (dragging && dragIndex >= 0) {
-                const rect = this.svg.getBoundingClientRect();
-                const svgX = e.clientX - rect.left;
-                const svgY = e.clientY - rect.top;
-
-                const mathX = this.toMathX(svgX);
-                const mathY = this.toMathY(svgY);
-
-                // Update point
-                this.currentPoints[dragIndex][0] = Math.round(mathX * 10) / 10;
-                this.currentPoints[dragIndex][1] = Math.round(mathY * 10) / 10;
-
-                // Re-render
-                this.render({ type: 'points', points: this.currentPoints, interactive: true });
-            }
-        });
-
-        this.svg.addEventListener('mouseup', () => {
-            dragging = false;
-            dragIndex = -1;
-            this.svg.style.cursor = 'default';
-        });
-    }
-
-    /**
-     * Coordinate transformation: Math X to SVG X
+     * Coordinate transformations
      */
     toSVGX(x) {
         const { width, padding, xMin, xMax } = this.settings;
         return padding + ((x - xMin) / (xMax - xMin)) * (width - 2 * padding);
     }
 
-    /**
-     * Coordinate transformation: Math Y to SVG Y
-     */
     toSVGY(y) {
         const { height, padding, yMin, yMax } = this.settings;
         return height - padding - ((y - yMin) / (yMax - yMin)) * (height - 2 * padding);
     }
 
-    /**
-     * Coordinate transformation: SVG X to Math X
-     */
     toMathX(svgX) {
         const { width, padding, xMin, xMax } = this.settings;
         return xMin + ((svgX - padding) / (width - 2 * padding)) * (xMax - xMin);
     }
 
-    /**
-     * Coordinate transformation: SVG Y to Math Y
-     */
     toMathY(svgY) {
         const { height, padding, yMin, yMax } = this.settings;
         return yMin + ((height - padding - svgY) / (height - 2 * padding)) * (yMax - yMin);
@@ -603,7 +794,7 @@ class CoordinateGrid {
         text.setAttribute('y', y);
         text.setAttribute('fill', fill);
         text.setAttribute('font-size', fontSize);
-        text.setAttribute('font-family', 'monospace');
+        text.setAttribute('font-family', 'Arial, sans-serif');
         text.setAttribute('text-anchor', 'middle');
         text.textContent = content;
         return text;
