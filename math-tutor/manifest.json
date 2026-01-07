@@ -1,0 +1,192 @@
+{
+  "version": "1.0.0",
+  "name": "Math Tutor Modular System",
+  "description": "Modular math visualization apps for elementary through pre-calculus",
+  
+  "core": {
+    "tutorEngine": "core/tutor-engine.js",
+    "languageManager": "core/language-manager.js",
+    "appLoader": "core/app-loader.js",
+    "messageParser": "core/message-parser.js"
+  },
+
+  "apps": [
+    {
+      "id": "FractionVisualizer",
+      "name": "Fraction Visualizer",
+      "version": "1.0.0",
+      "category": "Number & Fraction Tools",
+      "gradeLevels": ["elementary", "middle"],
+      "description": "Visual representations of fractions, decimals, and percents",
+      "file": "apps/fractions/fractions.js",
+      "css": "apps/fractions/fractions.css",
+      "metadata": "apps/fractions/fractions.json",
+      "capabilities": [
+        "display_fraction",
+        "compare_fractions",
+        "add_fractions",
+        "interactive_fraction_builder"
+      ],
+      "dependencies": [],
+      "priority": 1,
+      "autoload": false,
+      "estimatedSize": "42KB"
+    },
+    {
+      "id": "CoordinateGrid",
+      "name": "Coordinate Grid",
+      "version": "1.0.0",
+      "category": "Coordinate Systems",
+      "gradeLevels": ["middle", "high"],
+      "description": "Plot points, lines, parabolas, and inequalities on coordinate plane",
+      "file": "apps/coordinate-grid/coordinate-grid.js",
+      "css": "apps/coordinate-grid/coordinate-grid.css",
+      "metadata": "apps/coordinate-grid/coordinate-grid.json",
+      "capabilities": [
+        "plot_points",
+        "draw_lines",
+        "graph_functions",
+        "show_inequalities",
+        "interactive_grid"
+      ],
+      "dependencies": [],
+      "priority": 2,
+      "autoload": false,
+      "estimatedSize": "38KB"
+    },
+    {
+      "id": "ChartMaker",
+      "name": "Chart Maker",
+      "version": "1.0.0",
+      "category": "Data & Statistics",
+      "gradeLevels": ["elementary", "middle", "high"],
+      "description": "Create bar charts, line graphs, scatter plots, and histograms",
+      "file": "apps/chart-maker/chart-maker.js",
+      "css": "apps/chart-maker/chart-maker.css",
+      "metadata": "apps/chart-maker/chart-maker.json",
+      "capabilities": [
+        "bar_chart",
+        "line_graph",
+        "scatter_plot",
+        "histogram",
+        "pie_chart"
+      ],
+      "dependencies": ["chartjs"],
+      "priority": 3,
+      "autoload": false,
+      "estimatedSize": "35KB"
+    },
+    {
+      "id": "NumberLine",
+      "name": "Number Line",
+      "version": "1.0.0",
+      "category": "Number & Fraction Tools",
+      "gradeLevels": ["elementary", "middle"],
+      "description": "Interactive number line for operations and inequalities",
+      "file": "apps/number-line/number-line.js",
+      "css": "apps/number-line/number-line.css",
+      "metadata": "apps/number-line/number-line.json",
+      "capabilities": [
+        "plot_points",
+        "show_operations",
+        "display_inequalities",
+        "interactive_drag"
+      ],
+      "dependencies": [],
+      "priority": 4,
+      "autoload": false,
+      "estimatedSize": "28KB"
+    },
+    {
+      "id": "SlopeExplorer",
+      "name": "Slope Explorer",
+      "version": "1.0.0",
+      "category": "Coordinate Systems",
+      "gradeLevels": ["middle", "high"],
+      "description": "Interactive slope and y-intercept manipulation",
+      "file": "apps/slope-explorer/slope-explorer.js",
+      "css": "apps/slope-explorer/slope-explorer.css",
+      "metadata": "apps/slope-explorer/slope-explorer.json",
+      "capabilities": [
+        "adjust_slope",
+        "adjust_intercept",
+        "show_equation",
+        "interactive_line"
+      ],
+      "dependencies": [],
+      "priority": 5,
+      "autoload": false,
+      "estimatedSize": "32KB"
+    }
+  ],
+
+  "libraries": {
+    "chartjs": {
+      "name": "Chart.js",
+      "version": "4.4.0",
+      "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js",
+      "integrity": "sha384-LGNWRNhVFZJT9hXStsQgw+S3J1gFMsxqJgqBUGIL+oU/8FRxZ7KvjPKVIBvz1vjM",
+      "required": false,
+      "description": "Charting library for data visualization"
+    },
+    "desmos": {
+      "name": "Desmos API",
+      "version": "1.9",
+      "url": "https://www.desmos.com/api/v1.9/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6",
+      "required": false,
+      "description": "Advanced graphing calculator integration"
+    }
+  },
+
+  "settings": {
+    "maxConcurrentApps": 3,
+    "appTimeout": 5000,
+    "enableOfflineCache": true,
+    "preloadPriority": 2
+  },
+
+  "categories": [
+    {
+      "id": "number-fraction",
+      "name": "Number & Fraction Tools",
+      "icon": "🔢",
+      "description": "Basic arithmetic and fraction visualization"
+    },
+    {
+      "id": "coordinate",
+      "name": "Coordinate Systems",
+      "icon": "📊",
+      "description": "Graphing and coordinate plane tools"
+    },
+    {
+      "id": "data-stats",
+      "name": "Data & Statistics",
+      "icon": "📈",
+      "description": "Charts and statistical analysis"
+    },
+    {
+      "id": "geometry-2d",
+      "name": "Geometry 2D",
+      "icon": "▲",
+      "description": "Shapes, angles, and transformations"
+    },
+    {
+      "id": "geometry-3d",
+      "name": "Geometry 3D",
+      "icon": "🧊",
+      "description": "Solid shapes and volume"
+    },
+    {
+      "id": "measurement",
+      "name": "Measurement Tools",
+      "icon": "📏",
+      "description": "Rulers, clocks, and unit conversion"
+    },
+    {
+      "id": "advanced",
+      "name": "Advanced Topics",
+      "icon": "🎓",
+      "description": "Trigonometry, vectors, and matrices"
+    }
+  ]
+}
