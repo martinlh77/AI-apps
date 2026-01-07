@@ -1,0 +1,256 @@
+/* ============ MOBILE OPTIMIZATIONS ============ */
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 15px;
+    }
+
+    .brand {
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .controls {
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .controls select,
+    .controls input,
+    .controls button {
+        flex: 1 1 calc(50% - 5px);
+        min-width: 120px;
+    }
+
+    #chat-area {
+        padding: 15px 10px;
+    }
+
+    #welcome-screen {
+        padding: 15px;
+    }
+
+    .welcome-icon {
+        font-size: 3rem;
+    }
+
+    #welcome-screen h2 {
+        font-size: 1.4rem;
+    }
+
+    #welcome-screen p {
+        font-size: 0.95rem;
+    }
+
+    .prompts-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .prompt-card {
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .feature-item {
+        padding: 12px;
+    }
+
+    .message-content {
+        max-width: 95%;
+        padding: 10px 14px;
+    }
+
+    .msg-header {
+        font-size: 0.75rem;
+    }
+
+    .visual-container {
+        padding: 8px;
+        overflow-x: auto;
+    }
+
+    .visual-container table {
+        font-size: 0.8rem;
+    }
+
+    .visual-container th,
+    .visual-container td {
+        padding: 6px 8px;
+    }
+
+    .visual-container svg {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .app-panel {
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-width: calc(100vw - 20px);
+        top: 80px;
+        max-height: 60vh;
+    }
+
+    body.rtl .app-panel {
+        left: 10px;
+        right: 10px;
+    }
+
+    #input-area {
+        padding: 15px 10px;
+    }
+
+    .input-wrapper {
+        gap: 8px;
+    }
+
+    textarea {
+        font-size: 0.95rem;
+        padding: 10px 12px;
+    }
+
+    #send-btn {
+        padding: 0 18px;
+        font-size: 0.95rem;
+    }
+
+    .safety-badge {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+        bottom: 5px;
+        right: 5px;
+    }
+
+    body.rtl .safety-badge {
+        right: auto;
+        left: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-text h1 {
+        font-size: 1.2rem;
+    }
+
+    .brand-text p {
+        font-size: 0.75rem;
+    }
+
+    .brand-icon {
+        font-size: 1.5rem;
+    }
+
+    .controls select,
+    .controls input,
+    .controls button {
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+
+    .message-content {
+        font-size: 0.9rem;
+    }
+
+    .app-panel {
+        max-height: 50vh;
+    }
+
+    /* Ensure touch targets are at least 44x44px */
+    .prompt-card,
+    .copy-btn,
+    button.control-btn,
+    #send-btn,
+    #app-panel-close {
+        min-height: 44px;
+        min-width: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .prompt-card {
+        display: block;
+        padding: 12px;
+    }
+}
+
+/* Landscape mobile adjustments */
+@media (max-width: 768px) and (orientation: landscape) {
+    #chat-area {
+        max-height: calc(100vh - 180px);
+    }
+
+    .app-panel {
+        max-height: 50vh;
+    }
+
+    #welcome-screen {
+        padding: 10px;
+    }
+
+    .welcome-icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    #welcome-screen h2 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+
+    #welcome-screen p {
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+    }
+
+    .prompts-section {
+        padding: 15px;
+    }
+
+    .features-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --border-color: #ffffff;
+        --text-color: #ffffff;
+    }
+
+    .message-content {
+        border: 2px solid #ffffff;
+    }
+
+    .visual-container {
+        border: 2px solid var(--accent-color);
+    }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .welcome-icon {
+        animation: none;
+    }
+
+    .typing-indicator .dot {
+        animation: none;
+        opacity: 0.7;
+    }
+}
