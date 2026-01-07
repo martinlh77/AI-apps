@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe AI Math Tutor</title>
+    <link rel="stylesheet" href="styles/core.css">
+    <link rel="stylesheet" href="styles/mobile.css">
+</head>
+<body>
+
+<div id="app-container">
+    <header>
+        <div class="brand">
+            <span class="brand-icon">🎓</span>
+            <div class="brand-text">
+                <h1 id="app-title">AI Math Tutor</h1>
+                <p id="app-subtitle">Safe, Guided Learning</p>
+            </div>
+        </div>
+        <div class="controls">
+            <!-- Language Selector -->
+            <select id="lang-select" title="Choose Language" aria-label="Language Selection">
+                <option value="en">English</option>
+                <option value="es">Spanish (Español)</option>
+                <option value="ar">Arabic (العربية)</option>
+                <option value="fr">French (Français)</option>
+                <option value="de">German (Deutsch)</option>
+                <option value="ru">Russian (Русский)</option>
+                <option value="it">Italian (Italiano)</option>
+                <option value="pt">Portuguese (Português)</option>
+                <option value="other">Other...</option>
+            </select>
+            <input type="text" id="other-lang-input" placeholder="Type language..." aria-label="Custom Language Input" />
+
+            <select id="grade-select" title="Select Student Grade Level" aria-label="Grade Level">
+                <option value="elementary">Elementary (3-5)</option>
+                <option value="middle">Middle School (6-8)</option>
+                <option value="high">High School (9-12)</option>
+                <option value="general">General / College</option>
+            </select>
+            
+            <select id="model-select" title="Select AI Model" aria-label="AI Model">
+                <option value="nova-micro">Nova Micro ⚡</option>
+                <option value="qwen-coder">Qwen Coder</option>
+                <option value="mistral">Mistral</option>
+                <option value="gemini-fast">Gemini Fast</option>
+                <option value="openai-fast">OpenAI Fast</option>
+                <option value="grok">Grok</option>
+            </select>
+
+            <button class="control-btn" id="new-chat-btn" aria-label="Start New Chat">
+                🔄 <span id="new-chat-text">New Chat</span>
+            </button>
+        </div>
+    </header>
+
+    <div id="chat-area" role="log" aria-live="polite" aria-atomic="false">
+        <div id="welcome-screen">
+            <div class="welcome-icon" aria-hidden="true">🧮</div>
+            <h2 id="welcome-title">Welcome to your Math Tutor!</h2>
+            <p id="welcome-desc">I'm here to help you understand math concepts. I won't just give you the answers—I want to help you learn how to solve problems yourself!</p>
+            
+            <div class="prompts-section">
+                <h3 id="prompts-title">🌟 Ask me about...</h3>
+                <div class="prompts-grid" id="prompts-grid"></div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-item">
+                    <span aria-hidden="true">❓</span>
+                    <small id="feat-1">Ask specific questions</small>
+                </div>
+                <div class="feature-item">
+                    <span aria-hidden="true">📝</span>
+                    <small id="feat-2">Get step-by-step help</small>
+                </div>
+                <div class="feature-item">
+                    <span aria-hidden="true">🔍</span>
+                    <small id="feat-3">Check your work</small>
+                </div>
+                <div class="feature-item">
+                    <span aria-hidden="true">💡</span>
+                    <small id="feat-4">Learn real-world examples</small>
+                </div>
+            </div>
+        </div>
+
+        <div id="messages-container"></div>
+    </div>
+
+    <!-- App Container (Apps load here dynamically) -->
+    <div id="app-container-panel" class="app-panel" style="display: none;">
+        <div class="app-panel-header">
+            <h3 id="app-panel-title">Visualization</h3>
+            <button id="app-panel-close" aria-label="Close App Panel">✕</button>
+        </div>
+        <div id="app-panel-content"></div>
+    </div>
+
+    <div id="input-area">
+        <div class="input-wrapper">
+            <textarea 
+                id="chat-input" 
+                placeholder="Ask a math question..." 
+                rows="1" 
+                aria-label="Math Question Input"
+            ></textarea>
+            <button id="send-btn" aria-label="Send Message">Send</button>
+        </div>
+    </div>
+    
+    <div class="safety-badge" id="safety-badge" aria-label="School Safe AI Indicator">School-Safe AI</div>
+</div>
+
+<!-- Core Engine Scripts -->
+<script src="core/language-manager.js"></script>
+<script src="core/message-parser.js"></script>
+<script src="core/app-loader.js"></script>
+<script src="core/tutor-engine.js"></script>
+
+<script>
+    // Initialize the application
+    window.addEventListener('DOMContentLoaded', () => {
+        window.mathTutor = new TutorEngine();
+    });
+</script>
+
+</body>
+</html>
