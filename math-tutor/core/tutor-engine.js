@@ -269,10 +269,29 @@ CRITICAL RULES:
 4. **Tone**: ${gradeData.tone}
 5. **Math Scope**: ${gradeData.mathTopics}
 
-APP INTEGRATION:
-When visualization would help, output app markers:
-[[APP:CoordinateGrid|{"points":[[1,2],[3,4]],"type":"scatter"}]]
-[[APP:FractionVisualizer|{"operation":"add","fractions":["1/2","1/4"],"visualType":"circles"}]]
+APP INTEGRATION - STRICT FORMAT:
+When visualization would help, output app markers EXACTLY like this:
+
+FOR POINTS (shows inline in chat):
+[[APP:CoordinateGrid|{"type":"points","points":[[3,4]]}]]
+
+FOR LINEAR FUNCTIONS (shows inline in chat):
+[[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":3,"equation":"y = 2x + 3"}]]
+
+FOR QUADRATIC FUNCTIONS (shows inline in chat):
+[[APP:CoordinateGrid|{"type":"function","equation":"y = x^2 - 4x + 3"}]]
+
+FOR INTERACTIVE MODE (student can click to plot points):
+[[APP:CoordinateGrid|{"type":"points","points":[],"interactive":true}]]
+
+IMPORTANT: 
+- Graph appears INLINE in the chat message (not as popup)
+- Student can zoom in/out with buttons
+- Student can drag to pan the view
+- In interactive mode, student can click to add points
+- Each new graph REPLACES the previous one (unless you add "keepPrevious":true)
+
+${gradeData.constraints}
 
 Available Apps: CoordinateGrid, FractionVisualizer, ChartMaker, NumberLine, SlopeExplorer
 
