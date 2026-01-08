@@ -120,10 +120,16 @@ class TutorEngine {
         // New chat button
         document.getElementById('new-chat-btn').addEventListener('click', () => this.startNewChat());
 
-        // App panel close
-        document.getElementById('app-panel-close').addEventListener('click', () => {
-            document.getElementById('app-container-panel').style.display = 'none';
-        });
+        // App panel close (only if element exists - for backward compatibility)
+        const appPanelClose = document.getElementById('app-panel-close');
+        if (appPanelClose) {
+            appPanelClose.addEventListener('click', () => {
+                const appPanel = document.getElementById('app-container-panel');
+                if (appPanel) {
+                    appPanel.style.display = 'none';
+                }
+            });
+        }
 
         // Send message
         const sendBtn = document.getElementById('send-btn');
@@ -177,10 +183,15 @@ class TutorEngine {
             const response = await this.callAPI(message);
             this.removeTypingIndicator(typingId);
 
+            console.log('Raw API Response:', response); // DEBUG
+
             // Parse for app triggers
             const { cleanText, appCalls } = this.messageParser.extractAppCalls(response);
 
-            // Add assistant message
+            console.log('Parsed Clean Text:', cleanText); // DEBUG
+            console.log('App Calls Found:', appCalls); // DEBUG
+
+            // Add assistant message with CLEAN text (no app markers)
             this.addMessage(cleanText, 'assistant');
 
             // Update history
@@ -189,7 +200,10 @@ class TutorEngine {
 
             // Process app calls
             if (appCalls.length > 0) {
+                console.log(`Processing ${appCalls.length} app call(s)...`); // DEBUG
                 await this.processAppCalls(appCalls);
+            } else {
+                console.log('No app calls detected in response'); // DEBUG
             }
 
         } catch (error) {
@@ -219,11 +233,7 @@ class TutorEngine {
                     continue;
                 }
 
-                // Show app panel
-                document.getElementById('app-container-panel').style.display = 'block';
-                document.getElementById('app-panel-title').textContent = call.appId;
-
-                // Initialize app
+                // Initialize app (apps now render inline, no popup needed)
                 const app = new AppClass('app-panel-content');
                 this.state.activeApp = app;
 
@@ -259,7 +269,7 @@ class TutorEngine {
             langInstruction = `Reply in the user's language: ${lang}.`;
         }
 
-        // System prompt with app integration
+        // UPDATED System prompt with comprehensive app integration
         const systemPrompt = `You are a safe, educational AI Math Tutor for ${gradeData.level} students.
 
 CRITICAL RULES:
@@ -269,66 +279,96 @@ CRITICAL RULES:
 4. **Tone**: ${gradeData.tone}
 5. **Math Scope**: ${gradeData.mathTopics}
 
-APP INTEGRATION - STRICT FORMAT:
-When visualization would help, output app markers EXACTLY like this:
+APP INTEGRATION - COORDINATE GRID (CRITICAL INSTRUCTIONS):
 
-FOR POINTS (shows inline in chat):
-[[APP:CoordinateGrid|{"type":"points","points":[[3,4]]}]]
+When graphing, ALWAYS preserve existing elements by including them in the payload:
 
-FOR LINEAR FUNCTIONS (shows inline in chat):
+✅ CORRECT - Keep points when adding line:
+[[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":3,"equation":"y = 2x + 3","points":[[1,5],[2,7]]}]]
+
+✅ CORRECT - Multiple inequalities with different colors:
+[[APP:CoordinateGrid|{"type":"multi","inequalities":[{"equation":"y > 2x + 1"},{"equation":"y < -x + 5"}]}]]
+
+✅ CORRECT - Line AND parabola together:
+[[APP:CoordinateGrid|{"type":"multi","functions":[{"equation":"y = 2x + 1","color":"#00d4ff"},{"equation":"y = x^2","color":"#ff0055"}]}]]
+
+✅ CORRECT - Line AND inequality together:
+[[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":1,"equation":"y = 2x + 1","points":[[0,1]]}]]
+Then add inequality:
+[[APP:CoordinateGrid|{"type":"inequality","equation":"y > 2x + 1","keepPrevious":true}]]
+
+❌ WRONG - This will lose points:
+[[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":3}]]
+
+BASIC GRAPH TYPES:
+
+**Plot Points (inline in chat)**:
+[[APP:CoordinateGrid|{"type":"points","points":[[3,4],[5,7]]}]]
+
+**Linear Function (inline in chat)**:
 [[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":3,"equation":"y = 2x + 3"}]]
 
-FOR QUADRATIC FUNCTIONS (shows inline in chat):
+**Quadratic Function (inline in chat)**:
 [[APP:CoordinateGrid|{"type":"function","equation":"y = x^2 - 4x + 3"}]]
 
-FOR INTERACTIVE MODE (student can click to plot points):
+**Inequality with colored shading**:
+[[APP:CoordinateGrid|{"type":"inequality","equation":"y > 2x + 1"}]]
+
+**Interactive blank grid (student plots their own points)**:
 [[APP:CoordinateGrid|{"type":"points","points":[],"interactive":true}]]
 
-IMPORTANT: 
-- Graph appears INLINE in the chat message (not as popup)
-- Student can zoom in/out with buttons
-- Student can drag to pan the view
-- In interactive mode, student can click to add points
-- Each new graph REPLACES the previous one (unless you add "keepPrevious":true)
+AUTO-SCALING:
+- The grid automatically scales to fit all data
+- For y = x + 100, it will show BOTH axes with appropriate spacing (e.g., counting by 10s or 50s)
+- Grid spacing auto-adjusts: 1, 5, 10, 20, 50, or 100 based on data range
+- Always maintains square aspect ratio (slopes appear correctly)
+
+INTERACTIVE FEATURES (available to students):
+- Zoom in/out buttons
+- Drag to pan the view
+- Interactive mode: Click to plot points, draw lines, or delete points
+- Save graph button (prevents auto-replacement)
+- Download as PNG button
+
+GRAPH BEHAVIOR:
+- Each new graph REPLACES the previous one by default
+- To keep previous graph: add "keepPrevious":true
+- To make graph permanent: student clicks "Save Graph" button
+- Graphs appear INLINE in chat messages (not as popup)
+
+MULTIPLE ELEMENTS ON SAME GRAPH:
+To show multiple inequalities, lines, or parabolas together, use type "multi":
+
+[[APP:CoordinateGrid|{"type":"multi","functions":[{"equation":"y = x^2","color":"#ff0055"},{"equation":"y = 2x + 1","color":"#00d4ff"}],"inequalities":[{"equation":"y > x^2"}],"points":[[0,0],[2,4]]}]]
+
+IMPORTANT FORMAT RULES:
+- Use DOUBLE brackets: [[APP:...]]
+- App name: CoordinateGrid (exact capitalization)
+- Separator: | (pipe character)
+- JSON must be valid and on ONE line
+- NO extra spaces inside brackets
+- Put the app marker FIRST in your response, then explain
+
+EXAMPLE RESPONSES:
+
+User: "Graph the point (3, 4)"
+You: "[[APP:CoordinateGrid|{"type":"points","points":[[3,4]]}]]
+
+The point (3, 4) is located 3 units to the right and 4 units up from the origin."
+
+User: "Graph y = 2x + 1 and show the point (0, 1)"
+You: "[[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":1,"equation":"y = 2x + 1","points":[[0,1]]}]]
+
+Here's the line y = 2x + 1 with the y-intercept point (0, 1) marked."
+
+User: "Graph y > 2x + 1 and y < -x + 5"
+You: "[[APP:CoordinateGrid|{"type":"multi","inequalities":[{"equation":"y > 2x + 1"},{"equation":"y < -x + 5"}]}]]
+
+I've shaded both inequality regions with different colors. The solution to the system is where the colors overlap."
 
 ${gradeData.constraints}
 
-Available Apps: CoordinateGrid, FractionVisualizer, ChartMaker, NumberLine, SlopeExplorer
-
-// Inside callAPI() method, update systemPrompt to include:
-
-COORDINATE GRID APP USAGE:
-
-When student asks to graph points, lines, or functions, use:
-
-**Points**: 
-[[APP:CoordinateGrid|{"type":"points","points":[[x1,y1,"label"],[x2,y2]]}]]
-
-**Linear Function**: 
-[[APP:CoordinateGrid|{"type":"line","slope":m,"intercept":b,"equation":"y = mx + b"}]]
-
-**Quadratic/Other Function**: 
-[[APP:CoordinateGrid|{"type":"function","equation":"y = x^2 - 4x + 3"}]]
-
-**Inequality**: 
-[[APP:CoordinateGrid|{"type":"inequality","equation":"y > 2x + 1"}]]
-
-**Multiple Functions**: 
-[[APP:CoordinateGrid|{"type":"multi","functions":[{"equation":"y = x","color":"#00d4ff"},{"equation":"y = x^2","color":"#ff0055"}]}]]
-
-Window options: {"window":{"xMin":-10,"xMax":10,"yMin":-10,"yMax":10}}
-
-VISUALIZATION RULES:
-- If asked for graphs/plots: Use CoordinateGrid app OR output SVG with these specs:
-  - viewBox="0 0 300 300", origin at (150,150)
-  - Grid: stroke="rgba(255,255,255,0.2)"
-  - Function line: stroke="#00d4ff" stroke-width="2"
-  - Points: fill="#ff0055" r="4"
-  - Text: fill="#ffffff" font-size="12"
-- Never output markdown tables for coordinate data
-- Structure: Output SVG first, then explanation text
-
-${gradeData.constraints}`;
+Available Apps: CoordinateGrid, FractionVisualizer (coming soon), ChartMaker (coming soon)`;
 
         // Build context from recent history
         const recentHistory = this.state.chatHistory.slice(-8);
@@ -469,7 +509,12 @@ ${gradeData.constraints}`;
         this.state.activeApp = null;
         document.getElementById('messages-container').innerHTML = '';
         document.getElementById('welcome-screen').style.display = 'block';
-        document.getElementById('app-container-panel').style.display = 'none';
+        
+        // Only hide app panel if it exists
+        const appPanel = document.getElementById('app-container-panel');
+        if (appPanel) {
+            appPanel.style.display = 'none';
+        }
         
         this.languageManager.updateUI();
         this.languageManager.renderStarterPrompts(this.state.currentGrade);
