@@ -817,7 +817,7 @@ DEFINITION: [simple definition]
 SENTENCE: [a short sample sentence]`;
 
         const seed = Math.floor(Math.random() * 10000); 
-                const url = `https://gen.pollinations.ai/text/${encodeURIComponent(prompt)}?model=openai&seed=${seed}&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL`;
+                const url = `https://gen.pollinations.ai/text/${encodeURIComponent(prompt)}?model=openai&seed=${seed}&key=pk_OIQlw5rh71ylmlqV`;
 
         try {
             const response = await fetch(url);
@@ -1016,7 +1016,7 @@ SENTENCE: [a short sample sentence]`;
             prompt = `Give me a comma-separated list of ${count} words about "${effectiveTheme}". Max word length ${maxLen}. No hyphens. Only output list.`;
         }
 
-                const apiURL = `https://gen.pollinations.ai/text/${encodeURIComponent(prompt)}?model=openai&seed=${seed}&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL`;
+                const apiURL = `https://gen.pollinations.ai/text/${encodeURIComponent(prompt)}?model=openai&seed=${seed}&key=pk_OIQlw5rh71ylmlqV`;
         const response = await fetch(apiURL);
         if (!response.ok) throw new Error("API Error");
         const text = await response.text();
@@ -1283,4 +1283,5 @@ SENTENCE: [a short sample sentence]`;
     initialize();
 </script>
 </body>
+
 </html>
