@@ -786,7 +786,7 @@
                 <option value="claude-large">Claude-Large👁️💻</option>
                 <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
                 <option value="openai-large">Openai-Large👁️💻</option>
-                <option value="nova-micro">Nova-Micro</option>
+                <option value="nova-fast">Nova-Micro</option>
                 <option value="mistral">Mistral</option>
                 <option value="gemini">Gemini👁️👂🔍💻</option>
                 <option value="gemini-fast">Gemini Fast👁️🔍💻</option>
@@ -981,7 +981,7 @@
                                 <option value="claude-large">Claude-Large👁️💻</option>
                                 <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
                                 <option value="openai-large">Openai-Large👁️💻</option>
-                                <option value="nova-micro">Nova-Micro</option>
+                                <option value="nova-fast">Nova-Micro</option>
                                 <option value="mistral">Mistral</option>
                                 <option value="gemini">Gemini👁️</option>
                                 <option value="openai">Openai👁️</option>
@@ -1754,7 +1754,7 @@
     stream: true,
     seed: seed,
     temperature: 1,
-    max_tokens: ['mistral', 'nova-micro'].includes(model) ? 4096 : 64000
+    max_tokens: ['mistral', 'nova-fast'].includes(model) ? 4096 : 64000
 };
 
         isGenerating = true;
@@ -3003,6 +3003,7 @@ mediaUseRefDimensions.addEventListener('change', function() {
 </script>
 </body>
 </html>
+
 
 
 
