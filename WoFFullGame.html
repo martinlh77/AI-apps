@@ -1687,7 +1687,7 @@ const Game = {
         
         const seed = Math.floor(Math.random() * 9999);
         const encodedDesc = encodeURIComponent(desc + " cartoon headshot, plain background");
-        const imgUrl = `https://enter.pollinations.ai/api/generate/image/${encodedDesc}?model=flux&seed=${seed}&nologo=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL`;
+        const imgUrl = `https://enter.pollinations.ai/api/generate/image/${encodedDesc}?model=flux&seed=${seed}&nologo=true&key=pk_OIQlw5rh71ylmlqV`;
         
         const img = new Image();
         img.onload = () => {
@@ -1780,7 +1780,7 @@ const Game = {
 
     fetchNewPuzzle: async function() {
         const seed = Math.floor(Math.random() * 9999);
-        const url = `https://enter.pollinations.ai/api/generate/text/Give%20me%20a%20json%20object%20with%20category%20and%20answer%20for%20wheel%20of%20fortune%20puzzle.%20Format:%20{"category":"Phrase","answer":"HELLO%20WORLD"}.%20No%20markdown.` + `?model=openai&seed=${seed}&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL`;
+        const url = `https://enter.pollinations.ai/api/generate/text/Give%20me%20a%20json%20object%20with%20category%20and%20answer%20for%20wheel%20of%20fortune%20puzzle.%20Format:%20{"category":"Phrase","answer":"HELLO%20WORLD"}.%20No%20markdown.` + `?model=openai&seed=${seed}&key=pk_OIQlw5rh71ylmlqV`;
         try {
             const controller = new AbortController();
             const id = setTimeout(() => controller.abort(), 5000);
@@ -2131,7 +2131,7 @@ const Game = {
             
             const prize = this.currentBonusPrize;
             // Fetch prize image
-            const imgUrl = `https://enter.pollinations.ai/api/generate/image/${encodeURIComponent(prize.image_prompt)}?model=flux&seed=${Math.floor(Math.random()*999)}&nologo=true&key=plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL`;
+            const imgUrl = `https://enter.pollinations.ai/api/generate/image/${encodeURIComponent(prize.image_prompt)}?model=flux&seed=${Math.floor(Math.random()*999)}&nologo=true&key=pk_OIQlw5rh71ylmlqV`;
             
             UI.showPrizeModal("GRAND WINNER!", `You won the ${prize.name}!\nTotal Winnings: $${this.players[this.currentPlayerIndex].totalScore}`, imgUrl);
         } else {
@@ -2546,3 +2546,4 @@ Game.init();
 </script>
 </body>
 </html>
+
