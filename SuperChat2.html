@@ -780,7 +780,7 @@
             <label>Model</label>
             <select id="model-select">
 
-                <option value="nova-micro">Nova-Micro</option>
+                <option value="nova-fast">Nova-Micro</option>
                 <option value="mistral">Mistral</option>
                 <option value="gemini">Gemini👁️👂🔍💻</option>
                 <option value="gemini-fast">Gemini Fast👁️🔍</option>
@@ -1725,7 +1725,7 @@
     stream: true,
     seed: seed,
     temperature: 1,
-    max_tokens: ['mistral', 'nova-micro'].includes(model) ? 4096 : 64000
+    max_tokens: ['mistral', 'nova-fast'].includes(model) ? 4096 : 64000
 };
 
         isGenerating = true;
@@ -2851,6 +2851,7 @@
 </body>
 
 </html>
+
 
 
 
