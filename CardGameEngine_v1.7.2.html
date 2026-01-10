@@ -2620,7 +2620,7 @@
             const DEFAULT_API_KEY = "pk_WlWG5xAS9Wm060JP";
             const key = document.getElementById('apiKey').value || DEFAULT_API_KEY;
             const seed = Math.floor(Math.random() * 100000000);
-            const url = `https://gen.pollinations.ai/text/${encodeURIComponent(prompt)}?model=nova-micro&seed=${seed}&key=${key}`;
+            const url = `https://gen.pollinations.ai/text/${encodeURIComponent(prompt)}?model=nova-fast&seed=${seed}&key=${key}`;
             const resp = await fetch(url);
             const text = await resp.text();
             await sleep(3500);
@@ -3600,3 +3600,4 @@ function filterGames() {
     </script>
 </body>
 </html>
+
