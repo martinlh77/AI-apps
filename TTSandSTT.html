@@ -135,7 +135,7 @@
         
         <!-- Action Buttons -->
         <div class="flex gap-2">
-            <button id="open-new-window" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md flex-1">Open</button>
+            <button id="open-new-window" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md flex-1">Direct Link</button>
             <button id="download" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md flex-1">Download</button>
         </div>
         
@@ -504,7 +504,7 @@ downloadButton.onclick = () => {
                 // Display both URLs
                 catboxUrlDisplay.innerHTML = `
                     <div style="margin-top: 10px;">
-                        <strong>Catbox URL:</strong><br>
+                        <strong>Direct Link URL:</strong><br>
                         <a href="${fileUrl}" target="_blank" style="color: var(--user-msg-bg); word-break: break-all;">${fileUrl}</a>
                         <button class="audio-btn" onclick="navigator.clipboard.writeText('${fileUrl}'); displayMessageBox('URL copied to clipboard!');" style="margin-left: 10px;">
                             <i class="fas fa-copy"></i> Copy
@@ -520,7 +520,7 @@ downloadButton.onclick = () => {
                 `;
                 
                 catboxResultContainer.classList.remove('hidden');
-                uploadCatboxButton.innerHTML = "Upload to Catbox";
+                uploadCatboxButton.innerHTML = "Create a Backup Direct Link";
                 uploadCatboxButton.disabled = false;
 
             } catch (error) {
