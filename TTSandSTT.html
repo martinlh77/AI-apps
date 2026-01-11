@@ -141,12 +141,12 @@
         
         <button id="upload-catbox" class="hidden">Upload Audio to Catbox</button>
         
-        <!-- Catbox Result -->
-        <div id="catbox-result-container" class="hidden mt-4 p-3 bg-purple-50 border border-purple-200 rounded-md text-purple-800">
-            <p class="font-semibold mb-1">Catbox URL:</p>
-            <div id="catbox-url-display" class="bg-white p-2 rounded border border-purple-200 text-sm break-all"></div>
-            <button id="copy-catbox-button" class="mt-2 text-sm">Copy URL</button>
-        </div>
+<!-- Catbox Result -->
+<div id="catbox-result-container" class="hidden mt-4 p-3 bg-purple-50 border border-purple-200 rounded-md text-purple-800">
+    <p class="font-semibold mb-1">Backup Direct Link URL:</p>
+    <div id="catbox-url-display" class="bg-white p-2 rounded border border-purple-200 text-sm break-all"></div>
+    <button id="copy-catbox-button" class="mt-2 text-sm">Copy URL</button>
+</div>
 
         <div id="loading-tts" class="hidden">
             Generating audio...
@@ -464,88 +464,73 @@ downloadButton.onclick = () => {
         });
 
         // Upload to Catbox Logic (Improved version)
-        uploadCatboxButton.addEventListener('click', async () => {
-            if (!currentAudioBlob) {
-                displayMessageBox('No audio generated yet.');
-                return;
-            }
+uploadCatboxButton.addEventListener('click', async () => {
+    if (!currentAudioBlob) {
+        displayMessageBox('No audio generated yet.');
+        return;
+    }
 
-            uploadCatboxButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
-            uploadCatboxButton.disabled = true;
-            catboxResultContainer.classList.add('hidden');
+    uploadCatboxButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    uploadCatboxButton.disabled = true;
+    catboxResultContainer.classList.add('hidden');
 
-            try {
-                const formData = new FormData();
-                formData.append('reqtype', 'fileupload');
-                formData.append('fileToUpload', currentAudioBlob, `audio_${Date.now()}.mp3`);
-                
-                // Use CORS proxy for catbox upload
-                const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://catbox.moe/user/api.php');
-                
-                const response = await fetch(corsProxyUrl, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Catbox upload failed: ${response.status} ${errorText}`);
-                }
-                
-                const fileUrl = await response.text();
-                
-                if (!fileUrl || !fileUrl.startsWith('http')) {
-                    throw new Error('Invalid catbox response');
-                }
-                
-                // Create API endpoint URL for direct access
-                const apiUrl = `https://gen.pollinations.ai/audio/${audioId}`;
-                
-                // Display both URLs
-                catboxUrlDisplay.innerHTML = `
-                    <div style="margin-top: 10px;">
-                        <strong>Direct Link URL:</strong><br>
-                        <a href="${fileUrl}" target="_blank" style="color: var(--user-msg-bg); word-break: break-all;">${fileUrl}</a>
-                        <button class="audio-btn" onclick="navigator.clipboard.writeText('${fileUrl}'); displayMessageBox('URL copied to clipboard!');" style="margin-left: 10px;">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <strong>API Endpoint:</strong><br>
-                        <a href="${apiUrl}" target="_blank" style="color: var(--user-msg-bg); word-break: break-all;">${apiUrl}</a>
-                        <button class="audio-btn" onclick="navigator.clipboard.writeText('${apiUrl}'); displayMessageBox('URL copied to clipboard!');" style="margin-left: 10px;">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
-                    </div>
-                `;
-                
-                catboxResultContainer.classList.remove('hidden');
-                uploadCatboxButton.innerHTML = "Create a Backup Direct Link";
-                uploadCatboxButton.disabled = false;
-
-            } catch (error) {
-                displayMessageBox("Failed to upload to Catbox: " + error.message);
-                uploadCatboxButton.innerHTML = "Upload to Catbox";
-                uploadCatboxButton.disabled = false;
-            }
+    try {
+        const formData = new FormData();
+        formData.append('reqtype', 'fileupload');
+        formData.append('fileToUpload', currentAudioBlob, `audio_${Date.now()}.mp3`);
+        
+        // Use CORS proxy for catbox upload
+        const corsProxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://catbox.moe/user/api.php');
+        
+        const response = await fetch(corsProxyUrl, {
+            method: 'POST',
+            body: formData
         });
 
-        copyCatboxButton.addEventListener('click', () => {
-            const textToCopy = catboxUrlDisplay.textContent;
-            if (textToCopy) {
-                const textArea = document.createElement("textarea");
-                textArea.value = textToCopy;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    displayMessageBox('URL copied to clipboard!');
-                } catch (err) {
-                    displayMessageBox('Failed to copy URL.');
-                }
-                document.body.removeChild(textArea);
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Catbox upload failed: ${response.status} ${errorText}`);
+        }
+        
+        const fileUrl = await response.text();
+        
+        if (!fileUrl || !fileUrl.startsWith('http')) {
+            throw new Error('Invalid catbox response');
+        }
+        
+        // Display only the Catbox URL (removed API Endpoint)
+        catboxUrlDisplay.innerHTML = `
+            <div style="margin-top: 10px;">
+                <a href="${fileUrl}" target="_blank" style="color: var(--user-msg-bg); word-break: break-all;">${fileUrl}</a>
+                <button class="audio-btn" onclick="navigator.clipboard.writeText('${fileUrl}'); displayMessageBox('URL copied to clipboard!');" style="margin-left: 10px;">
+                    <i class="fas fa-copy"></i> Copy
+                </button>
+            </div>
+        `;
+        
+        catboxResultContainer.classList.remove('hidden');
+        uploadCatboxButton.innerHTML = "Create a Backup Direct Link";
+        uploadCatboxButton.disabled = false;
+
+    } catch (error) {
+        displayMessageBox("Failed to upload to Catbox: " + error.message);
+        uploadCatboxButton.innerHTML = "Upload to Catbox";
+        uploadCatboxButton.disabled = false;
+    }
+});
+
+copyCatboxButton.addEventListener('click', () => {
+    // Extract just the URL from the display (first anchor tag)
+    const urlElement = catboxUrlDisplay.querySelector('a');
+    if (urlElement) {
+        const urlToCopy = urlElement.href;
+        navigator.clipboard.writeText(urlToCopy).then(() => {
+            displayMessageBox('URL copied to clipboard!');
+        }).catch(err => {
+            displayMessageBox('Failed to copy URL.');
         });
+    }
+});
 
         transcribeAudioButton.addEventListener('click', async () => {
             const audioFile = audioFileInput.files[0];
