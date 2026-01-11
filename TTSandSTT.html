@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Text-to-Speech & Speech-to-Text (Updated API)</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -86,6 +87,56 @@
         #copy-transcription-button:hover, #copy-catbox-button:hover { background-color: #059669; }
         
         .hidden { display: none !important; }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 0.375rem;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1001;
+            animation: fadeInOut 3s forwards;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(-20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        
+        .success {
+            background-color: #10b981;
+        }
+        
+        .error {
+            background-color: #ef4444;
+        }
     </style>
 </head>
 <body>
@@ -198,6 +249,15 @@
         
         <button id="refresh" class="mt-8">Reset All</button>
     </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p class="mt-4 text-lg">Processing...</p>
+        </div>
+    </div>
+    
     <script>
         // Configuration
         const DEFAULT_API_KEY = 'pk_8CQPK8dxqANijjhy';
@@ -237,26 +297,32 @@
         const sttSeedInput = document.getElementById('stt-seed');
         const sttRandomizeSeed = document.getElementById('stt-randomize-seed');
 
+        // Loading overlay
+        const loadingOverlay = document.getElementById('loading-overlay');
+
         // Global state for audio blob
         let currentAudioBlob = null;
         let audioUrl = '';
         let audioId = '';
         let apiEndpointUrl = '';
 
-        function displayMessageBox(message) {
-            const messageBox = document.createElement('div');
-            messageBox.id = 'custom-message-box';
-            messageBox.className = 'fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50';
-            messageBox.innerHTML = `
-                <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm w-full">
-                    <p class="text-lg font-semibold mb-4">${message}</p>
-                    <button id="message-box-ok" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">OK</button>
-                </div>
-            `;
-            document.body.appendChild(messageBox);
-            document.getElementById('message-box-ok').addEventListener('click', () => {
-                document.body.removeChild(messageBox);
-            });
+        function showNotification(message, isSuccess = true) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${isSuccess ? 'success' : 'error'}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        function showLoadingOverlay(show = true) {
+            if (show) {
+                loadingOverlay.classList.remove('hidden');
+            } else {
+                loadingOverlay.classList.add('hidden');
+            }
         }
 
         function getApiKey() {
@@ -358,7 +424,7 @@ async function performTranscription(audioBlobToTranscribe) {
             transcribedTextDisplay.textContent = 'Error transcribing audio. Please try again.';
             transcribedTextContainer.classList.remove('hidden');
             copyTranscriptionButton.classList.add('hidden');
-            displayMessageBox(`Failed to transcribe audio. Error: ${error.message}. Please check the file and try again.`);
+            showNotification(`Failed to transcribe audio. Error: ${error.message}. Please check the file and try again.`, false);
         } finally {
             loadingSttDiv.style.display = 'none';
         }
@@ -369,7 +435,7 @@ async function performTranscription(audioBlobToTranscribe) {
         generateButton.addEventListener('click', async () => {
             const prompt = promptTextArea.value.trim();
             if (prompt === '') {
-                displayMessageBox('Please enter text to convert to speech.');
+                showNotification('Please enter text to convert to speech.', false);
                 return;
             }
             const voice = voiceSelect.value;
@@ -413,6 +479,9 @@ async function performTranscription(audioBlobToTranscribe) {
             uploadCatboxButton.classList.add('hidden');
 
             try {
+                // Show loading overlay during TTS generation
+                showLoadingOverlay(true);
+                
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const blob = await response.blob();
@@ -455,26 +524,33 @@ downloadButton.onclick = () => {
     a.click();
     document.body.removeChild(a);
 };
+                showNotification('Audio generated successfully!');
             } catch (error) {
                 audioContainer.innerHTML = '<p class="text-red-500">Error generating audio. Please try again.</p>';
                 generatedTextContainer.classList.add('hidden');
                 loadingTtsDiv.style.display = 'none';
-                displayMessageBox('Failed to generate audio. Please check your prompt and try again.');
+                showNotification('Failed to generate audio. Please check your prompt and try again.', false);
+            } finally {
+                showLoadingOverlay(false);
             }
         });
 
         // Upload to Catbox Logic (Improved version)
 uploadCatboxButton.addEventListener('click', async () => {
     if (!currentAudioBlob) {
-        displayMessageBox('No audio generated yet.');
+        showNotification('No audio generated yet.', false);
         return;
     }
 
-    uploadCatboxButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+    // Disable button and show loading state
     uploadCatboxButton.disabled = true;
+    uploadCatboxButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
     catboxResultContainer.classList.add('hidden');
 
     try {
+        // Show loading overlay during catbox upload
+        showLoadingOverlay(true);
+        
         const formData = new FormData();
         formData.append('reqtype', 'fileupload');
         formData.append('fileToUpload', currentAudioBlob, `audio_${Date.now()}.mp3`);
@@ -502,7 +578,7 @@ uploadCatboxButton.addEventListener('click', async () => {
         catboxUrlDisplay.innerHTML = `
             <div style="margin-top: 10px;">
                 <a href="${fileUrl}" target="_blank" style="color: var(--user-msg-bg); word-break: break-all;">${fileUrl}</a>
-                <button class="audio-btn" onclick="navigator.clipboard.writeText('${fileUrl}'); displayMessageBox('URL copied to clipboard!');" style="margin-left: 10px;">
+                <button class="audio-btn" onclick="navigator.clipboard.writeText('${fileUrl}'); showNotification('URL copied to clipboard!');" style="margin-left: 10px;">
                     <i class="fas fa-copy"></i> Copy
                 </button>
             </div>
@@ -511,11 +587,13 @@ uploadCatboxButton.addEventListener('click', async () => {
         catboxResultContainer.classList.remove('hidden');
         uploadCatboxButton.innerHTML = "Create a Backup Direct Link";
         uploadCatboxButton.disabled = false;
-
+        showNotification('Audio uploaded to Catbox successfully!');
     } catch (error) {
-        displayMessageBox("Failed to upload to Catbox: " + error.message);
+        showNotification("Failed to upload to Catbox: " + error.message, false);
         uploadCatboxButton.innerHTML = "Upload to Catbox";
         uploadCatboxButton.disabled = false;
+    } finally {
+        showLoadingOverlay(false);
     }
 });
 
@@ -525,9 +603,9 @@ copyCatboxButton.addEventListener('click', () => {
     if (urlElement) {
         const urlToCopy = urlElement.href;
         navigator.clipboard.writeText(urlToCopy).then(() => {
-            displayMessageBox('URL copied to clipboard!');
+            showNotification('URL copied to clipboard!');
         }).catch(err => {
-            displayMessageBox('Failed to copy URL.');
+            showNotification('Failed to copy URL.', false);
         });
     }
 });
@@ -535,7 +613,7 @@ copyCatboxButton.addEventListener('click', () => {
         transcribeAudioButton.addEventListener('click', async () => {
             const audioFile = audioFileInput.files[0];
             if (!audioFile) {
-                displayMessageBox('Please select an audio file to transcribe.');
+                showNotification('Please select an audio file to transcribe.', false);
                 return;
             }
             audioContainer.innerHTML = 'No audio generated yet.';
@@ -551,7 +629,14 @@ copyCatboxButton.addEventListener('click', () => {
             uploadedAudioPlayer.src = uploadedAudioUrl;
             uploadedAudioPlayerContainer.classList.remove('hidden');
 
-            await performTranscription(audioFile);
+            // Show loading overlay during STT processing
+            showLoadingOverlay(true);
+            
+            try {
+                await performTranscription(audioFile);
+            } finally {
+                showLoadingOverlay(false);
+            }
         });
 
         audioFileInput.addEventListener('change', () => {
@@ -581,9 +666,9 @@ copyCatboxButton.addEventListener('click', () => {
                 textArea.select();
                 try {
                     document.execCommand('copy');
-                    displayMessageBox('Transcribed text copied to clipboard!');
+                    showNotification('Transcribed text copied to clipboard!');
                 } catch (err) {
-                    displayMessageBox('Failed to copy text. Please try again or copy manually.');
+                    showNotification('Failed to copy text. Please try again or copy manually.', false);
                 }
                 document.body.removeChild(textArea);
             }
