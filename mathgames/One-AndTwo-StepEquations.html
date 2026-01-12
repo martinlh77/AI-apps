@@ -1,0 +1,2847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solving One- and Two-Step Equations</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            background: linear-gradient(to right, #ff9966, #ff5858);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .stat-item i {
+            color: #ffcc00;
+        }
+        
+        .stat-item.correct-counter {
+            background: rgba(46, 204, 113, 0.3);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+        }
+        
+        .stat-item.correct-counter i {
+            color: #2ecc71;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #ffcc00;
+        }
+        
+        .stat-item.correct-counter .stat-value {
+            color: #2ecc71;
+        }
+        
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .level-btn {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .level-btn:hover, .level-btn.active {
+            background: linear-gradient(to right, #ff9966, #ff5858);
+            border-color: transparent;
+            transform: scale(1.05);
+        }
+        
+        .game-selector {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .game-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            width: 220px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.3);
+            border-color: #ff9966;
+        }
+        
+        .game-card i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+        
+        .game-card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+        
+        .game-card p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .game-card .card-stat {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.85rem;
+            color: #ffcc00;
+        }
+        
+        .challenge-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .problem-area {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .problem-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .problem-header h2 {
+            font-size: 1.8rem;
+        }
+        
+        .problem-display {
+            font-size: 1.8rem;
+            text-align: center;
+            margin: 30px 0;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            flex-direction: column;
+            line-height: 1.6;
+        }
+        
+        .instruction-text {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .format-hint {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 8px;
+            color: #3498db;
+        }
+        
+        /* Audio Container Styles */
+        .audio-container {
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .tts-btn {
+            background: rgba(52, 152, 219, 0.5);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .tts-btn:hover {
+            background: rgba(52, 152, 219, 0.8);
+        }
+        
+        .tts-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .tts-btn .spinner-small {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        
+        .tts-btn.loading .spinner-small {
+            display: inline-block;
+        }
+        
+        .tts-btn.loading .btn-icon {
+            display: none;
+        }
+        
+        .audio-player-container {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+        
+        .audio-player-container.visible {
+            display: block;
+        }
+        
+        .audio-player-container audio {
+            width: 100%;
+            height: 40px;
+        }
+        
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .audio-controls button {
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-area {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        input {
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            width: 250px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            outline: none;
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        select {
+            padding: 10px 15px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 25px;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        select option {
+            background: #1a2a6c;
+            color: white;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(to right, #ff9966, #ff5858);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .feedback {
+            min-height: 60px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .correct {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            color: #2ecc71;
+        }
+        
+        .incorrect {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+            color: #e74c3c;
+        }
+        
+        .hint {
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            color: #3498db;
+        }
+        
+        .game-area {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .game-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        /* Hangman Styles */
+        .hangman-container {
+            width: 200px;
+            height: 280px;
+            position: relative;
+            margin: 20px auto;
+        }
+        
+        .gallows-base {
+            position: absolute;
+            bottom: 0;
+            left: 10px;
+            width: 180px;
+            height: 10px;
+            background: #8B4513;
+            border-radius: 2px;
+        }
+        
+        .gallows-pole {
+            position: absolute;
+            bottom: 10px;
+            left: 40px;
+            width: 10px;
+            height: 240px;
+            background: #8B4513;
+        }
+        
+        .gallows-top {
+            position: absolute;
+            top: 10px;
+            left: 40px;
+            width: 100px;
+            height: 10px;
+            background: #8B4513;
+        }
+        
+        .gallows-rope {
+            position: absolute;
+            top: 20px;
+            left: 130px;
+            width: 4px;
+            height: 30px;
+            background: #D2691E;
+        }
+        
+        .hangman-head {
+            position: absolute;
+            top: 50px;
+            left: 112px;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #fff;
+            border-radius: 50%;
+            display: none;
+        }
+        
+        .hangman-body {
+            position: absolute;
+            top: 90px;
+            left: 130px;
+            width: 4px;
+            height: 60px;
+            background: #fff;
+            display: none;
+        }
+        
+        .hangman-arm-left {
+            position: absolute;
+            top: 110px;
+            left: 95px;
+            width: 35px;
+            height: 4px;
+            background: #fff;
+            transform: rotate(25deg);
+            transform-origin: right center;
+            display: none;
+        }
+        
+        .hangman-arm-right {
+            position: absolute;
+            top: 110px;
+            left: 134px;
+            width: 35px;
+            height: 4px;
+            background: #fff;
+            transform: rotate(-25deg);
+            transform-origin: left center;
+            display: none;
+        }
+        
+        .hangman-leg-left {
+            position: absolute;
+            top: 145px;
+            left: 100px;
+            width: 35px;
+            height: 4px;
+            background: #fff;
+            transform: rotate(25deg);
+            transform-origin: right center;
+            display: none;
+        }
+        
+        .hangman-leg-right {
+            position: absolute;
+            top: 145px;
+            left: 134px;
+            width: 35px;
+            height: 4px;
+            background: #fff;
+            transform: rotate(-25deg);
+            transform-origin: left center;
+            display: none;
+        }
+        
+        /* Rescue Mermaids */
+        .rescue-container {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin: 15px 0;
+            min-height: 40px;
+        }
+        
+        .rescuer {
+            font-size: 1.8rem;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+        
+        .rescuer.active {
+            opacity: 1;
+            animation: swim 1s ease-in-out infinite;
+        }
+        
+        @keyframes swim {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .secret-message {
+            font-size: 1.8rem;
+            text-align: center;
+            margin: 20px 0;
+            letter-spacing: 6px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #ffcc00;
+            word-wrap: break-word;
+            max-width: 100%;
+            flex-wrap: wrap;
+        }
+        
+        .guess-input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .guess-input-area input {
+            width: 200px;
+            padding: 10px 15px;
+            font-size: 1rem;
+        }
+        
+        .guess-input-area button {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+        }
+        
+        /* Image Style Selector */
+        .style-selector {
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .style-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        
+        .style-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        
+        .style-btn {
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .style-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .style-btn.selected {
+            background: linear-gradient(to right, #9b59b6, #8e44ad);
+            border-color: transparent;
+        }
+        
+        /* Puzzle Image Reveal */
+        .puzzle-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+        
+        .puzzle-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .puzzle-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+        }
+        
+        .puzzle-piece {
+            background: linear-gradient(135deg, #2c3e50, #1a252f);
+            border: 2px solid #34495e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.4);
+            transition: all 0.5s ease;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        .puzzle-piece.revealed {
+            background: transparent !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .download-btn {
+            display: none;
+            margin-top: 15px;
+            padding: 12px 25px;
+            background: linear-gradient(to right, #27ae60, #2ecc71);
+            font-size: 0.95rem;
+        }
+        
+        .download-btn.visible {
+            display: inline-block;
+        }
+        
+        /* Royal Wedding Styles */
+        .royal-wedding-container {
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+        }
+        
+        .challenge-only-note {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .royal-track {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            font-size: 2rem;
+            margin: 25px 0;
+            min-height: 60px;
+            flex-wrap: wrap;
+        }
+        
+        .royal-step {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+        
+        .royal-step.active {
+            background: rgba(255, 215, 0, 0.4);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .royal-step.heart {
+            background: rgba(255, 100, 100, 0.4);
+            color: #ff6b6b;
+            font-size: 1rem;
+        }
+        
+        .king-emoji, .queen-emoji {
+            font-size: 2.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .hearts-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .heart {
+            font-size: 1.5rem;
+            color: #ff6b6b;
+            animation: heartbeat 1s infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .progress-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #ff9966, #ff5858);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .hint-button {
+            padding: 10px 20px;
+            background: rgba(52, 152, 219, 0.3);
+            font-size: 0.9rem;
+        }
+        
+        .retry-btn {
+            padding: 10px 20px;
+            background: rgba(155, 89, 182, 0.3);
+            font-size: 0.9rem;
+        }
+        
+        .next-round-btn {
+            padding: 12px 25px;
+            background: linear-gradient(to right, #9b59b6, #8e44ad);
+            font-size: 1rem;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .next-round-btn.visible {
+            display: inline-block;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 5px solid #ffcc00;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .problem-type-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            background: rgba(155, 89, 182, 0.3);
+            margin-right: 10px;
+        }
+        
+        .level-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            background: rgba(46, 204, 113, 0.3);
+        }
+        
+        .pieces-counter {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 1rem;
+            color: #ffcc00;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .new-puzzle-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: rgba(46, 204, 113, 0.3);
+            font-size: 0.9rem;
+        }
+        
+        .image-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+            color: rgba(255, 255, 255, 0.5);
+            width: 100%;
+            height: 100%;
+        }
+        
+        .solution-display {
+            font-weight: bold;
+            color: #ffcc00;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .game-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .game-card {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .problem-display {
+                font-size: 1.4rem;
+            }
+            
+            .royal-track {
+                gap: 2px;
+            }
+            
+            .royal-step {
+                width: 20px;
+                height: 20px;
+            }
+            
+            .stats-bar {
+                gap: 8px;
+            }
+            
+            .stat-item {
+                padding: 5px 10px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-calculator"></i> Solving One- and Two-Step Equations</h1>
+            <p class="subtitle">Practice solving equations and translating word problems. Master your math skills!</p>
+        </header>
+        
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-item correct-counter">
+                <i class="fas fa-check-circle"></i>
+                <span>Correct:</span>
+                <span class="stat-value" id="stat-correct">0</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-lock"></i>
+                <span>Messages:</span>
+                <span class="stat-value" id="stat-messages">0</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-puzzle-piece"></i>
+                <span>Pictures:</span>
+                <span class="stat-value" id="stat-pictures">0</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-user-shield"></i>
+                <span>Rescues:</span>
+                <span class="stat-value" id="stat-rescues">0</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-crown"></i>
+                <span>Weddings:</span>
+                <span class="stat-value" id="stat-weddings">0</span>
+            </div>
+            <div class="stat-item">
+                <i class="fas fa-trophy"></i>
+                <span>Highest Level:</span>
+                <span class="stat-value" id="stat-highest-level">1</span>
+            </div>
+        </div>
+        
+        <div class="level-selector">
+            <button class="level-btn active" onclick="setLevel(1)">Level 1: Integers</button>
+            <button class="level-btn" onclick="setLevel(2)">Level 2: Decimals</button>
+            <button class="level-btn" onclick="setLevel(3)">Level 3: Fractions</button>
+            <button class="level-btn" onclick="setLevel(4)">Level 4: Mixed Numbers</button>
+            <button class="level-btn" onclick="setLevel(5)">Level 5: All Mixed</button>
+        </div>
+        
+        <div class="game-selector" id="game-selector">
+            <div class="game-card" onclick="selectGame('secret')">
+                <i class="fas fa-lock"></i>
+                <h3>Secret Message</h3>
+                <p>Uncover hidden messages by solving equations</p>
+                <div class="card-stat">Solved: <span id="card-stat-messages">0</span></div>
+            </div>
+            <div class="game-card" onclick="selectGame('puzzle')">
+                <i class="fas fa-puzzle-piece"></i>
+                <h3>Picture Reveal</h3>
+                <p>Reveal a mystery picture piece by piece</p>
+                <div class="card-stat">Revealed: <span id="card-stat-pictures">0</span></div>
+            </div>
+            <div class="game-card" onclick="selectGame('hangman')">
+                <i class="fas fa-user-shield"></i>
+                <h3>Hangman Rescue</h3>
+                <p>Save the figure by solving equations correctly</p>
+                <div class="card-stat">Saved: <span id="card-stat-rescues">0</span></div>
+            </div>
+            <div class="game-card" onclick="selectGame('royal')">
+                <span class="challenge-badge">⚡ LEVEL 5 ONLY</span>
+                <i class="fas fa-crown"></i>
+                <h3>Royal Wedding</h3>
+                <p>Unite the King & Queen with your math skills!</p>
+                <div class="card-stat">Reunited: <span id="card-stat-weddings">0</span></div>
+            </div>
+        </div>
+        
+        <div class="main-content" id="main-content" style="display: none;">
+            <div class="problem-area">
+                <div class="problem-header">
+                    <h2>Math Problem</h2>
+                    <div class="problem-stats">
+                        <span class="problem-type-badge" id="problem-type-badge">One-Step</span>
+                        <span class="level-badge" id="level-badge">Level 1</span>
+                    </div>
+                </div>
+                
+                <div class="problem-display" id="problem-display">
+                    <div class="spinner"></div>
+                </div>
+                
+                <!-- Audio Container -->
+                <div class="audio-container">
+                    <button class="tts-btn" id="tts-btn" onclick="requestTTS()">
+                        <span class="spinner-small"></span>
+                        <i class="fas fa-volume-up btn-icon"></i>
+                        <span class="btn-text">Read Problem Aloud</span>
+                    </button>
+                    <div class="audio-player-container" id="audio-player-container">
+                        <audio id="tts-audio" controls></audio>
+                        <div class="audio-controls">
+                            <button onclick="replayAudio()"><i class="fas fa-redo"></i> Replay</button>
+                            <button onclick="hideAudioPlayer()"><i class="fas fa-times"></i> Close</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="input-area">
+                    <input type="text" id="answer-input" placeholder="Enter your answer">
+                    <button id="check-btn"><i class="fas fa-check"></i> Check</button>
+                </div>
+                
+                <div class="feedback" id="feedback">
+                    Enter your answer above.
+                </div>
+                
+                <div class="button-group">
+                    <button id="hint-btn" class="hint-button" style="display:none;"><i class="fas fa-lightbulb"></i> Get Hint</button>
+                    <button id="show-solution-btn" class="hint-button" style="display:none;"><i class="fas fa-eye"></i> Show Solution</button>
+                    <button id="retry-problem-btn" class="retry-btn" style="display:none;" onclick="retryCurrentProblem()"><i class="fas fa-redo"></i> New Problem</button>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Generating new problem...</p>
+                </div>
+            </div>
+            
+            <div class="game-area">
+                <h2 class="game-title" id="game-title">Select a Game Mode</h2>
+                <div id="game-content">
+                    <!-- Game content will appear here -->
+                </div>
+                <button class="next-round-btn" id="next-round-btn" onclick="startNextRound()">
+                    <i class="fas fa-arrow-right"></i> <span id="next-round-text">Another Round?</span>
+                </button>
+            </div>
+        </div>
+        
+        <footer>
+            <p>AI Math Equation Adventure &copy; 2026 | Dynamic Math Practice Generator</p>
+        </footer>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_KEY = 'pk_8CQPK8dxqANijjhy';
+        const API_BASE = 'https://gen.pollinations.ai';
+        
+        // Game state
+        let currentGame = null;
+        let currentProblem = null;
+        let currentLevel = 1;
+        let correctAnswers = 0;
+        let totalCorrect = 0;
+        let attemptCount = 0;
+        let maxAttempts = 3;
+        let hintShown = false;
+        let currentAudioUrl = null;
+        let gameOver = false;
+        let puzzleGameActive = false;
+        
+        // Image style selection
+        let selectedImageStyle = 'cute';
+        
+        // Specific style prompts - much more explicit
+        const imageStyles = {
+            'cute': {
+                style: 'cute kawaii chibi style, adorable, pastel colors, rounded shapes, big eyes',
+                subjects: ['kitten playing', 'puppy with bow', 'bunny in garden', 'baby panda', 'hamster eating', 'penguin dancing', 'baby elephant', 'koala sleeping', 'hedgehog with apple', 'duckling swimming'],
+                negative: 'scary, horror, dark, realistic, photo'
+            },
+            'anime': {
+                style: 'japanese anime style, cel shaded, vibrant colors, anime aesthetic, manga inspired',
+                subjects: ['cherry blossom tree', 'peaceful shrine', 'student at desk', 'cat cafe scene', 'ramen shop', 'sunset cityscape', 'train station', 'school rooftop', 'bamboo forest', 'koi pond'],
+                negative: 'western cartoon, 3d render, realistic photo, ghibli'
+            },
+            'ghibli': {
+                style: 'Studio Ghibli style, Hayao Miyazaki inspired, hand painted, whimsical, soft watercolor, dreamy atmosphere',
+                subjects: ['cottage in meadow', 'forest spirit', 'flying machine', 'castle in clouds', 'bakery shop', 'countryside train', 'garden with flowers', 'treehouse village', 'windmill on hill', 'cozy library'],
+                negative: 'space, aliens, sci-fi, dark, horror, realistic photo, anime'
+            },
+            'steampunk': {
+                style: 'steampunk style, victorian era, brass and copper, gears and cogs, industrial, mechanical',
+                subjects: ['clockwork bird', 'steam train', 'airship in sky', 'mechanical horse', 'inventor workshop', 'brass telescope', 'steam powered car', 'clocktower', 'submarine', 'robot butler'],
+                negative: 'modern, futuristic, neon, digital, cute, kawaii'
+            },
+            'futuristic': {
+                style: 'futuristic sci-fi style, neon lights, holographic, cyberpunk city, high tech, glowing',
+                subjects: ['hover car', 'robot companion', 'space station', 'neon city street', 'hologram display', 'futuristic school', 'flying drone', 'teleporter', 'laser bridge', 'android friend'],
+                negative: 'medieval, fantasy, nature, rustic, vintage, steampunk'
+            },
+            'watercolor': {
+                style: 'watercolor painting style, soft washes, artistic, hand painted, delicate brushstrokes, pastel palette',
+                subjects: ['flower bouquet', 'mountain landscape', 'sailboat on lake', 'butterfly garden', 'autumn trees', 'bird on branch', 'seaside village', 'lavender field', 'rainforest waterfall', 'peaceful river'],
+                negative: 'digital art, 3d render, anime, cartoon, photo realistic'
+            },
+            'pixel': {
+                style: 'pixel art style, 16-bit retro video game, blocky pixels, nostalgic, 8-bit aesthetic',
+                subjects: ['treasure chest', 'knight character', 'dragon sprite', 'magical sword', 'castle entrance', 'forest dungeon', 'potion shop', 'wizard tower', 'bridge over lava', 'village market'],
+                negative: 'realistic, smooth, 3d render, high resolution, photo'
+            },
+            'fantasy': {
+                style: 'high fantasy art style, magical, enchanted, fairytale, mystical atmosphere, detailed illustration',
+                subjects: ['dragon on mountain', 'fairy in mushroom ring', 'wizard casting spell', 'enchanted forest', 'crystal cave', 'unicorn by waterfall', 'magic castle', 'phoenix rising', 'elf village', 'ancient ruins'],
+                negative: 'modern, sci-fi, technology, realistic photo, aliens, space'
+            }
+        };
+        
+        // Progress tracking
+        let stats = {
+            messages: 0,
+            pictures: 0,
+            rescues: 0,
+            weddings: 0,
+            highestLevel: 1,
+            totalCorrect: 0
+        };
+        
+        // Variables for problem generation
+        const variables = 'abcdefghijklmnopqrstuvwxyz'.split('');
+        
+        // Secret Message Game State
+        let secretPhrase = '';
+        let secretRevealedIndices = new Set();
+        
+        // Puzzle Game State
+        let puzzleImageBlob = null;
+        let puzzlePiecesRevealed = [];
+        let puzzleRevealOrder = [];
+        const totalPuzzlePieces = 9;
+        
+        // Hangman Game State
+        let hangmanMistakes = 0;
+        let hangmanRescuers = 0;
+        const maxHangman = 6;
+        const rescuersNeeded = 5;
+        
+        // Royal Wedding Game State
+        let royalProgress = 5;
+        const royalMax = 10;
+        
+        // Problem type selection
+        const problemTypes = ['one-step', 'two-step', 'distributive', 'word-to-equation', 'word-solve'];
+        
+        // Load stats from localStorage
+        function loadStats() {
+            const saved = localStorage.getItem('mathAdventureStats');
+            if (saved) {
+                stats = JSON.parse(saved);
+                totalCorrect = stats.totalCorrect || 0;
+            }
+            updateStatsDisplay();
+        }
+        
+        function saveStats() {
+            stats.totalCorrect = totalCorrect;
+            localStorage.setItem('mathAdventureStats', JSON.stringify(stats));
+            updateStatsDisplay();
+        }
+        
+        function updateStatsDisplay() {
+            document.getElementById('stat-correct').textContent = totalCorrect;
+            document.getElementById('stat-messages').textContent = stats.messages;
+            document.getElementById('stat-pictures').textContent = stats.pictures;
+            document.getElementById('stat-rescues').textContent = stats.rescues;
+            document.getElementById('stat-weddings').textContent = stats.weddings;
+            document.getElementById('stat-highest-level').textContent = stats.highestLevel;
+            
+            document.getElementById('card-stat-messages').textContent = stats.messages;
+            document.getElementById('card-stat-pictures').textContent = stats.pictures;
+            document.getElementById('card-stat-rescues').textContent = stats.rescues;
+            document.getElementById('card-stat-weddings').textContent = stats.weddings;
+        }
+        
+        function updateHighestLevel(level) {
+            if (level > stats.highestLevel) {
+                stats.highestLevel = level;
+                saveStats();
+            }
+        }
+        
+        // ==================== UTILITY FUNCTIONS ====================
+        
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        
+        function getRandomVariable() {
+            return variables[getRandomInt(0, variables.length - 1)];
+        }
+        
+        function generateSeed() {
+            return Math.floor(Math.random() * 1000000);
+        }
+        
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        function roundToPlaces(num, places) {
+            const factor = Math.pow(10, places);
+            return Math.round(num * factor) / factor;
+        }
+        
+        function gcd(a, b) {
+            a = Math.abs(Math.round(a));
+            b = Math.abs(Math.round(b));
+            while (b) {
+                let t = b;
+                b = a % b;
+                a = t;
+            }
+            return a;
+        }
+        
+        function simplifyFraction(num, den) {
+            if (den === 0) return { num: 0, den: 1 };
+            num = Math.round(num);
+            den = Math.round(den);
+            const g = gcd(num, den);
+            let sNum = num / g;
+            let sDen = den / g;
+            if (sDen < 0) {
+                sNum = -sNum;
+                sDen = -sDen;
+            }
+            return { num: sNum, den: sDen };
+        }
+        
+        function fractionToString(num, den) {
+            const simplified = simplifyFraction(num, den);
+            if (simplified.den === 1) return simplified.num.toString();
+            return `${simplified.num}/${simplified.den}`;
+        }
+        
+        function mixedNumberToString(whole, num, den) {
+            if (num === 0) return whole.toString();
+            if (whole === 0) return fractionToString(num, den);
+            const sign = whole < 0 ? '-' : '';
+            return `${sign}${Math.abs(whole)} ${Math.abs(num)}/${Math.abs(den)}`;
+        }
+        
+        function createProperFraction(maxNum = 7, maxDen = 8) {
+            const den = getRandomInt(2, maxDen);
+            const num = getRandomInt(1, den - 1);
+            return { num, den, value: num / den };
+        }
+        
+        function parseMixedNumber(str) {
+            str = str.trim().replace(/\s+/g, ' ');
+            
+            const mixedMatch = str.match(/^(-?\d+)\s+(\d+)\/(\d+)$/);
+            if (mixedMatch) {
+                const whole = parseInt(mixedMatch[1]);
+                const num = parseInt(mixedMatch[2]);
+                const den = parseInt(mixedMatch[3]);
+                const sign = whole < 0 ? -1 : 1;
+                return sign * (Math.abs(whole) + num / den);
+            }
+            
+            const fractionMatch = str.match(/^(-?\d+)\/(\d+)$/);
+            if (fractionMatch) {
+                return parseInt(fractionMatch[1]) / parseInt(fractionMatch[2]);
+            }
+            
+            return parseFloat(str);
+        }
+        
+        // ==================== LEVEL-SPECIFIC NUMBER GENERATION ====================
+        
+        function generateLevelNumber(level, min, max, allowNegative = true) {
+            const negative = allowNegative && Math.random() < 0.25;
+            const sign = negative ? -1 : 1;
+            
+            switch (level) {
+                case 1: // Integers only
+                    return sign * getRandomInt(min, max);
+                case 2: // Decimals
+                    return sign * roundToPlaces(getRandomInt(min * 10, max * 10) / 10, 1);
+                case 3: // Fractions
+                case 4: // Mixed numbers
+                    return sign * getRandomInt(min, max); // For coefficients, still use integers
+                case 5: // Mixed - randomly choose
+                    const subLevel = getRandomInt(1, 2);
+                    return generateLevelNumber(subLevel, min, max, allowNegative);
+                default:
+                    return sign * getRandomInt(min, max);
+            }
+        }
+        
+        function formatLevelAnswer(answer, level) {
+            switch (level) {
+                case 1:
+                    return Math.round(answer).toString();
+                case 2:
+                    return roundToPlaces(answer, 1).toString();
+                case 3:
+                case 4:
+                    return answer.toString();
+                case 5:
+                    return answer.toString();
+                default:
+                    return answer.toString();
+            }
+        }
+        
+        // ==================== PROBLEM GENERATION ====================
+        
+        function generateOneStepProblem(level) {
+            const variable = getRandomVariable();
+            const operations = ['+', '-', '*', '/'];
+            const operation = operations[getRandomInt(0, 3)];
+            
+            let a, b, answer, problemStr, answerStr;
+            
+            // Level 1: Integers only, Level 2: Decimals, Level 3+: Fractions
+            if (level === 1) {
+                // INTEGERS ONLY
+                switch (operation) {
+                    case '+':
+                        b = getRandomInt(1, 15);
+                        answer = getRandomInt(-10, 15);
+                        const sum = answer + b;
+                        problemStr = `${variable} + ${b} = ${sum}`;
+                        answerStr = answer.toString();
+                        break;
+                    case '-':
+                        b = getRandomInt(1, 15);
+                        answer = getRandomInt(1, 20);
+                        const diff = answer - b;
+                        problemStr = `${variable} - ${b} = ${diff}`;
+                        answerStr = answer.toString();
+                        break;
+                    case '*':
+                        a = getRandomInt(2, 10);
+                        answer = getRandomInt(-10, 10);
+                        if (answer === 0) answer = 1;
+                        const product = a * answer;
+                        problemStr = `${a}${variable} = ${product}`;
+                        answerStr = answer.toString();
+                        break;
+                    case '/':
+                        b = getRandomInt(2, 10);
+                        const quotient = getRandomInt(1, 10);
+                        answer = quotient * b;
+                        problemStr = `${variable}/${b} = ${quotient}`;
+                        answerStr = answer.toString();
+                        break;
+                }
+            } else if (level === 2) {
+                // DECIMALS
+                switch (operation) {
+                    case '+':
+                        b = roundToPlaces(getRandomInt(10, 100) / 10, 1);
+                        answer = roundToPlaces(getRandomInt(-100, 150) / 10, 1);
+                        const sum = roundToPlaces(answer + b, 1);
+                        problemStr = `${variable} + ${b} = ${sum}`;
+                        answerStr = answer.toString();
+                        break;
+                    case '-':
+                        b = roundToPlaces(getRandomInt(10, 100) / 10, 1);
+                        answer = roundToPlaces(getRandomInt(10, 200) / 10, 1);
+                        const diff = roundToPlaces(answer - b, 1);
+                        problemStr = `${variable} - ${b} = ${diff}`;
+                        answerStr = answer.toString();
+                        break;
+                    case '*':
+                        a = roundToPlaces(getRandomInt(20, 80) / 10, 1);
+                        answer = roundToPlaces(getRandomInt(-80, 80) / 10, 1);
+                        if (answer === 0) answer = 0.5;
+                        const product = roundToPlaces(a * answer, 2);
+                        problemStr = `${a}${variable} = ${product}`;
+                        answerStr = answer.toString();
+                        break;
+                    case '/':
+                        b = roundToPlaces(getRandomInt(20, 50) / 10, 1);
+                        const quotient = roundToPlaces(getRandomInt(10, 80) / 10, 1);
+                        answer = roundToPlaces(quotient * b, 2);
+                        problemStr = `${variable}/${b} = ${quotient}`;
+                        answerStr = answer.toString();
+                        break;
+                }
+            } else {
+                // FRACTIONS (level 3, 4, 5)
+                const frac = createProperFraction();
+                const mult = getRandomInt(2, 5);
+                answer = frac.value;
+                const productNum = frac.num * mult;
+                const productDen = frac.den;
+                
+                if (productNum < productDen) {
+                    problemStr = `${mult}${variable} = ${fractionToString(productNum, productDen)}`;
+                } else {
+                    const whole = Math.floor(productNum / productDen);
+                    const remainder = productNum % productDen;
+                    if (remainder === 0) {
+                        problemStr = `${mult}${variable} = ${whole}`;
+                    } else {
+                        problemStr = `${mult}${variable} = ${whole} ${remainder}/${productDen}`;
+                    }
+                }
+                answerStr = fractionToString(frac.num, frac.den);
+            }
+            
+            return {
+                type: 'one-step',
+                problem: problemStr,
+                answer: answer,
+                answerStr: answerStr,
+                variable: variable,
+                instruction: `Solve for ${variable}`,
+                hint: `Isolate ${variable} by performing the inverse operation on both sides.`,
+                spokenProblem: `Solve for ${variable}. ${problemStr.replace(/\*/g, ' times ').replace(/\//g, ' divided by ')}`
+            };
+        }
+        
+        function generateTwoStepProblem(level) {
+            const variable = getRandomVariable();
+            let a, b, c, answer, problemStr, answerStr;
+            
+            if (level === 1) {
+                // INTEGERS ONLY
+                a = getRandomInt(2, 8);
+                b = getRandomInt(1, 12);
+                answer = getRandomInt(-8, 10);
+                if (answer === 0) answer = 1;
+                
+                const operation = Math.random() < 0.5 ? '+' : '-';
+                if (operation === '+') {
+                    c = a * answer + b;
+                    problemStr = `${a}${variable} + ${b} = ${c}`;
+                } else {
+                    c = a * answer - b;
+                    problemStr = `${a}${variable} - ${b} = ${c}`;
+                }
+                answerStr = answer.toString();
+            } else if (level === 2) {
+                // DECIMALS
+                a = roundToPlaces(getRandomInt(20, 80) / 10, 1);
+                b = roundToPlaces(getRandomInt(10, 100) / 10, 1);
+                answer = roundToPlaces(getRandomInt(-60, 80) / 10, 1);
+                if (answer === 0) answer = 0.5;
+                
+                const operation = Math.random() < 0.5 ? '+' : '-';
+                if (operation === '+') {
+                    c = roundToPlaces(a * answer + b, 2);
+                    problemStr = `${a}${variable} + ${b} = ${c}`;
+                } else {
+                    c = roundToPlaces(a * answer - b, 2);
+                    problemStr = `${a}${variable} - ${b} = ${c}`;
+                }
+                answerStr = answer.toString();
+            } else {
+                // FRACTIONS
+                a = getRandomInt(2, 5);
+                b = getRandomInt(1, 6);
+                const frac = createProperFraction(5, 6);
+                answer = frac.value;
+                c = a * answer + b;
+                
+                const resultNum = a * frac.num + b * frac.den;
+                const resultDen = frac.den;
+                
+                if (resultNum < resultDen) {
+                    problemStr = `${a}${variable} + ${b} = ${fractionToString(resultNum, resultDen)}`;
+                } else {
+                    const whole = Math.floor(resultNum / resultDen);
+                    const remainder = resultNum % resultDen;
+                    if (remainder === 0) {
+                        problemStr = `${a}${variable} + ${b} = ${whole}`;
+                    } else {
+                        problemStr = `${a}${variable} + ${b} = ${whole} ${remainder}/${resultDen}`;
+                    }
+                }
+                answerStr = fractionToString(frac.num, frac.den);
+            }
+            
+            return {
+                type: 'two-step',
+                problem: problemStr,
+                answer: answer,
+                answerStr: answerStr,
+                variable: variable,
+                instruction: `Solve for ${variable}`,
+                hint: `First, undo addition/subtraction, then undo multiplication/division.`,
+                spokenProblem: `Solve for ${variable}. ${problemStr.replace(/\*/g, ' times ').replace(/\//g, ' divided by ')}`
+            };
+        }
+        
+        function generateDistributiveProblem(level) {
+            const variable = getRandomVariable();
+            let p, q, answer, r, problemStr, answerStr;
+            
+            if (level === 1) {
+                // INTEGERS ONLY
+                p = getRandomInt(2, 6);
+                q = getRandomInt(1, 8);
+                answer = getRandomInt(-5, 10);
+                if (answer === 0) answer = 1;
+                
+                const operation = Math.random() < 0.5 ? '+' : '-';
+                if (operation === '+') {
+                    r = p * (answer + q);
+                    problemStr = `${p}(${variable} + ${q}) = ${r}`;
+                } else {
+                    r = p * (answer - q);
+                    problemStr = `${p}(${variable} - ${q}) = ${r}`;
+                }
+                answerStr = answer.toString();
+            } else if (level === 2) {
+                // DECIMALS
+                p = roundToPlaces(getRandomInt(20, 50) / 10, 1);
+                q = roundToPlaces(getRandomInt(10, 60) / 10, 1);
+                answer = roundToPlaces(getRandomInt(-40, 80) / 10, 1);
+                if (answer === 0) answer = 0.5;
+                
+                const operation = Math.random() < 0.5 ? '+' : '-';
+                if (operation === '+') {
+                    r = roundToPlaces(p * (answer + q), 2);
+                    problemStr = `${p}(${variable} + ${q}) = ${r}`;
+                } else {
+                    r = roundToPlaces(p * (answer - q), 2);
+                    problemStr = `${p}(${variable} - ${q}) = ${r}`;
+                }
+                answerStr = answer.toString();
+            } else {
+                // FRACTIONS
+                p = getRandomInt(2, 4);
+                q = getRandomInt(1, 5);
+                const frac = createProperFraction(4, 5);
+                answer = frac.value;
+                r = p * (answer + q);
+                
+                const innerSum = frac.num + q * frac.den;
+                const resultNum = p * innerSum;
+                const resultDen = frac.den;
+                
+                if (resultNum % resultDen === 0) {
+                    problemStr = `${p}(${variable} + ${q}) = ${resultNum / resultDen}`;
+                } else {
+                    const whole = Math.floor(resultNum / resultDen);
+                    const remainder = resultNum % resultDen;
+                    problemStr = `${p}(${variable} + ${q}) = ${whole} ${remainder}/${resultDen}`;
+                }
+                answerStr = fractionToString(frac.num, frac.den);
+            }
+            
+            return {
+                type: 'distributive',
+                problem: problemStr,
+                answer: answer,
+                answerStr: answerStr,
+                variable: variable,
+                instruction: `Solve for ${variable} (divide first, then subtract/add)`,
+                hint: `Divide both sides by the number outside the parentheses first, then isolate ${variable}.`,
+                spokenProblem: `Solve for ${variable}. ${problemStr.replace(/\(/g, ', open parenthesis, ').replace(/\)/g, ', close parenthesis, ')}`
+            };
+        }
+        
+        function generateWordToEquation(level) {
+            const variable = getRandomVariable();
+            
+            // Level-specific value generators
+            function getLevelValue(min, max) {
+                if (level === 1) return getRandomInt(min, max);
+                if (level === 2) return roundToPlaces(getRandomInt(min * 10, max * 10) / 10, 1);
+                return getRandomInt(min, max);
+            }
+            
+            function formatValue(val) {
+                if (level === 2) return val;
+                return val;
+            }
+            
+            // Extended templates with more variety
+            const templates = [
+                // Basic operations
+                { template: (a) => `the sum of a number and ${a}`, equation: (v, a) => `${v} + ${a}`, values: () => [getLevelValue(1, 15)] },
+                { template: (a) => `${a} more than a number`, equation: (v, a) => `${v} + ${a}`, values: () => [getLevelValue(1, 15)] },
+                { template: (a) => `the difference of a number and ${a}`, equation: (v, a) => `${v} - ${a}`, values: () => [getLevelValue(1, 15)] },
+                { template: (a) => `${a} less than a number`, equation: (v, a) => `${v} - ${a}`, values: () => [getLevelValue(1, 15)] },
+                { template: (a) => `the product of ${a} and a number`, equation: (v, a) => `${a}${v}`, values: () => [getLevelValue(2, 10)] },
+                { template: (a) => `the quotient of a number and ${a}`, equation: (v, a) => `${v}/${a}`, values: () => [getLevelValue(2, 10)] },
+                { template: () => `five less than a number`, equation: (v) => `${v} - 5`, values: () => [] },
+                { template: () => `the quotient of five and a number`, equation: (v) => `5/${v}`, values: () => [] },
+                { template: () => `the product of seven and a number`, equation: (v) => `7${v}`, values: () => [] },
+                
+                // Distributive - twice, three times, four times
+                { template: (a) => `twice the sum of a number and ${a}`, equation: (v, a) => `2(${v} + ${a})`, values: () => [getLevelValue(1, 10)], isDistributive: true },
+                { template: (a) => `three times the sum of a number and ${a}`, equation: (v, a) => `3(${v} + ${a})`, values: () => [getLevelValue(1, 8)], isDistributive: true },
+                { template: (a) => `four times the difference of a number and ${a}`, equation: (v, a) => `4(${v} - ${a})`, values: () => [getLevelValue(1, 6)], isDistributive: true },
+                { template: (a) => `twice the difference of ${a} and a number`, equation: (v, a) => `2(${a} - ${v})`, values: () => [getLevelValue(2, 12)], isDistributive: true },
+                
+                // Half, one-fourth patterns
+                { template: (a) => `half the sum of a number and ${a}`, equation: (v, a) => `(1/2)(${v} + ${a})`, values: () => [getLevelValue(2, 12)], isDistributive: true, hasFraction: true },
+                { template: (a) => `one-fourth of the product of ${a} and a number`, equation: (v, a) => `(1/4)(${a}${v})`, values: () => [getLevelValue(4, 12)], isDistributive: true, hasFraction: true },
+                
+                // Complex: "X less than the sum/difference of..."
+                { template: (a, b) => `${b} less than the sum of a number and ${a}`, equation: (v, a, b) => `(${v} + ${a}) - ${b}`, values: () => [getLevelValue(2, 10), getLevelValue(1, 5)], isComplex: true },
+                { template: (a, b) => `${b} more than the difference of a number and ${a}`, equation: (v, a, b) => `(${v} - ${a}) + ${b}`, values: () => [getLevelValue(2, 8), getLevelValue(1, 5)], isComplex: true },
+                
+                // Product of number and sum/difference
+                { template: (a, b) => `the product of ${a} and the sum of a number and ${b}`, equation: (v, a, b) => `${a}(${v} + ${b})`, values: () => [getLevelValue(2, 6), getLevelValue(1, 8)], isDistributive: true },
+                { template: (a, b) => `the product of ${a} and the difference of a number and ${b}`, equation: (v, a, b) => `${a}(${v} - ${b})`, values: () => [getLevelValue(2, 6), getLevelValue(1, 6)], isDistributive: true },
+            ];
+            
+            const selected = templates[getRandomInt(0, templates.length - 1)];
+            const vals = selected.values();
+            const phrase = selected.template(...vals);
+            const equation = selected.equation(variable, ...vals);
+            
+            const result = getLevelValue(5, 40);
+            
+            let formatHint = '';
+            if (selected.hasFraction) {
+                formatHint = 'Use (1/2) for "half" and (1/4) for "one-fourth" when multiplying quantities.';
+            } else if (selected.isDistributive) {
+                formatHint = 'Use parentheses for grouped expressions, e.g., 2(x + 3)';
+            } else if (selected.isComplex) {
+                formatHint = 'Use parentheses to group the sum or difference first.';
+            }
+            
+            return {
+                type: 'word-to-equation',
+                problem: `"${phrase} equals ${result}"`,
+                answer: equation + ' = ' + result,
+                answerVariants: [
+                    equation + ' = ' + result,
+                    equation + '=' + result,
+                    equation.replace(/\s/g, '') + '=' + result
+                ],
+                variable: variable,
+                instruction: `Write as an equation using "${variable}" for the number`,
+                formatHint: formatHint,
+                hint: `Translate each word: "sum" = +, "difference" = -, "product" = ×, "quotient" = ÷, "twice" = 2×`,
+                spokenProblem: `Write an equation using ${variable} for the unknown number. ${phrase} equals ${result}.`
+            };
+        }
+        
+        function generateWordProblemSolve(level) {
+            const variable = getRandomVariable();
+            
+            function getLevelValue(min, max) {
+                if (level === 1) return getRandomInt(min, max);
+                if (level === 2) return roundToPlaces(getRandomInt(min * 10, max * 10) / 10, 1);
+                return getRandomInt(min, max);
+            }
+            
+            const templates = [
+                // Basic
+                {
+                    template: (a, b) => `The sum of a number and ${a} is ${b}. What is the number?`,
+                    values: () => {
+                        const answer = getLevelValue(-10, 20);
+                        const a = getLevelValue(1, 15);
+                        const b = level === 2 ? roundToPlaces(a + answer, 1) : a + answer;
+                        return [a, b, answer];
+                    }
+                },
+                {
+                    template: (a, b) => `A number minus ${a} equals ${b}. What is the number?`,
+                    values: () => {
+                        const answer = getLevelValue(5, 30);
+                        const a = getLevelValue(1, 15);
+                        const b = level === 2 ? roundToPlaces(answer - a, 1) : answer - a;
+                        return [a, b, answer];
+                    }
+                },
+                {
+                    template: (a, b) => `${a} times a number equals ${b}. What is the number?`,
+                    values: () => {
+                        const answer = getLevelValue(1, 12);
+                        const a = getLevelValue(2, 10);
+                        const b = level === 2 ? roundToPlaces(a * answer, 2) : a * answer;
+                        return [a, b, answer];
+                    }
+                },
+                {
+                    template: (a, b) => `A number divided by ${a} equals ${b}. Find the number.`,
+                    values: () => {
+                        const b = getLevelValue(1, 10);
+                        const a = getLevelValue(2, 8);
+                        const answer = level === 2 ? roundToPlaces(a * b, 1) : a * b;
+                        return [a, b, answer];
+                    }
+                },
+                
+                // Distributive word problems to solve
+                {
+                    template: (a, b) => `Twice the sum of a number and ${a} equals ${b}. What is the number?`,
+                    values: () => {
+                        const answer = getLevelValue(1, 10);
+                        const a = getLevelValue(2, 8);
+                        const b = level === 2 ? roundToPlaces(2 * (answer + a), 1) : 2 * (answer + a);
+                        return [a, b, answer];
+                    }
+                },
+                {
+                    template: (a, b) => `Three times the difference of a number and ${a} is ${b}. Find the number.`,
+                    values: () => {
+                        const answer = getLevelValue(5, 15);
+                        const a = getLevelValue(1, 4);
+                        const b = level === 2 ? roundToPlaces(3 * (answer - a), 1) : 3 * (answer - a);
+                        return [a, b, answer];
+                    }
+                },
+                {
+                    template: (a, b) => `Four times the difference of ${a} and a number results in ${b}. What is the number?`,
+                    values: () => {
+                        const answer = getLevelValue(1, 8);
+                        const a = getLevelValue(answer + 2, answer + 10);
+                        const b = level === 2 ? roundToPlaces(4 * (a - answer), 1) : 4 * (a - answer);
+                        return [a, b, answer];
+                    }
+                },
+                {
+                    template: (a, b) => `Half of the sum of a number and ${a} is ${b}. What is the number?`,
+                    values: () => {
+                        const answer = getLevelValue(2, 16);
+                        const a = getLevelValue(2, 10);
+                        const b = level === 2 ? roundToPlaces((answer + a) / 2, 1) : (answer + a) / 2;
+                        return [a, b, answer];
+                    }
+                },
+                
+                // Complex: "X less/more than the sum/difference"
+                {
+                    template: (a, b, c) => `Three less than the sum of a number and ${a} is ${b}. Find the number.`,
+                    values: () => {
+                        const answer = getLevelValue(1, 12);
+                        const a = getLevelValue(2, 8);
+                        const b = level === 2 ? roundToPlaces((answer + a) - 3, 1) : (answer + a) - 3;
+                        return [a, b, 3, answer];
+                    }
+                },
+                {
+                    template: (a, b, c) => `Five more than twice a number is ${b}. What is the number?`,
+                    values: () => {
+                        const answer = getLevelValue(1, 15);
+                        const b = level === 2 ? roundToPlaces(2 * answer + 5, 1) : 2 * answer + 5;
+                        return [5, b, 0, answer];
+                    }
+                },
+            ];
+            
+            const selected = templates[getRandomInt(0, templates.length - 1)];
+            const vals = selected.values();
+            const problem = selected.template(...vals);
+            const answer = vals[vals.length - 1];
+            
+            let answerStr;
+            if (level === 1) {
+                answerStr = Math.round(answer).toString();
+            } else if (level === 2) {
+                answerStr = roundToPlaces(answer, 1).toString();
+            } else {
+                answerStr = answer.toString();
+            }
+            
+            return {
+                type: 'word-solve',
+                problem: problem,
+                answer: answer,
+                answerStr: answerStr,
+                variable: variable,
+                instruction: 'Find the number',
+                hint: 'Set up an equation first, then solve for the unknown.',
+                spokenProblem: `Find the number. ${problem}`
+            };
+        }
+        
+        function generateProblem() {
+            if (currentGame === 'puzzle' && !puzzleGameActive) {
+                // Don't generate problems if puzzle game hasn't started
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('problem-display').innerHTML = '<div class="spinner"></div>';
+            hideAudioPlayer();
+            gameOver = false;
+            
+            const typeIndex = getRandomInt(0, problemTypes.length - 1);
+            const problemType = problemTypes[typeIndex];
+            
+            const levelToUse = currentGame === 'royal' ? 5 : currentLevel;
+            
+            updateHighestLevel(levelToUse);
+            
+            let problem;
+            switch (problemType) {
+                case 'one-step':
+                    problem = generateOneStepProblem(levelToUse);
+                    break;
+                case 'two-step':
+                    problem = generateTwoStepProblem(levelToUse);
+                    break;
+                case 'distributive':
+                    problem = generateDistributiveProblem(levelToUse);
+                    break;
+                case 'word-to-equation':
+                    problem = generateWordToEquation(levelToUse);
+                    break;
+                case 'word-solve':
+                    problem = generateWordProblemSolve(levelToUse);
+                    break;
+            }
+            
+            currentProblem = problem;
+            
+            setTimeout(() => {
+                let displayHTML = `
+                    <div style="word-wrap: break-word; max-width: 100%;">${problem.problem}</div>
+                    <div class="instruction-text">(${problem.instruction})</div>
+                `;
+                
+                if (problem.formatHint) {
+                    displayHTML += `<div class="format-hint">💡 ${problem.formatHint}</div>`;
+                }
+                
+                document.getElementById('problem-display').innerHTML = displayHTML;
+                
+                const typeBadge = document.getElementById('problem-type-badge');
+                typeBadge.textContent = problemType.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                
+                const levelBadge = document.getElementById('level-badge');
+                const levelNames = ['', 'Integers', 'Decimals', 'Fractions', 'Mixed Numbers', 'All Mixed'];
+                levelBadge.textContent = `Level ${levelToUse}: ${levelNames[levelToUse]}`;
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('hint-btn').style.display = 'inline-block';
+                document.getElementById('retry-problem-btn').style.display = 'inline-block';
+                
+                resetProblemState();
+            }, 600);
+        }
+        
+        function retryCurrentProblem() {
+            generateProblem();
+        }
+        
+        // ==================== TTS FUNCTIONS ====================
+        
+        async function requestTTS() {
+            if (!currentProblem) return;
+            
+            const ttsBtn = document.getElementById('tts-btn');
+            ttsBtn.classList.add('loading');
+            ttsBtn.disabled = true;
+            ttsBtn.querySelector('.btn-text').textContent = 'Loading Audio...';
+            
+            const textToSpeak = currentProblem.spokenProblem || 
+                `${currentProblem.instruction}. ${currentProblem.problem.replace(/"/g, '')}`;
+            
+            const readOnlyPrompt = `Read the following math problem aloud exactly as written. Do NOT solve it. Do NOT give the answer. Do NOT explain how to solve it. Simply read the problem clearly for a student to hear: "${textToSpeak}"`;
+            
+            const encodedText = encodeURIComponent(readOnlyPrompt);
+            const seed = generateSeed();
+            
+            const url = `${API_BASE}/text/${encodedText}?model=openai-audio&voice=shimmer&seed=${seed}&key=${API_KEY}`;
+            
+            try {
+                await delay(2000);
+                
+                const response = await fetch(url);
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const audioUrl = URL.createObjectURL(blob);
+                    currentAudioUrl = audioUrl;
+                    
+                    const audioElement = document.getElementById('tts-audio');
+                    audioElement.src = audioUrl;
+                    
+                    document.getElementById('audio-player-container').classList.add('visible');
+                    
+                    audioElement.play().catch(e => console.log('Auto-play blocked'));
+                    
+                    ttsBtn.querySelector('.btn-text').textContent = 'Read Problem Aloud';
+                    ttsBtn.classList.remove('loading');
+                    ttsBtn.disabled = false;
+                } else {
+                    throw new Error('API request failed');
+                }
+            } catch (error) {
+                console.log('API TTS failed, using browser TTS');
+                useBrowserTTS(textToSpeak);
+                ttsBtn.querySelector('.btn-text').textContent = 'Read Problem Aloud';
+                ttsBtn.classList.remove('loading');
+                ttsBtn.disabled = false;
+            }
+        }
+        
+        function useBrowserTTS(text) {
+            if ('speechSynthesis' in window) {
+                speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                speechSynthesis.speak(utterance);
+            }
+        }
+        
+        function replayAudio() {
+            const audioElement = document.getElementById('tts-audio');
+            audioElement.currentTime = 0;
+            audioElement.play();
+        }
+        
+        function hideAudioPlayer() {
+            document.getElementById('audio-player-container').classList.remove('visible');
+            const audioElement = document.getElementById('tts-audio');
+            audioElement.pause();
+            audioElement.currentTime = 0;
+        }
+        
+        // ==================== ANSWER CHECKING ====================
+        
+        function resetProblemState() {
+            attemptCount = 0;
+            hintShown = false;
+            document.getElementById('feedback').className = "feedback";
+            document.getElementById('feedback').innerHTML = "Enter your answer above.";
+            document.getElementById('answer-input').value = '';
+            document.getElementById('answer-input').disabled = false;
+            document.getElementById('check-btn').disabled = false;
+            document.getElementById('show-solution-btn').style.display = 'none';
+            document.getElementById('next-round-btn').classList.remove('visible');
+        }
+        
+        function checkAnswer() {
+            if (!currentProblem || gameOver) return;
+
+            const userAnswer = document.getElementById('answer-input').value.trim();
+            const feedbackElement = document.getElementById('feedback');
+            
+            if (userAnswer === '') {
+                feedbackElement.innerHTML = "Please enter an answer";
+                feedbackElement.className = "feedback incorrect";
+                return;
+            }
+            
+            attemptCount++;
+            
+            let isCorrect = false;
+
+            if (currentProblem.type === 'word-to-equation') {
+                const normalizedUser = userAnswer.replace(/\s/g, '').toLowerCase();
+                const variants = currentProblem.answerVariants || [currentProblem.answer];
+                
+                for (const variant of variants) {
+                    if (normalizedUser === variant.replace(/\s/g, '').toLowerCase()) {
+                        isCorrect = true;
+                        break;
+                    }
+                }
+                
+                if (!isCorrect) {
+                    const userVar = userAnswer.match(/[a-z]/i);
+                    if (userVar) {
+                        for (const variant of variants) {
+                            const normalizedAnswer = variant.replace(new RegExp(currentProblem.variable, 'gi'), userVar[0].toLowerCase());
+                            if (normalizedUser === normalizedAnswer.replace(/\s/g, '').toLowerCase()) {
+                                isCorrect = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                const numericAnswer = parseMixedNumber(userAnswer);
+                if (isNaN(numericAnswer)) {
+                    feedbackElement.innerHTML = "Please enter a valid number (e.g., 5, 2.5, 1/2, or 2 1/3)";
+                    feedbackElement.className = "feedback incorrect";
+                    return;
+                }
+                
+                const tolerance = currentLevel <= 2 ? 0.01 : 0.001;
+                if (Math.abs(numericAnswer - currentProblem.answer) < tolerance) {
+                    isCorrect = true;
+                }
+            }
+            
+            if (isCorrect) {
+                handleCorrectAnswer();
+            } else {
+                handleIncorrectAnswer();
+            }
+        }
+        
+        function handleCorrectAnswer() {
+            const feedbackElement = document.getElementById('feedback');
+            feedbackElement.innerHTML = "🎉 Correct! Well done!";
+            feedbackElement.className = "feedback correct";
+            correctAnswers++;
+            totalCorrect++;
+            saveStats();
+            
+            document.getElementById('answer-input').disabled = true;
+            document.getElementById('check-btn').disabled = true;
+            
+            if (currentGame === 'secret') {
+                revealSecretLetter();
+            } else if (currentGame === 'puzzle') {
+                revealPuzzlePiece();
+            } else if (currentGame === 'hangman') {
+                addRescuer();
+            } else if (currentGame === 'royal') {
+                moveRoyalsCloser();
+            }
+            
+            setTimeout(() => {
+                // Check if puzzle is complete
+                if (currentGame === 'puzzle') {
+                    const revealedCount = puzzlePiecesRevealed.filter(p => p).length;
+                    if (revealedCount >= totalPuzzlePieces) {
+                        finishGame();
+                        return;
+                    }
+                }
+                
+                if (currentGame === 'hangman' && hangmanRescuers >= rescuersNeeded) {
+                    finishGame();
+                } else if (currentGame === 'royal') {
+                    if (royalProgress >= royalMax) {
+                        finishGame();
+                    } else {
+                        generateProblem();
+                    }
+                } else {
+                    generateProblem();
+                }
+            }, 1500);
+        }
+        
+        function handleIncorrectAnswer() {
+            const feedbackElement = document.getElementById('feedback');
+            
+            if (currentGame === 'hangman') {
+                hangmanMistakes++;
+                updateHangmanDrawing();
+                
+                const partsLeft = maxHangman - hangmanMistakes;
+                if (partsLeft > 0) {
+                    feedbackElement.innerHTML = `❌ Incorrect! ${partsLeft} chances remaining!`;
+                    feedbackElement.className = "feedback incorrect";
+                } else {
+                    gameOver = true;
+                    const answer = currentProblem.answerStr || currentProblem.answer;
+                    feedbackElement.innerHTML = `💀 Oh no! Game Over!<div class="solution-display">The answer was: ${answer}</div>`;
+                    feedbackElement.className = "feedback incorrect";
+                    document.getElementById('check-btn').disabled = true;
+                    document.getElementById('answer-input').disabled = true;
+                    setTimeout(finishGame, 3000);
+                    return;
+                }
+            } else if (currentGame === 'royal') {
+                moveRoyalsFurther();
+                feedbackElement.innerHTML = `❌ Incorrect! The royals move apart! Try again.`;
+                feedbackElement.className = "feedback incorrect";
+                
+                if (royalProgress <= 0) {
+                    gameOver = true;
+                    const answer = currentProblem.answerStr || currentProblem.answer;
+                    feedbackElement.innerHTML = `💔 The royals have drifted too far apart!<div class="solution-display">The answer was: ${answer}</div>`;
+                    setTimeout(finishGame, 3000);
+                    return;
+                }
+            } else {
+                if (attemptCount >= maxAttempts) {
+                    feedbackElement.innerHTML = "Too many attempts!";
+                    feedbackElement.className = "feedback incorrect";
+                    document.getElementById('show-solution-btn').style.display = 'inline-block';
+                    document.getElementById('hint-btn').style.display = 'none';
+                    document.getElementById('answer-input').disabled = true;
+                } else {
+                    feedbackElement.innerHTML = `❌ Incorrect. Try again! (${maxAttempts - attemptCount} attempts left)`;
+                    feedbackElement.className = "feedback incorrect";
+                }
+            }
+        }
+        
+        function showHint() {
+            const feedbackElement = document.getElementById('feedback');
+            feedbackElement.innerHTML = currentProblem.hint || "Try to isolate the variable on one side of the equation.";
+            feedbackElement.className = "feedback hint";
+            hintShown = true;
+        }
+        
+        function showSolution() {
+            const feedbackElement = document.getElementById('feedback');
+            const answer = currentProblem.answerStr || currentProblem.answer;
+            feedbackElement.innerHTML = `✨ Solution: <strong>${answer}</strong>`;
+            feedbackElement.className = "feedback hint";
+            document.getElementById('show-solution-btn').style.display = 'none';
+            document.getElementById('hint-btn').style.display = 'none';
+            document.getElementById('answer-input').disabled = true;
+            
+            setTimeout(() => {
+                document.getElementById('check-btn').disabled = false;
+                generateProblem();
+            }, 2500);
+        }
+        
+        // ==================== GAME FUNCTIONS ====================
+        
+        function setLevel(level) {
+            currentLevel = level;
+            document.querySelectorAll('.level-btn').forEach((btn, index) => {
+                btn.classList.toggle('active', index + 1 === level);
+            });
+            
+            if (currentGame && currentGame !== 'royal' && currentGame !== 'puzzle') {
+                generateProblem();
+            } else if (currentGame === 'puzzle' && puzzleGameActive) {
+                generateProblem();
+            }
+        }
+        
+        function selectGame(game) {
+            currentGame = game;
+            
+            secretRevealedIndices = new Set();
+            puzzlePiecesRevealed = [];
+            puzzleRevealOrder = [];
+            puzzleImageBlob = null;
+            puzzleGameActive = false;
+            hangmanMistakes = 0;
+            hangmanRescuers = 0;
+            royalProgress = 5;
+            gameOver = false;
+            correctAnswers = 0;
+            
+            document.getElementById('main-content').style.display = 'flex';
+            
+            const gameNames = {
+                'secret': 'Secret Message Puzzle',
+                'puzzle': 'Picture Reveal',
+                'hangman': 'Hangman Rescue',
+                'royal': 'Royal Wedding 👑'
+            };
+            
+            document.getElementById('game-title').textContent = gameNames[game] || 'Game';
+            
+            renderGameContent();
+            
+            document.getElementById('check-btn').disabled = false;
+            
+            const nextRoundTexts = {
+                'secret': 'Another Message?',
+                'puzzle': 'Another Picture?',
+                'hangman': 'Another Rescue?',
+                'royal': 'Another Wedding?'
+            };
+            document.getElementById('next-round-text').textContent = nextRoundTexts[game] || 'Another Round?';
+            
+            // Don't generate problem for puzzle until image is ready
+            if (game !== 'puzzle') {
+                generateProblem();
+            }
+        }
+        
+        function selectImageStyle(style) {
+            selectedImageStyle = style;
+            document.querySelectorAll('.style-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.style === style);
+            });
+        }
+        
+        async function renderGameContent() {
+            const gameContent = document.getElementById('game-content');
+            
+            switch(currentGame) {
+                case 'secret':
+                    gameContent.innerHTML = '<div class="image-loading"><div class="spinner"></div><p>Generating secret message...</p></div>';
+                    await generateSecretPhrase();
+                    gameContent.innerHTML = `
+                        <div class="secret-message" id="secret-message">
+                            ${generateUnderscoreWord()}
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="secret-progress" style="width: 0%"></div>
+                        </div>
+                        <p>Reveal the hidden message by solving equations!</p>
+                        <div class="guess-input-area">
+                            <input type="text" id="guess-input" placeholder="Guess the phrase...">
+                            <button onclick="guessPhrase()"><i class="fas fa-lightbulb"></i> Guess</button>
+                        </div>
+                        <button class="new-puzzle-btn" onclick="newSecretPuzzle()"><i class="fas fa-sync"></i> New Message</button>
+                    `;
+                    break;
+                    
+                case 'puzzle':
+                    gameContent.innerHTML = `
+                        <div class="style-selector">
+                            <label>Choose an art style:</label>
+                            <div class="style-buttons">
+                                <button class="style-btn ${selectedImageStyle === 'cute' ? 'selected' : ''}" data-style="cute" onclick="selectImageStyle('cute')">🎀 Cute</button>
+                                <button class="style-btn ${selectedImageStyle === 'anime' ? 'selected' : ''}" data-style="anime" onclick="selectImageStyle('anime')">🎌 Anime</button>
+                                <button class="style-btn ${selectedImageStyle === 'ghibli' ? 'selected' : ''}" data-style="ghibli" onclick="selectImageStyle('ghibli')">🌸 Ghibli</button>
+                                <button class="style-btn ${selectedImageStyle === 'steampunk' ? 'selected' : ''}" data-style="steampunk" onclick="selectImageStyle('steampunk')">⚙️ Steampunk</button>
+                                <button class="style-btn ${selectedImageStyle === 'futuristic' ? 'selected' : ''}" data-style="futuristic" onclick="selectImageStyle('futuristic')">🚀 Futuristic</button>
+                                <button class="style-btn ${selectedImageStyle === 'watercolor' ? 'selected' : ''}" data-style="watercolor" onclick="selectImageStyle('watercolor')">🎨 Watercolor</button>
+                                <button class="style-btn ${selectedImageStyle === 'pixel' ? 'selected' : ''}" data-style="pixel" onclick="selectImageStyle('pixel')">👾 Pixel Art</button>
+                                <button class="style-btn ${selectedImageStyle === 'fantasy' ? 'selected' : ''}" data-style="fantasy" onclick="selectImageStyle('fantasy')">✨ Fantasy</button>
+                            </div>
+                        </div>
+                        <button class="new-puzzle-btn" onclick="generatePuzzleImageWithStyle()" id="generate-puzzle-btn"><i class="fas fa-image"></i> Generate Picture</button>
+                        <div id="puzzle-content"></div>
+                    `;
+                    // Clear problem display until puzzle is ready
+                    document.getElementById('problem-display').innerHTML = '<p style="opacity: 0.7;">Select a style and click "Generate Picture" to start!</p>';
+                    break;
+                    
+                case 'hangman':
+                    gameContent.innerHTML = `
+                        <div class="hangman-container">
+                            <div class="gallows-base"></div>
+                            <div class="gallows-pole"></div>
+                            <div class="gallows-top"></div>
+                            <div class="gallows-rope"></div>
+                            <div class="hangman-head" id="hangman-head"></div>
+                            <div class="hangman-body" id="hangman-body"></div>
+                            <div class="hangman-arm-left" id="hangman-arm-left"></div>
+                            <div class="hangman-arm-right" id="hangman-arm-right"></div>
+                            <div class="hangman-leg-left" id="hangman-leg-left"></div>
+                            <div class="hangman-leg-right" id="hangman-leg-right"></div>
+                        </div>
+                        <div class="rescue-container" id="rescue-container">
+                            ${generateRescuerDisplay()}
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="hangman-progress" style="width: 0%; background: linear-gradient(to right, #e74c3c, #c0392b);"></div>
+                        </div>
+                        <p id="hangman-status">Earn ${rescuersNeeded} rescuers 🧜‍♀️ before ${maxHangman} mistakes to save the figure!</p>
+                    `;
+                    break;
+                    
+                case 'royal':
+                    gameContent.innerHTML = `
+                        <div class="royal-wedding-container">
+                            <div class="challenge-only-note">⚡ LEVEL 5 CHALLENGE ONLY ⚡</div>
+                            <p style="font-size: 1.2rem; margin-bottom: 10px;">Unite the King & Queen! 💕</p>
+                            <div class="royal-track" id="royal-track">
+                                ${generateRoyalTrack()}
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="royal-progress" style="width: 50%; background: linear-gradient(to right, #ff69b4, #ff1493);"></div>
+                            </div>
+                            <p id="royal-status">Correct answers bring them closer, wrong answers push them apart!</p>
+                            <div class="hearts-container" id="hearts-container">
+                                ${generateHearts(3)}
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+        }
+        
+        // Secret Message Functions
+        async function generateSecretPhrase() {
+            const fallbackPhrases = [
+                "MATH IS AWESOME",
+                "YOU ARE A STAR",
+                "KEEP LEARNING",
+                "NEVER GIVE UP",
+                "DREAM BIG",
+                "STAY CURIOUS",
+                "BE BRAVE",
+                "WORK HARD",
+                "BELIEVE IN YOURSELF",
+                "PRACTICE MAKES PERFECT",
+                "KNOWLEDGE IS POWER",
+                "SUCCESS TAKES TIME",
+                "YOU CAN DO IT",
+                "THINK POSITIVE",
+                "STAY FOCUSED",
+                "AIM HIGH",
+                "BE KIND",
+                "TRY YOUR BEST",
+                "NEVER STOP LEARNING",
+                "YOU ARE AMAZING"
+            ];
+            
+            try {
+                const seed = generateSeed();
+                const prompt = encodeURIComponent("Generate ONE short inspirational phrase for students (2-4 words maximum). Just the phrase in UPPERCASE, no punctuation, no quotes, no explanation. Examples: DREAM BIG, STAY CURIOUS, YOU CAN DO IT");
+                const url = `${API_BASE}/text/${prompt}?model=nova-fast&seed=${seed}&key=${API_KEY}`;
+                
+                await delay(2500);
+                const response = await fetch(url);
+                if (response.ok) {
+                    const text = await response.text();
+                    const cleaned = text.trim().toUpperCase().replace(/[^A-Z\s]/g, '').substring(0, 25);
+                    if (cleaned.length >= 5 && cleaned.split(' ').length <= 5) {
+                        secretPhrase = cleaned;
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.log('API phrase generation failed, using fallback');
+            }
+            
+            secretPhrase = fallbackPhrases[getRandomInt(0, fallbackPhrases.length - 1)];
+        }
+        
+        function generateUnderscoreWord() {
+            return secretPhrase.split('').map((char, index) => {
+                if (char === ' ') return '&nbsp;&nbsp;&nbsp;';
+                return secretRevealedIndices.has(index) ? char : '_';
+            }).join(' ');
+        }
+        
+        function revealSecretLetter() {
+            const unrevealed = [];
+            for (let i = 0; i < secretPhrase.length; i++) {
+                if (!secretRevealedIndices.has(i) && secretPhrase[i] !== ' ') {
+                    unrevealed.push(i);
+                }
+            }
+            
+            if (unrevealed.length > 0) {
+                const randomIndex = unrevealed[getRandomInt(0, unrevealed.length - 1)];
+                secretRevealedIndices.add(randomIndex);
+                
+                document.getElementById('secret-message').innerHTML = generateUnderscoreWord();
+                
+                const totalLetters = secretPhrase.replace(/\s/g, '').length;
+                const progressPercent = (secretRevealedIndices.size / totalLetters) * 100;
+                document.getElementById('secret-progress').style.width = `${progressPercent}%`;
+            }
+        }
+        
+        function guessPhrase() {
+            const guessInput = document.getElementById('guess-input');
+            const guess = guessInput.value.trim().toUpperCase();
+            
+            if (guess === secretPhrase) {
+                document.getElementById('secret-message').innerHTML = secretPhrase;
+                document.getElementById('secret-message').style.color = '#2ecc71';
+                document.getElementById('secret-progress').style.width = '100%';
+                document.getElementById('feedback').innerHTML = '🎉 You guessed it!';
+                document.getElementById('feedback').className = 'feedback correct';
+                
+                stats.messages++;
+                saveStats();
+                
+                showNextRoundButton();
+            } else {
+                document.getElementById('feedback').innerHTML = '❌ Not quite! Keep solving equations for hints.';
+                document.getElementById('feedback').className = 'feedback incorrect';
+            }
+            guessInput.value = '';
+        }
+        
+        async function newSecretPuzzle() {
+            secretRevealedIndices = new Set();
+            correctAnswers = 0;
+            
+            document.getElementById('game-content').innerHTML = '<div class="image-loading"><div class="spinner"></div><p>Generating new message...</p></div>';
+            
+            await generateSecretPhrase();
+            
+            document.getElementById('game-content').innerHTML = `
+                <div class="secret-message" id="secret-message">
+                    ${generateUnderscoreWord()}
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="secret-progress" style="width: 0%"></div>
+                </div>
+                <p>Reveal the hidden message by solving equations!</p>
+                <div class="guess-input-area">
+                    <input type="text" id="guess-input" placeholder="Guess the phrase...">
+                    <button onclick="guessPhrase()"><i class="fas fa-lightbulb"></i> Guess</button>
+                </div>
+                <button class="new-puzzle-btn" onclick="newSecretPuzzle()"><i class="fas fa-sync"></i> New Message</button>
+            `;
+            
+            document.getElementById('feedback').innerHTML = 'New message started!';
+            document.getElementById('feedback').className = 'feedback';
+            document.getElementById('next-round-btn').classList.remove('visible');
+            
+            generateProblem();
+        }
+        
+        // Puzzle Image Functions
+        async function generatePuzzleImageWithStyle() {
+            // Reset puzzle state completely
+            puzzlePiecesRevealed = Array(9).fill(false);
+            puzzleRevealOrder = Array.from({length: 9}, (_, i) => i);
+            shuffleArray(puzzleRevealOrder);
+            puzzleImageBlob = null;
+            correctAnswers = 0;
+            
+            // Disable generate button during loading
+            const generateBtn = document.getElementById('generate-puzzle-btn');
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = '<div class="spinner-small" style="display:inline-block;"></div> Generating...';
+            }
+            
+            const puzzleContent = document.getElementById('puzzle-content');
+            
+            puzzleContent.innerHTML = `
+                <div class="puzzle-container" id="puzzle-container">
+                    <div class="image-loading" style="width: 100%; height: 300px;">
+                        <div class="spinner"></div>
+                        <p>Generating ${selectedImageStyle} picture...</p>
+                    </div>
+                </div>
+                <div class="pieces-counter" id="pieces-counter">Pieces revealed: 0 / 9</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="puzzle-progress" style="width: 0%"></div>
+                </div>
+                <p>Reveal the mystery picture by solving equations!</p>
+                <button class="download-btn" id="download-btn" onclick="downloadPuzzleImage()"><i class="fas fa-download"></i> Download Image</button>
+            `;
+            
+            // Get style-specific subject and settings
+            const styleConfig = imageStyles[selectedImageStyle];
+            const subject = styleConfig.subjects[getRandomInt(0, styleConfig.subjects.length - 1)];
+            const fullPrompt = `${subject}, ${styleConfig.style}`;
+            const negativePrompt = styleConfig.negative;
+            
+            const seed = generateSeed();
+            const imageUrl = `${API_BASE}/image/${encodeURIComponent(fullPrompt)}?model=zimage&seed=${seed}&private=true&nologo=true&enhance=true&safe=true&nofeed=true&width=512&height=512&quality=medium&negative_prompt=${encodeURIComponent(negativePrompt)}&key=${API_KEY}`;
+            
+            try {
+                await delay(3000); // Longer delay for image generation
+                
+                const response = await fetch(imageUrl);
+                if (response.ok) {
+                    puzzleImageBlob = await response.blob();
+                    const localImageUrl = URL.createObjectURL(puzzleImageBlob);
+                    
+                    const container = document.getElementById('puzzle-container');
+                    container.innerHTML = `
+                        <img src="${localImageUrl}" alt="Mystery Puzzle" class="puzzle-image" id="puzzle-image">
+                        <div class="puzzle-overlay" id="puzzle-overlay">
+                            ${Array.from({length: 9}, (_, i) => `
+                                <div class="puzzle-piece" id="puzzle-piece-${i}">?</div>
+                            `).join('')}
+                        </div>
+                    `;
+                    
+                    // Re-enable generate button
+                    if (generateBtn) {
+                        generateBtn.disabled = false;
+                        generateBtn.innerHTML = '<i class="fas fa-image"></i> Generate New Picture';
+                    }
+                    
+                    // Mark puzzle as active and generate first problem
+                    puzzleGameActive = true;
+                    generateProblem();
+                } else {
+                    throw new Error('Image fetch failed');
+                }
+            } catch (error) {
+                console.log('Image generation failed, using fallback');
+                createFallbackPuzzle();
+                
+                if (generateBtn) {
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = '<i class="fas fa-image"></i> Generate Picture';
+                }
+                
+                puzzleGameActive = true;
+                generateProblem();
+            }
+        }
+        
+        function createFallbackPuzzle() {
+            const container = document.getElementById('puzzle-container');
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3'];
+            
+            container.innerHTML = `
+                <div style="width: 100%; height: 100%; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);">
+                    ${colors.map((color, i) => `<div style="background: ${color};"></div>`).join('')}
+                </div>
+                <div class="puzzle-overlay" id="puzzle-overlay">
+                    ${Array.from({length: 9}, (_, i) => `
+                        <div class="puzzle-piece" id="puzzle-piece-${i}">?</div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        function revealPuzzlePiece() {
+            for (let i = 0; i < puzzleRevealOrder.length; i++) {
+                const pieceIndex = puzzleRevealOrder[i];
+                if (!puzzlePiecesRevealed[pieceIndex]) {
+                    puzzlePiecesRevealed[pieceIndex] = true;
+                    const piece = document.getElementById(`puzzle-piece-${pieceIndex}`);
+                    if (piece) {
+                        piece.classList.add('revealed');
+                        piece.textContent = '';
+                    }
+                    break;
+                }
+            }
+            
+            const revealedCount = puzzlePiecesRevealed.filter(p => p).length;
+            const progressPercent = (revealedCount / totalPuzzlePieces) * 100;
+            
+            const progressBar = document.getElementById('puzzle-progress');
+            if (progressBar) {
+                progressBar.style.width = `${progressPercent}%`;
+            }
+            
+            const counter = document.getElementById('pieces-counter');
+            if (counter) {
+                counter.textContent = `Pieces revealed: ${revealedCount} / ${totalPuzzlePieces}`;
+            }
+        }
+        
+        async function newPuzzleImage() {
+            puzzlePiecesRevealed = [];
+            puzzleRevealOrder = [];
+            puzzleImageBlob = null;
+            puzzleGameActive = false;
+            correctAnswers = 0;
+            
+            const downloadBtn = document.getElementById('download-btn');
+            if (downloadBtn) downloadBtn.classList.remove('visible');
+            document.getElementById('next-round-btn').classList.remove('visible');
+            
+            await renderGameContent();
+        }
+        
+        function downloadPuzzleImage() {
+            if (puzzleImageBlob) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(puzzleImageBlob);
+                link.download = `math-adventure-${selectedImageStyle}-puzzle.png`;
+                link.click();
+            }
+        }
+        
+        // Hangman Functions
+        function generateRescuerDisplay() {
+            let html = '';
+            for (let i = 0; i < rescuersNeeded; i++) {
+                html += `<span class="rescuer ${i < hangmanRescuers ? 'active' : ''}" id="rescuer-${i}">🧜‍♀️</span>`;
+            }
+            return html;
+        }
+        
+        function addRescuer() {
+            if (hangmanRescuers < rescuersNeeded) {
+                hangmanRescuers++;
+                updateRescuerDisplay();
+            }
+        }
+        
+        function updateRescuerDisplay() {
+            for (let i = 0; i < rescuersNeeded; i++) {
+                const rescuer = document.getElementById(`rescuer-${i}`);
+                if (rescuer) {
+                    rescuer.classList.toggle('active', i < hangmanRescuers);
+                }
+            }
+            
+            const status = document.getElementById('hangman-status');
+            if (status) {
+                if (hangmanRescuers >= rescuersNeeded) {
+                    status.textContent = '🎉 Rescue complete! The mermaids saved the day!';
+                } else {
+                    const remaining = rescuersNeeded - hangmanRescuers;
+                    const mistakes = maxHangman - hangmanMistakes;
+                    status.textContent = `Need ${remaining} more rescuers! ${mistakes} chances left.`;
+                }
+            }
+        }
+        
+        function updateHangmanDrawing() {
+            const parts = ['head', 'body', 'arm-left', 'arm-right', 'leg-left', 'leg-right'];
+            
+            for (let i = 0; i < hangmanMistakes && i < parts.length; i++) {
+                const part = document.getElementById(`hangman-${parts[i]}`);
+                if (part) {
+                    part.style.display = 'block';
+                }
+            }
+            
+            const progressPercent = (hangmanMistakes / maxHangman) * 100;
+            const progressBar = document.getElementById('hangman-progress');
+            if (progressBar) {
+                progressBar.style.width = `${progressPercent}%`;
+            }
+            
+            updateRescuerDisplay();
+        }
+        
+        // Royal Wedding Functions
+        function generateRoyalTrack() {
+            let html = '<span class="king-emoji">🤴</span>';
+            
+            for (let i = 0; i < royalMax; i++) {
+                const isMiddle = i === Math.floor(royalMax / 2);
+                const isActive = i < royalProgress;
+                html += `<div class="royal-step ${isActive ? 'active' : ''} ${isMiddle ? 'heart' : ''}" id="royal-step-${i}">
+                    ${isMiddle ? '💕' : (isActive ? '✨' : '○')}
+                </div>`;
+            }
+            
+            html += '<span class="queen-emoji">👸</span>';
+            return html;
+        }
+        
+        function generateHearts(count) {
+            return Array(Math.max(0, Math.min(count, 10))).fill('<span class="heart">❤️</span>').join('');
+        }
+        
+        function moveRoyalsCloser() {
+            if (royalProgress < royalMax) {
+                royalProgress++;
+                updateRoyalDisplay();
+            }
+        }
+        
+        function moveRoyalsFurther() {
+            if (royalProgress > 0) {
+                royalProgress--;
+                updateRoyalDisplay();
+            }
+        }
+        
+        function updateRoyalDisplay() {
+            document.getElementById('royal-track').innerHTML = generateRoyalTrack();
+            
+            const progressPercent = (royalProgress / royalMax) * 100;
+            document.getElementById('royal-progress').style.width = `${progressPercent}%`;
+            
+            const heartCount = Math.floor(royalProgress / 2);
+            document.getElementById('hearts-container').innerHTML = generateHearts(heartCount);
+            
+            if (royalProgress >= royalMax) {
+                document.getElementById('royal-status').textContent = '💒 The Royal Wedding is complete! 💒';
+            } else if (royalProgress <= 2) {
+                document.getElementById('royal-status').textContent = '💔 They\'re drifting apart! Hurry!';
+            } else {
+                document.getElementById('royal-status').textContent = `They're getting closer! ${royalMax - royalProgress} steps to go!`;
+            }
+        }
+        
+        // ==================== FINISH GAME & NEXT ROUND ====================
+        
+        function showNextRoundButton() {
+            document.getElementById('next-round-btn').classList.add('visible');
+        }
+        
+        function startNextRound() {
+            document.getElementById('next-round-btn').classList.remove('visible');
+            gameOver = false;
+            
+            switch(currentGame) {
+                case 'secret':
+                    newSecretPuzzle();
+                    break;
+                case 'puzzle':
+                    newPuzzleImage();
+                    break;
+                case 'hangman':
+                    hangmanMistakes = 0;
+                    hangmanRescuers = 0;
+                    correctAnswers = 0;
+                    renderGameContent();
+                    generateProblem();
+                    break;
+                case 'royal':
+                    royalProgress = 5;
+                    correctAnswers = 0;
+                    renderGameContent();
+                    generateProblem();
+                    break;
+            }
+        }
+        
+        function finishGame() {
+            const feedback = document.getElementById('feedback');
+            
+            if (currentGame === 'royal') {
+                if (royalProgress >= royalMax) {
+                    feedback.innerHTML = '👑💒💕 CONGRATULATIONS! The Royal Wedding is complete! 💕💒👑';
+                    feedback.className = "feedback correct";
+                    document.getElementById('royal-track').innerHTML = '🤴💕👸';
+                    document.getElementById('royal-status').textContent = 'They lived happily ever after!';
+                    
+                    stats.weddings++;
+                    saveStats();
+                } else {
+                    feedback.innerHTML = '💔 The royals couldn\'t unite this time. Try again!';
+                    feedback.className = "feedback incorrect";
+                }
+            } else if (currentGame === 'hangman') {
+                if (hangmanRescuers >= rescuersNeeded) {
+                    feedback.innerHTML = `🧜‍♀️🎉 The mermaids saved the day! You got ${correctAnswers} correct!`;
+                    feedback.className = "feedback correct";
+                    document.getElementById('hangman-status').textContent = '🎉 Rescue successful!';
+                    
+                    stats.rescues++;
+                    saveStats();
+                } else if (hangmanMistakes >= maxHangman) {
+                    feedback.innerHTML = `Game Over! You got ${hangmanRescuers} of ${rescuersNeeded} rescuers.`;
+                    feedback.className = "feedback incorrect";
+                } else {
+                    feedback.innerHTML = `Game ended! You got ${hangmanRescuers} of ${rescuersNeeded} rescuers.`;
+                    feedback.className = "feedback hint";
+                }
+            } else if (currentGame === 'secret') {
+                document.getElementById('secret-message').innerHTML = secretPhrase;
+                document.getElementById('secret-message').style.color = "#2ecc71";
+                document.getElementById('secret-progress').style.width = "100%";
+                feedback.innerHTML = `🎉 Amazing! You revealed the message!`;
+                feedback.className = "feedback correct";
+                
+                stats.messages++;
+                saveStats();
+            } else if (currentGame === 'puzzle') {
+                // Reveal all remaining pieces
+                for (let i = 0; i < 9; i++) {
+                    const piece = document.getElementById(`puzzle-piece-${i}`);
+                    if (piece) {
+                        piece.classList.add('revealed');
+                        piece.textContent = '';
+                    }
+                }
+                const progressBar = document.getElementById('puzzle-progress');
+                if (progressBar) {
+                    progressBar.style.width = "100%";
+                }
+                const counter = document.getElementById('pieces-counter');
+                if (counter) {
+                    counter.textContent = `Pieces revealed: 9 / 9 - Complete!`;
+                }
+                feedback.innerHTML = `🎉 Picture revealed!`;
+                feedback.className = "feedback correct";
+                
+                const downloadBtn = document.getElementById('download-btn');
+                if (downloadBtn) downloadBtn.classList.add('visible');
+                
+                // Disable the generate button to prevent exploit
+                const generateBtn = document.getElementById('generate-puzzle-btn');
+                if (generateBtn) {
+                    generateBtn.style.display = 'none';
+                }
+                
+                stats.pictures++;
+                saveStats();
+                
+                puzzleGameActive = false;
+            }
+            
+            document.getElementById('answer-input').disabled = true;
+            document.getElementById('check-btn').disabled = true;
+            document.getElementById('hint-btn').style.display = 'none';
+            document.getElementById('show-solution-btn').style.display = 'none';
+            
+            showNextRoundButton();
+        }
+        
+        // ==================== INITIALIZATION ====================
+        
+        function init() {
+            loadStats();
+            
+            document.getElementById('check-btn').addEventListener('click', checkAnswer);
+            document.getElementById('answer-input').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') checkAnswer();
+            });
+            document.getElementById('hint-btn').addEventListener('click', showHint);
+            document.getElementById('show-solution-btn').addEventListener('click', showSolution);
+        }
+        
+        window.onload = init;
+    </script>
+</body>
+</html>
