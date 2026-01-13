@@ -331,7 +331,7 @@ async function generateRandomPrompt() {
     
     // 2. Updated API Endpoint structure
     const promptText = `give me a creative and detailed image prompt about ${randomTopic}`;
-    const url = `https://gen.pollinations.ai/text/${encodeURIComponent(promptText)}?model=openai&seed=${seed}&key=${POLLINATIONS_KEY}`;
+    const url = `https://gen.pollinations.ai/text/${encodeURIComponent(promptText)}?model=nova-fast&seed=${seed}&key=${POLLINATIONS_KEY}`;
 
     try {
         const response = await fetch(url);
@@ -908,3 +908,4 @@ if (pos.x >= globalX && pos.x <= globalX + p.width &&
 </body>
 
 </html>
+
