@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations Studio (Image & Video)V6</title>
+    <title>Pollinations Studio (Image & Video)V8</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -272,7 +272,7 @@
 <body class="p-4 md:p-8">
 
     <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor)</h1>
+        <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor)V8</h1>
 
         <div id="message-area" class="mb-4"></div>
 
@@ -320,8 +320,8 @@
                     </div>
                 </div>
 
-                <div id="negativePromptGroup" class="hidden">
-                    <label for="negativePromptInput" class="block text-sm font-medium mb-1 text-red-400">Negative Prompt (For Seedream)</label>
+                <div id="negativePromptGroup">
+                    <label for="negativePromptInput" class="block text-sm font-medium mb-1 text-red-400">Negative Prompt</label>
                     <textarea id="negativePromptInput" rows="2" class="w-full border-red-500" placeholder="blurry, low quality, duplicate, cropped"></textarea>
                 </div>
 
@@ -677,7 +677,7 @@
                     height: img.height
                 })).filter(img => img.url), // Only keep URL-based references
                 
-                // Seedream negative prompt
+                // Negative prompt (all models now support it)
                 negativePrompt: negativePromptInput.value.trim()
             };
             
@@ -817,7 +817,7 @@
             // Load core settings
             if (item.seed !== undefined) {
                 seedInput.value = item.seed;
-                randomizeSeedCheckbox.checked = false; // Don't randomize when loading history
+                // Do NOT uncheck randomize seed when loading history - maintain setting
             }
             
             if (item.guidanceScale !== undefined) {
@@ -1002,10 +1002,6 @@
             
             if (referenceImages.length === 0) {
                 galleryPlaceholder.style.display = 'block';
-                if (askDimensionsCheckbox.checked) {
-                    widthInput.value = DEFAULT_DIMENSION;
-                    heightInput.value = DEFAULT_DIMENSION;
-                }
                 return;
             }
 
@@ -1223,10 +1219,10 @@
             const isSeedance = model === 'seedance';
             const isSeedancePro = model === 'seedance-pro';
 
-            if (isVideoModel) {
-                imageDimensionsGroup.style.display = 'none'; 
-                transparentGroup.classList.add('hidden');    
-                videoControlsGroup.style.display = 'block';  
+        if (isVideoModel) {
+            imageDimensionsGroup.style.display = 'grid'; 
+            transparentGroup.classList.add('hidden');    
+            videoControlsGroup.style.display = 'block';  
                 
                 durationSelect.innerHTML = '';
                 if (isVeo) {
@@ -1266,12 +1262,16 @@
                 imageInputGroup.style.display = 'none';
             }
 
-            negativePromptGroup.style.display = isSeedream ? 'block' : 'none';
+            // Enable negative prompt for all models
+            negativePromptGroup.style.display = 'block';
+            
             generateBtn.innerText = isVideoModel ? 'Generate Video' : 'Generate / Edit Image';
             
-            if (isSeedream) {
-                widthInput.value = 1920;
-                heightInput.value = 1920;
+            // For video models, don't set default dimensions (use aspect ratio instead)
+            // For image models, set default dimensions to 1024x1024
+            if (!isVideoModel) {
+                widthInput.value = DEFAULT_DIMENSION;
+                heightInput.value = DEFAULT_DIMENSION;
             }
         }
 
@@ -1323,12 +1323,12 @@
             if (isVideoModel) {
                 params.append('aspectRatio', aspectRatioSelect.value);
                 params.append('duration', durationSelect.value);
+                // Video models use aspect ratio instead of width/height
                 if (model === 'veo') {
                     params.append('audio', audioCheckbox.checked ? 'true' : 'false');
-                    params.append('width', widthInput.value);
-                    params.append('height', heightInput.value);
                 }
             } else {
+                // Image models use dimensions
                 const width = parseInt(widthInput.value) || DEFAULT_DIMENSION;
                 const height = parseInt(heightInput.value) || DEFAULT_DIMENSION;               
                 params.append('width', width);
@@ -1373,7 +1373,8 @@
                 }
             }
 
-            if (SEEDREAM_MODEL.includes(model) && negativePromptInput.value.trim()) {
+            // Add negative prompt for all models (not just Seedream)
+            if (negativePromptInput.value.trim()) {
                 params.append('negative_prompt', negativePromptInput.value.trim());
             }
 
@@ -1495,9 +1496,6 @@
                 heightInput.value = referenceImages[0].height;
             } else if (askDimensionsCheckbox.checked) {
                 displayMessage('Add an image first to use its dimensions.', 'info');
-            } else {
-                widthInput.value = DEFAULT_DIMENSION;
-                heightInput.value = DEFAULT_DIMENSION;
             }
         });
 
@@ -1544,4 +1542,3 @@
     </script>
 </body>
 </html>
-
