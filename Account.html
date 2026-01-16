@@ -267,17 +267,30 @@
             font-size: clamp(0.85rem, 2.5vw, 1rem);
         }
         
-        /* Mobile-optimized table */
+        /* Improved table scrolling */
+        .usage-table-container {
+            position: relative;
+            margin-top: 15px;
+        }
+        
         .usage-table-wrapper {
-            overflow-x: auto;
+            overflow: auto;
             -webkit-overflow-scrolling: touch;
+            max-height: 600px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (min-width: 768px) {
+            .usage-table-wrapper {
+                max-height: 70vh;
+            }
         }
         
         .usage-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-            min-width: 800px;
+            min-width: 1400px;
         }
         
         .usage-table th,
@@ -286,18 +299,37 @@
             text-align: left;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             font-size: clamp(0.7rem, 2vw, 0.85rem);
+            background: rgba(0, 0, 0, 0.3);
         }
         
         .usage-table th {
-            background: rgba(77, 171, 247, 0.2);
+            background: rgba(77, 171, 247, 0.3);
             font-weight: 600;
             position: sticky;
             top: 0;
             z-index: 10;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
-        .usage-table tr:hover {
-            background: rgba(255, 255, 255, 0.05);
+        .usage-table th:hover {
+            background: rgba(77, 171, 247, 0.4);
+        }
+        
+        .usage-table th.sorted-asc::after {
+            content: ' ▲';
+            color: #51cf66;
+        }
+        
+        .usage-table th.sorted-desc::after {
+            content: ' ▼';
+            color: #51cf66;
+        }
+        
+        .usage-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.08);
         }
         
         .cost-cell {
@@ -473,11 +505,11 @@
             }
         }
         
-        /* Improve scrollbar on mobile */
+        /* Improve scrollbar styling */
         .result-container::-webkit-scrollbar,
         .usage-table-wrapper::-webkit-scrollbar {
-            height: 8px;
-            width: 8px;
+            height: 10px;
+            width: 10px;
         }
         
         .result-container::-webkit-scrollbar-track,
@@ -488,8 +520,20 @@
         
         .result-container::-webkit-scrollbar-thumb,
         .usage-table-wrapper::-webkit-scrollbar-thumb {
-            background: rgba(77, 171, 247, 0.5);
+            background: rgba(77, 171, 247, 0.6);
             border-radius: 10px;
+        }
+        
+        .result-container::-webkit-scrollbar-thumb:hover,
+        .usage-table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(77, 171, 247, 0.8);
+        }
+        
+        /* Firefox scrollbar */
+        .result-container,
+        .usage-table-wrapper {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(77, 171, 247, 0.6) rgba(255, 255, 255, 0.1);
         }
         
         /* Touch-friendly tap targets */
@@ -501,6 +545,124 @@
             input, select {
                 min-height: 44px;
             }
+        }
+        
+        /* Column visibility controls */
+        .column-controls {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .column-controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .column-controls-header h3 {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .column-controls-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .column-controls-content.expanded {
+            max-height: 500px;
+            margin-top: 10px;
+        }
+        
+        .column-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .column-checkbox:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .column-checkbox input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .column-checkbox label {
+            margin: 0;
+            cursor: pointer;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+        }
+        
+        .column-controls-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .column-controls-buttons button {
+            margin: 0;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+            padding: 8px 12px;
+        }
+        
+        .usage-table th.hidden,
+        .usage-table td.hidden {
+            display: none;
+        }
+        
+        /* Record count info */
+        .record-info {
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(77, 171, 247, 0.1);
+            border-radius: 6px;
+            opacity: 0.9;
+            font-size: clamp(0.8rem, 2vw, 0.9rem);
+        }
+        
+        /* Scroll hint for desktop */
+        .scroll-hint {
+            display: none;
+            text-align: center;
+            padding: 8px;
+            background: rgba(77, 171, 247, 0.2);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @media (min-width: 768px) {
+            .scroll-hint.show {
+                display: block;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
@@ -611,6 +773,86 @@
                     <i class="fas fa-sync-alt"></i> Fetch Usage History
                 </button>
                 
+                <!-- Column Visibility Controls -->
+                <div class="column-controls">
+                    <div class="column-controls-header" id="column-controls-toggle">
+                        <h3>
+                            <i class="fas fa-columns"></i> Column Visibility
+                        </h3>
+                        <i class="fas fa-chevron-down" id="column-controls-icon"></i>
+                    </div>
+                    <div class="column-controls-content" id="column-controls-content">
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-timestamp" checked>
+                            <label for="col-timestamp">Time (ET)</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-type" checked>
+                            <label for="col-type">Type</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-model" checked>
+                            <label for="col-model">Model</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-api-key" checked>
+                            <label for="col-api-key">API Key</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-key-type" checked>
+                            <label for="col-key-type">Key Type</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-in-text" checked>
+                            <label for="col-in-text">In Text</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-in-cache" checked>
+                            <label for="col-in-cache">In Cache</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-in-audio" checked>
+                            <label for="col-in-audio">In Audio</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-in-image" checked>
+                            <label for="col-in-image">In Image</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-out-text" checked>
+                            <label for="col-out-text">Out Text</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-out-reason" checked>
+                            <label for="col-out-reason">Out Reason</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-out-audio" checked>
+                            <label for="col-out-audio">Out Audio</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-out-image" checked>
+                            <label for="col-out-image">Out Image</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-cost" checked>
+                            <label for="col-cost">Cost</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-response-time" checked>
+                            <label for="col-response-time">Response Time</label>
+                        </div>
+                        <div class="column-controls-buttons">
+                            <button id="show-all-columns">
+                                <i class="fas fa-eye"></i> Show All
+                            </button>
+                            <button id="hide-all-columns">
+                                <i class="fas fa-eye-slash"></i> Hide All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="export-buttons">
                     <button id="export-csv-btn" disabled>
                         <i class="fas fa-file-csv"></i> CSV
@@ -620,16 +862,12 @@
                     </button>
                 </div>
                 
-                <div class="result-container">
-                    <div class="result-header">
-                        <div class="result-title">Records</div>
-                        <button class="copy-btn" id="copy-usage-btn" style="display: none;">
-                            <i class="fas fa-copy"></i> Copy
-                        </button>
-                    </div>
-                    <div class="result-content" id="usage-result">
-                        <p style="text-align: center; opacity: 0.7;">Configure and fetch</p>
-                    </div>
+                <div id="scroll-hint" class="scroll-hint">
+                    <i class="fas fa-arrows-alt"></i> Table scrolls both horizontally and vertically - use your mouse or trackpad to navigate
+                </div>
+                
+                <div id="usage-result">
+                    <p style="text-align: center; opacity: 0.7; padding: 40px;">Configure and fetch usage history</p>
                 </div>
             </div>
             
@@ -670,8 +908,11 @@
                         <li>Choose JSON or CSV format</li>
                         <li>Set records limit (1-10000)</li>
                         <li>Optionally filter by date</li>
+                        <li>Click column headers to sort</li>
+                        <li>Show/hide columns as needed</li>
+                        <li>Table scrolls independently (both directions)</li>
                         <li>Export data as CSV or JSON</li>
-                        <li>All times shown in Eastern Time</li>
+                        <li>All times shown in Eastern Time (AM/PM)</li>
                     </ul>
                 </div>
             </div>
@@ -686,7 +927,28 @@
         // Global variables
         let cachedUsageData = null;
         let currentFormat = 'json';
+        let sortColumn = null;
+        let sortDirection = 'asc';
         const BASE_URL = 'https://gen.pollinations.ai/api/account';
+        
+        // Column definitions
+        const columns = [
+            { id: 'timestamp', label: 'Time (ET)', field: 'timestamp', sortable: true },
+            { id: 'type', label: 'Type', field: 'type', sortable: true },
+            { id: 'model', label: 'Model', field: 'model', sortable: true },
+            { id: 'api-key', label: 'API Key', field: 'api_key', sortable: true },
+            { id: 'key-type', label: 'Key Type', field: 'api_key_type', sortable: true },
+            { id: 'in-text', label: 'In Text', field: 'input_text_tokens', sortable: true, numeric: true },
+            { id: 'in-cache', label: 'In Cache', field: 'input_cached_tokens', sortable: true, numeric: true },
+            { id: 'in-audio', label: 'In Audio', field: 'input_audio_tokens', sortable: true, numeric: true },
+            { id: 'in-image', label: 'In Image', field: 'input_image_tokens', sortable: true, numeric: true },
+            { id: 'out-text', label: 'Out Text', field: 'output_text_tokens', sortable: true, numeric: true },
+            { id: 'out-reason', label: 'Out Reason', field: 'output_reasoning_tokens', sortable: true, numeric: true },
+            { id: 'out-audio', label: 'Out Audio', field: 'output_audio_tokens', sortable: true, numeric: true },
+            { id: 'out-image', label: 'Out Image', field: 'output_image_tokens', sortable: true, numeric: true },
+            { id: 'cost', label: 'Cost', field: 'cost_usd', sortable: true, numeric: true },
+            { id: 'response-time', label: 'ms', field: 'response_time_ms', sortable: true, numeric: true }
+        ];
         
         // DOM Elements
         const apiKeyInput = document.getElementById('api-key');
@@ -697,7 +959,6 @@
         const csvFormatBtn = document.getElementById('csv-format-btn');
         const exportCSVBtn = document.getElementById('export-csv-btn');
         const exportJSONBtn = document.getElementById('export-json-btn');
-        const copyUsageBtn = document.getElementById('copy-usage-btn');
         const limitInput = document.getElementById('limit');
         const startDateInput = document.getElementById('start-date');
         const endDateInput = document.getElementById('end-date');
@@ -706,6 +967,12 @@
         const balanceResult = document.getElementById('balance-result');
         const usageResult = document.getElementById('usage-result');
         const currentTimeDisplay = document.getElementById('current-time');
+        const columnControlsToggle = document.getElementById('column-controls-toggle');
+        const columnControlsContent = document.getElementById('column-controls-content');
+        const columnControlsIcon = document.getElementById('column-controls-icon');
+        const showAllColumnsBtn = document.getElementById('show-all-columns');
+        const hideAllColumnsBtn = document.getElementById('hide-all-columns');
+        const scrollHint = document.getElementById('scroll-hint');
 
         // Update current time display
         function updateTime() {
@@ -735,8 +1002,8 @@
         startDateInput.value = formatDateForInput(thirtyDaysAgo);
         endDateInput.value = formatDateForInput(now);
 
-        // Convert UTC timestamp to Eastern Time
-        function convertToEasternTime(timestamp) {
+        // Convert UTC timestamp to Eastern Time with AM/PM
+        function convertToEasternTimeAMPM(timestamp) {
             let date;
             if (timestamp.includes('T') || timestamp.includes('Z')) {
                 date = new Date(timestamp);
@@ -752,7 +1019,7 @@
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
-                hour12: false
+                hour12: true
             };
             return date.toLocaleString('en-US', options);
         }
@@ -777,6 +1044,45 @@
             return data;
         }
 
+        // Column visibility controls
+        columnControlsToggle.addEventListener('click', () => {
+            columnControlsContent.classList.toggle('expanded');
+            columnControlsIcon.classList.toggle('fa-chevron-down');
+            columnControlsIcon.classList.toggle('fa-chevron-up');
+        });
+
+        showAllColumnsBtn.addEventListener('click', () => {
+            columns.forEach(col => {
+                const checkbox = document.getElementById(`col-${col.id}`);
+                if (checkbox) checkbox.checked = true;
+            });
+            if (cachedUsageData) displayUsage(cachedUsageData);
+        });
+
+        hideAllColumnsBtn.addEventListener('click', () => {
+            columns.forEach(col => {
+                const checkbox = document.getElementById(`col-${col.id}`);
+                if (checkbox) checkbox.checked = false;
+            });
+            if (cachedUsageData) displayUsage(cachedUsageData);
+        });
+
+        // Add change listeners to all column checkboxes
+        columns.forEach(col => {
+            const checkbox = document.getElementById(`col-${col.id}`);
+            if (checkbox) {
+                checkbox.addEventListener('change', () => {
+                    if (cachedUsageData) displayUsage(cachedUsageData);
+                });
+            }
+        });
+
+        // Check if column is visible
+        function isColumnVisible(columnId) {
+            const checkbox = document.getElementById(`col-${columnId}`);
+            return checkbox ? checkbox.checked : true;
+        }
+
         // Event Listeners
         fetchProfileBtn.addEventListener('click', fetchProfile);
         fetchBalanceBtn.addEventListener('click', fetchBalance);
@@ -785,7 +1091,6 @@
         csvFormatBtn.addEventListener('click', () => switchFormat('csv'));
         exportCSVBtn.addEventListener('click', () => exportData('csv'));
         exportJSONBtn.addEventListener('click', () => exportData('json'));
-        copyUsageBtn.addEventListener('click', copyToClipboard);
 
         // Switch format
         function switchFormat(format) {
@@ -911,13 +1216,69 @@
                 };
                 
                 cachedUsageData = filteredData;
+                sortColumn = null; // Reset sort when fetching new data
+                sortDirection = 'asc';
                 displayUsage(filteredData);
                 updateSummaryStats(filteredData);
-                copyUsageBtn.style.display = 'block';
                 exportCSVBtn.disabled = false;
                 exportJSONBtn.disabled = false;
+                
+                // Show scroll hint
+                scrollHint.classList.add('show');
+                setTimeout(() => {
+                    scrollHint.classList.remove('show');
+                }, 5000);
             } catch (error) {
                 showMessage(usageResult, 'Error: ' + error.message, 'error');
+            }
+        }
+
+        // Sort data
+        function sortData(data, column, direction) {
+            const sorted = [...data];
+            const col = columns.find(c => c.id === column);
+            
+            if (!col) return sorted;
+            
+            sorted.sort((a, b) => {
+                let aVal = a[col.field];
+                let bVal = b[col.field];
+                
+                // Handle timestamps specially
+                if (col.field === 'timestamp') {
+                    aVal = new Date(aVal.includes('T') || aVal.includes('Z') ? aVal : aVal + ' UTC').getTime();
+                    bVal = new Date(bVal.includes('T') || bVal.includes('Z') ? bVal : bVal + ' UTC').getTime();
+                } else if (col.numeric) {
+                    aVal = parseFloat(aVal) || 0;
+                    bVal = parseFloat(bVal) || 0;
+                } else {
+                    aVal = String(aVal || '').toLowerCase();
+                    bVal = String(bVal || '').toLowerCase();
+                }
+                
+                if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+            
+            return sorted;
+        }
+
+        // Handle column header click for sorting
+        function handleColumnClick(columnId) {
+            if (sortColumn === columnId) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = columnId;
+                sortDirection = 'asc';
+            }
+            
+            if (cachedUsageData) {
+                const sortedData = {
+                    ...cachedUsageData,
+                    usage: sortData(cachedUsageData.usage, columnId, sortDirection)
+                };
+                displayUsage(sortedData);
             }
         }
 
@@ -937,7 +1298,7 @@
                 let value = data[key] || 'N/A';
                 
                 if (key === 'createdAt' && value !== 'N/A') {
-                    value = convertToEasternTime(value);
+                    value = convertToEasternTimeAMPM(value);
                 }
                 
                 html += `
@@ -973,52 +1334,79 @@
         // Display Usage
         function displayUsage(data) {
             if (!data.usage || data.usage.length === 0) {
-                usageResult.innerHTML = '<p style="text-align: center; opacity: 0.7;">No records found</p>';
+                usageResult.innerHTML = '<p style="text-align: center; opacity: 0.7; padding: 40px;">No records found</p>';
                 return;
             }
             
             let html = `
-                <div class="usage-table-wrapper">
-                <table class="usage-table">
-                    <thead>
-                        <tr>
-                            <th>Time (ET)</th>
-                            <th>Type</th>
-                            <th>Model</th>
-                            <th>In</th>
-                            <th>Out</th>
-                            <th>Cost</th>
-                            <th>ms</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="usage-table-container">
+                    <div class="usage-table-wrapper">
+                        <table class="usage-table">
+                            <thead>
+                                <tr>
             `;
             
-            data.usage.forEach(item => {
-                const timestamp = convertToEasternTime(item.timestamp);
-                const cost = parseFloat(item.cost_usd || 0).toFixed(6);
-                const responseTime = item.response_time_ms || '-';
+            // Generate headers with visibility and sort indicators
+            columns.forEach(col => {
+                const visible = isColumnVisible(col.id);
+                const sortClass = sortColumn === col.id ? (sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc') : '';
+                const hiddenClass = visible ? '' : 'hidden';
                 
                 html += `
-                    <tr>
-                        <td style="white-space: nowrap;">${timestamp}</td>
-                        <td>${item.type || '-'}</td>
-                        <td>${item.model || '-'}</td>
-                        <td>${(item.input_text_tokens || 0).toLocaleString()}</td>
-                        <td>${(item.output_text_tokens || 0).toLocaleString()}</td>
-                        <td class="cost-cell">$${cost}</td>
-                        <td>${responseTime}</td>
-                    </tr>
+                    <th class="${sortClass} ${hiddenClass}" 
+                        onclick="handleColumnClick('${col.id}')"
+                        data-column="${col.id}">
+                        ${col.label}
+                    </th>
                 `;
             });
             
             html += `
-                    </tbody>
-                </table>
+                                </tr>
+                            </thead>
+                            <tbody>
+            `;
+            
+            data.usage.forEach(item => {
+                html += '<tr>';
+                
+                columns.forEach(col => {
+                    const visible = isColumnVisible(col.id);
+                    const hiddenClass = visible ? '' : 'hidden';
+                    let value = item[col.field];
+                    let cellClass = '';
+                    
+                    // Format values based on column
+                    if (col.field === 'timestamp') {
+                        value = convertToEasternTimeAMPM(value);
+                    } else if (col.field === 'cost_usd') {
+                        value = '$' + parseFloat(value || 0).toFixed(6);
+                        cellClass = 'cost-cell';
+                    } else if (col.numeric) {
+                        value = (parseInt(value) || 0).toLocaleString();
+                    } else if (!value) {
+                        value = '-';
+                    }
+                    
+                    const style = col.field === 'timestamp' ? 'white-space: nowrap;' : 
+                                 col.field === 'model' ? 'max-width: 200px; overflow: hidden; text-overflow: ellipsis;' : '';
+                    const title = col.field === 'model' ? `title="${item[col.field] || '-'}"` : '';
+                    
+                    html += `<td class="${cellClass} ${hiddenClass}" style="${style}" ${title}>${value}</td>`;
+                });
+                
+                html += '</tr>';
+            });
+            
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <p style="text-align: center; margin-top: 15px; opacity: 0.8; font-size: clamp(0.8rem, 2vw, 0.9rem);">
-                    ${data.usage.length} records${data.totalCount ? ` (of ${data.totalCount})` : ''}
-                </p>
+                <div class="record-info">
+                    <i class="fas fa-info-circle"></i> 
+                    Showing ${data.usage.length} record${data.usage.length !== 1 ? 's' : ''}${data.totalCount ? ` (of ${data.totalCount} total)` : ''}
+                </div>
             `;
             
             usageResult.innerHTML = html;
@@ -1043,8 +1431,16 @@
             
             data.usage.forEach(item => {
                 totalCost += parseFloat(item.cost_usd || 0);
+                // Sum all input token types
                 totalInputTokens += parseInt(item.input_text_tokens || 0);
+                totalInputTokens += parseInt(item.input_cached_tokens || 0);
+                totalInputTokens += parseInt(item.input_audio_tokens || 0);
+                totalInputTokens += parseInt(item.input_image_tokens || 0);
+                // Sum all output token types
                 totalOutputTokens += parseInt(item.output_text_tokens || 0);
+                totalOutputTokens += parseInt(item.output_reasoning_tokens || 0);
+                totalOutputTokens += parseInt(item.output_audio_tokens || 0);
+                totalOutputTokens += parseInt(item.output_image_tokens || 0);
                 
                 if (item.response_time_ms) {
                     totalResponseTime += parseInt(item.response_time_ms);
@@ -1071,15 +1467,41 @@
             let content, filename, mimeType;
             
             if (format === 'csv') {
-                const headers = ['Timestamp (ET)', 'Timestamp (UTC)', 'Type', 'Model', 'API Key', 'Input Tokens', 'Output Tokens', 'Cost (USD)', 'Response Time (ms)'];
+                const headers = [
+                    'Timestamp (ET)',
+                    'Timestamp (UTC)',
+                    'Type',
+                    'Model',
+                    'API Key',
+                    'API Key Type',
+                    'Meter Source',
+                    'Input Text Tokens',
+                    'Input Cached Tokens',
+                    'Input Audio Tokens',
+                    'Input Image Tokens',
+                    'Output Text Tokens',
+                    'Output Reasoning Tokens',
+                    'Output Audio Tokens',
+                    'Output Image Tokens',
+                    'Cost (USD)',
+                    'Response Time (ms)'
+                ];
                 const rows = cachedUsageData.usage.map(item => [
-                    convertToEasternTime(item.timestamp),
+                    convertToEasternTimeAMPM(item.timestamp),
                     item.timestamp,
                     item.type || '',
                     item.model || '',
                     item.api_key || '',
+                    item.api_key_type || '',
+                    item.meter_source || '',
                     item.input_text_tokens || 0,
+                    item.input_cached_tokens || 0,
+                    item.input_audio_tokens || 0,
+                    item.input_image_tokens || 0,
                     item.output_text_tokens || 0,
+                    item.output_reasoning_tokens || 0,
+                    item.output_audio_tokens || 0,
+                    item.output_image_tokens || 0,
                     item.cost_usd || 0,
                     item.response_time_ms || ''
                 ]);
@@ -1095,7 +1517,7 @@
                     ...cachedUsageData,
                     usage: cachedUsageData.usage.map(item => ({
                         ...item,
-                        timestamp_et: convertToEasternTime(item.timestamp),
+                        timestamp_et: convertToEasternTimeAMPM(item.timestamp),
                         timestamp_utc: item.timestamp
                     }))
                 };
@@ -1121,21 +1543,6 @@
             setTimeout(() => {
                 btn.innerHTML = originalText;
             }, 2000);
-        }
-
-        // Copy to Clipboard
-        async function copyToClipboard() {
-            if (!cachedUsageData) return;
-            
-            try {
-                await navigator.clipboard.writeText(JSON.stringify(cachedUsageData, null, 2));
-                copyUsageBtn.innerHTML = '<i class="fas fa-check"></i> ✓';
-                setTimeout(() => {
-                    copyUsageBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
-                }, 2000);
-            } catch (error) {
-                alert('Failed to copy');
-            }
         }
 
         // Show Loading
