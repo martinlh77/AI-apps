@@ -101,6 +101,14 @@
             background-color: #e68900;
         }
         
+        .practice-btn {
+            background-color: #9C27B0;
+        }
+        
+        .practice-btn:hover {
+            background-color: #7B1FA2;
+        }
+        
         .graph-container {
             position: relative;
             width: 100%;
@@ -145,6 +153,7 @@
             top: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
+            cursor: pointer;
         }
         
         .solution-circle.open {
@@ -234,6 +243,100 @@
         
         .form-container.active {
             display: block;
+        }
+        
+        .practice-graph-container {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            margin: 20px 0;
+            overflow: visible;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        
+        .graph-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0;
+            align-items: center;
+        }
+        
+        .circle-type-btn {
+            padding: 8px 12px;
+            background-color: #ddd;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .circle-type-btn.active {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .arrow-direction-btn {
+            padding: 8px 12px;
+            background-color: #ddd;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .arrow-direction-btn.active {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .instruction {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        .points-display {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #e8f4fd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .points-display.correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        /* New: Inequality symbol buttons */
+        .symbol-buttons {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        
+        .symbol-btn {
+            padding: 8px 12px;
+            background-color: #e0e0e0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .symbol-btn:hover {
+            background-color: #d0d0d0;
+        }
+        
+        .answer-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
         }
     </style>
 </head>
@@ -334,7 +437,7 @@
             <h2>Practice Problems</h2>
             
             <div class="input-row">
-                <button id="generate-problem-btn">Generate Practice Problem</button>
+                <button id="generate-problem-btn" class="practice-btn">Generate Practice Problem</button>
                 <select id="problem-type">
                     <option value="simple">Simple (x > a)</option>
                     <option value="onestep">One-Step (ax > b)</option>
@@ -347,13 +450,55 @@
                 Click "Generate Practice Problem" to start
             </div>
             
-            <div class="input-row">
-                <label>Your answer:</label>
+            <!-- New: Interactive Graph Controls -->
+            <div id="graph-practice-section" style="display: none;">
+                <h3>Graph the Solution on the Number Line</h3>
+                <div class="instruction">
+                    Click on the number line to place a point. Use buttons below to select open/filled circle and arrow direction.
+                </div>
+                
+                <div class="practice-graph-container" id="practice-graph-container">
+                    <!-- Interactive graph will be drawn here -->
+                </div>
+                
+                <div class="graph-controls">
+                    <div>
+                        <strong>Circle Type:</strong>
+                        <button class="circle-type-btn active" id="open-circle-btn">Open Circle (&gt;, &lt;)</button>
+                        <button class="circle-type-btn" id="filled-circle-btn">Filled Circle (&ge;, &le;)</button>
+                    </div>
+                    <div>
+                        <strong>Arrow Direction:</strong>
+                        <button class="arrow-direction-btn active" id="right-arrow-btn">Right (≥, >)</button>
+                        <button class="arrow-direction-btn" id="left-arrow-btn">Left (≤, <)</button>
+                    </div>
+                    <div>
+                        <button id="clear-graph-btn">Clear My Graph</button>
+                        <button id="check-graph-btn">Check My Graph</button>
+                    </div>
+                </div>
+                
+                <div id="graph-feedback" class="feedback"></div>
+            </div>
+            
+            <!-- Updated: Added inequality symbol buttons -->
+            <div class="answer-input-container">
+                <label>Your algebraic answer:</label>
                 <input type="text" id="answer-input" placeholder="e.g., x > 3" style="flex-grow: 1;">
+                <div class="symbol-buttons">
+                    <button class="symbol-btn" data-symbol=">">&gt;</button>
+                    <button class="symbol-btn" data-symbol="<">&lt;</button>
+                    <button class="symbol-btn" data-symbol=">=">&ge;</button>
+                    <button class="symbol-btn" data-symbol="<=">&le;</button>
+                </div>
                 <button id="check-answer-btn">Check Answer</button>
             </div>
             
             <div id="answer-feedback" class="feedback"></div>
+            
+            <div id="points-display" class="points-display" style="display: none;">
+                <strong>Score:</strong> <span id="points">0</span> points
+            </div>
         </div>
         
         <div class="panel">
@@ -365,7 +510,15 @@
                 <li><strong>Open Circle:</strong> NOT included (&gt; or &lt;)</li>
                 <li><strong>Filled Circle:</strong> IS included (&ge; or &le;)</li>
                 <li><strong>Arrow:</strong> Shows solution direction</li>
-                <li><strong>Practice:</strong> Generate problems and check answers</li>
+                <li><strong>Practice Problems:</strong> 
+                    <ul>
+                        <li>Use the inequality symbol buttons to easily insert &lt;, &gt;, ≤, or ≥</li>
+                        <li>For "less than or equal to" write "&lt;=" or use the ≤ button</li>
+                        <li>For "greater than or equal to" write "&gt;=" or use the ≥ button</li>
+                        <li>The graph will automatically clear when generating a new problem</li>
+                    </ul>
+                </li>
+                <li><strong>Interactive Graph:</strong> Click to place points, use buttons to select circle type and arrow direction</li>
             </ul>
             
             <h3>Solving Distributive Form</h3>
@@ -403,12 +556,29 @@
         const graphContainer = document.getElementById('graph-container');
         const solutionText = document.getElementById('solution-text');
         
+        // Practice problem elements
         const generateProblemBtn = document.getElementById('generate-problem-btn');
         const problemType = document.getElementById('problem-type');
         const practiceProblemDisplay = document.getElementById('practice-problem-display');
         const answerInput = document.getElementById('answer-input');
         const checkAnswerBtn = document.getElementById('check-answer-btn');
         const answerFeedback = document.getElementById('answer-feedback');
+        
+        // New practice graph elements
+        const graphPracticeSection = document.getElementById('graph-practice-section');
+        const practiceGraphContainer = document.getElementById('practice-graph-container');
+        const openCircleBtn = document.getElementById('open-circle-btn');
+        const filledCircleBtn = document.getElementById('filled-circle-btn');
+        const rightArrowBtn = document.getElementById('right-arrow-btn');
+        const leftArrowBtn = document.getElementById('left-arrow-btn');
+        const clearGraphBtn = document.getElementById('clear-graph-btn');
+        const checkGraphBtn = document.getElementById('check-graph-btn');
+        const graphFeedback = document.getElementById('graph-feedback');
+        const pointsDisplay = document.getElementById('points-display');
+        const pointsSpan = document.getElementById('points');
+        
+        // Symbol buttons
+        const symbolButtons = document.querySelectorAll('.symbol-btn');
         
         // Form tabs
         const typeTabs = document.querySelectorAll('.type-tab');
@@ -420,6 +590,9 @@
         
         let currentForm = 'simple';
         let currentPracticeProblem = null;
+        let currentGraphSolution = null;
+        let userGraph = { x: null, circleType: 'open', arrowDirection: 'right' };
+        let score = 0;
         
         // Initialize
         function init() {
@@ -432,6 +605,14 @@
             generateProblemBtn.addEventListener('click', generatePracticeProblem);
             checkAnswerBtn.addEventListener('click', checkAnswer);
             
+            // New practice graph event listeners
+            openCircleBtn.addEventListener('click', () => setCircleType('open'));
+            filledCircleBtn.addEventListener('click', () => setCircleType('filled'));
+            rightArrowBtn.addEventListener('click', () => setArrowDirection('right'));
+            leftArrowBtn.addEventListener('click', () => setArrowDirection('left'));
+            clearGraphBtn.addEventListener('click', clearPracticeGraph);
+            checkGraphBtn.addEventListener('click', checkGraphAnswer);
+            
             // Set up form tabs
             typeTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
@@ -440,11 +621,39 @@
                 });
             });
             
+            // Set up symbol buttons
+            symbolButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const symbol = button.dataset.symbol;
+                    insertSymbol(symbol);
+                });
+            });
+            
             // Set up simple input to auto-fill 'x' if empty
             simpleX.value = 'x';
             
             // Generate initial random problem
             generateRandomInequality();
+            
+            // Set initial points display
+            updatePointsDisplay();
+        }
+        
+        // Insert inequality symbol into answer input
+        function insertSymbol(symbol) {
+            const input = answerInput;
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const text = input.value;
+            
+            // Insert the symbol at cursor position
+            input.value = text.substring(0, start) + symbol + text.substring(end);
+            
+            // Move cursor after inserted symbol
+            input.selectionStart = input.selectionEnd = start + symbol.length;
+            
+            // Focus back on input
+            input.focus();
         }
         
         // Switch between form types
@@ -665,8 +874,20 @@
             const containerWidth = container.offsetWidth;
             
             // Determine range to display (centered around x)
-            const leftBoundary = -4 * scale;
-            const rightBoundary = 4 * scale;
+            // Ensure the number line doesn't end at the solution value
+            // For right arrows: make sure there's space to the right
+            // For left arrows: make sure there's space to the left
+            let leftBoundary, rightBoundary;
+            
+            if (type === '>' || type === '>=') {
+                // Arrow points right - ensure space to the right
+                leftBoundary = -4 * scale;
+                rightBoundary = Math.max(4 * scale, x + 2 * scale);
+            } else {
+                // Arrow points left - ensure space to the left
+                leftBoundary = Math.min(-4 * scale, x - 2 * scale);
+                rightBoundary = 4 * scale;
+            }
             
             // Adjust boundaries to ensure x is visible
             const minX = Math.min(x, leftBoundary);
@@ -793,114 +1014,433 @@
             }
         }
         
-        // Generate a practice problem
-        function generatePracticeProblem() {
-            const type = problemType.value;
-            let problem = '';
-            let answer = '';
+// Generate a practice problem
+function generatePracticeProblem() {
+    const type = problemType.value;
+    let problem = '';
+    let answer = '';
+    let graphSolution = { x: 0, inequality: '', circleType: 'open', arrowDirection: 'right' };
+    
+    if (type === 'simple') {
+        // Simple: x > a
+        const value = Math.floor(Math.random() * 11) - 5;
+        const inequalityTypes = ['>', '<', '>=', '<='];
+        const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
+
+        problem = `x ${inequality} ${formatNumber(value)}`;
+        answer = `x ${inequality} ${formatNumber(value)}`;
+        
+        graphSolution.x = value;
+        graphSolution.inequality = inequality;
+        graphSolution.circleType = inequality.includes('=') ? 'filled' : 'open';
+        graphSolution.arrowDirection = (inequality === '>' || inequality === '>=') ? 'right' : 'left';
+        
+    } else if (type === 'onestep') {
+        // One-step: ax > b, x + a > b, x - a > b, x/a > b
+        // Randomly choose between multiplication, addition, subtraction, and division
+        const operationTypes = ['multiplication', 'addition', 'subtraction', 'division'];
+        const operation = operationTypes[Math.floor(Math.random() * operationTypes.length)];
+        
+        const inequalityTypes = ['>', '<', '>=', '<='];
+        const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
+        
+        let a, b, xValue, adjustedInequality;
+        
+        if (operation === 'multiplication') {
+            // ax > b format
+            a = Math.floor(Math.random() * 5) + 1;
+            if (Math.random() > 0.5) a = -a;
+            b = Math.floor(Math.random() * 11) - 5;
             
-            if (type === 'simple') {
-                // Simple: x > a
-                const value = Math.floor(Math.random() * 11) - 5;
-                const inequalityTypes = ['>', '<', '>=', '<='];
-                const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
-                
-                problem = `x ${inequality} ${formatNumber(value)}`;
-                answer = `x ${inequality} ${formatNumber(value)}`;
-                
-            } else if (type === 'onestep') {
-                // One-step: ax > b
-                let a = Math.floor(Math.random() * 5) + 1;
-                if (Math.random() > 0.5) a = -a;
-                
-                let b = Math.floor(Math.random() * 11) - 5;
-                const inequalityTypes = ['>', '<', '>=', '<='];
-                const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
-                
-                const aDisplay = a === 1 ? '' : a === -1 ? '-' : formatNumber(a);
-                problem = `${aDisplay}x ${inequality} ${formatNumber(b)}`;
-                
-                // Solve: x > b/a
-                let xValue = b / a;
-                let adjustedInequality = inequality;
-                
-                if (a < 0) {
-                    if (inequality === '>') adjustedInequality = '<';
-                    else if (inequality === '<') adjustedInequality = '>';
-                    else if (inequality === '>=') adjustedInequality = '<=';
-                    else if (inequality === '<=') adjustedInequality = '>=';
-                }
-                
-                answer = `x ${adjustedInequality} ${formatNumber(xValue)}`;
-                
-            } else if (type === 'twostep') {
-                // Two-step: ax + b > c
-                let a = Math.floor(Math.random() * 5) + 1;
-                if (Math.random() > 0.5) a = -a;
-                
-                let b = Math.floor(Math.random() * 11) - 5;
-                let c = Math.floor(Math.random() * 11) - 5;
-                const inequalityTypes = ['>', '<', '>=', '<='];
-                const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
-                
-                const aDisplay = a === 1 ? '' : a === -1 ? '-' : formatNumber(a);
-                const bDisplay = b === 0 ? '' : b > 0 ? ` + ${formatNumber(b)}` : ` - ${formatNumber(Math.abs(b))}`;
-                problem = `${aDisplay}x${bDisplay} ${inequality} ${formatNumber(c)}`;
-                
-                // Solve: x > (c - b)/a
-                let xValue = (c - b) / a;
-                let adjustedInequality = inequality;
-                
-                if (a < 0) {
-                    if (inequality === '>') adjustedInequality = '<';
-                    else if (inequality === '<') adjustedInequality = '>';
-                    else if (inequality === '>=') adjustedInequality = '<=';
-                    else if (inequality === '<=') adjustedInequality = '>=';
-                }
-                
-                answer = `x ${adjustedInequality} ${formatNumber(xValue)}`;
-                
-            } else {
-                // Distributive: p(x + q) > r
-                let p = Math.floor(Math.random() * 5) + 1;
-                if (Math.random() > 0.5) p = -p;
-                
-                let q = Math.floor(Math.random() * 11) - 5;
-                let r = Math.floor(Math.random() * 11) - 5;
-                const inequalityTypes = ['>', '<', '>=', '<='];
-                const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
-                
-                const pDisplay = p === 1 ? '' : p === -1 ? '-' : formatNumber(p);
-                const qDisplay = q === 0 ? '' : q > 0 ? ` + ${formatNumber(q)}` : ` - ${formatNumber(Math.abs(q))}`;
-                problem = `${pDisplay}(x${qDisplay}) ${inequality} ${formatNumber(r)}`;
-                
-                // Solve: x > (r/p) - q
-                let xValue = (r / p) - q;
-                let adjustedInequality = inequality;
-                
-                if (p < 0) {
-                    if (inequality === '>') adjustedInequality = '<';
-                    else if (inequality === '<') adjustedInequality = '>';
-                    else if (inequality === '>=') adjustedInequality = '<=';
-                    else if (inequality === '<=') adjustedInequality = '>=';
-                }
-                
-                answer = `x ${adjustedInequality} ${formatNumber(xValue)}`;
+            const aDisplay = a === 1 ? '' : a === -1 ? '-' : formatNumber(a);
+            problem = `${aDisplay}x ${inequality} ${formatNumber(b)}`;
+            
+            // Solve: x > b/a
+            xValue = b / a;
+            adjustedInequality = inequality;
+            
+            if (a < 0) {
+                if (inequality === '>') adjustedInequality = '<';
+                else if (inequality === '<') adjustedInequality = '>';
+                else if (inequality === '>=') adjustedInequality = '<=';
+                else if (inequality === '<=') adjustedInequality = '>=';
             }
             
-            // Store the problem and answer
-            currentPracticeProblem = { problem, answer };
+        } else if (operation === 'addition') {
+            // x + a > b format
+            a = Math.floor(Math.random() * 11) - 5;
+            b = Math.floor(Math.random() * 11) - 5;
             
-            // Display the problem
-            practiceProblemDisplay.textContent = `Solve: ${problem}`;
+            const aDisplay = a >= 0 ? ` + ${formatNumber(a)}` : ` - ${formatNumber(Math.abs(a))}`;
+            problem = `x${aDisplay} ${inequality} ${formatNumber(b)}`;
             
-            // Clear previous feedback and answer
-            answerFeedback.textContent = '';
-            answerFeedback.className = 'feedback';
-            answerInput.value = '';
+            // Solve: x > b - a
+            xValue = b - a;
+            adjustedInequality = inequality;
+            
+            answer = `x ${adjustedInequality} ${formatNumber(xValue)}`;
+            
+        } else if (operation === 'subtraction') {
+            // x - a > b format (treated the same as addition with negative a)
+            a = Math.floor(Math.random() * 11) - 5;
+            b = Math.floor(Math.random() * 11) - 5;
+            
+            const aDisplay = a >= 0 ? ` - ${formatNumber(a)}` : ` + ${formatNumber(Math.abs(a))}`;
+            problem = `x${aDisplay} ${inequality} ${formatNumber(b)}`;
+            
+            // Solve: x > b + a
+            xValue = b + a;
+            adjustedInequality = inequality;
+            
+        } else if (operation === 'division') {
+            // x/a > b format
+            a = Math.floor(Math.random() * 5) + 1;
+            if (Math.random() > 0.5) a = -a;
+            b = Math.floor(Math.random() * 11) - 5;
+            
+            // For division, we need to write it as x/a or x ÷ a
+            const aDisplay = formatNumber(a);
+            problem = `x/${aDisplay} ${inequality} ${formatNumber(b)}`;
+            
+            // Solve: x > b * a
+            xValue = b * a;
+            adjustedInequality = inequality;
+            
+            if (a < 0) {
+                if (inequality === '>') adjustedInequality = '<';
+                else if (inequality === '<') adjustedInequality = '>';
+                else if (inequality === '>=') adjustedInequality = '<=';
+                else if (inequality === '<=') adjustedInequality = '>=';
+            }
         }
         
-        // Check the answer to the practice problem
+        answer = `x ${adjustedInequality} ${formatNumber(xValue)}`;
+        
+        graphSolution.x = xValue;
+        graphSolution.inequality = adjustedInequality;
+        graphSolution.circleType = adjustedInequality.includes('=') ? 'filled' : 'open';
+        graphSolution.arrowDirection = (adjustedInequality === '>' || adjustedInequality === '>=') ? 'right' : 'left';
+        
+    } else if (type === 'twostep') {
+        // Two-step: ax + b > c
+        let a = Math.floor(Math.random() * 5) + 1;
+        if (Math.random() > 0.5) a = -a;
+        
+        let b = Math.floor(Math.random() * 11) - 5;
+        let c = Math.floor(Math.random() * 11) - 5;
+        const inequalityTypes = ['>', '<', '>=', '<='];
+        const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
+        
+        const aDisplay = a === 1 ? '' : a === -1 ? '-' : formatNumber(a);
+        const bDisplay = b === 0 ? '' : b > 0 ? ` + ${formatNumber(b)}` : ` - ${formatNumber(Math.abs(b))}`;
+        problem = `${aDisplay}x${bDisplay} ${inequality} ${formatNumber(c)}`;
+        
+        // Solve: x > (c - b)/a
+        let xValue = (c - b) / a;
+        let adjustedInequality = inequality;
+        
+        if (a < 0) {
+            if (inequality === '>') adjustedInequality = '<';
+            else if (inequality === '<') adjustedInequality = '>';
+            else if (inequality === '>=') adjustedInequality = '<=';
+            else if (inequality === '<=') adjustedInequality = '>=';
+        }
+        
+        answer = `x ${adjustedInequality} ${formatNumber(xValue)}`;
+        
+        graphSolution.x = xValue;
+        graphSolution.inequality = adjustedInequality;
+        graphSolution.circleType = adjustedInequality.includes('=') ? 'filled' : 'open';
+        graphSolution.arrowDirection = (adjustedInequality === '>' || adjustedInequality === '>=') ? 'right' : 'left';
+        
+    } else {
+        // Distributive: p(x + q) > r
+        let p = Math.floor(Math.random() * 5) + 1;
+        if (Math.random() > 0.5) p = -p;
+        
+        let q = Math.floor(Math.random() * 11) - 5;
+        let r = Math.floor(Math.random() * 11) - 5;
+        const inequalityTypes = ['>', '<', '>=', '<='];
+        const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
+        
+        const pDisplay = p === 1 ? '' : p === -1 ? '-' : formatNumber(p);
+        const qDisplay = q === 0 ? '' : q > 0 ? ` + ${formatNumber(q)}` : ` - ${formatNumber(Math.abs(q))}`;
+        problem = `${pDisplay}(x${qDisplay}) ${inequality} ${formatNumber(r)}`;
+        
+        // Solve: x > (r/p) - q
+        let xValue = (r / p) - q;
+        let adjustedInequality = inequality;
+        
+        if (p < 0) {
+            if (inequality === '>') adjustedInequality = '<';
+            else if (inequality === '<') adjustedInequality = '>';
+            else if (inequality === '>=') adjustedInequality = '<=';
+            else if (inequality === '<=') adjustedInequality = '>=';
+        }
+        
+        answer = `x ${adjustedInequality} ${formatNumber(xValue)}`;
+        
+        graphSolution.x = xValue;
+        graphSolution.inequality = adjustedInequality;
+        graphSolution.circleType = adjustedInequality.includes('=') ? 'filled' : 'open';
+        graphSolution.arrowDirection = (adjustedInequality === '>' || adjustedInequality === '>=') ? 'right' : 'left';
+    }
+    
+    // Store the problem, answer, and graph solution
+    currentPracticeProblem = { problem, answer };
+    currentGraphSolution = graphSolution;
+    
+    // Display the problem
+    practiceProblemDisplay.textContent = `Solve: ${problem}`;
+    
+    // Show the graph practice section
+    graphPracticeSection.style.display = 'block';
+    
+    // Clear the practice graph automatically
+    clearPracticeGraph();
+    
+    // Draw the practice graph
+    drawPracticeGraph();
+    
+    // Clear previous feedback and answer
+    answerFeedback.textContent = '';
+    answerFeedback.className = 'feedback';
+    graphFeedback.textContent = '';
+    graphFeedback.className = 'feedback';
+    answerInput.value = '';
+    
+    // Reset user graph
+    userGraph = { x: null, circleType: 'open', arrowDirection: 'right' };
+    
+    // Update buttons to default
+    setCircleType('open');
+    setArrowDirection('right');
+}
+        
+// Draw the practice graph (interactive number line)
+function drawPracticeGraph() {
+    practiceGraphContainer.innerHTML = '';
+    
+    if (!currentGraphSolution) return;
+    
+    const container = practiceGraphContainer;
+    const containerWidth = container.offsetWidth;
+    
+    // Calculate appropriate scale based on the solution value
+    const scale = calculateScale(currentGraphSolution.x);
+    
+    // Determine range to display (centered around the solution)
+    // Ensure the number line doesn't end at the solution value
+    let leftBoundary, rightBoundary;
+    
+    if (currentGraphSolution.arrowDirection === 'right') {
+        // Arrow points right - ensure space to the right
+        leftBoundary = -4 * scale;
+        rightBoundary = Math.max(4 * scale, currentGraphSolution.x + 2 * scale);
+    } else {
+        // Arrow points left - ensure space to the left
+        leftBoundary = Math.min(-4 * scale, currentGraphSolution.x - 2 * scale);
+        rightBoundary = 4 * scale;
+    }
+    
+    // Adjust boundaries to ensure the solution is visible
+    const minX = Math.min(currentGraphSolution.x, leftBoundary);
+    const maxX = Math.max(currentGraphSolution.x, rightBoundary);
+    const range = maxX - minX;
+    
+    // Create number line element
+    const numberLine = document.createElement('div');
+    numberLine.className = 'number-line';
+    numberLine.style.left = '5%';
+    numberLine.style.width = '90%';
+    container.appendChild(numberLine);
+    
+    // Draw ticks
+    const startTick = Math.ceil(minX / scale) * scale;
+    const endTick = Math.floor(maxX / scale) * scale;
+    
+    for (let value = startTick; value <= endTick; value += scale) {
+        // Calculate position (percentage from left)
+        const position = ((value - minX) / range) * 90 + 5;
+        
+        // Create tick
+        const tick = document.createElement('div');
+        tick.className = 'tick';
+        tick.style.left = `${position}%`;
+        container.appendChild(tick);
+        
+        // Create tick label (below the number line)
+        const tickLabel = document.createElement('div');
+        tickLabel.className = 'tick-label';
+        tickLabel.textContent = formatNumber(value);
+        tickLabel.style.left = `${position}%`;
+        container.appendChild(tickLabel);
+    }
+    
+    // Create a clickable area over the entire number line
+    // This allows clicking at any position, not just at tick marks
+    const clickableArea = document.createElement('div');
+    clickableArea.style.position = 'absolute';
+    clickableArea.style.top = '0';
+    clickableArea.style.left = '5%';
+    clickableArea.style.width = '90%';
+    clickableArea.style.height = '100%';
+    clickableArea.style.cursor = 'pointer';
+    clickableArea.title = 'Click anywhere to place point';
+    
+    clickableArea.addEventListener('click', (event) => {
+        // Calculate the click position relative to the number line
+        const rect = clickableArea.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const percentage = (clickX / rect.width) * 100;
+        
+        // Convert percentage back to x value
+        // From: position = ((value - minX) / range) * 90 + 5
+        // Solve for value: value = ((position - 5) / 90) * range + minX
+        const position = percentage;
+        const xValue = ((position - 5) / 90) * range + minX;
+        
+        // Round to nearest 0.5 for better user experience
+        userGraph.x = Math.round(xValue * 2) / 2;
+        updateUserGraph();
+    });
+    
+    container.appendChild(clickableArea);
+    
+    // If user has placed a point, draw it
+    if (userGraph.x !== null) {
+        const userCirclePosition = ((userGraph.x - minX) / range) * 90 + 5;
+        
+        // Draw user circle
+        const userCircle = document.createElement('div');
+        userCircle.className = `solution-circle ${userGraph.circleType}`;
+        userCircle.style.left = `${userCirclePosition}%`;
+        userCircle.style.cursor = 'pointer';
+        userCircle.title = `Point at ${formatNumber(userGraph.x)}. Click to remove.`;
+        userCircle.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent triggering the clickable area
+            userGraph.x = null;
+            updateUserGraph();
+        });
+        container.appendChild(userCircle);
+        
+        // Draw user arrow
+        const userArrow = document.createElement('div');
+        userArrow.className = 'solution-arrow';
+        userArrow.style.backgroundColor = '#2196F3';
+        
+        if (userGraph.arrowDirection === 'right') {
+            userArrow.style.left = `${userCirclePosition}%`;
+            userArrow.style.width = `${100 - userCirclePosition - 5}%`;
+        } else {
+            userArrow.style.left = '5%';
+            userArrow.style.width = `${userCirclePosition - 5}%`;
+        }
+        
+        container.appendChild(userArrow);
+    }
+}
+        
+        // Update the user graph display
+        function updateUserGraph() {
+            drawPracticeGraph();
+        }
+        
+        // Set circle type for user graph
+        function setCircleType(type) {
+            userGraph.circleType = type;
+            
+            // Update button states
+            openCircleBtn.classList.remove('active');
+            filledCircleBtn.classList.remove('active');
+            
+            if (type === 'open') {
+                openCircleBtn.classList.add('active');
+            } else {
+                filledCircleBtn.classList.add('active');
+            }
+            
+            // Redraw graph if user has placed a point
+            if (userGraph.x !== null) {
+                updateUserGraph();
+            }
+        }
+        
+        // Set arrow direction for user graph
+        function setArrowDirection(direction) {
+            userGraph.arrowDirection = direction;
+            
+            // Update button states
+            rightArrowBtn.classList.remove('active');
+            leftArrowBtn.classList.remove('active');
+            
+            if (direction === 'right') {
+                rightArrowBtn.classList.add('active');
+            } else {
+                leftArrowBtn.classList.add('active');
+            }
+            
+            // Redraw graph if user has placed a point
+            if (userGraph.x !== null) {
+                updateUserGraph();
+            }
+        }
+        
+        // Clear the practice graph
+        function clearPracticeGraph() {
+            userGraph = { x: null, circleType: 'open', arrowDirection: 'right' };
+            updateUserGraph();
+            setCircleType('open');
+            setArrowDirection('right');
+            graphFeedback.textContent = '';
+            graphFeedback.className = 'feedback';
+        }
+        
+        // Check the graph answer
+        function checkGraphAnswer() {
+            if (!currentGraphSolution) {
+                graphFeedback.textContent = 'Please generate a problem first.';
+                graphFeedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            if (userGraph.x === null) {
+                graphFeedback.textContent = 'Please place a point on the number line.';
+                graphFeedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            // Check if the point is at the correct location (within a tolerance)
+            const tolerance = 0.05; // Allow for small rounding errors
+            const xCorrect = Math.abs(userGraph.x - currentGraphSolution.x) < tolerance;
+            const circleCorrect = userGraph.circleType === currentGraphSolution.circleType;
+            const arrowCorrect = userGraph.arrowDirection === currentGraphSolution.arrowDirection;
+            
+            if (xCorrect && circleCorrect && arrowCorrect) {
+                graphFeedback.textContent = 'Perfect! Your graph is correct!';
+                graphFeedback.className = 'feedback correct';
+                score += 10;
+                updatePointsDisplay();
+            } else {
+                let feedback = 'Your graph needs adjustment:';
+                if (!xCorrect) {
+                    feedback += `\n• Point should be at ${formatNumber(currentGraphSolution.x)}`;
+                }
+                if (!circleCorrect) {
+                    const correctType = currentGraphSolution.circleType === 'open' ? 'open circle (not included)' : 'filled circle (included)';
+                    feedback += `\n• Use ${correctType}`;
+                }
+                if (!arrowCorrect) {
+                    const correctDirection = currentGraphSolution.arrowDirection === 'right' ? 'right arrow (greater than)' : 'left arrow (less than)';
+                    feedback += `\n• Arrow should point ${correctDirection}`;
+                }
+                
+                graphFeedback.textContent = feedback;
+                graphFeedback.className = 'feedback incorrect';
+            }
+        }
+        
+        // Check the algebraic answer
         function checkAnswer() {
             if (!currentPracticeProblem) {
                 answerFeedback.textContent = 'Please generate a problem first.';
@@ -915,16 +1455,54 @@
                 return;
             }
             
-            // Normalize answers for comparison (remove extra spaces)
-            const normalizedUserAnswer = userAnswer.replace(/\s+/g, ' ').toLowerCase();
-            const normalizedCorrectAnswer = currentPracticeProblem.answer.replace(/\s+/g, ' ').toLowerCase();
+            // Normalize answers for comparison
+            // Accept both <= and ≤, >= and ≥
+            const normalizedUserAnswer = userAnswer.replace(/\s+/g, ' ')
+                .toLowerCase()
+                .replace(/≤/g, '<=')
+                .replace(/≥/g, '>=');
+            
+            const normalizedCorrectAnswer = currentPracticeProblem.answer.replace(/\s+/g, ' ')
+                .toLowerCase()
+                .replace(/≤/g, '<=')
+                .replace(/≥/g, '>=');
             
             if (normalizedUserAnswer === normalizedCorrectAnswer) {
                 answerFeedback.textContent = 'Correct! Well done!';
                 answerFeedback.className = 'feedback correct';
+                score += 10;
+                updatePointsDisplay();
             } else {
+                // Check if they used the wrong inequality symbol but right number
+                const userParts = normalizedUserAnswer.split(/\s+/);
+                const correctParts = normalizedCorrectAnswer.split(/\s+/);
+                
+                if (userParts.length === 3 && correctParts.length === 3) {
+                    if (userParts[2] === correctParts[2] && 
+                       ((userParts[1] === '>' && correctParts[1] === '>=') || 
+                        (userParts[1] === '<' && correctParts[1] === '<=') ||
+                        (userParts[1] === '>=' && correctParts[1] === '>') ||
+                        (userParts[1] === '<=' && correctParts[1] === '<'))) {
+                        
+                        answerFeedback.textContent = 'Close! Check your inequality symbol. Use ≤ for "less than or equal to" and ≥ for "greater than or equal to".';
+                        answerFeedback.className = 'feedback incorrect';
+                        return;
+                    }
+                }
+                
                 answerFeedback.textContent = `Incorrect. Try again! The correct answer is: ${currentPracticeProblem.answer}`;
                 answerFeedback.className = 'feedback incorrect';
+            }
+        }
+        
+        // Update the points display
+        function updatePointsDisplay() {
+            pointsSpan.textContent = score;
+            pointsDisplay.style.display = 'block';
+            
+            // Add correct class when points are earned
+            if (score > 0) {
+                pointsDisplay.classList.add('correct');
             }
         }
         
