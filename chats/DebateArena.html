@@ -1,0 +1,1998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Debate Arena - Multi-AI Conversations</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-main: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #475569;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--bg-main) 0%, #1a1a2e 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        
+        /* Chat Area */
+        .chat-area {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px var(--shadow);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 200px);
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            padding: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-tertiary);
+        }
+        
+        .topic-display {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .message {
+            display: flex;
+            gap: 1rem;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .message-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .message-content {
+            flex: 1;
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: 12px;
+            position: relative;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .persona-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--primary);
+        }
+        
+        .message-text {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .message-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .message-actions button {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        
+        .message-actions button:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Input Area */
+        .input-area {
+            padding: 1.5rem;
+            border-top: 2px solid var(--border);
+            background: var(--bg-tertiary);
+        }
+        
+        .input-wrapper {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+        
+        .input-wrapper textarea {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            padding: 1rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            resize: none;
+            min-height: 60px;
+            max-height: 150px;
+            transition: border-color 0.2s;
+        }
+        
+        .input-wrapper textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* Buttons */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        .btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--border);
+            box-shadow: none;
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+        }
+        
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+        
+        /* Settings Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 900px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px var(--shadow);
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .modal-header h2 {
+            font-size: 1.8rem;
+            color: var(--text-primary);
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        
+        .close-modal:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        /* Form Elements */
+        .form-section {
+            margin-bottom: 2rem;
+        }
+        
+        .form-section h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        /* Personas List */
+        .personas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .persona-card {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .persona-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.2);
+        }
+        
+        .persona-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .persona-card-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .persona-card-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .persona-name-input {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .persona-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .persona-detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .persona-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .persona-actions button {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        /* Slider */
+        .slider-container {
+            margin-top: 0.5rem;
+        }
+        
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: var(--primary-dark);
+            transform: scale(1.2);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        input[type="range"]::-moz-range-thumb:hover {
+            background: var(--primary-dark);
+            transform: scale(1.2);
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid var(--bg-tertiary);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-message {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* Status Messages */
+        .status-message {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+        
+        .status-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 2px solid var(--danger);
+            color: var(--danger);
+        }
+        
+        /* Image Display */
+        .image-preview {
+            margin-top: 0.5rem;
+            border-radius: 8px;
+            overflow: hidden;
+            max-width: 100%;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .image-preview:hover {
+            transform: scale(1.02);
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .image-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .image-controls button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+        
+        /* Background Image Section */
+        .background-image-section {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .background-preview {
+            width: 100%;
+            height: 200px;
+            border-radius: 8px;
+            background: var(--bg-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-top: 1rem;
+            position: relative;
+        }
+        
+        .background-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .background-preview .placeholder {
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .chat-area {
+                height: calc(100vh - 250px);
+            }
+            
+            .personas-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+        }
+        
+        /* Helper Text */
+        .help-text {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            font-style: italic;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Background pattern */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 0.5rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        /* Background Image Overlay */
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            z-index: -1;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>🎭 AI Debate Arena</h1>
+        <div class="header-controls">
+            <button class="btn btn-secondary" id="settingsBtn">⚙️ Settings</button>
+            <button class="btn btn-success" id="startBtn">▶️ Start Conversation</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Chat Area -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <div class="topic-display" id="topicDisplay">
+                    Click "Settings" to configure personas and topic, then "Start Conversation"
+                </div>
+                <button class="btn btn-secondary btn-sm" id="nextTurnBtn" style="display: none;">Next Response ▶️</button>
+            </div>
+            
+            <div class="messages-container" id="messagesContainer">
+                <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">💬</div>
+                    <h3>Ready to Start!</h3>
+                    <p>Configure your personas in Settings, then start the conversation.</p>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="userInput" 
+                        placeholder="Type your message here... (Press Ctrl+Enter to send)"
+                        rows="2"></textarea>
+                    <button class="btn" id="sendBtn">Send 📤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Settings & Configuration</h2>
+                <button class="close-modal" id="closeModal">×</button>
+            </div>
+
+            <!-- Topic Configuration -->
+            <div class="form-section">
+                <h3>📝 Conversation Topic</h3>
+                <div class="form-group">
+                    <label for="topicInput">What should they discuss?</label>
+                    <input type="text" id="topicInput" placeholder="e.g., The ethics of artificial intelligence">
+                    <p class="help-text">This topic will guide the conversation between personas</p>
+                </div>
+                <button class="btn btn-secondary" id="generateTopicBtn">🎲 Generate Random Topic</button>
+            </div>
+
+            <!-- User Persona -->
+            <div class="form-section">
+                <h3>👤 Your Persona</h3>
+                <div class="form-group">
+                    <label for="userPersonaInput">How should the AI address you?</label>
+                    <input type="text" id="userPersonaInput" placeholder="e.g., a curious student, an expert scientist, a skeptical journalist">
+                    <p class="help-text">Optional: Helps AI personas tailor their responses to you</p>
+                </div>
+                
+                <div class="form-group">
+                    <label>Your Avatar</label>
+                    <div class="persona-card-avatar" id="userAvatar" style="width: 100px; height: 100px;">
+                        👤
+                    </div>
+                    <input type="text" id="userAvatarPrompt" placeholder="e.g., a professional person in business attire" style="margin-top: 0.5rem;">
+                    <div class="image-controls">
+                        <button class="btn btn-secondary btn-small" onclick="generateUserAvatar()">🎨 Generate</button>
+                        <button class="btn btn-secondary btn-small" onclick="randomizePrompt('user')">🎲 Random Prompt</button>
+                        <button class="btn btn-secondary btn-small" onclick="clearUserAvatar()">🗑️ Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Background Image -->
+            <div class="form-section">
+                <h3>🖼️ Background Image</h3>
+                <div class="background-image-section">
+                    <div class="form-group">
+                        <label for="backgroundPrompt">Background Image Prompt</label>
+                        <input type="text" id="backgroundPrompt" placeholder="e.g., abstract cosmic art, soft purple and blue gradient">
+                        <p class="help-text">This will be used as the conversation background</p>
+                    </div>
+                    
+                    <div class="background-preview" id="backgroundPreview">
+                        <div class="placeholder">
+                            <div style="font-size: 3rem; margin-bottom: 0.5rem;">🖼️</div>
+                            <p>No background image generated yet</p>
+                        </div>
+                    </div>
+                    
+                    <div class="image-controls" style="margin-top: 1rem;">
+                        <button class="btn btn-secondary" onclick="generateBackgroundImage()">🎨 Generate Background</button>
+                        <button class="btn btn-secondary" onclick="randomizePrompt('background')">🎲 Random Prompt</button>
+                        <button class="btn btn-secondary" onclick="clearBackground()">🗑️ Clear</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conversation Settings -->
+            <div class="form-section">
+                <h3>🎮 Conversation Mode</h3>
+                <div class="form-group">
+                    <label for="conversationMode">Mode</label>
+                    <select id="conversationMode">
+                        <option value="turn-based">Turn-Based: Stop after each response (Recommended)</option>
+                        <option value="auto">Auto: Personas continue until max turns</option>
+                        <option value="user-participant">User as Participant: You're part of the conversation</option>
+                    </select>
+                    <p class="help-text">Turn-based lets you control the flow and interject anytime</p>
+                </div>
+                <div class="form-group">
+                    <label for="maxTurns">Maximum Turns (0 = Unlimited)</label>
+                    <input type="number" id="maxTurns" min="0" max="100" value="0">
+                    <p class="help-text">0 means unlimited - you control when to stop</p>
+                </div>
+            </div>
+
+            <!-- AI Personas -->
+            <div class="form-section">
+                <h3>🎭 AI Personas</h3>
+                <p class="help-text" style="margin-bottom: 1rem;">
+                    Add multiple personas with unique personalities. Each can have its own model, temperature, and response style.
+                </p>
+                
+                <div class="personas-grid" id="personasGrid">
+                    <!-- Personas will be added here dynamically -->
+                </div>
+                
+                <button class="btn" id="addPersonaBtn" style="margin-top: 1rem;">➕ Add New Persona</button>
+            </div>
+
+            <!-- Global Settings -->
+            <div class="form-section">
+                <h3>🔧 Global Settings</h3>
+                <div class="form-group">
+                    <label>Default Image Model</label>
+                    <select id="defaultImageModel">
+                        <option value="zimage">Z-Image (Default, Recommended)</option>
+                        <option value="flux">Flux</option>
+                        <option value="turbo">Turbo</option>
+                    </select>
+                    <p class="help-text">Used for generating persona avatars and backgrounds</p>
+                </div>
+                <div class="form-group">
+                    <label>Prompt Generation Model</label>
+                    <select id="promptGenerationModel">
+                        <option value="openai">OpenAI (GPT-4o) - Best Quality</option>
+                        <option value="claude">Claude - Very Good</option>
+                        <option value="gemini">Gemini - Good</option>
+                        <option value="mistral">Mistral - Fast</option>
+                        <option value="deepseek">DeepSeek - Balanced</option>
+                        <option value="grok">Grok - Creative</option>
+                        <option value="nova-fast">Nova Fast - Fastest</option>
+                    </select>
+                    <p class="help-text">Used for randomizing image prompts and generating topics</p>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button class="btn btn-success" id="saveSettingsBtn" style="flex: 1;">💾 Save & Close</button>
+                <button class="btn btn-danger" id="resetAllBtn">🗑️ Reset All</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'pk_8CQPK8dxqANijjhy';
+        const API_ENDPOINT = 'https://gen.pollinations.ai/v1/chat/completions';
+        const IMAGE_ENDPOINT = 'https://gen.pollinations.ai/image';
+        const TEXT_ENDPOINT = 'https://gen.pollinations.ai/text';
+        const RATE_LIMIT_DELAY = 2500; // 2.5 seconds between requests
+
+        // State
+        let personas = [];
+        let conversationHistory = [];
+        let currentTopic = '';
+        let userPersona = '';
+        let userAvatarUrl = null;
+        let userAvatarUrlWithoutKey = null;
+        let backgroundImageUrl = null;
+        let backgroundImageUrlWithoutKey = null;
+        let conversationMode = 'turn-based';
+        let maxTurns = 0;
+        let currentTurn = 0;
+        let isConversationActive = false;
+        let lastRequestTime = 0;
+        let defaultImageModel = 'zimage';
+        let promptGenerationModel = 'openai';
+
+        // DOM Elements
+        const settingsModal = document.getElementById('settingsModal');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const closeModal = document.getElementById('closeModal');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const startBtn = document.getElementById('startBtn');
+        const nextTurnBtn = document.getElementById('nextTurnBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const userInput = document.getElementById('userInput');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const topicDisplay = document.getElementById('topicDisplay');
+        const topicInput = document.getElementById('topicInput');
+        const generateTopicBtn = document.getElementById('generateTopicBtn');
+        const userPersonaInput = document.getElementById('userPersonaInput');
+        const conversationModeSelect = document.getElementById('conversationMode');
+        const maxTurnsInput = document.getElementById('maxTurns');
+        const personasGrid = document.getElementById('personasGrid');
+        const addPersonaBtn = document.getElementById('addPersonaBtn');
+        const resetAllBtn = document.getElementById('resetAllBtn');
+        const defaultImageModelSelect = document.getElementById('defaultImageModel');
+        const promptGenerationModelSelect = document.getElementById('promptGenerationModel');
+        const userAvatarPrompt = document.getElementById('userAvatarPrompt');
+        const backgroundPrompt = document.getElementById('backgroundPrompt');
+
+        // Initialize
+        loadFromLocalStorage();
+        renderPersonas();
+        updateUserAvatar();
+        updateBackgroundPreview();
+
+        // Event Listeners
+        settingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
+        closeModal.addEventListener('click', () => settingsModal.classList.remove('active'));
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        startBtn.addEventListener('click', startConversation);
+        nextTurnBtn.addEventListener('click', nextTurn);
+        sendBtn.addEventListener('click', sendUserMessage);
+        generateTopicBtn.addEventListener('click', generateRandomTopic);
+        addPersonaBtn.addEventListener('click', addPersona);
+        resetAllBtn.addEventListener('click', resetAll);
+
+        // Close modal on outside click
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.remove('active');
+            }
+        });
+
+        // Ctrl+Enter to send
+        userInput.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                sendUserMessage();
+            }
+        });
+
+        // Functions
+        function getRandomSeed() {
+            // Return a random seed between 1 and 2147483647 (max allowed)
+            return Math.floor(Math.random() * 2147483647) + 1;
+        }
+
+        async function buildImageUrl(prompt, width, height) {
+            const seed = getRandomSeed();
+            const urlWithKey = `${IMAGE_ENDPOINT}/${encodeURIComponent(prompt)}?model=${defaultImageModel}&width=${width}&height=${height}&seed=${seed}&nologo=true&key=${API_KEY}`;
+            const urlWithoutKey = `${IMAGE_ENDPOINT}/${encodeURIComponent(prompt)}?model=${defaultImageModel}&width=${width}&height=${height}&seed=${seed}&nologo=true`;
+            
+            console.log('Generating image with seed:', seed);
+            console.log('URL without key:', urlWithoutKey);
+            
+            // Preload the image with key to cache it
+            await preloadImage(urlWithKey);
+            
+            // Wait 1.5 seconds for caching
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            return { urlWithKey, urlWithoutKey };
+        }
+
+        function preloadImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    console.log('Image preloaded successfully');
+                    resolve();
+                };
+                img.onerror = () => {
+                    console.error('Image failed to preload');
+                    reject(new Error('Image failed to load'));
+                };
+                img.src = url;
+            });
+        }
+
+        function addPersona() {
+            const persona = {
+                id: Date.now(),
+                name: `Persona ${personas.length + 1}`,
+                description: 'A thoughtful participant in conversations',
+                model: 'openai',
+                temperature: 0.7,
+                maxTokens: 500,
+                imageUrl: null,
+                imageUrlWithoutKey: null,
+                imagePrompt: ''
+            };
+            personas.push(persona);
+            renderPersonas();
+        }
+
+        async function renderPersonas() {
+            personasGrid.innerHTML = '';
+            
+            if (personas.length === 0) {
+                // Add two default personas
+                personas = [
+                    {
+                        id: Date.now(),
+                        name: 'Optimistic Thinker',
+                        description: 'You are an optimistic, forward-thinking individual who sees possibilities and opportunities in every situation. You inspire others with your positive outlook.',
+                        model: 'openai',
+                        temperature: 0.8,
+                        maxTokens: 400,
+                        imageUrl: null,
+                        imageUrlWithoutKey: null,
+                        imagePrompt: 'a friendly optimistic person smiling, professional portrait'
+                    },
+                    {
+                        id: Date.now() + 1,
+                        name: 'Critical Analyst',
+                        description: 'You are a careful, analytical thinker who examines ideas critically and looks for potential problems. You ask tough questions and consider multiple perspectives.',
+                        model: 'openai',
+                        temperature: 0.6,
+                        maxTokens: 400,
+                        imageUrl: null,
+                        imageUrlWithoutKey: null,
+                        imagePrompt: 'a thoughtful analytical person, professional portrait'
+                    }
+                ];
+            }
+
+            for (const persona of personas) {
+                const card = document.createElement('div');
+                card.className = 'persona-card';
+                card.innerHTML = `
+                    <div class="persona-card-avatar" id="avatar-${persona.id}">
+                        ${persona.imageUrlWithoutKey ? `<img src="${persona.imageUrlWithoutKey}" alt="${persona.name}">` : getInitials(persona.name)}
+                    </div>
+                    <div class="form-group">
+                        <input type="text" class="persona-name-input" value="${persona.name}" 
+                               data-id="${persona.id}" data-field="name" placeholder="Persona Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Personality & Behavior</label>
+                        <textarea data-id="${persona.id}" data-field="description" 
+                                  placeholder="Describe this persona's personality, speaking style, and perspective..."
+                                  rows="3">${persona.description}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>AI Model</label>
+                        <select data-id="${persona.id}" data-field="model">
+                            <option value="openai" ${persona.model === 'openai' ? 'selected' : ''}>OpenAI (GPT-4o)</option>
+                            <option value="openai-fast" ${persona.model === 'openai-fast' ? 'selected' : ''}>OpenAI Fast</option>
+                            <option value="claude" ${persona.model === 'claude' ? 'selected' : ''}>Claude</option>
+                            <option value="gemini" ${persona.model === 'gemini' ? 'selected' : ''}>Gemini</option>
+                            <option value="mistral" ${persona.model === 'mistral' ? 'selected' : ''}>Mistral</option>
+                            <option value="deepseek" ${persona.model === 'deepseek' ? 'selected' : ''}>DeepSeek</option>
+                            <option value="nova-fast" ${persona.model === 'nova-fast' ? 'selected' : ''}>Nova Fast (Cheapest)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Temperature: <span id="temp-${persona.id}">${persona.temperature}</span></label>
+                        <div class="slider-container">
+                            <div class="slider-labels">
+                                <span>Focused</span>
+                                <span>Creative</span>
+                            </div>
+                            <input type="range" min="0" max="2" step="0.1" value="${persona.temperature}"
+                                   data-id="${persona.id}" data-field="temperature">
+                        </div>
+                    </div>
+<div class="form-group">
+    <label>Response Length Preference: <span id="tokens-${persona.id}">${getResponseLengthLabel(persona.maxTokens)}</span></label>
+    <div class="slider-container">
+        <div class="slider-labels">
+            <span>Very Brief</span>
+            <span>Detailed</span>
+        </div>
+        <input type="range" min="100" max="1000" step="100" value="${persona.maxTokens}"
+               data-id="${persona.id}" data-field="maxTokens">
+    </div>
+</div>
+                    <div class="form-group">
+                        <label>Avatar Image Prompt</label>
+                        <input type="text" value="${persona.imagePrompt || ''}" 
+                               data-id="${persona.id}" data-field="imagePrompt"
+                               placeholder="e.g., a friendly robot, professional portrait">
+                        <div class="image-controls">
+                            <button class="btn btn-secondary btn-small" onclick="generatePersonaImage(${persona.id})">
+                                🎨 Generate
+                            </button>
+                            <button class="btn btn-secondary btn-small" onclick="randomizePrompt('persona', ${persona.id})">
+                                🎲 Random
+                            </button>
+                            ${persona.imageUrlWithoutKey ? `<button class="btn btn-secondary btn-small" onclick="clearPersonaImage(${persona.id})">🗑️ Clear</button>` : ''}
+                        </div>
+                    </div>
+                    <div class="persona-actions">
+                        <button class="btn btn-secondary" onclick="duplicatePersona(${persona.id})">📋 Duplicate</button>
+                        <button class="btn btn-danger" onclick="removePersona(${persona.id})">🗑️ Remove</button>
+                    </div>
+                `;
+                personasGrid.appendChild(card);
+
+// Add event listeners for inputs
+const inputs = card.querySelectorAll('input, textarea, select');
+inputs.forEach(input => {
+    input.addEventListener('input', (e) => {
+        updatePersonaField(e.target);
+        if (e.target.dataset.field === 'maxTokens') {
+            const id = e.target.dataset.id;
+            document.getElementById(`tokens-${id}`).textContent = getResponseLengthLabel(e.target.value);
+        }
+    });
+});
+            }
+        }
+
+function getResponseLengthLabel(tokens) {
+    if (tokens <= 200) return 'Very Brief';
+    if (tokens <= 400) return 'Brief';
+    if (tokens <= 600) return 'Moderate';
+    if (tokens <= 800) return 'Detailed';
+    return 'Very Detailed';
+}
+
+function getInitials(name) {
+    return name.split(' ').map(word => word[0]).join('').toUpperCase().substring(0, 2);
+}
+
+        function updatePersonaField(element) {
+            const id = parseInt(element.dataset.id);
+            const field = element.dataset.field;
+            const persona = personas.find(p => p.id === id);
+            
+            if (!persona) return;
+
+            if (field === 'temperature' || field === 'maxTokens') {
+                persona[field] = parseFloat(element.value);
+                document.getElementById(`${field === 'temperature' ? 'temp' : 'tokens'}-${id}`).textContent = element.value;
+            } else {
+                persona[field] = element.value;
+            }
+        }
+
+        async function randomizePrompt(type, personaId = null) {
+            await enforceRateLimit();
+            
+            let promptField;
+            let context = '';
+            
+            // Add random number and timestamp to make prompts truly random
+            const randomSeed = getRandomSeed();
+            const timestamp = Date.now();
+            
+            if (type === 'persona') {
+                const persona = personas.find(p => p.id === personaId);
+                if (!persona) return;
+                promptField = document.querySelector(`input[data-id="${personaId}"][data-field="imagePrompt"]`);
+                context = `Generate a completely unique and creative image prompt for a persona avatar. The persona is: ${persona.name} - ${persona.description.substring(0, 100)}. Be creative and random. Output only the image prompt, nothing else. [Random ID: ${randomSeed}-${timestamp}]`;
+            } else if (type === 'user') {
+                promptField = userAvatarPrompt;
+                const userDesc = userPersonaInput.value || 'a professional person';
+                context = `Generate a completely unique and creative image prompt for a user avatar who is: ${userDesc}. Be creative and random. Output only the image prompt, nothing else. [Random ID: ${randomSeed}-${timestamp}]`;
+            } else if (type === 'background') {
+                promptField = backgroundPrompt;
+                const topic = topicInput.value || 'a general conversation';
+                context = `Generate a completely unique and creative image prompt for an abstract background representing: ${topic}. It should be subtle, artistic, and not distracting. Be creative and random. Output only the image prompt, nothing else. [Random ID: ${randomSeed}-${timestamp}]`;
+            }
+            
+            try {
+                const response = await fetch(`${TEXT_ENDPOINT}/${encodeURIComponent(context)}?model=${promptGenerationModel}&seed=${randomSeed}&temperature=1.2&key=${API_KEY}`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                const prompt = await response.text();
+                promptField.value = prompt.trim();
+                
+                // Update persona object if it's a persona prompt
+                if (type === 'persona') {
+                    const persona = personas.find(p => p.id === personaId);
+                    if (persona) persona.imagePrompt = prompt.trim();
+                }
+            } catch (error) {
+                console.error('Prompt generation error:', error);
+                alert('Failed to generate prompt: ' + error.message);
+            }
+        }
+
+        async function generatePersonaImage(personaId) {
+            const persona = personas.find(p => p.id === personaId);
+            if (!persona) return;
+            
+            const promptInput = document.querySelector(`input[data-id="${personaId}"][data-field="imagePrompt"]`);
+            const prompt = promptInput.value.trim();
+            
+            if (!prompt) {
+                alert('Please enter an image prompt first!');
+                return;
+            }
+
+            await enforceRateLimit();
+
+            const avatarDiv = document.getElementById(`avatar-${personaId}`);
+            avatarDiv.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const { urlWithKey, urlWithoutKey } = await buildImageUrl(prompt, 256, 256);
+                
+                console.log('Generated persona image (secure URL):', urlWithoutKey);
+                
+                persona.imageUrl = urlWithKey;
+                persona.imageUrlWithoutKey = urlWithoutKey;
+                avatarDiv.innerHTML = `<img src="${urlWithoutKey}" alt="${persona.name}" onerror="this.parentElement.innerHTML='${getInitials(persona.name)}'; alert('Image failed to load');">`;
+                
+                saveToLocalStorage();
+                renderPersonas();
+                
+            } catch (error) {
+                console.error('Image generation error:', error);
+                avatarDiv.innerHTML = getInitials(persona.name);
+                alert('Failed to generate image: ' + error.message);
+            }
+        }
+
+        function clearPersonaImage(personaId) {
+            const persona = personas.find(p => p.id === personaId);
+            if (persona) {
+                persona.imageUrl = null;
+                persona.imageUrlWithoutKey = null;
+                renderPersonas();
+                saveToLocalStorage();
+            }
+        }
+
+        async function generateUserAvatar() {
+            const prompt = userAvatarPrompt.value.trim();
+            if (!prompt) {
+                alert('Please enter an avatar prompt first!');
+                return;
+            }
+
+            await enforceRateLimit();
+
+            const avatarDiv = document.getElementById('userAvatar');
+            avatarDiv.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const { urlWithKey, urlWithoutKey } = await buildImageUrl(prompt, 256, 256);
+                
+                console.log('Generated user avatar (secure URL):', urlWithoutKey);
+                
+                userAvatarUrl = urlWithKey;
+                userAvatarUrlWithoutKey = urlWithoutKey;
+                avatarDiv.innerHTML = `<img src="${urlWithoutKey}" alt="User" onerror="this.parentElement.innerHTML='👤'; alert('Image failed to load');">`;
+                
+                saveToLocalStorage();
+                
+            } catch (error) {
+                console.error('User avatar generation error:', error);
+                avatarDiv.innerHTML = '👤';
+                alert('Failed to generate avatar: ' + error.message);
+            }
+        }
+
+        function clearUserAvatar() {
+            userAvatarUrl = null;
+            userAvatarUrlWithoutKey = null;
+            updateUserAvatar();
+            saveToLocalStorage();
+        }
+
+        function updateUserAvatar() {
+            const avatarDiv = document.getElementById('userAvatar');
+            if (userAvatarUrlWithoutKey) {
+                avatarDiv.innerHTML = `<img src="${userAvatarUrlWithoutKey}" alt="User">`;
+            } else {
+                avatarDiv.innerHTML = '👤';
+            }
+        }
+
+        async function generateBackgroundImage() {
+            const prompt = backgroundPrompt.value.trim();
+            if (!prompt) {
+                alert('Please enter a background prompt first!');
+                return;
+            }
+
+            await enforceRateLimit();
+
+            const previewDiv = document.getElementById('backgroundPreview');
+            previewDiv.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const { urlWithKey, urlWithoutKey } = await buildImageUrl(prompt, 1920, 1080);
+                
+                console.log('Generated background (secure URL):', urlWithoutKey);
+                
+                backgroundImageUrl = urlWithKey;
+                backgroundImageUrlWithoutKey = urlWithoutKey;
+                previewDiv.innerHTML = `<img src="${urlWithoutKey}" alt="Background" onerror="this.parentElement.innerHTML='<div class=\\'placeholder\\'><p>Image failed to load</p></div>'; alert('Image failed to load');">`;
+                
+                saveToLocalStorage();
+                
+            } catch (error) {
+                console.error('Background generation error:', error);
+                previewDiv.innerHTML = '<div class="placeholder"><p>Failed to generate image</p></div>';
+                alert('Failed to generate background: ' + error.message);
+            }
+        }
+
+        function clearBackground() {
+            backgroundImageUrl = null;
+            backgroundImageUrlWithoutKey = null;
+            updateBackgroundPreview();
+            // Remove background from body
+            document.body.style.backgroundImage = '';
+            document.body.style.backgroundAttachment = '';
+            document.body.style.backgroundPosition = '';
+            document.body.style.backgroundColor = '';
+            const overlay = document.getElementById('bg-overlay');
+            if (overlay) overlay.remove();
+            saveToLocalStorage();
+        }
+
+        function updateBackgroundPreview() {
+            const previewDiv = document.getElementById('backgroundPreview');
+            if (backgroundImageUrlWithoutKey) {
+                previewDiv.innerHTML = `<img src="${backgroundImageUrlWithoutKey}" alt="Background">`;
+            } else {
+                previewDiv.innerHTML = `
+                    <div class="placeholder">
+                        <div style="font-size: 3rem; margin-bottom: 0.5rem;">🖼️</div>
+                        <p>No background image generated yet</p>
+                    </div>
+                `;
+            }
+        }
+
+        function duplicatePersona(personaId) {
+            const persona = personas.find(p => p.id === personaId);
+            if (!persona) return;
+
+            const newPersona = {
+                ...persona,
+                id: Date.now(),
+                name: persona.name + ' (Copy)',
+                imageUrl: null,
+                imageUrlWithoutKey: null
+            };
+            personas.push(newPersona);
+            renderPersonas();
+        }
+
+        function removePersona(personaId) {
+            if (personas.length <= 1) {
+                alert('You must have at least one persona!');
+                return;
+            }
+            personas = personas.filter(p => p.id !== personaId);
+            renderPersonas();
+        }
+
+        async function generateRandomTopic() {
+            const btn = generateTopicBtn;
+            btn.disabled = true;
+            btn.textContent = '🎲 Generating...';
+
+            await enforceRateLimit();
+
+            try {
+                // Add random seed and timestamp for true randomness
+                const randomSeed = getRandomSeed();
+                const timestamp = Date.now();
+                const prompt = `Generate a completely unique, interesting, and thought-provoking conversation topic. Be creative and random. It could be about technology, philosophy, science, society, ethics, or any engaging subject. Output only the topic, nothing else. [Random ID: ${randomSeed}-${timestamp}]`;
+                const url = `${TEXT_ENDPOINT}/${encodeURIComponent(prompt)}?model=${promptGenerationModel}&seed=${randomSeed}&temperature=1.3&key=${API_KEY}`;
+                
+                console.log('Generating random topic...');
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const topic = await response.text();
+                topicInput.value = topic.trim();
+            } catch (error) {
+                console.error('Topic generation error:', error);
+                alert('Failed to generate topic: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🎲 Generate Random Topic';
+            }
+        }
+
+        function saveSettings() {
+            currentTopic = topicInput.value.trim();
+            userPersona = userPersonaInput.value.trim();
+            conversationMode = conversationModeSelect.value;
+            maxTurns = parseInt(maxTurnsInput.value) || 0;
+            defaultImageModel = defaultImageModelSelect.value;
+            promptGenerationModel = promptGenerationModelSelect.value;
+
+            if (!currentTopic) {
+                alert('Please enter a conversation topic!');
+                return;
+            }
+
+            if (personas.length === 0) {
+                alert('Please add at least one persona!');
+                return;
+            }
+
+            saveToLocalStorage();
+            settingsModal.classList.remove('active');
+            alert('Settings saved! Click "Start Conversation" to begin.');
+        }
+
+        async function startConversation() {
+            if (!currentTopic) {
+                alert('Please configure settings first!');
+                settingsModal.classList.add('active');
+                return;
+            }
+
+            conversationHistory = [];
+            currentTurn = 0;
+            isConversationActive = true;
+
+            messagesContainer.innerHTML = '';
+            topicDisplay.textContent = `💬 Topic: ${currentTopic}`;
+            nextTurnBtn.style.display = 'inline-flex';
+            startBtn.textContent = '🔄 Restart';
+
+            // Apply background image if exists
+            if (backgroundImageUrlWithoutKey) {
+                // Create overlay for background
+                let overlay = document.getElementById('bg-overlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'bg-overlay';
+                    overlay.className = 'background-overlay';
+                    document.body.appendChild(overlay);
+                }
+                overlay.style.backgroundImage = `url('${backgroundImageUrlWithoutKey}')`;
+                overlay.style.opacity = '0.7';
+                
+                // Also set as body background as fallback
+                document.body.style.backgroundImage = `url('${backgroundImageUrlWithoutKey}')`;
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundAttachment = 'fixed';
+                document.body.style.backgroundPosition = 'center';
+                document.body.style.backgroundColor = '#0f172a';
+            }
+
+            // Add system message
+            addSystemMessage(`Conversation started! Topic: "${currentTopic}"`);
+
+            // Start first turn
+            if (conversationMode !== 'user-participant') {
+                await nextTurn();
+            }
+        }
+
+        async function nextTurn() {
+            if (!isConversationActive) return;
+
+            // Check max turns
+            if (maxTurns > 0 && currentTurn >= maxTurns) {
+                addSystemMessage('Conversation ended: Maximum turns reached');
+                isConversationActive = false;
+                nextTurnBtn.style.display = 'none';
+                return;
+            }
+
+            // Get next persona
+            const personaIndex = currentTurn % personas.length;
+            const persona = personas[personaIndex];
+
+            currentTurn++;
+
+            // Show loading
+            const loadingId = addLoadingMessage(persona);
+
+            await enforceRateLimit();
+
+            try {
+                // Build message history
+                const messages = buildMessageHistory(persona);
+
+                console.log('Sending request to API:', {
+                    model: persona.model,
+                    temperature: persona.temperature,
+                    max_tokens: persona.maxTokens,
+                    messages_count: messages.length
+                });
+
+                // Call API with Authorization header
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+body: JSON.stringify({
+    model: persona.model,
+    messages: messages,
+    temperature: persona.temperature,
+    max_tokens: Math.max(persona.maxTokens * 2, 1000)
+})
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error Response:', errorText);
+                    throw new Error(`API error ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('API Response received:', data);
+                
+                if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                    console.error('Invalid API response:', data);
+                    throw new Error('Invalid API response format');
+                }
+                
+                const message = data.choices[0].message.content;
+                console.log('Message content length:', message.length, 'characters');
+                console.log('Message preview:', message.substring(0, 100) + '...');
+
+                // Remove loading message
+                removeLoadingMessage(loadingId);
+
+                // Add to history
+                conversationHistory.push({
+                    persona: persona,
+                    message: message,
+                    timestamp: Date.now()
+                });
+
+                // Display message
+                addPersonaMessage(persona, message);
+
+                // Auto-continue if in auto mode
+                if (conversationMode === 'auto') {
+                    setTimeout(nextTurn, 1000);
+                }
+
+            } catch (error) {
+                console.error('API error:', error);
+                removeLoadingMessage(loadingId);
+                addSystemMessage(`Error getting response from ${persona.name}: ${error.message}`, true);
+                
+                if (conversationMode === 'auto') {
+                    isConversationActive = false;
+                }
+            }
+        }
+
+function buildMessageHistory(currentPersona) {
+    // Calculate response length guidance based on maxTokens
+    let lengthGuidance = '';
+    if (currentPersona.maxTokens <= 200) {
+        lengthGuidance = 'Keep your response very brief and concise (1-2 short paragraphs).';
+    } else if (currentPersona.maxTokens <= 400) {
+        lengthGuidance = 'Keep your response reasonably concise (2-3 paragraphs).';
+    } else if (currentPersona.maxTokens <= 800) {
+        lengthGuidance = 'You can provide a moderate length response (3-4 paragraphs).';
+    } else {
+        lengthGuidance = 'You can provide a detailed response if needed.';
+    }
+    
+    const systemContext = `${currentPersona.description}\n\nYou are participating in a conversation about: "${currentTopic}"\n\nYou are: ${currentPersona.name}\n\n${lengthGuidance}\n\nRespond naturally and stay in character. Build on what others have said. You are conversing with other AI personas${userPersona ? ` and a human user (${userPersona})` : ' and possibly a human user'}. Pay attention to who is speaking.${userPersona ? `\n\nThe user identifies as: ${userPersona}` : ''}`;
+    
+    const messages = [];
+    
+    // Add recent conversation history (last 10 messages)
+    const recentHistory = conversationHistory.slice(-10);
+    
+    if (recentHistory.length === 0) {
+        // First turn: Start with a user message that includes context
+        messages.push({
+            role: 'user',
+            content: `${systemContext}\n\nPlease share your perspective on this topic: "${currentTopic}"`
+        });
+    } else {
+        // First, add the context as a user message
+        messages.push({
+            role: 'user',
+            content: systemContext
+        });
+        
+        // Then add conversation history, ensuring proper alternation
+        let lastRole = 'user'; // We just added a user message
+        
+        for (const entry of recentHistory) {
+            if (entry.persona) {
+                // This is an assistant message from a persona
+                const speakerName = entry.persona.name;
+                const isSelf = entry.persona.id === currentPersona.id;
+                
+                if (lastRole === 'user') {
+                    // Can add assistant message directly
+                    if (isSelf) {
+                        // This persona's previous message
+                        messages.push({
+                            role: 'assistant',
+                            content: entry.message
+                        });
+                    } else {
+                        // Another persona's message - present it as if the user is relaying it
+                        messages.push({
+                            role: 'assistant',
+                            content: `${speakerName}: ${entry.message}`
+                        });
+                    }
+                    lastRole = 'assistant';
+                } else {
+                    // Need to insert a user prompt before this assistant message
+                    if (isSelf) {
+                        // This persona's previous message
+                        messages.push({
+                            role: 'user',
+                            content: `You previously said:`
+                        });
+                        messages.push({
+                            role: 'assistant',
+                            content: entry.message
+                        });
+                    } else {
+                        // Another persona's message
+                        messages.push({
+                            role: 'user',
+                            content: `${speakerName} said:`
+                        });
+                        messages.push({
+                            role: 'assistant',
+                            content: entry.message
+                        });
+                    }
+                    lastRole = 'assistant';
+                }
+            } else {
+                // This is a user message
+                if (lastRole === 'assistant' || lastRole === null) {
+                    messages.push({
+                        role: 'user',
+                        content: `The human user says: ${entry.message}`
+                    });
+                    lastRole = 'user';
+                } else {
+                    // Two user messages in a row, combine them
+                    const prevMessage = messages[messages.length - 1];
+                    prevMessage.content += `\n\nThe human user also says: ${entry.message}`;
+                }
+            }
+        }
+        
+        // Ensure we end with a user message requesting the next response
+        if (lastRole === 'assistant') {
+            messages.push({
+                role: 'user',
+                content: `Continue the conversation as ${currentPersona.name}. Respond to what has been said and add your perspective. Address the other personas or the user as appropriate.`
+            });
+        } else {
+            // Already ends with user, just append instruction
+            const lastMessage = messages[messages.length - 1];
+            lastMessage.content += `\n\nNow, respond as ${currentPersona.name}. Address the other personas or the user as appropriate.`;
+        }
+    }
+
+    return messages;
+}
+
+        async function sendUserMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            userInput.value = '';
+
+            // Add to history and display
+            conversationHistory.push({
+                persona: null,
+                message: message,
+                timestamp: Date.now()
+            });
+
+            addUserMessage(message);
+
+            // If conversation is active, trigger next turn
+            if (isConversationActive && conversationMode !== 'auto') {
+                setTimeout(nextTurn, 500);
+            }
+        }
+
+        function addPersonaMessage(persona, message) {
+            const displayImageUrl = persona.imageUrlWithoutKey || null;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = `
+                <div class="message-avatar">
+                    ${displayImageUrl ? `<img src="${displayImageUrl}" alt="">` : getInitials(persona.name)}
+                </div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="persona-name">${persona.name}</span>
+                        <span style="color: var(--text-secondary); font-size: 0.85rem;">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <div class="message-text">${escapeHtml(message)}</div>
+                    <div class="message-actions">
+                        <button onclick="copyMessage(this)">📋 Copy</button>
+                    </div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function addUserMessage(message) {
+            const displayImageUrl = userAvatarUrlWithoutKey || null;
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = `
+                <div class="message-avatar" style="background: linear-gradient(135deg, var(--accent), var(--warning));">
+                    ${displayImageUrl ? `<img src="${displayImageUrl}" alt="">` : '👤'}
+                </div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="persona-name" style="color: var(--accent);">You</span>
+                        <span style="color: var(--text-secondary); font-size: 0.85rem;">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <div class="message-text">${escapeHtml(message)}</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function addSystemMessage(message, isError = false) {
+            const div = document.createElement('div');
+            div.className = `status-message ${isError ? 'status-error' : 'status-success'}`;
+            div.textContent = `${isError ? '⚠️' : 'ℹ️'} ${message}`;
+            messagesContainer.appendChild(div);
+            scrollToBottom();
+        }
+
+        function addLoadingMessage(persona) {
+            const id = `loading-${Date.now()}`;
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'loading-message';
+            div.innerHTML = `
+                <div class="spinner"></div>
+            `;
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = `${persona.name} is thinking...`;
+            div.appendChild(nameSpan);
+            
+            messagesContainer.appendChild(div);
+            scrollToBottom();
+            return id;
+        }
+
+        function removeLoadingMessage(id) {
+            const elem = document.getElementById(id);
+            if (elem) elem.remove();
+        }
+
+        function copyMessage(button) {
+            const messageText = button.closest('.message-content').querySelector('.message-text').textContent;
+            navigator.clipboard.writeText(messageText).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Copy failed:', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        async function enforceRateLimit() {
+            const now = Date.now();
+            const timeSinceLastRequest = now - lastRequestTime;
+            if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
+                const waitTime = RATE_LIMIT_DELAY - timeSinceLastRequest;
+                console.log(`Rate limiting: waiting ${waitTime}ms`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+            lastRequestTime = Date.now();
+        }
+
+        function saveToLocalStorage() {
+            const data = {
+                personas,
+                currentTopic,
+                userPersona,
+                userAvatarUrl,
+                userAvatarUrlWithoutKey,
+                backgroundImageUrl,
+                backgroundImageUrlWithoutKey,
+                conversationMode,
+                maxTurns,
+                defaultImageModel,
+                promptGenerationModel
+            };
+            localStorage.setItem('aiPersonaArena', JSON.stringify(data));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('aiPersonaArena');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    personas = data.personas || [];
+                    currentTopic = data.currentTopic || '';
+                    userPersona = data.userPersona || '';
+                    userAvatarUrl = data.userAvatarUrl || null;
+                    userAvatarUrlWithoutKey = data.userAvatarUrlWithoutKey || null;
+                    backgroundImageUrl = data.backgroundImageUrl || null;
+                    backgroundImageUrlWithoutKey = data.backgroundImageUrlWithoutKey || null;
+                    conversationMode = data.conversationMode || 'turn-based';
+                    maxTurns = data.maxTurns || 0;
+                    defaultImageModel = data.defaultImageModel || 'zimage';
+                    promptGenerationModel = data.promptGenerationModel || 'openai';
+
+                    // Update UI
+                    topicInput.value = currentTopic;
+                    userPersonaInput.value = userPersona;
+                    conversationModeSelect.value = conversationMode;
+                    maxTurnsInput.value = maxTurns;
+                    defaultImageModelSelect.value = defaultImageModel;
+                    promptGenerationModelSelect.value = promptGenerationModel;
+                } catch (error) {
+                    console.error('Error loading from localStorage:', error);
+                }
+            }
+        }
+
+        function resetAll() {
+            if (!confirm('Are you sure you want to reset everything? This cannot be undone.')) {
+                return;
+            }
+            localStorage.removeItem('aiPersonaArena');
+            personas = [];
+            conversationHistory = [];
+            currentTopic = '';
+            userPersona = '';
+            userAvatarUrl = null;
+            userAvatarUrlWithoutKey = null;
+            backgroundImageUrl = null;
+            backgroundImageUrlWithoutKey = null;
+            conversationMode = 'turn-based';
+            maxTurns = 0;
+            currentTurn = 0;
+            isConversationActive = false;
+            defaultImageModel = 'zimage';
+            promptGenerationModel = 'openai';
+
+            topicInput.value = '';
+            userPersonaInput.value = '';
+            userAvatarPrompt.value = '';
+            backgroundPrompt.value = '';
+            conversationModeSelect.value = 'turn-based';
+            maxTurnsInput.value = 0;
+            messagesContainer.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">💬</div>
+                    <h3>Reset Complete!</h3>
+                    <p>Add personas and configure settings to get started.</p>
+                </div>
+            `;
+            topicDisplay.textContent = 'Click "Settings" to configure personas and topic, then "Start Conversation"';
+            
+            // Remove background
+            document.body.style.backgroundImage = '';
+            document.body.style.backgroundAttachment = '';
+            document.body.style.backgroundPosition = '';
+            document.body.style.backgroundColor = '';
+            const overlay = document.getElementById('bg-overlay');
+            if (overlay) overlay.remove();
+            
+            updateUserAvatar();
+            updateBackgroundPreview();
+            renderPersonas();
+        }
+
+        // Make functions globally accessible for onclick handlers
+        window.generatePersonaImage = generatePersonaImage;
+        window.clearPersonaImage = clearPersonaImage;
+        window.duplicatePersona = duplicatePersona;
+        window.removePersona = removePersona;
+        window.copyMessage = copyMessage;
+        window.randomizePrompt = randomizePrompt;
+        window.generateUserAvatar = generateUserAvatar;
+        window.clearUserAvatar = clearUserAvatar;
+        window.generateBackgroundImage = generateBackgroundImage;
+        window.clearBackground = clearBackground;
+    </script>
+</body>
+</html>
