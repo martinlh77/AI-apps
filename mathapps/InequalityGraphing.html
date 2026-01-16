@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inequality Graphing - 7th Grade</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            margin: 20px;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c5aa0;
+            text-align: center;
+            margin-top: 0;
+        }
+        
+        h2 {
+            color: #2c5aa0;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            color: #2c5aa0;
+            margin: 15px 0 10px 0;
+        }
+        
+        .panel {
+            margin: 25px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .input-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 15px 0;
+            gap: 10px;
+        }
+        
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        input, select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: #2c5aa0;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background-color: #1a3f7a;
+        }
+        
+        .simple-btn {
+            background-color: #4CAF50;
+        }
+        
+        .simple-btn:hover {
+            background-color: #3d8b40;
+        }
+        
+        .distributive-btn {
+            background-color: #FF9800;
+        }
+        
+        .distributive-btn:hover {
+            background-color: #e68900;
+        }
+        
+        .graph-container {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            margin: 20px 0;
+            overflow: visible;
+        }
+        
+        .number-line {
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            width: 90%;
+            height: 4px;
+            background-color: #000;
+            transform: translateY(-50%);
+        }
+        
+        .tick {
+            position: absolute;
+            width: 2px;
+            height: 10px;
+            background-color: #000;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .tick-label {
+            position: absolute;
+            top: 60px;
+            text-align: center;
+            font-size: 14px;
+            width: 30px;
+            left: -15px;
+        }
+        
+        .solution-circle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        
+        .solution-circle.open {
+            background-color: white;
+            border: 3px solid #e74c3c;
+        }
+        
+        .solution-circle.filled {
+            background-color: #e74c3c;
+            border: 2px solid #c0392b;
+        }
+        
+        .solution-arrow {
+            position: absolute;
+            height: 4px;
+            background-color: #e74c3c;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5;
+        }
+        
+        .inequality-display {
+            font-size: 20px;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e8f4fd;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .solution-box {
+            padding: 15px;
+            background-color: #e8f4fd;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-size: 18px;
+        }
+        
+        .feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .examples {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .inequality-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .type-tab {
+            padding: 10px 15px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .type-tab.active {
+            background-color: #2c5aa0;
+            color: white;
+        }
+        
+        .form-container {
+            display: none;
+        }
+        
+        .form-container.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Inequality Graphing for 7th Grade</h1>
+        
+        <div class="panel">
+            <h2>Graph an Inequality</h2>
+            
+            <div class="inequality-type-selector">
+                <div class="type-tab active" data-type="simple">Simple (x > a)</div>
+                <div class="type-tab" data-type="equation">Equation (ax + b > c)</div>
+                <div class="type-tab" data-type="distributive">Distributive (p(x + q) > r)</div>
+            </div>
+            
+            <!-- Simple Form -->
+            <div id="simple-form" class="form-container active">
+                <div class="input-row">
+                    <label>Enter inequality:</label>
+                    <div class="input-group">
+                        <input type="text" id="simple-x" placeholder="x" style="width: 60px;">
+                        <select id="simple-inequality-type">
+                            <option value=">">&gt;</option>
+                            <option value="<">&lt;</option>
+                            <option value=">=">&ge;</option>
+                            <option value="<=">&le;</option>
+                        </select>
+                        <input type="text" id="simple-value" placeholder="number" style="width: 80px;">
+                    </div>
+                    <button class="simple-btn" id="graph-simple-btn">Graph Simple Inequality</button>
+                </div>
+                <div class="examples">Examples: x > 3, x ≤ -2, x ≥ 1/2</div>
+            </div>
+            
+            <!-- Equation Form -->
+            <div id="equation-form" class="form-container">
+                <div class="input-row">
+                    <label>Enter equation:</label>
+                    <div class="input-group">
+                        <input type="text" id="a-value" placeholder="a" style="width: 60px;">
+                        <span>x +</span>
+                        <input type="text" id="b-value" placeholder="b" style="width: 60px;">
+                        <select id="equation-inequality-type">
+                            <option value=">">&gt;</option>
+                            <option value="<">&lt;</option>
+                            <option value=">=">&ge;</option>
+                            <option value="<=">&le;</option>
+                        </select>
+                        <input type="text" id="c-value" placeholder="c" style="width: 60px;">
+                    </div>
+                    <button id="graph-equation-btn">Graph Equation</button>
+                </div>
+                <div class="examples">Examples: 2x + 3 > 7, -x + 1 ≤ 4, 1/2x - 2 ≥ 3</div>
+            </div>
+            
+            <!-- Distributive Form -->
+            <div id="distributive-form" class="form-container">
+                <div class="input-row">
+                    <label>Enter distributive form:</label>
+                    <div class="input-group">
+                        <input type="text" id="p-value" placeholder="p" style="width: 60px;">
+                        <span>(x +</span>
+                        <input type="text" id="q-value" placeholder="q" style="width: 60px;">
+                        <span>)</span>
+                        <select id="distributive-inequality-type">
+                            <option value=">">&gt;</option>
+                            <option value="<">&lt;</option>
+                            <option value=">=">&ge;</option>
+                            <option value="<=">&le;</option>
+                        </select>
+                        <input type="text" id="r-value" placeholder="r" style="width: 60px;">
+                    </div>
+                    <button class="distributive-btn" id="graph-distributive-btn">Graph Distributive</button>
+                </div>
+                <div class="examples">Examples: 2(x + 3) > 8, -3(x - 1) ≤ 6, 1/2(x + 4) ≥ 2</div>
+            </div>
+            
+            <div class="input-row">
+                <button id="clear-btn">Clear Graph</button>
+                <button id="random-btn">Generate Random</button>
+            </div>
+            
+            <div class="inequality-display" id="inequality-display">
+                Enter values above to display inequality
+            </div>
+            
+            <div class="graph-container" id="graph-container">
+                <!-- Graph will be drawn here -->
+            </div>
+            
+            <div class="solution-box">
+                <strong>Solution:</strong> <span id="solution-text">None yet</span>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>Practice Problems</h2>
+            
+            <div class="input-row">
+                <button id="generate-problem-btn">Generate Practice Problem</button>
+                <select id="problem-type">
+                    <option value="simple">Simple (x > a)</option>
+                    <option value="onestep">One-Step (ax > b)</option>
+                    <option value="twostep">Two-Step (ax + b > c)</option>
+                    <option value="distributive">Distributive (p(x + q) > r)</option>
+                </select>
+            </div>
+            
+            <div id="practice-problem-display" style="padding: 15px; background-color: #f0f0f0; border-radius: 5px; margin: 15px 0;">
+                Click "Generate Practice Problem" to start
+            </div>
+            
+            <div class="input-row">
+                <label>Your answer:</label>
+                <input type="text" id="answer-input" placeholder="e.g., x > 3" style="flex-grow: 1;">
+                <button id="check-answer-btn">Check Answer</button>
+            </div>
+            
+            <div id="answer-feedback" class="feedback"></div>
+        </div>
+        
+        <div class="panel">
+            <h2>How to Use</h2>
+            <ul>
+                <li><strong>Simple Inequalities:</strong> Enter directly like "x > 3"</li>
+                <li><strong>Equation Form:</strong> Enter like "2x + 3 > 7"</li>
+                <li><strong>Distributive Form:</strong> Enter like "2(x + 3) > 8"</li>
+                <li><strong>Open Circle:</strong> NOT included (&gt; or &lt;)</li>
+                <li><strong>Filled Circle:</strong> IS included (&ge; or &le;)</li>
+                <li><strong>Arrow:</strong> Shows solution direction</li>
+                <li><strong>Practice:</strong> Generate problems and check answers</li>
+            </ul>
+            
+            <h3>Solving Distributive Form</h3>
+            <p>For p(x + q) > r:</p>
+            <ol>
+                <li>Divide both sides by p: x + q > r/p</li>
+                <li>Subtract q from both sides: x > (r/p) - q</li>
+                <li>Remember to flip the inequality if p is negative!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const simpleX = document.getElementById('simple-x');
+        const simpleInequalityType = document.getElementById('simple-inequality-type');
+        const simpleValue = document.getElementById('simple-value');
+        const graphSimpleBtn = document.getElementById('graph-simple-btn');
+        
+        const aValue = document.getElementById('a-value');
+        const bValue = document.getElementById('b-value');
+        const equationInequalityType = document.getElementById('equation-inequality-type');
+        const cValue = document.getElementById('c-value');
+        const graphEquationBtn = document.getElementById('graph-equation-btn');
+        
+        const pValue = document.getElementById('p-value');
+        const qValue = document.getElementById('q-value');
+        const distributiveInequalityType = document.getElementById('distributive-inequality-type');
+        const rValue = document.getElementById('r-value');
+        const graphDistributiveBtn = document.getElementById('graph-distributive-btn');
+        
+        const clearBtn = document.getElementById('clear-btn');
+        const randomBtn = document.getElementById('random-btn');
+        const inequalityDisplay = document.getElementById('inequality-display');
+        const graphContainer = document.getElementById('graph-container');
+        const solutionText = document.getElementById('solution-text');
+        
+        const generateProblemBtn = document.getElementById('generate-problem-btn');
+        const problemType = document.getElementById('problem-type');
+        const practiceProblemDisplay = document.getElementById('practice-problem-display');
+        const answerInput = document.getElementById('answer-input');
+        const checkAnswerBtn = document.getElementById('check-answer-btn');
+        const answerFeedback = document.getElementById('answer-feedback');
+        
+        // Form tabs
+        const typeTabs = document.querySelectorAll('.type-tab');
+        const formContainers = {
+            simple: document.getElementById('simple-form'),
+            equation: document.getElementById('equation-form'),
+            distributive: document.getElementById('distributive-form')
+        };
+        
+        let currentForm = 'simple';
+        let currentPracticeProblem = null;
+        
+        // Initialize
+        function init() {
+            // Set up event listeners
+            graphSimpleBtn.addEventListener('click', graphSimpleInequality);
+            graphEquationBtn.addEventListener('click', graphEquationInequality);
+            graphDistributiveBtn.addEventListener('click', graphDistributiveInequality);
+            clearBtn.addEventListener('click', clearGraph);
+            randomBtn.addEventListener('click', generateRandomInequality);
+            generateProblemBtn.addEventListener('click', generatePracticeProblem);
+            checkAnswerBtn.addEventListener('click', checkAnswer);
+            
+            // Set up form tabs
+            typeTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const type = tab.dataset.type;
+                    switchForm(type);
+                });
+            });
+            
+            // Set up simple input to auto-fill 'x' if empty
+            simpleX.value = 'x';
+            
+            // Generate initial random problem
+            generateRandomInequality();
+        }
+        
+        // Switch between form types
+        function switchForm(type) {
+            currentForm = type;
+            
+            // Update tabs
+            typeTabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.type === type) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update form visibility
+            Object.keys(formContainers).forEach(key => {
+                formContainers[key].classList.remove('active');
+            });
+            formContainers[type].classList.add('active');
+        }
+        
+        // Parse a number from string input
+        function parseNumber(str) {
+            if (!str || str.trim() === '') return NaN;
+            
+            str = str.trim();
+            
+            // Handle fractions like "1/2"
+            if (str.includes('/')) {
+                const parts = str.split('/');
+                if (parts.length === 2) {
+                    const numerator = parseFloat(parts[0]);
+                    const denominator = parseFloat(parts[1]);
+                    if (!isNaN(numerator) && !isNaN(denominator) && denominator !== 0) {
+                        return numerator / denominator;
+                    }
+                }
+                return NaN;
+            }
+            
+            // Handle decimals
+            return parseFloat(str);
+        }
+        
+        // Format a number for display
+        function formatNumber(num) {
+            // Check if it's close to a common fraction
+            const fractions = [
+                {value: 0.5, text: '1/2'},
+                {value: 0.25, text: '1/4'},
+                {value: 0.75, text: '3/4'},
+                {value: 0.3333, text: '1/3'},
+                {value: 0.6667, text: '2/3'},
+                {value: 0.2, text: '1/5'},
+                {value: 0.4, text: '2/5'},
+                {value: 0.6, text: '3/5'},
+                {value: 0.8, text: '4/5'},
+            ];
+            
+            for (const fraction of fractions) {
+                if (Math.abs(num - fraction.value) < 0.001) {
+                    return fraction.text;
+                }
+            }
+            
+            // If it's close to an integer, return as integer
+            if (Math.abs(num - Math.round(num)) < 0.001) {
+                return Math.round(num).toString();
+            }
+            
+            // Otherwise return with up to 2 decimal places
+            return num.toFixed(2).replace(/\.?0+$/, '');
+        }
+        
+        // Graph a simple inequality (x > a format)
+        function graphSimpleInequality() {
+            const xVar = simpleX.value.trim() || 'x';
+            const type = simpleInequalityType.value;
+            const value = parseNumber(simpleValue.value);
+            
+            if (isNaN(value)) {
+                alert('Please enter a valid number for the inequality value.');
+                return;
+            }
+            
+            // Display the inequality
+            inequalityDisplay.textContent = `${xVar} ${type} ${formatNumber(value)}`;
+            
+            // Clear previous graph
+            clearGraph();
+            
+            // Calculate scale and draw graph
+            const scale = calculateScale(value);
+            drawNumberLine(value, scale, type);
+            
+            // Show solution
+            solutionText.textContent = `${xVar} ${type} ${formatNumber(value)}`;
+        }
+        
+        // Graph an inequality from equation form (ax + b > c)
+        function graphEquationInequality() {
+            const a = parseNumber(aValue.value || '1');
+            const b = parseNumber(bValue.value || '0');
+            const type = equationInequalityType.value;
+            const c = parseNumber(cValue.value);
+            
+            if (isNaN(c)) {
+                alert('Please enter a valid number for all values.');
+                return;
+            }
+            
+            if (a === 0) {
+                alert('The coefficient of x cannot be zero.');
+                return;
+            }
+            
+            // Display the inequality
+            const aDisplay = a === 1 ? '' : a === -1 ? '-' : formatNumber(a);
+            const bDisplay = b === 0 ? '' : b > 0 ? ` + ${formatNumber(b)}` : ` - ${formatNumber(Math.abs(b))}`;
+            inequalityDisplay.textContent = `${aDisplay}x${bDisplay} ${type} ${formatNumber(c)}`;
+            
+            // Solve the inequality: ax + b > c  =>  ax > c - b  =>  x > (c - b)/a
+            const xValue = (c - b) / a;
+            
+            // Adjust inequality sign if dividing by negative
+            let adjustedType = type;
+            if (a < 0) {
+                if (type === '>') adjustedType = '<';
+                else if (type === '<') adjustedType = '>';
+                else if (type === '>=') adjustedType = '<=';
+                else if (type === '<=') adjustedType = '>=';
+            }
+            
+            // Clear previous graph
+            clearGraph();
+            
+            // Calculate scale and draw graph
+            const scale = calculateScale(xValue);
+            drawNumberLine(xValue, scale, adjustedType);
+            
+            // Show solution
+            solutionText.textContent = `x ${adjustedType} ${formatNumber(xValue)}`;
+        }
+        
+        // Graph an inequality from distributive form (p(x + q) > r)
+        function graphDistributiveInequality() {
+            const p = parseNumber(pValue.value || '1');
+            const q = parseNumber(qValue.value || '0');
+            const type = distributiveInequalityType.value;
+            const r = parseNumber(rValue.value);
+            
+            if (isNaN(r)) {
+                alert('Please enter a valid number for all values.');
+                return;
+            }
+            
+            if (p === 0) {
+                alert('The coefficient p cannot be zero.');
+                return;
+            }
+            
+            // Display the inequality
+            const pDisplay = p === 1 ? '' : p === -1 ? '-' : formatNumber(p);
+            const qDisplay = q === 0 ? '' : q > 0 ? ` + ${formatNumber(q)}` : ` - ${formatNumber(Math.abs(q))}`;
+            inequalityDisplay.textContent = `${pDisplay}(x${qDisplay}) ${type} ${formatNumber(r)}`;
+            
+            // Solve the inequality: p(x + q) > r
+            // Step 1: Divide both sides by p: x + q > r/p
+            // Step 2: Subtract q: x > (r/p) - q
+            
+            const xValue = (r / p) - q;
+            
+            // Adjust inequality sign if dividing by negative
+            let adjustedType = type;
+            if (p < 0) {
+                if (type === '>') adjustedType = '<';
+                else if (type === '<') adjustedType = '>';
+                else if (type === '>=') adjustedType = '<=';
+                else if (type === '<=') adjustedType = '>=';
+            }
+            
+            // Clear previous graph
+            clearGraph();
+            
+            // Calculate scale and draw graph
+            const scale = calculateScale(xValue);
+            drawNumberLine(xValue, scale, adjustedType);
+            
+            // Show solution with steps
+            const steps = [];
+            steps.push(`Step 1: Divide both sides by ${formatNumber(p)}: x${qDisplay} ${adjustedType} ${formatNumber(r/p)}`);
+            steps.push(`Step 2: Subtract ${formatNumber(q)} from both sides: x ${adjustedType} ${formatNumber(xValue)}`);
+            
+            solutionText.innerHTML = `x ${adjustedType} ${formatNumber(xValue)}<br><small>${steps.join('<br>')}</small>`;
+        }
+        
+        // Calculate appropriate scale for the number line
+        function calculateScale(x) {
+            const absX = Math.abs(x);
+            
+            if (absX === 0) return 1;
+            
+            if (absX < 1) {
+                if (absX < 0.25) return 0.1;
+                if (absX < 0.5) return 0.2;
+                return 0.5;
+            }
+            
+            if (absX <= 5) return 1;
+            if (absX <= 10) return 2;
+            if (absX <= 20) return 5;
+            return 10;
+        }
+        
+        // Draw the number line with the solution
+        function drawNumberLine(x, scale, type) {
+            const container = graphContainer;
+            const containerWidth = container.offsetWidth;
+            
+            // Determine range to display (centered around x)
+            const leftBoundary = -4 * scale;
+            const rightBoundary = 4 * scale;
+            
+            // Adjust boundaries to ensure x is visible
+            const minX = Math.min(x, leftBoundary);
+            const maxX = Math.max(x, rightBoundary);
+            const range = maxX - minX;
+            
+            // Create number line element
+            const numberLine = document.createElement('div');
+            numberLine.className = 'number-line';
+            numberLine.style.left = '5%';
+            numberLine.style.width = '90%';
+            container.appendChild(numberLine);
+            
+            // Draw ticks
+            const startTick = Math.ceil(minX / scale) * scale;
+            const endTick = Math.floor(maxX / scale) * scale;
+            
+            for (let value = startTick; value <= endTick; value += scale) {
+                // Calculate position (percentage from left)
+                const position = ((value - minX) / range) * 90 + 5;
+                
+                // Create tick
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                tick.style.left = `${position}%`;
+                container.appendChild(tick);
+                
+                // Create tick label (below the number line)
+                const tickLabel = document.createElement('div');
+                tickLabel.className = 'tick-label';
+                tickLabel.textContent = formatNumber(value);
+                tickLabel.style.left = `${position}%`;
+                container.appendChild(tickLabel);
+            }
+            
+            // Draw solution circle
+            const circlePosition = ((x - minX) / range) * 90 + 5;
+            
+            const circle = document.createElement('div');
+            circle.className = `solution-circle ${type.includes('=') ? 'filled' : 'open'}`;
+            circle.style.left = `${circlePosition}%`;
+            container.appendChild(circle);
+            
+            // Draw solution arrow
+            const arrow = document.createElement('div');
+            arrow.className = 'solution-arrow';
+            
+            if (type === '>' || type === '>=') {
+                // Arrow to the right
+                arrow.style.left = `${circlePosition}%`;
+                arrow.style.width = `${100 - circlePosition - 5}%`;
+            } else {
+                // Arrow to the left
+                arrow.style.left = '5%';
+                arrow.style.width = `${circlePosition - 5}%`;
+            }
+            
+            container.appendChild(arrow);
+        }
+        
+        // Clear the graph
+        function clearGraph() {
+            graphContainer.innerHTML = '';
+            inequalityDisplay.textContent = 'Enter values above to display inequality';
+            solutionText.textContent = 'None yet';
+            answerFeedback.textContent = '';
+            answerFeedback.className = 'feedback';
+        }
+        
+        // Generate a random inequality
+        function generateRandomInequality() {
+            // Randomly choose between forms
+            const forms = ['simple', 'equation', 'distributive'];
+            const randomForm = forms[Math.floor(Math.random() * forms.length)];
+            
+            switchForm(randomForm);
+            
+            if (randomForm === 'simple') {
+                // Simple form
+                const types = ['>', '<', '>=', '<='];
+                const type = types[Math.floor(Math.random() * types.length)];
+                const value = Math.floor(Math.random() * 11) - 5; // -5 to 5
+                
+                simpleInequalityType.value = type;
+                simpleValue.value = formatNumber(value);
+                
+                graphSimpleInequality();
+            } else if (randomForm === 'equation') {
+                // Equation form
+                const types = ['>', '<', '>=', '<='];
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                // Generate simple coefficients
+                let a = Math.floor(Math.random() * 5) + 1; // 1 to 5
+                if (Math.random() > 0.5) a = -a;
+                
+                let b = Math.floor(Math.random() * 11) - 5; // -5 to 5
+                let c = Math.floor(Math.random() * 11) - 5; // -5 to 5
+                
+                aValue.value = formatNumber(a);
+                bValue.value = formatNumber(b);
+                equationInequalityType.value = type;
+                cValue.value = formatNumber(c);
+                
+                graphEquationInequality();
+            } else {
+                // Distributive form
+                const types = ['>', '<', '>=', '<='];
+                const type = types[Math.floor(Math.random() * types.length)];
+                
+                // Generate simple coefficients
+                let p = Math.floor(Math.random() * 5) + 1; // 1 to 5
+                if (Math.random() > 0.5) p = -p;
+                
+                let q = Math.floor(Math.random() * 11) - 5; // -5 to 5
+                let r = Math.floor(Math.random() * 11) - 5; // -5 to 5
+                
+                pValue.value = formatNumber(p);
+                qValue.value = formatNumber(q);
+                distributiveInequalityType.value = type;
+                rValue.value = formatNumber(r);
+                
+                graphDistributiveInequality();
+            }
+        }
+        
+        // Generate a practice problem
+        function generatePracticeProblem() {
+            const type = problemType.value;
+            let problem = '';
+            let answer = '';
+            
+            if (type === 'simple') {
+                // Simple: x > a
+                const value = Math.floor(Math.random() * 11) - 5;
+                const inequalityTypes = ['>', '<', '>=', '<='];
+                const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
+                
+                problem = `x ${inequality} ${formatNumber(value)}`;
+                answer = `x ${inequality} ${formatNumber(value)}`;
+                
+            } else if (type === 'onestep') {
+                // One-step: ax > b
+                let a = Math.floor(Math.random() * 5) + 1;
+                if (Math.random() > 0.5) a = -a;
+                
+                let b = Math.floor(Math.random() * 11) - 5;
+                const inequalityTypes = ['>', '<', '>=', '<='];
+                const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
+                
+                const aDisplay = a === 1 ? '' : a === -1 ? '-' : formatNumber(a);
+                problem = `${aDisplay}x ${inequality} ${formatNumber(b)}`;
+                
+                // Solve: x > b/a
+                let xValue = b / a;
+                let adjustedInequality = inequality;
+                
+                if (a < 0) {
+                    if (inequality === '>') adjustedInequality = '<';
+                    else if (inequality === '<') adjustedInequality = '>';
+                    else if (inequality === '>=') adjustedInequality = '<=';
+                    else if (inequality === '<=') adjustedInequality = '>=';
+                }
+                
+                answer = `x ${adjustedInequality} ${formatNumber(xValue)}`;
+                
+            } else if (type === 'twostep') {
+                // Two-step: ax + b > c
+                let a = Math.floor(Math.random() * 5) + 1;
+                if (Math.random() > 0.5) a = -a;
+                
+                let b = Math.floor(Math.random() * 11) - 5;
+                let c = Math.floor(Math.random() * 11) - 5;
+                const inequalityTypes = ['>', '<', '>=', '<='];
+                const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
+                
+                const aDisplay = a === 1 ? '' : a === -1 ? '-' : formatNumber(a);
+                const bDisplay = b === 0 ? '' : b > 0 ? ` + ${formatNumber(b)}` : ` - ${formatNumber(Math.abs(b))}`;
+                problem = `${aDisplay}x${bDisplay} ${inequality} ${formatNumber(c)}`;
+                
+                // Solve: x > (c - b)/a
+                let xValue = (c - b) / a;
+                let adjustedInequality = inequality;
+                
+                if (a < 0) {
+                    if (inequality === '>') adjustedInequality = '<';
+                    else if (inequality === '<') adjustedInequality = '>';
+                    else if (inequality === '>=') adjustedInequality = '<=';
+                    else if (inequality === '<=') adjustedInequality = '>=';
+                }
+                
+                answer = `x ${adjustedInequality} ${formatNumber(xValue)}`;
+                
+            } else {
+                // Distributive: p(x + q) > r
+                let p = Math.floor(Math.random() * 5) + 1;
+                if (Math.random() > 0.5) p = -p;
+                
+                let q = Math.floor(Math.random() * 11) - 5;
+                let r = Math.floor(Math.random() * 11) - 5;
+                const inequalityTypes = ['>', '<', '>=', '<='];
+                const inequality = inequalityTypes[Math.floor(Math.random() * inequalityTypes.length)];
+                
+                const pDisplay = p === 1 ? '' : p === -1 ? '-' : formatNumber(p);
+                const qDisplay = q === 0 ? '' : q > 0 ? ` + ${formatNumber(q)}` : ` - ${formatNumber(Math.abs(q))}`;
+                problem = `${pDisplay}(x${qDisplay}) ${inequality} ${formatNumber(r)}`;
+                
+                // Solve: x > (r/p) - q
+                let xValue = (r / p) - q;
+                let adjustedInequality = inequality;
+                
+                if (p < 0) {
+                    if (inequality === '>') adjustedInequality = '<';
+                    else if (inequality === '<') adjustedInequality = '>';
+                    else if (inequality === '>=') adjustedInequality = '<=';
+                    else if (inequality === '<=') adjustedInequality = '>=';
+                }
+                
+                answer = `x ${adjustedInequality} ${formatNumber(xValue)}`;
+            }
+            
+            // Store the problem and answer
+            currentPracticeProblem = { problem, answer };
+            
+            // Display the problem
+            practiceProblemDisplay.textContent = `Solve: ${problem}`;
+            
+            // Clear previous feedback and answer
+            answerFeedback.textContent = '';
+            answerFeedback.className = 'feedback';
+            answerInput.value = '';
+        }
+        
+        // Check the answer to the practice problem
+        function checkAnswer() {
+            if (!currentPracticeProblem) {
+                answerFeedback.textContent = 'Please generate a problem first.';
+                answerFeedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            const userAnswer = answerInput.value.trim();
+            if (!userAnswer) {
+                answerFeedback.textContent = 'Please enter an answer.';
+                answerFeedback.className = 'feedback incorrect';
+                return;
+            }
+            
+            // Normalize answers for comparison (remove extra spaces)
+            const normalizedUserAnswer = userAnswer.replace(/\s+/g, ' ').toLowerCase();
+            const normalizedCorrectAnswer = currentPracticeProblem.answer.replace(/\s+/g, ' ').toLowerCase();
+            
+            if (normalizedUserAnswer === normalizedCorrectAnswer) {
+                answerFeedback.textContent = 'Correct! Well done!';
+                answerFeedback.className = 'feedback correct';
+            } else {
+                answerFeedback.textContent = `Incorrect. Try again! The correct answer is: ${currentPracticeProblem.answer}`;
+                answerFeedback.className = 'feedback incorrect';
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
