@@ -160,9 +160,13 @@ class TutorEngine {
     detectQueryType(message) {
         const lowerMsg = message.toLowerCase();
 
+        // Check if this is a visualization request
+        const visualKeywords = ['graph', 'plot', 'draw', 'show', 'visualize', 'chart', 'diagram', 'picture', 'display', 'illustrate'];
+        const isVisualRequest = visualKeywords.some(kw => lowerMsg.includes(kw));
+
         if (lowerMsg.includes('code') || lowerMsg.includes('program') ||
-            lowerMsg.includes('python') || lowerMsg.includes('javascript') ||
-            lowerMsg.includes('algorithm') || lowerMsg.includes('write a function')) {
+            lowerMsg.includes('javascript') || lowerMsg.includes('algorithm') || 
+            lowerMsg.includes('write a function')) {
             return 'coder';
         }
 
@@ -174,6 +178,16 @@ class TutorEngine {
         }
 
         return 'tutor';
+    }
+
+    needsVisualization(message) {
+        const lowerMsg = message.toLowerCase();
+        const visualKeywords = [
+            'graph', 'plot', 'draw', 'show me', 'visualize', 'chart', 'diagram', 
+            'picture', 'display', 'illustrate', 'number line', 'coordinate',
+            'sketch', 'create a', 'make a', 'generate'
+        ];
+        return visualKeywords.some(kw => lowerMsg.includes(kw));
     }
 
     async sendMessage() {
@@ -202,22 +216,35 @@ class TutorEngine {
         try {
             const queryType = this.detectQueryType(message);
             const model = this.models[queryType];
+            const wantsVisual = this.needsVisualization(message);
 
-            const response = await this.callAPI(message, model);
+            console.log('Query type:', queryType, 'Wants visual:', wantsVisual);
+
+            const response = await this.callAPI(message, model, wantsVisual);
             this.removeTypingIndicator(typingId);
 
-            // Extract Python code blocks BEFORE rendering
-            const pythonBlocks = this.messageParser.extractPythonCode(response);
+            console.log('API Response:', response);
 
-            // Add assistant message (Python blocks will show "Generating visualization..." placeholder)
+            // Extract Python code blocks
+            const pythonBlocks = this.messageParser.extractPythonCode(response);
+            console.log('Python blocks found:', pythonBlocks.length);
+
+            if (pythonBlocks.length > 0) {
+                pythonBlocks.forEach((block, i) => {
+                    console.log(`Block ${i}:`, block.code.substring(0, 100) + '...');
+                });
+            }
+
+            // Add assistant message
             const messageElement = this.addMessage(response, 'assistant');
 
             // Update history
             this.state.chatHistory.push({ role: 'user', content: message });
             this.state.chatHistory.push({ role: 'assistant', content: response });
 
-            // Auto-execute ALL Python visualization code
+            // Auto-execute Python visualization code
             if (pythonBlocks.length > 0) {
+                console.log('Executing Python blocks...');
                 for (let i = 0; i < pythonBlocks.length; i++) {
                     const block = pythonBlocks[i];
                     await this.executeAndDisplayPython(block.code, messageElement, i);
@@ -236,6 +263,8 @@ class TutorEngine {
     }
 
     async executeAndDisplayPython(code, messageElement, blockIndex) {
+        console.log('Executing Python block', blockIndex);
+        
         // Find the placeholder in this message
         const placeholder = messageElement.querySelector(`.python-pending[data-code-index="${blockIndex}"]`);
         
@@ -244,8 +273,10 @@ class TutorEngine {
         }
 
         const result = await this.pythonEngine.runCode(code);
+        console.log('Python result:', result.success, result.error || 'no error');
 
         if (result.success && result.image) {
+            console.log('Got image, displaying...');
             // Replace placeholder with the actual image
             if (placeholder) {
                 const imgSrc = this.pythonEngine.getImageDataUrl(result.image);
@@ -261,10 +292,11 @@ class TutorEngine {
                 `;
             } else {
                 // Fallback: append to message
+                console.log('No placeholder found, appending...');
                 this.addVisualizationToMessage(messageElement, result.image);
             }
         } else if (result.success && result.stdout && result.stdout.trim()) {
-            // Show output if there's no image but there's stdout
+            console.log('Got stdout:', result.stdout);
             if (placeholder) {
                 placeholder.outerHTML = `
                     <div class="code-output">
@@ -273,7 +305,7 @@ class TutorEngine {
                 `;
             }
         } else if (!result.success) {
-            // Show error
+            console.error('Python error:', result.error);
             if (placeholder) {
                 placeholder.outerHTML = `
                     <div class="python-error">
@@ -281,9 +313,8 @@ class TutorEngine {
                     </div>
                 `;
             }
-            console.error('Python execution error:', result.error);
         } else {
-            // No output at all - remove placeholder
+            console.log('No output from Python');
             if (placeholder) {
                 placeholder.remove();
             }
@@ -354,7 +385,7 @@ class TutorEngine {
         this.scrollToBottom();
     }
 
-    async callAPI(userMessage, model = 'grok') {
+    async callAPI(userMessage, model = 'grok', wantsVisualization = false) {
         const gradeData = this.grades[this.state.currentGrade];
         const lang = this.state.currentLang;
         const langName = this.languageManager.getLanguageName();
@@ -363,88 +394,79 @@ class TutorEngine {
             "Reply in English." :
             `Reply in ${langName}.`;
 
+        // Build a very explicit system prompt
         const systemPrompt = `You are a safe, educational AI Math Tutor for ${gradeData.level} students.
 
-CRITICAL RULES:
-1. **Safety**: No violence, hate speech, or requests for personal information.
-2. **No Cheating**: Do not solve homework directly. Use the Socratic Method - ask guiding questions.
-3. **Language**: ${langInstruction}
-4. **Tone**: ${gradeData.tone}
-5. **Math Scope**: ${gradeData.mathTopics}
+RULES:
+1. Safety: No violence, hate speech, or personal information requests.
+2. No Cheating: Guide students with questions, don't just give answers.
+3. Language: ${langInstruction}
+4. Tone: ${gradeData.tone}
 
-PYTHON VISUALIZATION - IMPORTANT:
-When a student asks to SEE, GRAPH, PLOT, DRAW, SHOW, or VISUALIZE anything mathematical, you MUST generate Python code.
-The code will be AUTOMATICALLY executed and displayed as an image - the student will NOT see the code.
+═══════════════════════════════════════════════════════════════════
+VISUALIZATION REQUIREMENT - THIS IS MANDATORY
+═══════════════════════════════════════════════════════════════════
 
-REQUIRED FORMAT for visualizations:
+When a student asks to SEE, GRAPH, PLOT, DRAW, SHOW, VISUALIZE, DISPLAY, or ILLUSTRATE anything mathematical, you MUST include Python code that creates the visualization.
+
+The Python code will be automatically executed and the student will see the resulting image (not the code).
+
+MANDATORY FORMAT - You MUST use this exact format:
+
 \`\`\`python
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Your visualization code here
+# Your visualization code
 
 save_plot_as_base64()
 \`\`\`
 
 CRITICAL REQUIREMENTS:
-1. Always use the \`\`\`python code fence
-2. Always end with save_plot_as_base64()
-3. Use dark theme colors (background is dark blue #1a1a2e)
-4. Use these colors: primary=#00d4ff, secondary=#ff6b6b, accent=#d4af37, text=#f0f0f0
+1. Use triple backticks with "python" language identifier
+2. MUST call save_plot_as_base64() at the end
+3. Use dark theme: background #1a1a2e, text #f0f0f0
+4. Colors: primary #00d4ff, secondary #ff6b6b, accent #d4af37
 
-AVAILABLE HELPER FUNCTIONS (pre-loaded):
-- create_coordinate_grid(xmin, xmax, ymin, ymax) - Creates coordinate plane
-- plot_function(equation_string, xmin, xmax, color, ax) - Plots math functions  
-- save_plot_as_base64() - REQUIRED at end, saves the figure
+═══════════════════════════════════════════════════════════════════
+EXAMPLES - Follow these patterns exactly:
+═══════════════════════════════════════════════════════════════════
 
-VISUALIZATION TYPES YOU CAN CREATE:
+EXAMPLE 1 - Linear function:
+Student: "Show me a graph of y = 2x"
 
-**Number Lines & Inequalities:**
-- Number line with points
-- Inequalities: x > 3, x ≤ -2 (use open/closed circles, arrows)
-- Compound inequalities
+Your response should include:
+\`\`\`python
+import matplotlib.pyplot as plt
+import numpy as np
 
-**Coordinate Plane:**
-- Plot points with labels
-- Linear functions y = mx + b
-- Quadratic, polynomial, exponential, logarithmic, trig functions
-- Two-variable inequalities with shading
-- Systems of equations/inequalities
+fig, ax = plt.subplots(figsize=(8, 8))
 
-**Geometry 2D:**
-- Line segments, rays (with arrows), lines
-- Angles with arc and degree measurement
-- All polygons: triangles, quadrilaterals, pentagons, hexagons, etc.
-- Circles with radius, diameter, chord, arc, sector
-- Transformations: translation, reflection, rotation, dilation
+# Set up coordinate plane
+ax.set_xlim(-10, 10)
+ax.set_ylim(-10, 10)
+ax.axhline(y=0, color='#d4af37', linewidth=1.5)
+ax.axvline(x=0, color='#d4af37', linewidth=1.5)
+ax.grid(True, alpha=0.3)
+ax.set_aspect('equal')
 
-**Geometry 3D:**
-- Prisms, pyramids, cylinders, cones, spheres
-- Cross-sections
+# Plot the line y = 2x
+x = np.linspace(-10, 10, 100)
+y = 2 * x
+ax.plot(x, y, color='#00d4ff', linewidth=2, label='y = 2x')
 
-**Data & Statistics:**
-- Bar charts, double bar charts
-- Pie charts
-- Line graphs
-- Histograms
-- Scatter plots with trend lines
-- Box plots
-- Dot plots, stem-and-leaf plots
+ax.set_xlabel('x', color='#f0f0f0')
+ax.set_ylabel('y', color='#f0f0f0')
+ax.set_title('Graph of y = 2x', fontsize=14, color='#d4af37')
+ax.legend()
 
-**Probability:**
-- Dice probability models
-- Coin flip models
-- Spinners
-- Playing card probabilities
-- Theoretical vs experimental comparisons
+save_plot_as_base64()
+\`\`\`
 
-**Infographics:**
-- Step-by-step process diagrams
-- Flowcharts
+EXAMPLE 2 - Number line inequality:
+Student: "Graph x > 3 on a number line"
 
-EXAMPLE - Number Line Inequality:
-When student asks "Graph x > 3 on a number line", respond with explanation AND this code:
-
+Your response should include:
 \`\`\`python
 import matplotlib.pyplot as plt
 import numpy as np
@@ -454,31 +476,81 @@ fig, ax = plt.subplots(figsize=(12, 2.5))
 # Draw number line
 ax.hlines(0, -2, 10, colors='#f0f0f0', linewidth=2)
 
-# Draw tick marks and labels
+# Tick marks and labels
 for i in range(-2, 11):
     ax.vlines(i, -0.15, 0.15, colors='#f0f0f0', linewidth=1)
     ax.text(i, -0.4, str(i), ha='center', va='top', fontsize=10, color='#f0f0f0')
 
-# Shade the solution (x > 3)
+# Shade solution region
 ax.hlines(0, 3, 10, colors='#00d4ff', linewidth=6)
 ax.annotate('', xy=(10.3, 0), xytext=(9.8, 0),
             arrowprops=dict(arrowstyle='->', color='#00d4ff', lw=3))
 
-# Open circle at 3 (not included)
+# Open circle at 3
 circle = plt.Circle((3, 0), 0.2, color='#1a1a2e', ec='#00d4ff', linewidth=3, zorder=5)
 ax.add_patch(circle)
 
 ax.set_xlim(-2.5, 10.5)
 ax.set_ylim(-0.8, 0.6)
 ax.axis('off')
-ax.set_title("x > 3", fontsize=14, color='#d4af37', pad=15)
+ax.set_title('x > 3', fontsize=14, color='#d4af37', pad=15)
 
 save_plot_as_base64()
 \`\`\`
 
+EXAMPLE 3 - Bar chart:
+Student: "Show me a bar chart"
+
+\`\`\`python
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+categories = ['A', 'B', 'C', 'D']
+values = [25, 40, 30, 35]
+colors = ['#00d4ff', '#ff6b6b', '#d4af37', '#27ae60']
+
+bars = ax.bar(categories, values, color=colors)
+
+for bar, val in zip(bars, values):
+    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
+            str(val), ha='center', color='#f0f0f0')
+
+ax.set_ylabel('Value', color='#f0f0f0')
+ax.set_title('Bar Chart Example', fontsize=14, color='#d4af37')
+ax.set_facecolor('#1a1a2e')
+fig.patch.set_facecolor('#1a1a2e')
+ax.tick_params(colors='#f0f0f0')
+ax.spines['bottom'].set_color('#f0f0f0')
+ax.spines['left'].set_color('#f0f0f0')
+
+save_plot_as_base64()
+\`\`\`
+
+═══════════════════════════════════════════════════════════════════
+
+AVAILABLE VISUALIZATIONS:
+- Coordinate planes with functions (linear, quadratic, etc.)
+- Number line inequalities
+- Bar charts, pie charts, line graphs, histograms
+- Scatter plots
+- Geometric shapes (triangles, circles, etc.)
+- Angles with measurements
+- 3D shapes
+- Probability models
+
+HELPER FUNCTION (pre-loaded):
+- save_plot_as_base64() - REQUIRED at end of every visualization
+
 ${gradeData.constraints}`;
 
         const recentHistory = this.state.chatHistory.slice(-8);
+
+        // If user wants visualization, add a hint
+        let enhancedMessage = userMessage;
+        if (wantsVisualization) {
+            enhancedMessage = userMessage + "\n\n[System note: User wants a visual. Include Python matplotlib code in your response using ```python code blocks, ending with save_plot_as_base64()]";
+        }
 
         try {
             const response = await fetch(`${this.API_BASE}/v1/chat/completions`, {
@@ -492,7 +564,7 @@ ${gradeData.constraints}`;
                     messages: [
                         { role: 'system', content: systemPrompt },
                         ...recentHistory,
-                        { role: 'user', content: userMessage }
+                        { role: 'user', content: enhancedMessage }
                     ],
                     temperature: 0.7
                 })
@@ -645,7 +717,7 @@ ${gradeData.constraints}`;
         const speakBtn = this.languageManager.getString('speakBtn');
 
         // For copy/speak, strip out Python code blocks so students get clean text
-        const cleanContent = content.replace(/```python[\s\S]*?```/g, '[Visualization]').trim();
+        const cleanContent = content.replace(/```python[\s\S]*?```/g, '').trim();
 
         div.innerHTML = `
             <div class="message-content">
@@ -666,7 +738,7 @@ ${gradeData.constraints}`;
         container.appendChild(div);
         this.scrollToBottom();
 
-        return div; // Return the element so we can update it later
+        return div;
     }
 
     addSystemMessage(content) {
