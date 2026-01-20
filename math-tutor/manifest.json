@@ -1,14 +1,28 @@
 {
-  "version": "2.0.0",
+  "version": "3.0.0",
   "name": "Math Tutor with Python Integration",
-  "description": "AI Math Tutor with Python-powered visualizations",
+  "description": "AI Math Tutor with Python-powered visualizations, drawing tools, and conversation management",
 
   "core": {
     "tutorEngine": "core/tutor-engine.js",
     "languageManager": "core/language-manager.js",
     "appLoader": "core/app-loader.js",
     "messageParser": "core/message-parser.js",
-    "pythonEngine": "core/python-engine.js"
+    "pythonEngine": "core/python-engine.js",
+    "contentFilter": "core/content-filter.js",
+    "drawingTool": "core/drawing-tool.js",
+    "conversationManager": "core/conversation-manager.js"
+  },
+
+  "styles": {
+    "core": "styles/core.css",
+    "mobile": "styles/mobile.css",
+    "drawing": "styles/drawing.css"
+  },
+
+  "data": {
+    "languages": "data/languages.json",
+    "contentFilter": "data/content-filter.json"
   },
 
   "apps": [],
@@ -23,10 +37,23 @@
     }
   },
 
+  "features": {
+    "themes": ["dark", "light"],
+    "imageUpload": true,
+    "cameraCapture": true,
+    "drawingTool": true,
+    "conversationSaving": true,
+    "contentFiltering": true,
+    "textToSpeech": true,
+    "multiLanguage": true
+  },
+
   "settings": {
     "maxConcurrentApps": 3,
     "appTimeout": 5000,
     "enableOfflineCache": true,
-    "pythonPackages": ["numpy", "matplotlib"]
+    "pythonPackages": ["numpy", "matplotlib"],
+    "maxConversations": 50,
+    "maxUndoSteps": 50
   }
 }
