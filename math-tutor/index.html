@@ -6,6 +6,8 @@
     <title>Safe AI Math Tutor</title>
     <link rel="stylesheet" href="styles/core.css">
     <link rel="stylesheet" href="styles/mobile.css">
+    <!-- Pyodide for Python execution -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
 </head>
 <body>
 
@@ -19,16 +21,19 @@
             </div>
         </div>
         <div class="controls">
-            <!-- Language Selector -->
             <select id="lang-select" title="Choose Language" aria-label="Language Selection">
                 <option value="en">English</option>
-                <option value="es">Spanish (Español)</option>
-                <option value="ar">Arabic (العربية)</option>
-                <option value="fr">French (Français)</option>
-                <option value="de">German (Deutsch)</option>
-                <option value="ru">Russian (Русский)</option>
-                <option value="it">Italian (Italiano)</option>
-                <option value="pt">Portuguese (Português)</option>
+                <option value="es">Español</option>
+                <option value="ar">العربية</option>
+                <option value="fr">Français</option>
+                <option value="de">Deutsch</option>
+                <option value="ru">Русский</option>
+                <option value="it">Italiano</option>
+                <option value="pt">Português</option>
+                <option value="zh">中文</option>
+                <option value="ja">日本語</option>
+                <option value="ko">한국어</option>
+                <option value="hi">हिन्दी</option>
                 <option value="other">Other...</option>
             </select>
             <input type="text" id="other-lang-input" placeholder="Type language..." aria-label="Custom Language Input" />
@@ -39,13 +44,15 @@
                 <option value="high">High School (9-12)</option>
                 <option value="general">General / College</option>
             </select>
-            
-            <select id="model-select" title="Select AI Model" aria-label="AI Model">
-                <option value="nova-fast">Nova Micro</option>
-                <option value="qwen-coder">Qwen Coder</option>
-                <option value="gemini-fast">Gemini Fast</option>
-                <option value="openai-fast">OpenAI Fast</option>
-                <option value="grok" selected>Grok</option>
+
+            <select id="voice-select" title="Select TTS Voice" aria-label="TTS Voice">
+                <option value="alloy">Alloy</option>
+                <option value="echo">Echo</option>
+                <option value="fable">Fable</option>
+                <option value="onyx">Onyx</option>
+                <option value="shimmer">Shimmer</option>
+                <option value="coral">Coral</option>
+                <option value="sage">Sage</option>
             </select>
 
             <button class="control-btn" id="new-chat-btn" aria-label="Start New Chat">
@@ -67,25 +74,29 @@
 
             <div class="features-grid">
                 <div class="feature-item">
-                    <span aria-hidden="true">❓</span>
-                    <small id="feat-1">Ask specific questions</small>
+                    <span aria-hidden="true">📊</span>
+                    <small id="feat-1">Interactive graphs & charts</small>
                 </div>
                 <div class="feature-item">
-                    <span aria-hidden="true">📝</span>
-                    <small id="feat-2">Get step-by-step help</small>
+                    <span aria-hidden="true">📐</span>
+                    <small id="feat-2">2D & 3D visualizations</small>
                 </div>
                 <div class="feature-item">
-                    <span aria-hidden="true">🔍</span>
-                    <small id="feat-3">Check your work</small>
+                    <span aria-hidden="true">🎲</span>
+                    <small id="feat-3">Probability models</small>
                 </div>
                 <div class="feature-item">
-                    <span aria-hidden="true">💡</span>
-                    <small id="feat-4">Learn real-world examples</small>
+                    <span aria-hidden="true">🔊</span>
+                    <small id="feat-4">Text-to-speech support</small>
                 </div>
             </div>
         </div>
 
         <div id="messages-container"></div>
+    </div>
+
+    <div id="python-status" class="python-status">
+        <span id="python-status-text">Loading Python...</span>
     </div>
 
     <div id="input-area">
@@ -107,10 +118,10 @@
 <script src="core/language-manager.js"></script>
 <script src="core/message-parser.js"></script>
 <script src="core/app-loader.js"></script>
+<script src="core/python-engine.js"></script>
 <script src="core/tutor-engine.js"></script>
 
 <script>
-    // Initialize the application
     window.addEventListener('DOMContentLoaded', () => {
         window.mathTutor = new TutorEngine();
     });
