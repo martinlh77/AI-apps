@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-01",
+  "description": "Content filter for Math Tutor - Add words/phrases to block inappropriate content",
+  "blockedWords": [
+    "hate",
+    "kill",
+    "murder",
+    "suicide",
+    "terrorist",
+    "bomb",
+    "weapon",
+    "drugs",
+    "cocaine",
+    "heroin",
+    "meth",
+    "porn",
+    "xxx",
+    "nude",
+    "naked",
+    "sex",
+    "racist",
+    "slur"
+  ],
+  "blockedPhrases": [
+    "how to make a bomb",
+    "how to make drugs",
+    "how to hurt",
+    "how to kill"
+  ],
+  "replacements": {
+    "damn": "darn",
+    "hell": "heck",
+    "crap": "crud"
+  },
+  "warningPatterns": [
+    "personal information",
+    "phone number",
+    "address",
+    "credit card"
+  ],
+  "notes": "Add new words/phrases as discovered. This file is loaded at startup."
+}
