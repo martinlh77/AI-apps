@@ -52,15 +52,31 @@ plt.rcParams['grid.color'] = '#444444'
 plt.rcParams['figure.figsize'] = [8, 6]
 plt.rcParams['figure.dpi'] = 100
 
+# Global variable to store the last generated image
+_last_image_base64 = None
+
 def save_plot_as_base64():
+    """Save current matplotlib figure as base64 PNG and store it globally"""
+    global _last_image_base64
     buf = io.BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight', facecolor='#1a1a2e', edgecolor='none')
     buf.seek(0)
-    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    _last_image_base64 = base64.b64encode(buf.read()).decode('utf-8')
     plt.close('all')
-    return img_base64
+    return _last_image_base64
+
+def get_last_image():
+    """Retrieve the last generated image"""
+    global _last_image_base64
+    return _last_image_base64
+
+def clear_last_image():
+    """Clear the stored image"""
+    global _last_image_base64
+    _last_image_base64 = None
 
 def create_coordinate_grid(xmin=-10, xmax=10, ymin=-10, ymax=10):
+    """Create a standard coordinate grid"""
     fig, ax = plt.subplots()
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
@@ -71,6 +87,7 @@ def create_coordinate_grid(xmin=-10, xmax=10, ymin=-10, ymax=10):
     return fig, ax
 
 def plot_function(func_str, xmin=-10, xmax=10, num_points=500, label=None, color='#00d4ff', ax=None):
+    """Plot a mathematical function from string"""
     x = np.linspace(xmin, xmax, num_points)
     safe_dict = {
         'x': x, 'np': np, 'sin': np.sin, 'cos': np.cos, 'tan': np.tan,
@@ -127,6 +144,10 @@ print("Python math engine initialized successfully!")
         }
 
         try {
+            // Clear any previous image
+            await this.pyodide.runPythonAsync(`clear_last_image()`);
+
+            // Redirect stdout to capture print statements
             await this.pyodide.runPythonAsync(`
 import sys
 from io import StringIO
@@ -134,37 +155,36 @@ _stdout_capture = StringIO()
 sys.stdout = _stdout_capture
             `);
 
-            const result = await this.pyodide.runPythonAsync(code);
+            // Run the user code
+            await this.pyodide.runPythonAsync(code);
 
+            // Capture stdout
             const stdout = await this.pyodide.runPythonAsync(`
-_stdout_capture.getvalue()
-            `);
-
-            await this.pyodide.runPythonAsync(`
+_captured = _stdout_capture.getvalue()
 sys.stdout = sys.__stdout__
+_captured
             `);
 
-            let imageData = null;
-            try {
-                const hasPlot = await this.pyodide.runPythonAsync(`
-len(plt.get_fignums()) > 0
-                `);
-                
-                if (hasPlot) {
-                    imageData = await this.pyodide.runPythonAsync(`save_plot_as_base64()`);
-                }
-            } catch (e) {
-                // No plot to capture
-            }
+            // Check if an image was generated
+            const imageData = await this.pyodide.runPythonAsync(`get_last_image()`);
+            
+            console.log('Python execution complete. Image generated:', imageData ? 'yes (' + imageData.length + ' chars)' : 'no');
+            console.log('Stdout:', stdout || '(empty)');
 
             return {
                 success: true,
-                result: result,
+                result: null,
                 stdout: stdout,
                 image: imageData
             };
 
         } catch (error) {
+            console.error('Python execution error:', error);
+            // Reset stdout on error
+            try {
+                await this.pyodide.runPythonAsync(`sys.stdout = sys.__stdout__`);
+            } catch (e) {}
+            
             return {
                 success: false,
                 error: error.message
@@ -623,8 +643,6 @@ save_plot_as_base64()
 
         return `
 from matplotlib.patches import Polygon
-import matplotlib.pyplot as plt
-import numpy as np
 
 fig, ax = plt.subplots(figsize=(8, 8))
 
@@ -686,7 +704,7 @@ ax.set_aspect('equal')
 ax.grid(True, alpha=0.3)
 ax.axhline(y=0, color='#d4af37', linewidth=0.5, alpha=0.5)
 ax.axvline(x=0, color='#d4af37', linewidth=0.5, alpha=0.5)
-ax.set_title(f"${shapeType.charAt(0).toUpperCase() + shapeType.slice(1)}", fontsize=14, color='#d4af37')
+ax.set_title("${shapeType.charAt(0).toUpperCase() + shapeType.slice(1)}", fontsize=14, color='#d4af37')
 
 save_plot_as_base64()
         `;
@@ -706,8 +724,6 @@ save_plot_as_base64()
 
         return `
 from matplotlib.patches import Circle, Wedge
-import matplotlib.pyplot as plt
-import numpy as np
 
 fig, ax = plt.subplots(figsize=(8, 8))
 
@@ -775,8 +791,6 @@ save_plot_as_base64()
 
         return `
 from matplotlib.patches import Polygon
-import matplotlib.pyplot as plt
-import numpy as np
 
 fig, ax = plt.subplots(figsize=(10, 8))
 
@@ -862,8 +876,6 @@ save_plot_as_base64()
 
         return `
 from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-import numpy as np
 
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
@@ -902,8 +914,6 @@ save_plot_as_base64()
         return `
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-import matplotlib.pyplot as plt
-import numpy as np
 
 fig = plt.figure(figsize=(10, 8))
 ax = fig.add_subplot(111, projection='3d')
@@ -1039,8 +1049,6 @@ save_plot_as_base64()
         return `
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import Circle, Rectangle, Ellipse
-import matplotlib.pyplot as plt
-import numpy as np
 
 fig = plt.figure(figsize=(14, 6))
 ax1 = fig.add_subplot(121, projection='3d')
@@ -1155,8 +1163,6 @@ save_plot_as_base64()
         const horizontal = options.horizontal || false;
 
         return `
-import matplotlib.pyplot as plt
-
 data = ${JSON.stringify(data)}
 fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -1192,9 +1198,6 @@ save_plot_as_base64()
         const title = options.title || 'Double Bar Chart';
 
         return `
-import matplotlib.pyplot as plt
-import numpy as np
-
 data1 = ${JSON.stringify(data1)}
 data2 = ${JSON.stringify(data2)}
 
@@ -1225,8 +1228,6 @@ save_plot_as_base64()
         const explode = options.explode || null;
 
         return `
-import matplotlib.pyplot as plt
-
 data = ${JSON.stringify(data)}
 fig, ax = plt.subplots(figsize=(8, 8))
 
@@ -1263,9 +1264,6 @@ save_plot_as_base64()
         const ylabel = options.ylabel || 'Y';
 
         return `
-import matplotlib.pyplot as plt
-import numpy as np
-
 points = ${JSON.stringify(points)}
 fig, ax = plt.subplots(figsize=(10, 8))
 
@@ -1300,9 +1298,6 @@ save_plot_as_base64()
         const showStats = options.showStats || false;
 
         return `
-import matplotlib.pyplot as plt
-import numpy as np
-
 data = np.array(${JSON.stringify(data)})
 fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -1337,9 +1332,6 @@ save_plot_as_base64()
         const showMean = options.showMean || false;
 
         return `
-import matplotlib.pyplot as plt
-import numpy as np
-
 datasets = ${JSON.stringify(datasets)}
 labels = ${JSON.stringify(labels)}
 
@@ -1379,8 +1371,6 @@ save_plot_as_base64()
         const showArea = options.showArea || false;
 
         return `
-import matplotlib.pyplot as plt
-
 data = ${JSON.stringify(data)}
 fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -1414,8 +1404,6 @@ save_plot_as_base64()
         const title = options.title || 'Dot Plot';
 
         return `
-import matplotlib.pyplot as plt
-import numpy as np
 from collections import Counter
 
 data = ${JSON.stringify(data)}
@@ -1446,8 +1434,6 @@ save_plot_as_base64()
         const title = options.title || 'Stem-and-Leaf Plot';
 
         return `
-import matplotlib.pyplot as plt
-
 data = sorted(${JSON.stringify(data)})
 fig, ax = plt.subplots(figsize=(8, 6))
 
@@ -1487,8 +1473,6 @@ save_plot_as_base64()
 
         if (modelType === 'dice') {
             return `
-import matplotlib.pyplot as plt
-
 fig, ax = plt.subplots(figsize=(10, 6))
 outcomes = [1, 2, 3, 4, 5, 6]
 probabilities = [1/6] * 6
@@ -1511,8 +1495,6 @@ save_plot_as_base64()
             `;
         } else if (modelType === 'coin') {
             return `
-import matplotlib.pyplot as plt
-
 fig, ax = plt.subplots(figsize=(8, 6))
 outcomes = ['Heads', 'Tails']
 probabilities = [0.5, 0.5]
@@ -1533,8 +1515,6 @@ save_plot_as_base64()
         } else if (modelType === 'spinner') {
             const sections = options.sections || 4;
             return `
-import matplotlib.pyplot as plt
-
 fig, ax = plt.subplots(figsize=(8, 8))
 n_sections = ${sections}
 sizes = [1/n_sections] * n_sections
@@ -1555,8 +1535,6 @@ save_plot_as_base64()
             `;
         } else if (modelType === 'cards') {
             return `
-import matplotlib.pyplot as plt
-
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
 suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
@@ -1598,9 +1576,6 @@ save_plot_as_base64()
         const numTrials = options.numTrials || 100;
 
         return `
-import matplotlib.pyplot as plt
-import numpy as np
-
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 ax1, ax2 = axes
 
@@ -1661,7 +1636,6 @@ save_plot_as_base64()
         const title = options.title || 'Process Flowchart';
 
         return `
-import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
 fig, ax = plt.subplots(figsize=(8, ${Math.max(6, steps.length * 1.5 + 2)}))
@@ -1702,7 +1676,6 @@ save_plot_as_base64()
         const title = options.title || 'Step-by-Step Guide';
 
         return `
-import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 
 fig, ax = plt.subplots(figsize=(12, ${Math.max(4, steps.length * 1.8)}))
