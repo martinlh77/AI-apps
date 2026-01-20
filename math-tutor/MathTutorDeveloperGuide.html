@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Tutor - Developer Guide</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --bg-secondary: #16213e;
+            --accent: #d4af37;
+            --text: #f0f0f0;
+            --text-muted: #aaa;
+            --code-bg: #0d0d1a;
+            --border: #333;
+            --primary: #00d4ff;
+            --secondary: #ff6b6b;
+            --success: #27ae60;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-color);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-color));
+            border-bottom: 3px solid var(--accent);
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            color: var(--accent);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        h2 {
+            color: var(--accent);
+            font-size: 1.8rem;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        h3 {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin: 30px 0 15px;
+        }
+
+        h4 {
+            color: var(--text);
+            font-size: 1.1rem;
+            margin: 20px 0 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: var(--primary);
+        }
+
+        pre {
+            background: var(--code-bg);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid var(--border);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text);
+            display: block;
+            white-space: pre;
+        }
+
+        .note {
+            background: rgba(212, 175, 55, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .note-title {
+            color: var(--accent);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .warning {
+            background: rgba(255, 107, 107, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-title {
+            color: var(--secondary);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .success {
+            background: rgba(39, 174, 96, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(212, 175, 55, 0.2);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .color-swatch {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-right: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .checklist {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .checklist li {
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .checklist li::before {
+            content: '☐';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        .toc {
+            background: var(--bg-secondary);
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+            color: var(--accent);
+        }
+
+        .toc ul {
+            margin: 10px 0 0 20px;
+        }
+
+        .toc a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+
+        .architecture-diagram {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Fira Code', monospace;
+            border: 1px solid var(--border);
+        }
+
+        .architecture-diagram .flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .architecture-diagram .box {
+            background: var(--code-bg);
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .architecture-diagram .arrow {
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            margin-top: 60px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            pre {
+                padding: 15px;
+                font-size: 0.85rem;
+            }
+
+            .architecture-diagram .flow {
+                flex-direction: column;
+            }
+
+            .architecture-diagram .arrow {
+                transform: rotate(90deg);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🎓 Math Tutor Developer Guide</h1>
+    <p>Adding New Visualization Types to the Python Engine</p>
+</header>
+
+<div class="container">
+
+    <nav class="toc">
+        <h3>📋 Table of Contents</h3>
+        <ul>
+            <li><a href="#overview">Overview</a></li>
+            <li><a href="#prerequisites">Prerequisites</a></li>
+            <li><a href="#architecture">Architecture</a></li>
+            <li><a href="#adding-new">Adding a New Visualization</a></li>
+            <li><a href="#templates">Code Templates</a></li>
+            <li><a href="#colors">Color Reference</a></li>
+            <li><a href="#functions">Pre-loaded Functions</a></li>
+            <li><a href="#testing">Testing</a></li>
+            <li><a href="#checklist">Checklist</a></li>
+            <li><a href="#examples">Example Implementations</a></li>
+        </ul>
+    </nav>
+
+    <section id="overview">
+        <h2>Overview</h2>
+        <p>
+            The Math Tutor app uses <strong>Pyodide</strong> (Python compiled to WebAssembly) to execute 
+            matplotlib code directly in the browser. When a student asks for a visualization, the AI 
+            generates Python code that gets executed client-side, producing a downloadable PNG image.
+        </p>
+
+        <div class="note">
+            <div class="note-title">📁 Files to Provide to AI</div>
+            <p>When asking AI to create a new visualization type, provide:</p>
+            <ol>
+                <li><code>core/python-engine.js</code> - Contains all visualization generators</li>
+                <li>This developer guide document</li>
+            </ol>
+            <p>You do NOT need to provide index.html, tutor-engine.js, or manifest.json.</p>
+        </div>
+    </section>
+
+    <section id="prerequisites">
+        <h2>Prerequisites</h2>
+        <p>Before adding a new visualization type, ensure you understand:</p>
+        <ul>
+            <li>Basic Python matplotlib syntax</li>
+            <li>JavaScript template literals (backtick strings with <code>${variable}</code>)</li>
+            <li>The existing code patterns in python-engine.js</li>
+        </ul>
+    </section>
+
+    <section id="architecture">
+        <h2>Architecture</h2>
+        
+        <div class="architecture-diagram">
+            <div class="flow">
+                <div class="box">User Query</div>
+                <span class="arrow">→</span>
+                <div class="box">AI (Grok)</div>
+                <span class="arrow">→</span>
+                <div class="box">Python Code</div>
+                <span class="arrow">→</span>
+                <div class="box">Pyodide</div>
+                <span class="arrow">→</span>
+                <div class="box">Base64 PNG</div>
+                <span class="arrow">→</span>
+                <div class="box">Display</div>
+            </div>
+        </div>
+
+        <p>
+            The AI generates matplotlib Python code based on user requests. This code is executed 
+            client-side via Pyodide, and the resulting plot is converted to a base64-encoded PNG 
+            that displays inline and can be downloaded.
+        </p>
+    </section>
+
+    <section id="adding-new">
+        <h2>Adding a New Visualization Type</h2>
+
+        <h3>Step 1: Create Generator Method</h3>
+        <p>Add a new method to the <code>PythonEngine</code> class in <code>core/python-engine.js</code>:</p>
+
+        <pre><code>generateYourVisualizationCode(options) {
+    // Extract options with defaults using nullish coalescing (??) or logical OR (||)
+    const param1 = options.param1 ?? 'defaultValue';
+    const param2 = options.param2 || 10;
+    const dataArray = options.data || [1, 2, 3];
+    
+    // Return Python code as template literal
+    // Use ${} for JavaScript variables
+    return `
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots(figsize=(10, 8))
+
+# Your matplotlib code here
+data = ${JSON.stringify(dataArray)}
+param = ${param2}
+
+# Always style consistently
+ax.set_title("${param1}", fontsize=14, color='#d4af37')
+ax.grid(True, alpha=0.3)
+
+# REQUIRED: Must end with this
+save_plot_as_base64()
+    `;
+}</code></pre>
+
+        <h3>Step 2: Register in Switch Statement</h3>
+        <p>Find the <code>generateGraph</code> method (approximately line 50) and add your case:</p>
+
+        <pre><code>async generateGraph(config) {
+    const { type, equation, points, options = {} } = config;
+    let code = '';
+
+    switch (type) {
+        // ... existing cases ...
+        
+        case 'your_visualization_type':
+            code = this.generateYourVisualizationCode(options);
+            break;
+            
+        // ... more cases ...
+        
+        default:
+            code = this.generateFunctionPlotCode(equation || 'x', options);
+    }
+
+    return await this.runCode(code);
+}</code></pre>
+
+        <h3>Step 3: Update AI System Prompt</h3>
+        <p>
+            In <code>core/tutor-engine.js</code>, find the <code>systemPrompt</code> variable in the 
+            <code>callAPI</code> method. Add your new visualization type to the appropriate category 
+            in the capabilities list so the AI knows it can generate this type.
+        </p>
+
+        <pre><code>// In the systemPrompt, add to the appropriate section:
+
+**Your Category:**
+- Your visualization type - brief description</code></pre>
+    </section>
+
+    <section id="templates">
+        <h2>Code Templates</h2>
+
+        <h3>Basic 2D Plot</h3>
+        <pre><code>generateBasic2DCode(options) {
+    const xmin = options.xmin ?? -10;
+    const xmax = options.xmax ?? 10;
+    const ymin = options.ymin ?? -10;
+    const ymax = options.ymax ?? 10;
+    const title = options.title || 'Plot Title';
+
+    return `
+fig, ax = create_coordinate_grid(${xmin}, ${xmax}, ${ymin}, ${ymax})
+
+# Your 2D plotting code here
+x = np.linspace(${xmin}, ${xmax}, 100)
+y = x ** 2
+ax.plot(x, y, color='#00d4ff', linewidth=2)
+
+ax.set_title("${title}", fontsize=14, color='#d4af37')
+save_plot_as_base64()
+    `;
+}</code></pre>
+
+        <h3>3D Plot</h3>
+        <pre><code>generate3DPlotCode(options) {
+    const title = options.title || '3D Plot';
+
+    return `
+from mpl_toolkits.mplot3d import Axes3D
+
+fig = plt.figure(figsize=(10, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+# Your 3D plotting code here
+x = np.linspace(-5, 5, 50)
+y = np.linspace(-5, 5, 50)
+X, Y = np.meshgrid(x, y)
+Z = np.sin(np.sqrt(X**2 + Y**2))
+
+ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8)
+
+ax.set_xlabel('X', color='#f0f0f0')
+ax.set_ylabel('Y', color='#f0f0f0')
+ax.set_zlabel('Z', color='#f0f0f0')
+ax.set_title("${title}", fontsize=14, color='#d4af37')
+
+save_plot_as_base64()
+    `;
+}</code></pre>
+
+        <h3>Side-by-Side Comparison</h3>
+        <pre><code>generateComparisonCode(options) {
+    const title = options.title || 'Comparison';
+    const leftTitle = options.leftTitle || 'Left';
+    const rightTitle = options.rightTitle || 'Right';
+
+    return `
+fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+ax1, ax2 = axes
+
+# Left subplot
+ax1.set_title('${leftTitle}', color='#d4af37', fontsize=12)
+ax1.grid(True, alpha=0.3)
+
+# Right subplot
+ax2.set_title('${rightTitle}', color='#d4af37', fontsize=12)
+ax2.grid(True, alpha=0.3)
+
+plt.suptitle("${title}", fontsize=14, color='#d4af37', y=1.02)
+plt.tight_layout()
+save_plot_as_base64()
+    `;
+}</code></pre>
+
+        <h3>Bar/Category Chart</h3>
+        <pre><code>generateCategoryChartCode(options) {
+    const data = options.data || { 'A': 10, 'B': 20, 'C': 15 };
+    const title = options.title || 'Category Chart';
+
+    return `
+import matplotlib.pyplot as plt
+
+data = ${JSON.stringify(data)}
+fig, ax = plt.subplots(figsize=(10, 6))
+
+colors = ['#00d4ff', '#ff6b6b', '#d4af37', '#27ae60', '#9b59b6']
+bars = ax.bar(list(data.keys()), list(data.values()), 
+              color=colors[:len(data)], edgecolor='#1a1a2e')
+
+# Add value labels on bars
+for bar, val in zip(bars, data.values()):
+    ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5,
+            str(val), ha='center', va='bottom', color='#f0f0f0')
+
+ax.set_title("${title}", fontsize=14, color='#d4af37')
+ax.grid(True, alpha=0.3, axis='y')
+
+save_plot_as_base64()
+    `;
+}</code></pre>
+
+        <h3>Shape/Polygon Drawing</h3>
+        <pre><code>generateShapeCode(options) {
+    const vertices = options.vertices || [[0, 0], [2, 0], [1, 2]];
+    const title = options.title || 'Shape';
+    const fillColor = options.fillColor || '#00d4ff';
+
+    return `
+from matplotlib.patches import Polygon
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots(figsize=(8, 8))
+
+vertices = np.array(${JSON.stringify(vertices)})
+
+polygon = Polygon(vertices, fill=True, facecolor='${fillColor}',
+                  edgecolor='#f0f0f0', linewidth=2.5, alpha=0.4)
+ax.add_patch(polygon)
+
+# Plot and label vertices
+labels = 'ABCDEFGHIJKLMNOP'
+for i, (x, y) in enumerate(vertices):
+    ax.scatter([x], [y], color='#ff6b6b', s=80, zorder=5)
+    ax.text(x + 0.2, y + 0.2, labels[i], fontsize=12, 
+            color='#d4af37', fontweight='bold')
+
+# Auto-scale with margin
+margin = 1
+ax.set_xlim(vertices[:, 0].min() - margin, vertices[:, 0].max() + margin)
+ax.set_ylim(vertices[:, 1].min() - margin, vertices[:, 1].max() + margin)
+ax.set_aspect('equal')
+ax.grid(True, alpha=0.3)
+ax.set_title("${title}", fontsize=14, color='#d4af37')
+
+save_plot_as_base64()
+    `;
+}</code></pre>
+    </section>
+
+    <section id="colors">
+        <h2>Color Reference</h2>
+        <p>Use these colors consistently to match the app's dark theme:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Purpose</th>
+                    <th>Color</th>
+                    <th>Hex Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Primary (lines, fills)</td>
+                    <td><span class="color-swatch" style="background: #00d4ff;"></span>Cyan</td>
+                    <td><code>#00d4ff</code></td>
+                </tr>
+                <tr>
+                    <td>Secondary (highlights, points)</td>
+                    <td><span class="color-swatch" style="background: #ff6b6b;"></span>Coral</td>
+                    <td><code>#ff6b6b</code></td>
+                </tr>
+                <tr>
+                    <td>Accent (titles, labels, gold)</td>
+                    <td><span class="color-swatch" style="background: #d4af37;"></span>Gold</td>
+                    <td><code>#d4af37</code></td>
+                </tr>
+                <tr>
+                    <td>Success (positive values)</td>
+                    <td><span class="color-swatch" style="background: #27ae60;"></span>Green</td>
+                    <td><code>#27ae60</code></td>
+                </tr>
+                <tr>
+                    <td>Tertiary (variety)</td>
+                    <td><span class="color-swatch" style="background: #9b59b6;"></span>Purple</td>
+                    <td><code>#9b59b6</code></td>
+                </tr>
+                <tr>
+                    <td>Warning/Error</td>
+                    <td><span class="color-swatch" style="background: #e74c3c;"></span>Red</td>
+                    <td><code>#e74c3c</code></td>
+                </tr>
+                <tr>
+                    <td>Text (light)</td>
+                    <td><span class="color-swatch" style="background: #f0f0f0;"></span>Off-white</td>
+                    <td><code>#f0f0f0</code></td>
+                </tr>
+                <tr>
+                    <td>Text (muted)</td>
+                    <td><span class="color-swatch" style="background: #aaaaaa;"></span>Gray</td>
+                    <td><code>#aaaaaa</code></td>
+                </tr>
+                <tr>
+                    <td>Background (dark)</td>
+                    <td><span class="color-swatch" style="background: #1a1a2e;"></span>Navy</td>
+                    <td><code>#1a1a2e</code></td>
+                </tr>
+                <tr>
+                    <td>Grid lines</td>
+                    <td><span class="color-swatch" style="background: #444444;"></span>Dark gray</td>
+                    <td><code>#444444</code></td>
+                </tr>
+                <tr>
+                    <td>Borders/edges</td>
+                    <td><span class="color-swatch" style="background: #333333;"></span>Charcoal</td>
+                    <td><code>#333333</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h4>Multi-Color Arrays</h4>
+        <p>For charts needing multiple colors:</p>
+        <pre><code>colors = ['#00d4ff', '#ff6b6b', '#d4af37', '#27ae60', '#9b59b6', '#e74c3c', '#3498db', '#f39c12']</code></pre>
+    </section>
+
+    <section id="functions">
+        <h2>Pre-loaded Python Functions</h2>
+        <p>These functions are automatically available in all visualization code:</p>
+
+        <h4><code>create_coordinate_grid(xmin, xmax, ymin, ymax)</code></h4>
+        <p>Creates a standard coordinate plane with:</p>
+        <ul>
+            <li>X and Y axes highlighted in gold</li>
+            <li>Grid lines with 0.3 alpha</li>
+            <li>Equal aspect ratio</li>
+            <li>Specified limits</li>
+        </ul>
+        <pre><code># Returns (fig, ax) tuple
+fig, ax = create_coordinate_grid(-10, 10, -10, 10)</code></pre>
+
+        <h4><code>plot_function(func_str, xmin, xmax, num_points, label, color, ax)</code></h4>
+        <p>Plots a mathematical function from a string expression:</p>
+        <ul>
+            <li>Supports: <code>x</code>, <code>sin</code>, <code>cos</code>, <code>tan</code>, <code>sqrt</code>, <code>exp</code>, <code>log</code>, <code>abs</code>, <code>pi</code>, <code>e</code></li>
+            <li>Use <code>**</code> for exponents (or <code>^</code> is auto-converted)</li>
+        </ul>
+        <pre><code># Plot y = x^2 - 3
+plot_function("x**2 - 3", -10, 10, color='#00d4ff', ax=ax)</code></pre>
+
+        <h4><code>save_plot_as_base64()</code></h4>
+        <p><strong>REQUIRED</strong> at the end of every visualization. Converts the current figure to base64 PNG and closes it.</p>
+        <pre><code># Must be the last line
+save_plot_as_base64()</code></pre>
+
+        <div class="warning">
+            <div class="warning-title">⚠️ Important</div>
+            <p>Every visualization method MUST end with <code>save_plot_as_base64()</code> or no image will be generated.</p>
+        </div>
+    </section>
+
+    <section id="testing">
+        <h2>Testing</h2>
+
+        <h3>Manual Testing</h3>
+        <p>Test your visualization directly in the browser console:</p>
+        <pre><code>// After the page loads and Python is ready
+const result = await pythonEngine.generateGraph({
+    type: 'your_visualization_type',
+    options: {
+        param1: 'test value',
+        param2: 42,
+        data: [1, 2, 3, 4, 5]
+    }
+});
+
+// Check the result
+console.log('Success:', result.success);
+console.log('Error:', result.error);
+
+// If successful, view the image
+if (result.image) {
+    const img = document.createElement('img');
+    img.src = 'data:image/png;base64,' + result.image;
+    document.body.appendChild(img);
+}</code></pre>
+
+        <h3>AI Testing</h3>
+        <p>After updating the system prompt, test with natural language queries:</p>
+        <ul>
+            <li>"Show me a [your visualization type]"</li>
+            <li>"Graph/plot/draw [specific example]"</li>
+            <li>"Create a [visualization] with [specific parameters]"</li>
+        </ul>
+
+        <h3>Common Issues</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Problem</th>
+                    <th>Solution</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>No image generated</td>
+                    <td>Ensure <code>save_plot_as_base64()</code> is called</td>
+                </tr>
+                <tr>
+                    <td>Python syntax error</td>
+                    <td>Check template literal escaping; use <code>\\n</code> for newlines in strings</td>
+                </tr>
+                <tr>
+                    <td>Variable undefined</td>
+                    <td>Ensure JS variables are interpolated with <code>${}</code></td>
+                </tr>
+                <tr>
+                    <td>JSON parse error</td>
+                    <td>Use <code>JSON.stringify()</code> for arrays/objects passed to Python</td>
+                </tr>
+                <tr>
+                    <td>Colors look wrong</td>
+                    <td>Remember matplotlib is on dark background; use light colors</td>
+                </tr>
+                <tr>
+                    <td>AI doesn't use new type</td>
+                    <td>Update the system prompt in tutor-engine.js</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section id="checklist">
+        <h2>Implementation Checklist</h2>
+        <ul class="checklist">
+            <li>Generator method created in <code>python-engine.js</code></li>
+            <li>Options extracted with sensible defaults</li>
+            <li>Case added to <code>generateGraph</code> switch statement</li>
+            <li>System prompt updated in <code>tutor-engine.js</code></li>
+            <li>Colors match the theme palette</li>
+            <li>Title uses <code>color='#d4af37'</code></li>
+            <li><code>save_plot_as_base64()</code> called at end</li>
+            <li>Tested manually via browser console</li>
+            <li>Tested via AI with natural language queries</li>
+            <li>Edge cases handled (empty data, extreme values)</li>
+        </ul>
+    </section>
+
+    <section id="examples">
+        <h2>Example: Adding a Venn Diagram</h2>
+        <p>Here's a complete example of adding a new visualization type:</p>
+
+        <h4>1. Generator Method</h4>
+        <pre><code>generateVennDiagramCode(options) {
+    const setA = options.setA || 'Set A';
+    const setB = options.setB || 'Set B';
+    const onlyA = options.onlyA ?? 30;
+    const onlyB = options.onlyB ?? 25;
+    const intersection = options.intersection ?? 10;
+    const title = options.title || 'Venn Diagram';
+
+    return `
+import matplotlib.pyplot as plt
+from matplotlib.patches import Circle
+import numpy as np
+
+fig, ax = plt.subplots(figsize=(10, 8))
+
+# Create circles
+circle1 = Circle((-0.5, 0), 1.5, fill=True, facecolor='#00d4ff', 
+                 edgecolor='#f0f0f0', linewidth=2, alpha=0.4)
+circle2 = Circle((0.5, 0), 1.5, fill=True, facecolor='#ff6b6b', 
+                 edgecolor='#f0f0f0', linewidth=2, alpha=0.4)
+
+ax.add_patch(circle1)
+ax.add_patch(circle2)
+
+# Add labels
+ax.text(-1.2, 0, '${onlyA}', fontsize=16, ha='center', va='center', color='#f0f0f0')
+ax.text(1.2, 0, '${onlyB}', fontsize=16, ha='center', va='center', color='#f0f0f0')
+ax.text(0, 0, '${intersection}', fontsize=16, ha='center', va='center', color='#f0f0f0')
+
+# Set names
+ax.text(-1.5, 1.8, '${setA}', fontsize=14, ha='center', color='#00d4ff', fontweight='bold')
+ax.text(1.5, 1.8, '${setB}', fontsize=14, ha='center', color='#ff6b6b', fontweight='bold')
+
+ax.set_xlim(-3, 3)
+ax.set_ylim(-2.5, 2.5)
+ax.set_aspect('equal')
+ax.axis('off')
+ax.set_title("${title}", fontsize=14, color='#d4af37')
+
+save_plot_as_base64()
+    `;
+}</code></pre>
+
+        <h4>2. Switch Case</h4>
+        <pre><code>case 'venn':
+case 'venn_diagram':
+    code = this.generateVennDiagramCode(options);
+    break;</code></pre>
+
+        <h4>3. System Prompt Addition</h4>
+        <pre><code>**Sets & Logic:**
+- Venn diagrams showing set relationships and intersections</code></pre>
+
+        <h4>4. Test Query</h4>
+        <p>"Draw a Venn diagram showing 15 students who play soccer only, 20 who play basketball only, and 8 who play both"</p>
+    </section>
+
+</div>
+
+<footer>
+    <p>Math Tutor Developer Guide • Version 2.0</p>
+    <p>For questions or contributions, see the project repository.</p>
+</footer>
+
+</body>
+</html>
