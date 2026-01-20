@@ -62,15 +62,41 @@ class MessageParser {
             return `<div class="visual-container">${match}</div>`;
         });
 
-        // Remove LaTeX delimiters
+        // Handle tables (markdown style)
+        html = html.replace(/\|(.+)\|\n\|[-:| ]+\|\n((?:\|.+\|\n?)+)/g, (match, header, body) => {
+            return this.renderTable(match);
+        });
+
+        // Remove LaTeX delimiters but keep content
         html = html.replace(/\\\(([\s\S]*?)\\\)/g, "$1");
         html = html.replace(/\\\[([\s\S]*?)\\\]/g, "$1");
+        html = html.replace(/\$\$([\s\S]*?)\$\$/g, "$1");
+        html = html.replace(/\$([^\$]+)\$/g, "$1");
 
         // Markdown formatting (do this AFTER code block extraction)
-        html = html
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`([^`]+)`/g, '<code>$1</code>');
+        // Bold
+        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+        
+        // Italic
+        html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+        
+        // Inline code
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+        // Headers (simple support)
+        html = html.replace(/^### (.+)$/gm, '<h4 style="color: var(--accent-color); margin: 10px 0 5px;">$1</h4>');
+        html = html.replace(/^## (.+)$/gm, '<h3 style="color: var(--accent-color); margin: 15px 0 8px;">$1</h3>');
+        html = html.replace(/^# (.+)$/gm, '<h2 style="color: var(--accent-color); margin: 20px 0 10px;">$1</h2>');
+
+        // Lists (simple support)
+        html = html.replace(/^\* (.+)$/gm, '• $1');
+        html = html.replace(/^- (.+)$/gm, '• $1');
+        html = html.replace(/^\d+\. (.+)$/gm, (match, content, offset, string) => {
+            // Simple numbered list handling
+            return `${match}`;
+        });
 
         // Convert newlines to <br> LAST
         html = html.replace(/\n/g, '<br>');
@@ -119,7 +145,7 @@ class MessageParser {
 
         html += '<thead><tr>';
         headers.forEach(header => {
-            html += `<th>${header.trim()}</th>`;
+            html += `<th>${this.escapeHtml(header.trim())}</th>`;
         });
         html += '</tr></thead>';
 
@@ -130,7 +156,7 @@ class MessageParser {
 
             html += '<tr>';
             cells.forEach(cell => {
-                html += `<td>${cell.trim()}</td>`;
+                html += `<td>${this.escapeHtml(cell.trim())}</td>`;
             });
             html += '</tr>';
         });
