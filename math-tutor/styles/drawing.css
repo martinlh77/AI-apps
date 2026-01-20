@@ -1,0 +1,211 @@
+/* ============ DRAWING TOOL STYLES ============ */
+
+.drawing-modal-content {
+    width: 900px;
+    max-width: 95vw;
+    height: 80vh;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.drawing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.drawing-header h3 {
+    color: var(--accent-color);
+    margin: 0;
+}
+
+.drawing-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tool-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-color);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tool-btn:hover {
+    border-color: var(--accent-color);
+    background: rgba(212, 175, 55, 0.1);
+}
+
+.tool-btn.active {
+    border-color: var(--accent-color);
+    background: rgba(212, 175, 55, 0.2);
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+}
+
+#draw-color {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 2px;
+}
+
+#draw-size {
+    width: 80px;
+    height: 8px;
+    cursor: pointer;
+}
+
+#bg-select {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.drawing-canvas-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    background: var(--bg-secondary);
+    overflow: auto;
+}
+
+#drawing-canvas {
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    cursor: crosshair;
+    touch-action: none;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+[data-theme="light"] #drawing-canvas {
+    background: #ffffff;
+}
+
+[data-theme="dark"] #drawing-canvas {
+    background: #1a1a2e;
+}
+
+.drawing-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Drawing tool cursor states */
+.drawing-canvas-container.tool-pen #drawing-canvas {
+    cursor: crosshair;
+}
+
+.drawing-canvas-container.tool-line #drawing-canvas {
+    cursor: crosshair;
+}
+
+.drawing-canvas-container.tool-point #drawing-canvas {
+    cursor: cell;
+}
+
+.drawing-canvas-container.tool-eraser #drawing-canvas {
+    cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="8" fill="none" stroke="gray" stroke-width="2"/></svg>') 10 10, auto;
+}
+
+.drawing-canvas-container.tool-select #drawing-canvas {
+    cursor: move;
+}
+
+/* Background patterns for canvas */
+.canvas-bg-grid {
+    background-image: 
+        linear-gradient(var(--chart-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--chart-grid) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.canvas-bg-dots {
+    background-image: radial-gradient(var(--chart-grid) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.canvas-bg-lined {
+    background-image: linear-gradient(var(--chart-grid) 1px, transparent 1px);
+    background-size: 100% 25px;
+}
+
+/* Selected object highlight */
+.drawing-selection {
+    stroke: var(--accent-color);
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+    fill: none;
+    pointer-events: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .drawing-modal-content {
+        width: 100%;
+        height: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .drawing-header {
+        padding: 10px 15px;
+    }
+
+    .drawing-controls {
+        gap: 5px;
+    }
+
+    .tool-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+
+    #draw-color {
+        width: 36px;
+        height: 36px;
+    }
+
+    #draw-size {
+        width: 60px;
+    }
+
+    #bg-select {
+        font-size: 0.8rem;
+        padding: 6px 8px;
+    }
+
+    .drawing-canvas-container {
+        padding: 10px;
+    }
+
+    .drawing-footer {
+        padding: 10px 15px;
+    }
+}
