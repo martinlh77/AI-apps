@@ -7,6 +7,9 @@
     --user-msg-bg: linear-gradient(135deg, #2c5282, #2b6cb0);
     --assis-msg-bg: rgba(0, 0, 0, 0.4);
     --border-color: #444;
+    --success-color: #27ae60;
+    --error-color: #e74c3c;
+    --code-bg: #1e1e1e;
 }
 
 * {
@@ -133,7 +136,6 @@ button.control-btn:active {
     position: relative;
 }
 
-/* Scrollbar styling */
 #chat-area::-webkit-scrollbar {
     width: 8px;
 }
@@ -149,6 +151,40 @@ button.control-btn:active {
 
 #chat-area::-webkit-scrollbar-thumb:hover {
     background: rgba(212, 175, 55, 0.5);
+}
+
+/* ============ PYTHON STATUS ============ */
+.python-status {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    z-index: 200;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.python-status.ready {
+    border-color: var(--success-color);
+    color: var(--success-color);
+}
+
+.python-status.error {
+    border-color: var(--error-color);
+    color: var(--error-color);
+}
+
+.python-status.loading {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+body.rtl .python-status {
+    right: auto;
+    left: 20px;
 }
 
 /* ============ WELCOME SCREEN ============ */
@@ -192,6 +228,10 @@ button.control-btn:active {
     text-align: left;
 }
 
+body.rtl .prompts-section {
+    text-align: right;
+}
+
 .prompts-section h3 { 
     color: var(--accent-color); 
     margin-bottom: 15px; 
@@ -213,6 +253,10 @@ button.control-btn:active {
     transition: all 0.2s;
     font-size: 0.9rem;
     text-align: left;
+}
+
+body.rtl .prompt-card {
+    text-align: right;
 }
 
 .prompt-card:hover, .prompt-card:focus {
@@ -239,6 +283,7 @@ button.control-btn:active {
 body.rtl .feature-item { 
     border-left: none; 
     border-right: 3px solid var(--accent-color); 
+    text-align: right;
 }
 
 .feature-item span { 
@@ -349,10 +394,11 @@ body.rtl .message.assistant .message-content {
 .msg-actions { 
     display: flex; 
     gap: 10px; 
-    margin-top: 8px; 
+    margin-top: 8px;
+    flex-wrap: wrap;
 }
 
-.copy-btn {
+.action-btn {
     background: transparent;
     border: 1px solid var(--border-color);
     color: #aaa;
@@ -363,20 +409,91 @@ body.rtl .message.assistant .message-content {
     transition: all 0.2s;
 }
 
-.copy-btn:hover { 
+.action-btn:hover { 
     border-color: var(--accent-color); 
     color: #fff; 
 }
 
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============ CODE BLOCKS ============ */
+.code-container {
+    margin: 15px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.code-header {
+    background: #2d2d2d;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.code-language {
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+.code-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.code-block {
+    background: var(--code-bg);
+    padding: 15px;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #d4d4d4;
+}
+
+.code-block pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
 /* ============ VISUAL CONTAINERS ============ */
 .visual-container {
-    margin-top: 15px;
-    margin-bottom: 15px;
-    overflow-x: auto;
-    background: rgba(0,0,0,0.2);
+    margin: 15px 0;
+    overflow: hidden;
+    background: rgba(255,255,255,0.02);
     border-radius: 8px;
-    padding: 10px;
+    padding: 15px;
     border: 1px solid rgba(255,255,255,0.1);
+}
+
+.visual-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 4px;
+}
+
+.visual-container canvas {
+    max-width: 100%;
+    display: block;
+    margin: 0 auto;
+}
+
+.visual-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
 }
 
 .visual-container table {
@@ -405,11 +522,55 @@ body.rtl .message.assistant .message-content {
 
 .visual-container svg {
     display: block;
-    margin: 15px auto;
-    border: 1px solid var(--border-color);
-    background-color: rgba(255, 255, 255, 0.05);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    margin: 10px auto;
+    max-width: 100%;
+}
+
+/* ============ EXERCISE CONTAINERS ============ */
+.exercise-container {
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(39, 174, 96, 0.1);
+    border: 1px solid var(--success-color);
+    border-radius: 8px;
+}
+
+.exercise-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: var(--success-color);
+}
+
+.exercise-input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
     border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: var(--input-bg);
+    color: #fff;
+    font-size: 1rem;
+}
+
+.exercise-feedback {
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+
+.exercise-feedback.correct {
+    background: rgba(39, 174, 96, 0.2);
+    border: 1px solid var(--success-color);
+    color: var(--success-color);
+}
+
+.exercise-feedback.incorrect {
+    background: rgba(231, 76, 60, 0.2);
+    border: 1px solid var(--error-color);
+    color: var(--error-color);
 }
 
 /* ============ TYPING INDICATOR ============ */
@@ -438,82 +599,6 @@ body.rtl .message.assistant .message-content {
 @keyframes typing {
     0%, 60%, 100% { transform: translateY(0); opacity: 0.7; }
     30% { transform: translateY(-8px); opacity: 1; }
-}
-
-/* ============ APP PANEL ============ */
-.app-panel {
-    position: fixed;
-    right: 20px;
-    top: 100px;
-    width: 400px;
-    max-height: 500px;
-    background: rgba(0,0,0,0.9);
-    border: 2px solid var(--accent-color);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    z-index: 200;
-    overflow: hidden;
-    animation: slideIn 0.3s ease;
-}
-
-body.rtl .app-panel {
-    right: auto;
-    left: 20px;
-}
-
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-.app-panel-header {
-    background: rgba(212, 175, 55, 0.2);
-    padding: 12px 15px;
-    border-bottom: 1px solid var(--accent-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.app-panel-header h3 {
-    color: var(--accent-color);
-    font-size: 1rem;
-    margin: 0;
-}
-
-#app-panel-close {
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    transition: background 0.2s;
-}
-
-#app-panel-close:hover {
-    background: rgba(255,255,255,0.1);
-}
-
-#app-panel-content {
-    padding: 15px;
-    max-height: 430px;
-    overflow-y: auto;
-}
-
-#app-panel-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-#app-panel-content::-webkit-scrollbar-thumb {
-    background: rgba(212, 175, 55, 0.3);
-    border-radius: 3px;
 }
 
 /* ============ INPUT AREA ============ */
@@ -606,6 +691,34 @@ body.rtl .safety-badge {
 
 .safety-badge::before { 
     content: '🛡️'; 
+}
+
+/* ============ LOADING OVERLAY ============ */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    border-radius: 8px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* ============ ANIMATIONS ============ */
