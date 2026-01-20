@@ -5,51 +5,60 @@
 
 class MessageParser {
     constructor() {
+        // Match ```python ... ``` code blocks
         this.pythonCodeRegex = /```python\s*([\s\S]*?)```/g;
     }
 
     extractPythonCode(text) {
         const pythonBlocks = [];
         let match;
+        // Reset regex state
         const regex = /```python\s*([\s\S]*?)```/g;
 
         while ((match = regex.exec(text)) !== null) {
-            pythonBlocks.push({
-                code: match[1].trim(),
-                fullMatch: match[0]
-            });
+            const code = match[1].trim();
+            if (code.length > 0) {
+                pythonBlocks.push({
+                    code: code,
+                    fullMatch: match[0]
+                });
+            }
         }
 
+        console.log('extractPythonCode found', pythonBlocks.length, 'blocks');
         return pythonBlocks;
     }
 
     renderContent(text, options = {}) {
         let html = text;
 
-        // First, extract and preserve Python code blocks for auto-execution
-        // Replace them with a placeholder that won't be affected by other formatting
+        // First, extract Python code blocks and replace with placeholders
         const pythonBlocks = [];
         let blockIndex = 0;
         
         html = html.replace(/```python\s*([\s\S]*?)```/g, (match, code) => {
-            const placeholder = `__PYTHON_BLOCK_${blockIndex}__`;
-            pythonBlocks.push({
-                index: blockIndex,
-                code: code.trim()
-            });
-            blockIndex++;
-            return placeholder;
+            const trimmedCode = code.trim();
+            if (trimmedCode.length > 0) {
+                const placeholder = `<div class="python-pending" data-code-index="${blockIndex}"><em>📊 Generating visualization...</em></div>`;
+                pythonBlocks.push({
+                    index: blockIndex,
+                    code: trimmedCode
+                });
+                blockIndex++;
+                return placeholder;
+            }
+            return ''; // Empty code block, remove it
         });
 
-        // Handle other code blocks (non-Python)
+        // Handle other code blocks (non-Python) - show them as code
         html = html.replace(/```(\w*)\s*([\s\S]*?)```/g, (match, lang, code) => {
-            if (lang.toLowerCase() === 'python') return match; // Already handled
-            return this.renderCodeBlock(lang || 'text', code.trim(), null, false);
+            const trimmedCode = code.trim();
+            if (trimmedCode.length === 0) return '';
+            return this.renderCodeBlock(lang || 'text', trimmedCode, null, false);
         });
 
         // Handle SVG
-        const svgRegex = /<svg[\s\S]*?<\/svg>/g;
-        html = html.replace(svgRegex, (match) => {
+        html = html.replace(/<svg[\s\S]*?<\/svg>/g, (match) => {
             return `<div class="visual-container">${match}</div>`;
         });
 
@@ -57,25 +66,17 @@ class MessageParser {
         html = html.replace(/\\\(([\s\S]*?)\\\)/g, "$1");
         html = html.replace(/\\\[([\s\S]*?)\\\]/g, "$1");
 
-        // Markdown formatting
+        // Markdown formatting (do this AFTER code block extraction)
         html = html
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/`([^`]+)`/g, '<code>$1</code>')
-            .replace(/\n/g, '<br>');
+            .replace(/`([^`]+)`/g, '<code>$1</code>');
 
-        // Tables
-        const tableRegex = /(\|.*\|<br>\|[-|]+\|<br>(?:\|.*\|<br>?)+)/g;
-        html = html.replace(tableRegex, (match) => this.renderTable(match.replace(/<br>/g, '\n')));
+        // Convert newlines to <br> LAST
+        html = html.replace(/\n/g, '<br>');
 
-        // Now restore Python blocks - but DON'T render them as code blocks
-        // They will be auto-executed, so just show a loading placeholder
-        pythonBlocks.forEach(block => {
-            const placeholder = `__PYTHON_BLOCK_${block.index}__`;
-            // Replace with a minimal indicator that visualization is coming
-            // The actual visualization will be appended after auto-execution
-            html = html.replace(placeholder, `<div class="python-pending" data-code-index="${block.index}"><em>📊 Generating visualization...</em></div>`);
-        });
+        // Clean up multiple <br> tags
+        html = html.replace(/(<br\s*\/?>){3,}/g, '<br><br>');
 
         return html;
     }
@@ -83,13 +84,12 @@ class MessageParser {
     renderCodeBlock(language, code, codeId = null, canRun = false) {
         const id = codeId || `code-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         const escapedCode = this.escapeHtml(code);
-        const isPython = language.toLowerCase() === 'python';
 
         let actionsHtml = `
             <button class="action-btn copy-code-btn" data-code="${this.escapeAttr(code)}">📋 Copy</button>
         `;
 
-        if (isPython && canRun) {
+        if (canRun && language.toLowerCase() === 'python') {
             actionsHtml += `
                 <button class="action-btn run-code-btn" data-code-id="${id}">▶️ Run</button>
             `;
@@ -151,6 +151,7 @@ class MessageParser {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;')
             .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '&#10;');
     }
 }
