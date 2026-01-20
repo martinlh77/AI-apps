@@ -1,36 +1,43 @@
 /**
  * TutorEngine - Main Conversation & Coordination Controller
- * Manages chat, API calls, app triggers, and safety
+ * Manages chat, multi-model API routing, Python execution, and TTS
  */
 
 class TutorEngine {
     constructor() {
         this.API_KEY = 'pk_OIQlw5rh71ylmlqV';
-        this.API_BASE = 'https://gen.pollinations.ai/text';
-        this.currentModel = 'nova-micro';
+        this.API_BASE = 'https://gen.pollinations.ai';
+
+        this.models = {
+            tutor: 'grok',
+            vision: 'gemini-fast',
+            coder: 'qwen-coder',
+            search: 'gemini-search',
+            audio: 'openai-audio'
+        };
 
         this.grades = {
-            elementary: { 
-                level: "Elementary (Grades 3-5)", 
-                tone: "very friendly and encouraging", 
+            elementary: {
+                level: "Elementary (Grades 3-5)",
+                tone: "very friendly and encouraging",
                 constraints: "Use simple sentences. Avoid abstract concepts. Use concrete examples.",
                 mathTopics: "basic arithmetic, simple fractions, shapes, measurement"
             },
-            middle: { 
-                level: "Middle School (Grades 6-8)", 
-                tone: "helpful and supportive", 
+            middle: {
+                level: "Middle School (Grades 6-8)",
+                tone: "helpful and supportive",
                 constraints: "Introduce algebraic thinking. Use real-world examples.",
                 mathTopics: "algebra basics, coordinate planes, ratios, statistics"
             },
-            high: { 
-                level: "High School (Grades 9-12)", 
-                tone: "professional but approachable", 
+            high: {
+                level: "High School (Grades 9-12)",
+                tone: "professional but approachable",
                 constraints: "Use standard mathematical terminology. Encourage problem-solving.",
                 mathTopics: "algebra, geometry, trigonometry, pre-calculus"
             },
-            general: { 
-                level: "General / College", 
-                tone: "academic and precise", 
+            general: {
+                level: "General / College",
+                tone: "academic and precise",
                 constraints: "Full mathematical rigor. Advanced notation acceptable.",
                 mathTopics: "all topics including calculus, statistics, linear algebra"
             }
@@ -41,58 +48,58 @@ class TutorEngine {
             isProcessing: false,
             currentGrade: 'middle',
             currentLang: 'en',
+            currentVoice: 'alloy',
             loadedApps: new Set(),
             activeApp: null
         };
 
-        // Initialize subsystems
         this.languageManager = new LanguageManager();
         this.messageParser = new MessageParser();
         this.appLoader = new AppLoader();
+        this.pythonEngine = window.pythonEngine;
 
         this.init();
     }
 
-    init() {
-        // Load saved preferences
+    async init() {
+        await this.languageManager.initPromise;
+
         const savedGrade = localStorage.getItem('mathTutorGrade') || 'middle';
         const savedLang = localStorage.getItem('mathTutorLang') || 'en';
-        const savedModel = localStorage.getItem('mathTutorModel') || 'nova-micro';
-        
+        const savedVoice = localStorage.getItem('mathTutorVoice') || 'alloy';
+
         this.state.currentGrade = savedGrade;
         this.state.currentLang = savedLang;
-        this.currentModel = savedModel;
+        this.state.currentVoice = savedVoice;
 
         document.getElementById('grade-select').value = savedGrade;
         document.getElementById('lang-select').value = savedLang;
-        document.getElementById('model-select').value = savedModel;
+        document.getElementById('voice-select').value = savedVoice;
 
-        // Apply language
-        this.languageManager.applyLanguage(savedLang);
+        await this.languageManager.applyLanguage(savedLang);
+        this.languageManager.renderStarterPrompts(savedGrade);
 
-        // Setup event listeners
+        this.pythonEngine.initialize();
+
         this.setupEventListeners();
     }
 
     setupEventListeners() {
-        // Grade selection
         document.getElementById('grade-select').addEventListener('change', (e) => {
             this.state.currentGrade = e.target.value;
             localStorage.setItem('mathTutorGrade', e.target.value);
             this.startNewChat();
         });
 
-        // Model selection
-        document.getElementById('model-select').addEventListener('change', (e) => {
-            this.currentModel = e.target.value;
-            localStorage.setItem('mathTutorModel', e.target.value);
+        document.getElementById('voice-select').addEventListener('change', (e) => {
+            this.state.currentVoice = e.target.value;
+            localStorage.setItem('mathTutorVoice', e.target.value);
         });
 
-        // Language selection
         document.getElementById('lang-select').addEventListener('change', async (e) => {
             const lang = e.target.value;
             const input = document.getElementById('other-lang-input');
-            
+
             if (lang === 'other') {
                 input.style.display = 'block';
                 input.focus();
@@ -106,37 +113,23 @@ class TutorEngine {
             }
         });
 
-        // Custom language input
         document.getElementById('other-lang-input').addEventListener('change', async (e) => {
             if (e.target.value.trim()) {
                 const langName = e.target.value.trim();
                 this.state.currentLang = langName;
                 localStorage.setItem('mathTutorLang', langName);
-                await this.languageManager.translateAndApply(langName, this.API_BASE, this.API_KEY);
+                await this.languageManager.translateAndApply(langName, `${this.API_BASE}/text`, this.API_KEY);
                 this.startNewChat();
             }
         });
 
-        // New chat button
         document.getElementById('new-chat-btn').addEventListener('click', () => this.startNewChat());
 
-        // App panel close (only if element exists - for backward compatibility)
-        const appPanelClose = document.getElementById('app-panel-close');
-        if (appPanelClose) {
-            appPanelClose.addEventListener('click', () => {
-                const appPanel = document.getElementById('app-container-panel');
-                if (appPanel) {
-                    appPanel.style.display = 'none';
-                }
-            });
-        }
-
-        // Send message
         const sendBtn = document.getElementById('send-btn');
         const input = document.getElementById('chat-input');
-        
+
         sendBtn.addEventListener('click', () => this.sendMessage());
-        
+
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -144,21 +137,52 @@ class TutorEngine {
             }
         });
 
-        // Auto-resize textarea
         input.addEventListener('input', (e) => {
             e.target.style.height = 'auto';
             e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
         });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('copy-code-btn')) {
+                this.handleCopyCode(e.target);
+            } else if (e.target.classList.contains('run-code-btn')) {
+                this.handleRunCode(e.target);
+            } else if (e.target.classList.contains('speak-btn')) {
+                this.handleSpeak(e.target);
+            } else if (e.target.classList.contains('download-btn')) {
+                this.handleDownload(e.target);
+            } else if (e.target.classList.contains('copy-btn')) {
+                this.handleCopy(e.target);
+            }
+        });
+    }
+
+    detectQueryType(message) {
+        const lowerMsg = message.toLowerCase();
+
+        if (lowerMsg.includes('code') || lowerMsg.includes('program') ||
+            lowerMsg.includes('python') || lowerMsg.includes('javascript') ||
+            lowerMsg.includes('algorithm') || lowerMsg.includes('write a function')) {
+            return 'coder';
+        }
+
+        if (lowerMsg.includes('latest') || lowerMsg.includes('recent') ||
+            lowerMsg.includes('news') || lowerMsg.includes('current') ||
+            lowerMsg.includes('today') || lowerMsg.includes('2024') ||
+            lowerMsg.includes('2025')) {
+            return 'search';
+        }
+
+        return 'tutor';
     }
 
     async sendMessage() {
         const input = document.getElementById('chat-input');
         const message = input.value.trim();
-        
+
         if (!message) return;
         if (this.state.isProcessing) return;
 
-        // Safety check
         if (this.containsPII(message)) {
             this.addSystemMessage(
                 "⚠️ Please do not share personal information like your email, phone number, or address. I am here to help with math!"
@@ -166,44 +190,35 @@ class TutorEngine {
             return;
         }
 
-        // Hide welcome screen
         document.getElementById('welcome-screen').style.display = 'none';
 
-        // Add user message
         this.addMessage(message, 'user');
         input.value = '';
         input.style.height = 'auto';
 
-        // Set processing state
         this.setProcessing(true);
         const typingId = this.addTypingIndicator();
 
         try {
-            // Call API
-            const response = await this.callAPI(message);
+            const queryType = this.detectQueryType(message);
+            const model = this.models[queryType];
+
+            const response = await this.callAPI(message, model);
             this.removeTypingIndicator(typingId);
 
-            console.log('Raw API Response:', response); // DEBUG
+            const pythonBlocks = this.messageParser.extractPythonCode(response);
 
-            // Parse for app triggers
-            const { cleanText, appCalls } = this.messageParser.extractAppCalls(response);
+            await this.addMessage(response, 'assistant', pythonBlocks.length > 0);
 
-            console.log('Parsed Clean Text:', cleanText); // DEBUG
-            console.log('App Calls Found:', appCalls); // DEBUG
-
-            // Add assistant message with CLEAN text (no app markers)
-            this.addMessage(cleanText, 'assistant');
-
-            // Update history
             this.state.chatHistory.push({ role: 'user', content: message });
-            this.state.chatHistory.push({ role: 'assistant', content: cleanText });
+            this.state.chatHistory.push({ role: 'assistant', content: response });
 
-            // Process app calls
-            if (appCalls.length > 0) {
-                console.log(`Processing ${appCalls.length} app call(s)...`); // DEBUG
-                await this.processAppCalls(appCalls);
-            } else {
-                console.log('No app calls detected in response'); // DEBUG
+            if (pythonBlocks.length > 0) {
+                for (const block of pythonBlocks) {
+                    if (this.isVisualizationCode(block.code)) {
+                        await this.executeAndDisplayPython(block.code);
+                    }
+                }
             }
 
         } catch (error) {
@@ -217,214 +232,332 @@ class TutorEngine {
         }
     }
 
-    async processAppCalls(appCalls) {
-        for (const call of appCalls) {
-            try {
-                // Load app if not already loaded
-                if (!this.state.loadedApps.has(call.appId)) {
-                    await this.appLoader.loadApp(call.appId);
-                    this.state.loadedApps.add(call.appId);
-                }
+    isVisualizationCode(code) {
+        const visualKeywords = ['plt.', 'matplotlib', 'plot', 'graph', 'chart', 'figure', 'save_plot', 'ax.', 'fig,'];
+        return visualKeywords.some(kw => code.includes(kw));
+    }
 
-                // Get app instance
-                const AppClass = window[call.appId];
-                if (!AppClass) {
-                    console.error(`App ${call.appId} not found`);
-                    continue;
-                }
+    async executeAndDisplayPython(code) {
+        const result = await this.pythonEngine.runCode(code);
 
-                // Initialize app (apps now render inline, no popup needed)
-                const app = new AppClass('app-panel-content');
-                this.state.activeApp = app;
-
-                // Render app
-                const result = await app.render(call.payload);
-
-                // Add result to chat context
-                if (result.summary) {
-                    this.state.chatHistory.push({
-                        role: 'system',
-                        content: `[Visualization: ${result.summary}]`
-                    });
-                }
-
-            } catch (error) {
-                console.error(`App ${call.appId} error:`, error);
-                this.addSystemMessage(`⚠️ Could not load ${call.appId}. Continuing with text explanation.`);
-            }
+        if (result.success && result.image) {
+            this.addVisualization(result.image);
+        } else if (result.success && result.stdout) {
+            this.addCodeOutput(result.stdout);
+        } else if (!result.success) {
+            this.addSystemMessage(`Python Error: ${result.error}`);
         }
     }
 
-    async callAPI(userMessage) {
+    addVisualization(base64Image) {
+        const container = document.getElementById('messages-container');
+        const div = document.createElement('div');
+        div.className = 'message assistant';
+
+        const imgSrc = this.pythonEngine.getImageDataUrl(base64Image);
+        const downloadBtn = this.languageManager.getString('downloadBtn');
+
+        div.innerHTML = `
+            <div class="message-content">
+                <div class="visual-container">
+                    <img src="${imgSrc}" alt="Math Visualization" />
+                    <div class="visual-actions">
+                        <button class="action-btn download-btn" data-image="${base64Image}">${downloadBtn}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(div);
+        this.scrollToBottom();
+    }
+
+    addCodeOutput(output) {
+        const container = document.getElementById('messages-container');
+        const div = document.createElement('div');
+        div.className = 'message assistant';
+
+        div.innerHTML = `
+            <div class="message-content">
+                <div class="code-container">
+                    <div class="code-header">
+                        <span class="code-language">OUTPUT</span>
+                    </div>
+                    <div class="code-block">
+                        <pre>${this.escapeHtml(output)}</pre>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(div);
+        this.scrollToBottom();
+    }
+
+    async callAPI(userMessage, model = 'grok') {
         const gradeData = this.grades[this.state.currentGrade];
         const lang = this.state.currentLang;
+        const langName = this.languageManager.getLanguageName();
 
-        // Language instruction
-        let langInstruction = "";
-        if (lang === 'en') {
-            langInstruction = "Reply in English.";
-        } else if (this.languageManager.builtInTranslations[lang]) {
-            langInstruction = `Reply in ${lang.toUpperCase()}.`;
-        } else {
-            langInstruction = `Reply in the user's language: ${lang}.`;
-        }
+        let langInstruction = lang === 'en' ?
+            "Reply in English." :
+            `Reply in ${langName}.`;
 
-        // UPDATED System prompt with comprehensive app integration
         const systemPrompt = `You are a safe, educational AI Math Tutor for ${gradeData.level} students.
 
 CRITICAL RULES:
-1. **Safety**: No violence, hate speech, or requests for personal information (PII).
+1. **Safety**: No violence, hate speech, or requests for personal information.
 2. **No Cheating**: Do not solve homework directly. Use the Socratic Method - ask guiding questions.
 3. **Language**: ${langInstruction}
 4. **Tone**: ${gradeData.tone}
 5. **Math Scope**: ${gradeData.mathTopics}
 
-APP INTEGRATION - COORDINATE GRID (CRITICAL INSTRUCTIONS):
+PYTHON VISUALIZATION CAPABILITIES:
+When explaining math concepts that benefit from visuals, generate Python code using matplotlib.
+The code will be automatically executed and displayed. Always end visualization code with save_plot_as_base64().
 
-When graphing, ALWAYS preserve existing elements by including them in the payload:
+Available helper functions (pre-loaded):
+- create_coordinate_grid(xmin, xmax, ymin, ymax) - Creates coordinate plane with axes
+- plot_function(equation_string, xmin, xmax, color, ax) - Plots math functions
+- save_plot_as_base64() - REQUIRED at end of any visualization
 
-✅ CORRECT - Keep points when adding line:
-[[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":3,"equation":"y = 2x + 3","points":[[1,5],[2,7]]}]]
+VISUALIZATION TYPES YOU CAN CREATE:
 
-✅ CORRECT - Multiple inequalities with different colors:
-[[APP:CoordinateGrid|{"type":"multi","inequalities":[{"equation":"y > 2x + 1"},{"equation":"y < -x + 5"}]}]]
+**Graphs & Functions:**
+- Linear: y = mx + b
+- Quadratic: y = ax² + bx + c  
+- Polynomial, exponential, logarithmic, trigonometric
+- Multiple functions on same axes
+- Piecewise functions
 
-✅ CORRECT - Line AND parabola together:
-[[APP:CoordinateGrid|{"type":"multi","functions":[{"equation":"y = 2x + 1","color":"#00d4ff"},{"equation":"y = x^2","color":"#ff0055"}]}]]
+**Inequalities:**
+- Number line inequalities (x > 3, x ≤ -2) - use open/closed circles
+- Two-variable linear inequalities with shading (y > 2x + 1)
+- Systems of inequalities showing solution region
 
-✅ CORRECT - Line AND inequality together:
-[[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":1,"equation":"y = 2x + 1","points":[[0,1]]}]]
-Then add inequality:
-[[APP:CoordinateGrid|{"type":"inequality","equation":"y > 2x + 1","keepPrevious":true}]]
+**Geometry - 2D:**
+- Points with coordinates labeled
+- Lines, rays (with arrows), line segments
+- Angles with degree measurements and arcs
+- All polygons: triangles, quadrilaterals, pentagons, hexagons, etc.
+- Circles with radius, diameter, chords, arcs, sectors
+- Geometric transformations: translations, reflections, rotations, dilations
 
-❌ WRONG - This will lose points:
-[[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":3}]]
+**Geometry - 3D:**
+- Prisms (rectangular, triangular)
+- Pyramids (square base, triangular base)
+- Cylinders, cones, spheres
+- Cross-sections of 3D shapes
 
-BASIC GRAPH TYPES:
+**Data & Statistics:**
+- Bar charts (single and double/grouped)
+- Pie charts with percentages
+- Line graphs with data points
+- Histograms with frequency labels
+- Scatter plots with optional trend lines
+- Box plots (box-and-whisker)
+- Dot plots
+- Stem-and-leaf plots
 
-**Plot Points (inline in chat)**:
-[[APP:CoordinateGrid|{"type":"points","points":[[3,4],[5,7]]}]]
+**Probability Models:**
+- Fair dice probability distributions
+- Coin flip models (single and multiple coins)
+- Spinners with equal or unequal sections
+- Playing card probabilities by suit and type
+- Theoretical vs experimental comparison with simulations
 
-**Linear Function (inline in chat)**:
-[[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":3,"equation":"y = 2x + 3"}]]
+**Infographics:**
+- Step-by-step process diagrams
+- Flowcharts for problem-solving methods
 
-**Quadratic Function (inline in chat)**:
-[[APP:CoordinateGrid|{"type":"function","equation":"y = x^2 - 4x + 3"}]]
+WHEN TO CREATE VISUALIZATIONS:
+- Student asks to "graph", "plot", "draw", "show", or "visualize" something
+- Explaining geometric concepts
+- Demonstrating data or statistics
+- Teaching about probability
+- Showing function behavior
+- Comparing mathematical scenarios
 
-**Inequality with colored shading**:
-[[APP:CoordinateGrid|{"type":"inequality","equation":"y > 2x + 1"}]]
+CODE FORMAT:
+\`\`\`python
+import matplotlib.pyplot as plt
+import numpy as np
 
-**Interactive blank grid (student plots their own points)**:
-[[APP:CoordinateGrid|{"type":"points","points":[],"interactive":true}]]
+# Your visualization code here
 
-AUTO-SCALING:
-- The grid automatically scales to fit all data
-- For y = x + 100, it will show BOTH axes with appropriate spacing (e.g., counting by 10s or 50s)
-- Grid spacing auto-adjusts: 1, 5, 10, 20, 50, or 100 based on data range
-- Always maintains square aspect ratio (slopes appear correctly)
+save_plot_as_base64()
+\`\`\`
 
-INTERACTIVE FEATURES (available to students):
-- Zoom in/out buttons
-- Drag to pan the view
-- Interactive mode: Click to plot points, draw lines, or delete points
-- Save graph button (prevents auto-replacement)
-- Download as PNG button
+EXERCISE CREATION:
+Create practice problems for students. Guide them to discover answers through questioning.
 
-GRAPH BEHAVIOR:
-- Each new graph REPLACES the previous one by default
-- To keep previous graph: add "keepPrevious":true
-- To make graph permanent: student clicks "Save Graph" button
-- Graphs appear INLINE in chat messages (not as popup)
+${gradeData.constraints}`;
 
-MULTIPLE ELEMENTS ON SAME GRAPH:
-To show multiple inequalities, lines, or parabolas together, use type "multi":
-
-[[APP:CoordinateGrid|{"type":"multi","functions":[{"equation":"y = x^2","color":"#ff0055"},{"equation":"y = 2x + 1","color":"#00d4ff"}],"inequalities":[{"equation":"y > x^2"}],"points":[[0,0],[2,4]]}]]
-
-IMPORTANT FORMAT RULES:
-- Use DOUBLE brackets: [[APP:...]]
-- App name: CoordinateGrid (exact capitalization)
-- Separator: | (pipe character)
-- JSON must be valid and on ONE line
-- NO extra spaces inside brackets
-- Put the app marker FIRST in your response, then explain
-
-EXAMPLE RESPONSES:
-
-User: "Graph the point (3, 4)"
-You: "[[APP:CoordinateGrid|{"type":"points","points":[[3,4]]}]]
-
-The point (3, 4) is located 3 units to the right and 4 units up from the origin."
-
-User: "Graph y = 2x + 1 and show the point (0, 1)"
-You: "[[APP:CoordinateGrid|{"type":"line","slope":2,"intercept":1,"equation":"y = 2x + 1","points":[[0,1]]}]]
-
-Here's the line y = 2x + 1 with the y-intercept point (0, 1) marked."
-
-User: "Graph y > 2x + 1 and y < -x + 5"
-You: "[[APP:CoordinateGrid|{"type":"multi","inequalities":[{"equation":"y > 2x + 1"},{"equation":"y < -x + 5"}]}]]
-
-I've shaded both inequality regions with different colors. The solution to the system is where the colors overlap."
-
-${gradeData.constraints}
-
-Available Apps: CoordinateGrid, FractionVisualizer (coming soon), ChartMaker (coming soon)`;
-
-        // Build context from recent history
         const recentHistory = this.state.chatHistory.slice(-8);
-        const contextStr = recentHistory
-            .map(m => `${m.role}: ${m.content}`)
-            .join('\n\n');
-        
-        const fullPrompt = contextStr 
-            ? `${contextStr}\n\nuser: ${userMessage}` 
-            : userMessage;
-
-        // Make API call
-        const seed = Math.floor(Math.random() * 1000000);
-        const encodedPrompt = encodeURIComponent(fullPrompt);
-        const encodedSystem = encodeURIComponent(systemPrompt);
-        
-        const url = `${this.API_BASE}/${encodedPrompt}?model=${this.currentModel}&seed=${seed}&key=${this.API_KEY}&system=${encodedSystem}`;
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         try {
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            
+            const response = await fetch(`${this.API_BASE}/v1/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        ...recentHistory,
+                        { role: 'user', content: userMessage }
+                    ],
+                    temperature: 0.7
+                })
+            });
+
             if (!response.ok) {
                 throw new Error(`API responded with status ${response.status}`);
             }
-            
-            const text = await response.text();
-            return text.trim();
-        } catch (e) {
-            clearTimeout(timeoutId);
-            throw e;
+
+            const data = await response.json();
+            return data.choices[0].message.content.trim();
+
+        } catch (error) {
+            console.error('API call failed:', error);
+            throw error;
         }
+    }
+
+    async handleSpeak(button) {
+        const text = button.getAttribute('data-text');
+        if (!text) return;
+
+        button.disabled = true;
+        button.textContent = '🔊...';
+
+        try {
+            const lang = this.languageManager.getLanguageName();
+            const voice = this.state.currentVoice;
+
+            const ttsPrompt = `READ THIS TEXT EXACTLY WORD-FOR-WORD. Do NOT solve any problems, do NOT add explanations, do NOT change anything. Simply read aloud exactly what is written below in ${lang}:
+
+"${text}"`;
+
+            const response = await fetch(`${this.API_BASE}/v1/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: this.models.audio,
+                    modalities: ['text', 'audio'],
+                    audio: {
+                        voice: voice,
+                        format: 'mp3'
+                    },
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are a text-to-speech reader. Your ONLY job is to read the provided text EXACTLY as written, word-for-word. Never solve problems, never add commentary, never modify the text. Just read it aloud.'
+                        },
+                        { role: 'user', content: ttsPrompt }
+                    ]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('TTS request failed');
+            }
+
+            const data = await response.json();
+
+            if (data.choices?.[0]?.message?.audio?.data) {
+                const audioData = data.choices[0].message.audio.data;
+                const audio = new Audio(`data:audio/mp3;base64,${audioData}`);
+                audio.play();
+            }
+
+        } catch (error) {
+            console.error('TTS Error:', error);
+            this.addSystemMessage('Unable to generate audio. Please try again.');
+        } finally {
+            button.disabled = false;
+            button.textContent = this.languageManager.getString('speakBtn');
+        }
+    }
+
+    handleCopyCode(button) {
+        const code = button.getAttribute('data-code');
+        navigator.clipboard.writeText(code);
+        button.textContent = '✓';
+        setTimeout(() => button.textContent = '📋', 2000);
+    }
+
+    async handleRunCode(button) {
+        const codeId = button.getAttribute('data-code-id');
+        const container = document.getElementById(codeId);
+        if (!container) return;
+
+        const codeBlock = container.querySelector('.code-block pre');
+        const code = codeBlock.textContent;
+
+        button.disabled = true;
+        button.textContent = '⏳...';
+
+        const result = await this.pythonEngine.runCode(code);
+
+        if (result.success) {
+            if (result.image) {
+                this.addVisualization(result.image);
+            } else if (result.stdout) {
+                this.addCodeOutput(result.stdout);
+            }
+        } else {
+            this.addSystemMessage(`Error: ${result.error}`);
+        }
+
+        button.disabled = false;
+        button.textContent = '▶️ Run';
+    }
+
+    handleDownload(button) {
+        const imageData = button.getAttribute('data-image');
+        if (imageData) {
+            this.pythonEngine.downloadImage(imageData, 'math_visualization.png');
+        }
+    }
+
+    handleCopy(button) {
+        const text = button.getAttribute('data-text');
+        navigator.clipboard.writeText(text);
+        button.textContent = this.languageManager.getString('copiedBtn');
+        setTimeout(() => button.textContent = this.languageManager.getString('copyBtn'), 2000);
     }
 
     containsPII(text) {
         const patterns = [
-            /[\w.-]+@[\w.-]+\.\w+/,                    // Email
-            /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/,          // Phone
-            /\b\d{3}-\d{2}-\d{4}\b/,                  // SSN
-            /\b\d{5}(-\d{4})?\b/                       // ZIP code
+            /[\w.-]+@[\w.-]+\.\w+/,
+            /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/,
+            /\b\d{3}-\d{2}-\d{4}\b/,
+            /\b\d{5}(-\d{4})?\b/
         ];
-        
+
         return patterns.some(pattern => pattern.test(text));
     }
 
-    addMessage(content, role) {
+    addMessage(content, role, hasPython = false) {
         const container = document.getElementById('messages-container');
         const div = document.createElement('div');
         div.className = `message ${role}`;
-        
-        const htmlContent = this.messageParser.renderContent(content);
+
+        const htmlContent = this.messageParser.renderContent(content, {
+            canRunPython: this.pythonEngine.isReady
+        });
+
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const roleName = role === 'user' ? 'You' : '🤖 Tutor';
+
+        const copyBtn = this.languageManager.getString('copyBtn');
+        const speakBtn = this.languageManager.getString('speakBtn');
 
         div.innerHTML = `
             <div class="message-content">
@@ -435,7 +568,8 @@ Available Apps: CoordinateGrid, FractionVisualizer (coming soon), ChartMaker (co
                 <div class="msg-body">${htmlContent}</div>
                 ${role === 'assistant' ? `
                     <div class="msg-actions">
-                        <button class="copy-btn" data-text="${this.escapeHtml(content)}">📋 Copy</button>
+                        <button class="action-btn copy-btn" data-text="${this.escapeHtml(content)}">${copyBtn}</button>
+                        <button class="action-btn speak-btn" data-text="${this.escapeHtml(content)}">${speakBtn}</button>
                     </div>
                 ` : ''}
             </div>
@@ -443,16 +577,6 @@ Available Apps: CoordinateGrid, FractionVisualizer (coming soon), ChartMaker (co
 
         container.appendChild(div);
         this.scrollToBottom();
-
-        // Attach copy handler
-        div.querySelectorAll('.copy-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const text = e.target.getAttribute('data-text');
-                navigator.clipboard.writeText(text);
-                e.target.textContent = '✓ Copied';
-                setTimeout(() => e.target.textContent = '📋 Copy', 2000);
-            });
-        });
     }
 
     addSystemMessage(content) {
@@ -509,13 +633,7 @@ Available Apps: CoordinateGrid, FractionVisualizer (coming soon), ChartMaker (co
         this.state.activeApp = null;
         document.getElementById('messages-container').innerHTML = '';
         document.getElementById('welcome-screen').style.display = 'block';
-        
-        // Only hide app panel if it exists
-        const appPanel = document.getElementById('app-container-panel');
-        if (appPanel) {
-            appPanel.style.display = 'none';
-        }
-        
+
         this.languageManager.updateUI();
         this.languageManager.renderStarterPrompts(this.state.currentGrade);
     }
