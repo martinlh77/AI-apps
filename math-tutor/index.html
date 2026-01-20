@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Safe AI Math Tutor</title>
     <link rel="stylesheet" href="styles/core.css">
     <link rel="stylesheet" href="styles/mobile.css">
+    <link rel="stylesheet" href="styles/drawing.css">
     <!-- Pyodide for Python execution -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
 </head>
-<body>
+<body data-theme="dark">
 
 <div id="app-container">
     <header>
@@ -55,6 +56,14 @@
                 <option value="sage">Sage</option>
             </select>
 
+            <button class="control-btn" id="theme-toggle-btn" aria-label="Toggle Theme" title="Toggle Light/Dark Mode">
+                🌙
+            </button>
+
+            <button class="control-btn" id="conversations-btn" aria-label="Saved Conversations" title="Saved Conversations">
+                💾
+            </button>
+
             <button class="control-btn" id="new-chat-btn" aria-label="Start New Chat">
                 🔄 <span id="new-chat-text">New Chat</span>
             </button>
@@ -89,6 +98,14 @@
                     <span aria-hidden="true">🔊</span>
                     <small id="feat-4">Text-to-speech support</small>
                 </div>
+                <div class="feature-item">
+                    <span aria-hidden="true">✏️</span>
+                    <small id="feat-5">Drawing & graphing tools</small>
+                </div>
+                <div class="feature-item">
+                    <span aria-hidden="true">📷</span>
+                    <small id="feat-6">Upload images for review</small>
+                </div>
             </div>
         </div>
 
@@ -101,6 +118,17 @@
 
     <div id="input-area">
         <div class="input-wrapper">
+            <div class="input-actions">
+                <button class="input-action-btn" id="upload-btn" title="Upload Image" aria-label="Upload Image">
+                    📷
+                </button>
+                <button class="input-action-btn" id="camera-btn" title="Take Photo" aria-label="Take Photo">
+                    📸
+                </button>
+                <button class="input-action-btn" id="draw-btn" title="Open Drawing Tool" aria-label="Open Drawing Tool">
+                    ✏️
+                </button>
+            </div>
             <textarea 
                 id="chat-input" 
                 placeholder="Ask a math question..." 
@@ -109,9 +137,65 @@
             ></textarea>
             <button id="send-btn" aria-label="Send Message">Send</button>
         </div>
+        <input type="file" id="file-upload" accept="image/*" style="display: none;" />
+        <input type="file" id="camera-upload" accept="image/*" capture="environment" style="display: none;" />
+        <div id="upload-preview" class="upload-preview" style="display: none;">
+            <img id="preview-image" src="" alt="Preview" />
+            <button id="remove-upload" class="remove-upload-btn">✕</button>
+        </div>
     </div>
     
     <div class="safety-badge" id="safety-badge" aria-label="School Safe AI Indicator">School-Safe AI</div>
+</div>
+
+<!-- Drawing Modal -->
+<div id="drawing-modal" class="modal" style="display: none;">
+    <div class="modal-content drawing-modal-content">
+        <div class="drawing-header">
+            <h3>✏️ Drawing Tool</h3>
+            <div class="drawing-controls">
+                <select id="bg-select" title="Background Type">
+                    <option value="blank">Blank Canvas</option>
+                    <option value="grid">Coordinate Grid</option>
+                    <option value="dots">Dot Grid</option>
+                    <option value="lined">Lined Paper</option>
+                </select>
+                <button class="tool-btn active" id="tool-pen" title="Pen">✏️</button>
+                <button class="tool-btn" id="tool-line" title="Line">📏</button>
+                <button class="tool-btn" id="tool-point" title="Point">⚫</button>
+                <button class="tool-btn" id="tool-eraser" title="Eraser">🧹</button>
+                <button class="tool-btn" id="tool-select" title="Select/Move">👆</button>
+                <input type="color" id="draw-color" value="#00d4ff" title="Color" />
+                <input type="range" id="draw-size" min="1" max="20" value="3" title="Size" />
+                <button class="tool-btn" id="tool-clear" title="Clear All">🗑️</button>
+                <button class="tool-btn" id="tool-undo" title="Undo">↩️</button>
+            </div>
+            <button class="close-modal-btn" id="close-drawing">✕</button>
+        </div>
+        <div class="drawing-canvas-container">
+            <canvas id="drawing-canvas" width="800" height="600"></canvas>
+        </div>
+        <div class="drawing-footer">
+            <button class="control-btn" id="download-drawing">⬇️ Download</button>
+            <button class="control-btn primary" id="submit-drawing">📤 Submit to Tutor</button>
+        </div>
+    </div>
+</div>
+
+<!-- Conversations Modal -->
+<div id="conversations-modal" class="modal" style="display: none;">
+    <div class="modal-content conversations-modal-content">
+        <div class="modal-header">
+            <h3>💾 Saved Conversations</h3>
+            <button class="close-modal-btn" id="close-conversations">✕</button>
+        </div>
+        <div class="conversations-list" id="conversations-list">
+            <!-- Populated dynamically -->
+        </div>
+        <div class="modal-footer">
+            <button class="control-btn" id="save-current-chat">💾 Save Current Chat</button>
+        </div>
+    </div>
 </div>
 
 <!-- Core Engine Scripts -->
@@ -119,6 +203,9 @@
 <script src="core/message-parser.js"></script>
 <script src="core/app-loader.js"></script>
 <script src="core/python-engine.js"></script>
+<script src="core/content-filter.js"></script>
+<script src="core/drawing-tool.js"></script>
+<script src="core/conversation-manager.js"></script>
 <script src="core/tutor-engine.js"></script>
 
 <script>
