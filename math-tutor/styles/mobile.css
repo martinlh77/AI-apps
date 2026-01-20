@@ -21,13 +21,17 @@
     .controls input,
     .controls button {
         flex: 1 1 calc(33% - 7px);
-        min-width: 100px;
+        min-width: 80px;
         font-size: 0.85rem;
+    }
+
+    #new-chat-text {
+        display: none;
     }
 
     .python-status {
         top: auto;
-        bottom: 80px;
+        bottom: 100px;
         right: 10px;
         font-size: 0.7rem;
         padding: 6px 12px;
@@ -38,8 +42,57 @@
         left: 10px;
     }
 
+    /* CRITICAL: Make chat area shorter on mobile to ensure input is visible */
     #chat-area {
         padding: 15px 10px;
+        padding-bottom: 5px;
+        flex: 1;
+        min-height: 0;
+        max-height: calc(100vh - 220px);
+        max-height: calc(100dvh - 220px);
+    }
+
+    /* Ensure input area is always visible and has proper height */
+    #input-area {
+        padding: 10px;
+        flex-shrink: 0;
+        min-height: 70px;
+    }
+
+    .input-wrapper {
+        gap: 8px;
+    }
+
+    .input-actions {
+        flex-wrap: nowrap;
+        gap: 3px;
+    }
+
+    .input-action-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+
+    textarea {
+        font-size: 16px; /* Prevents iOS zoom */
+        padding: 10px 12px;
+        min-height: 44px;
+    }
+
+    #send-btn {
+        padding: 0 15px;
+        height: 44px;
+        font-size: 0.9rem;
+    }
+
+    .upload-preview {
+        margin-top: 8px;
+    }
+
+    .upload-preview img {
+        max-width: 100px;
+        max-height: 100px;
     }
 
     #welcome-screen {
@@ -77,6 +130,10 @@
         padding: 12px;
     }
 
+    .feature-item small {
+        font-size: 0.75rem;
+    }
+
     .message-content {
         max-width: 95%;
         padding: 10px 14px;
@@ -105,24 +162,6 @@
         padding: 10px;
     }
 
-    #input-area {
-        padding: 15px 10px;
-    }
-
-    .input-wrapper {
-        gap: 8px;
-    }
-
-    textarea {
-        font-size: 0.95rem;
-        padding: 10px 12px;
-    }
-
-    #send-btn {
-        padding: 0 18px;
-        font-size: 0.95rem;
-    }
-
     .safety-badge {
         font-size: 0.7rem;
         padding: 4px 8px;
@@ -133,6 +172,88 @@
     body.rtl .safety-badge {
         right: auto;
         left: 5px;
+    }
+
+    /* Modal adjustments for mobile */
+    .modal {
+        padding: 10px;
+    }
+
+    .modal-content {
+        max-width: 100%;
+        max-height: 95vh;
+        max-height: 95dvh;
+    }
+
+    .drawing-modal-content {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+    }
+
+    .drawing-header {
+        padding: 10px;
+        flex-wrap: wrap;
+    }
+
+    .drawing-controls {
+        flex-wrap: wrap;
+        gap: 5px;
+        order: 3;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .tool-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    #bg-select {
+        font-size: 0.8rem;
+        padding: 6px;
+    }
+
+    #draw-color {
+        width: 36px;
+        height: 36px;
+    }
+
+    #draw-size {
+        width: 60px;
+    }
+
+    .drawing-canvas-container {
+        padding: 10px;
+    }
+
+    #drawing-canvas {
+        width: 100%;
+        height: auto;
+        max-height: 50vh;
+        max-height: 50dvh;
+    }
+
+    .drawing-footer {
+        padding: 10px 15px;
+    }
+
+    .conversations-modal-content {
+        width: 100%;
+        max-height: 80vh;
+        max-height: 80dvh;
+    }
+
+    .conversation-item {
+        padding: 10px;
+    }
+
+    .conversation-name {
+        font-size: 0.9rem;
+    }
+
+    .conversation-date {
+        font-size: 0.75rem;
     }
 }
 
@@ -157,29 +278,54 @@
         flex: 1 1 calc(50% - 5px);
     }
 
+    /* Stack some controls on very small screens */
+    #theme-toggle-btn,
+    #conversations-btn {
+        flex: 0 0 auto;
+        padding: 6px 10px;
+    }
+
     .message-content {
         font-size: 0.9rem;
+    }
+
+    .message-image {
+        max-width: 200px;
+        max-height: 200px;
     }
 
     .prompt-card,
     .action-btn,
     button.control-btn,
-    #send-btn {
+    #send-btn,
+    .input-action-btn {
         min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
 
     .prompt-card {
         display: block;
         padding: 12px;
     }
+
+    /* Adjust chat area height for very small screens */
+    #chat-area {
+        max-height: calc(100vh - 240px);
+        max-height: calc(100dvh - 240px);
+    }
 }
 
 @media (max-width: 768px) and (orientation: landscape) {
     #chat-area {
-        max-height: calc(100vh - 180px);
+        max-height: calc(100vh - 160px);
+        max-height: calc(100dvh - 160px);
+    }
+
+    header {
+        padding: 8px 15px;
+    }
+
+    .brand {
+        margin-bottom: 5px;
     }
 
     #welcome-screen {
@@ -206,7 +352,53 @@
     }
 
     .features-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    #input-area {
+        padding: 8px 10px;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    .prompt-card,
+    .action-btn,
+    button.control-btn,
+    .input-action-btn,
+    #send-btn,
+    .tool-btn {
+        min-height: 44px;
+    }
+
+    .conversation-item {
+        padding: 15px;
+    }
+
+    .conversation-actions button {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Larger touch targets for drawing tools */
+    .tool-btn {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* Handle notched phones (iPhone X and later) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    #input-area {
+        padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    }
+
+    .safety-badge {
+        bottom: calc(10px + env(safe-area-inset-bottom));
+    }
+
+    .python-status {
+        bottom: calc(100px + env(safe-area-inset-bottom));
     }
 }
 
@@ -216,12 +408,22 @@
         --text-color: #ffffff;
     }
 
+    [data-theme="light"] {
+        --border-color: #000000;
+        --text-color: #000000;
+    }
+
     .message-content {
-        border: 2px solid #ffffff;
+        border: 2px solid currentColor;
     }
 
     .visual-container {
         border: 2px solid var(--accent-color);
+    }
+
+    .input-action-btn,
+    .tool-btn {
+        border-width: 2px;
     }
 }
 
@@ -239,5 +441,9 @@
     .typing-indicator .dot {
         animation: none;
         opacity: 0.7;
+    }
+
+    .message {
+        animation: none;
     }
 }
