@@ -206,18 +206,21 @@ class TutorEngine {
             const response = await this.callAPI(message, model);
             this.removeTypingIndicator(typingId);
 
+            // Extract Python code blocks BEFORE rendering
             const pythonBlocks = this.messageParser.extractPythonCode(response);
 
-            await this.addMessage(response, 'assistant', pythonBlocks.length > 0);
+            // Add assistant message (Python blocks will show "Generating visualization..." placeholder)
+            const messageElement = this.addMessage(response, 'assistant');
 
+            // Update history
             this.state.chatHistory.push({ role: 'user', content: message });
             this.state.chatHistory.push({ role: 'assistant', content: response });
 
+            // Auto-execute ALL Python visualization code
             if (pythonBlocks.length > 0) {
-                for (const block of pythonBlocks) {
-                    if (this.isVisualizationCode(block.code)) {
-                        await this.executeAndDisplayPython(block.code);
-                    }
+                for (let i = 0; i < pythonBlocks.length; i++) {
+                    const block = pythonBlocks[i];
+                    await this.executeAndDisplayPython(block.code, messageElement, i);
                 }
             }
 
@@ -232,21 +235,78 @@ class TutorEngine {
         }
     }
 
-    isVisualizationCode(code) {
-        const visualKeywords = ['plt.', 'matplotlib', 'plot', 'graph', 'chart', 'figure', 'save_plot', 'ax.', 'fig,'];
-        return visualKeywords.some(kw => code.includes(kw));
-    }
+    async executeAndDisplayPython(code, messageElement, blockIndex) {
+        // Find the placeholder in this message
+        const placeholder = messageElement.querySelector(`.python-pending[data-code-index="${blockIndex}"]`);
+        
+        if (placeholder) {
+            placeholder.innerHTML = '<em>📊 Generating visualization...</em>';
+        }
 
-    async executeAndDisplayPython(code) {
         const result = await this.pythonEngine.runCode(code);
 
         if (result.success && result.image) {
-            this.addVisualization(result.image);
-        } else if (result.success && result.stdout) {
-            this.addCodeOutput(result.stdout);
+            // Replace placeholder with the actual image
+            if (placeholder) {
+                const imgSrc = this.pythonEngine.getImageDataUrl(result.image);
+                const downloadBtn = this.languageManager.getString('downloadBtn');
+                
+                placeholder.outerHTML = `
+                    <div class="visual-container">
+                        <img src="${imgSrc}" alt="Math Visualization" />
+                        <div class="visual-actions">
+                            <button class="action-btn download-btn" data-image="${result.image}">${downloadBtn}</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Fallback: append to message
+                this.addVisualizationToMessage(messageElement, result.image);
+            }
+        } else if (result.success && result.stdout && result.stdout.trim()) {
+            // Show output if there's no image but there's stdout
+            if (placeholder) {
+                placeholder.outerHTML = `
+                    <div class="code-output">
+                        <pre>${this.escapeHtml(result.stdout)}</pre>
+                    </div>
+                `;
+            }
         } else if (!result.success) {
-            this.addSystemMessage(`Python Error: ${result.error}`);
+            // Show error
+            if (placeholder) {
+                placeholder.outerHTML = `
+                    <div class="python-error">
+                        <em>⚠️ Visualization could not be generated</em>
+                    </div>
+                `;
+            }
+            console.error('Python execution error:', result.error);
+        } else {
+            // No output at all - remove placeholder
+            if (placeholder) {
+                placeholder.remove();
+            }
         }
+    }
+
+    addVisualizationToMessage(messageElement, base64Image) {
+        const msgBody = messageElement.querySelector('.msg-body');
+        if (!msgBody) return;
+
+        const imgSrc = this.pythonEngine.getImageDataUrl(base64Image);
+        const downloadBtn = this.languageManager.getString('downloadBtn');
+
+        const visualDiv = document.createElement('div');
+        visualDiv.className = 'visual-container';
+        visualDiv.innerHTML = `
+            <img src="${imgSrc}" alt="Math Visualization" />
+            <div class="visual-actions">
+                <button class="action-btn download-btn" data-image="${base64Image}">${downloadBtn}</button>
+            </div>
+        `;
+
+        msgBody.appendChild(visualDiv);
     }
 
     addVisualization(base64Image) {
@@ -312,73 +372,11 @@ CRITICAL RULES:
 4. **Tone**: ${gradeData.tone}
 5. **Math Scope**: ${gradeData.mathTopics}
 
-PYTHON VISUALIZATION CAPABILITIES:
-When explaining math concepts that benefit from visuals, generate Python code using matplotlib.
-The code will be automatically executed and displayed. Always end visualization code with save_plot_as_base64().
+PYTHON VISUALIZATION - IMPORTANT:
+When a student asks to SEE, GRAPH, PLOT, DRAW, SHOW, or VISUALIZE anything mathematical, you MUST generate Python code.
+The code will be AUTOMATICALLY executed and displayed as an image - the student will NOT see the code.
 
-Available helper functions (pre-loaded):
-- create_coordinate_grid(xmin, xmax, ymin, ymax) - Creates coordinate plane with axes
-- plot_function(equation_string, xmin, xmax, color, ax) - Plots math functions
-- save_plot_as_base64() - REQUIRED at end of any visualization
-
-VISUALIZATION TYPES YOU CAN CREATE:
-
-**Graphs & Functions:**
-- Linear: y = mx + b
-- Quadratic: y = ax² + bx + c  
-- Polynomial, exponential, logarithmic, trigonometric
-- Multiple functions on same axes
-- Piecewise functions
-
-**Inequalities:**
-- Number line inequalities (x > 3, x ≤ -2) - use open/closed circles
-- Two-variable linear inequalities with shading (y > 2x + 1)
-- Systems of inequalities showing solution region
-
-**Geometry - 2D:**
-- Points with coordinates labeled
-- Lines, rays (with arrows), line segments
-- Angles with degree measurements and arcs
-- All polygons: triangles, quadrilaterals, pentagons, hexagons, etc.
-- Circles with radius, diameter, chords, arcs, sectors
-- Geometric transformations: translations, reflections, rotations, dilations
-
-**Geometry - 3D:**
-- Prisms (rectangular, triangular)
-- Pyramids (square base, triangular base)
-- Cylinders, cones, spheres
-- Cross-sections of 3D shapes
-
-**Data & Statistics:**
-- Bar charts (single and double/grouped)
-- Pie charts with percentages
-- Line graphs with data points
-- Histograms with frequency labels
-- Scatter plots with optional trend lines
-- Box plots (box-and-whisker)
-- Dot plots
-- Stem-and-leaf plots
-
-**Probability Models:**
-- Fair dice probability distributions
-- Coin flip models (single and multiple coins)
-- Spinners with equal or unequal sections
-- Playing card probabilities by suit and type
-- Theoretical vs experimental comparison with simulations
-
-**Infographics:**
-- Step-by-step process diagrams
-- Flowcharts for problem-solving methods
-
-WHEN TO CREATE VISUALIZATIONS:
-- Student asks to "graph", "plot", "draw", "show", or "visualize" something
-- Explaining geometric concepts
-- Demonstrating data or statistics
-- Teaching about probability
-- Showing function behavior
-- Comparing mathematical scenarios
-
-CODE FORMAT:
+REQUIRED FORMAT for visualizations:
 \`\`\`python
 import matplotlib.pyplot as plt
 import numpy as np
@@ -388,8 +386,95 @@ import numpy as np
 save_plot_as_base64()
 \`\`\`
 
-EXERCISE CREATION:
-Create practice problems for students. Guide them to discover answers through questioning.
+CRITICAL REQUIREMENTS:
+1. Always use the \`\`\`python code fence
+2. Always end with save_plot_as_base64()
+3. Use dark theme colors (background is dark blue #1a1a2e)
+4. Use these colors: primary=#00d4ff, secondary=#ff6b6b, accent=#d4af37, text=#f0f0f0
+
+AVAILABLE HELPER FUNCTIONS (pre-loaded):
+- create_coordinate_grid(xmin, xmax, ymin, ymax) - Creates coordinate plane
+- plot_function(equation_string, xmin, xmax, color, ax) - Plots math functions  
+- save_plot_as_base64() - REQUIRED at end, saves the figure
+
+VISUALIZATION TYPES YOU CAN CREATE:
+
+**Number Lines & Inequalities:**
+- Number line with points
+- Inequalities: x > 3, x ≤ -2 (use open/closed circles, arrows)
+- Compound inequalities
+
+**Coordinate Plane:**
+- Plot points with labels
+- Linear functions y = mx + b
+- Quadratic, polynomial, exponential, logarithmic, trig functions
+- Two-variable inequalities with shading
+- Systems of equations/inequalities
+
+**Geometry 2D:**
+- Line segments, rays (with arrows), lines
+- Angles with arc and degree measurement
+- All polygons: triangles, quadrilaterals, pentagons, hexagons, etc.
+- Circles with radius, diameter, chord, arc, sector
+- Transformations: translation, reflection, rotation, dilation
+
+**Geometry 3D:**
+- Prisms, pyramids, cylinders, cones, spheres
+- Cross-sections
+
+**Data & Statistics:**
+- Bar charts, double bar charts
+- Pie charts
+- Line graphs
+- Histograms
+- Scatter plots with trend lines
+- Box plots
+- Dot plots, stem-and-leaf plots
+
+**Probability:**
+- Dice probability models
+- Coin flip models
+- Spinners
+- Playing card probabilities
+- Theoretical vs experimental comparisons
+
+**Infographics:**
+- Step-by-step process diagrams
+- Flowcharts
+
+EXAMPLE - Number Line Inequality:
+When student asks "Graph x > 3 on a number line", respond with explanation AND this code:
+
+\`\`\`python
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots(figsize=(12, 2.5))
+
+# Draw number line
+ax.hlines(0, -2, 10, colors='#f0f0f0', linewidth=2)
+
+# Draw tick marks and labels
+for i in range(-2, 11):
+    ax.vlines(i, -0.15, 0.15, colors='#f0f0f0', linewidth=1)
+    ax.text(i, -0.4, str(i), ha='center', va='top', fontsize=10, color='#f0f0f0')
+
+# Shade the solution (x > 3)
+ax.hlines(0, 3, 10, colors='#00d4ff', linewidth=6)
+ax.annotate('', xy=(10.3, 0), xytext=(9.8, 0),
+            arrowprops=dict(arrowstyle='->', color='#00d4ff', lw=3))
+
+# Open circle at 3 (not included)
+circle = plt.Circle((3, 0), 0.2, color='#1a1a2e', ec='#00d4ff', linewidth=3, zorder=5)
+ax.add_patch(circle)
+
+ax.set_xlim(-2.5, 10.5)
+ax.set_ylim(-0.8, 0.6)
+ax.axis('off')
+ax.set_title("x > 3", fontsize=14, color='#d4af37', pad=15)
+
+save_plot_as_base64()
+\`\`\`
 
 ${gradeData.constraints}`;
 
@@ -488,8 +573,8 @@ ${gradeData.constraints}`;
     handleCopyCode(button) {
         const code = button.getAttribute('data-code');
         navigator.clipboard.writeText(code);
-        button.textContent = '✓';
-        setTimeout(() => button.textContent = '📋', 2000);
+        button.textContent = '✓ Copied';
+        setTimeout(() => button.textContent = '📋 Copy', 2000);
     }
 
     async handleRunCode(button) {
@@ -559,6 +644,9 @@ ${gradeData.constraints}`;
         const copyBtn = this.languageManager.getString('copyBtn');
         const speakBtn = this.languageManager.getString('speakBtn');
 
+        // For copy/speak, strip out Python code blocks so students get clean text
+        const cleanContent = content.replace(/```python[\s\S]*?```/g, '[Visualization]').trim();
+
         div.innerHTML = `
             <div class="message-content">
                 <div class="msg-header">
@@ -568,8 +656,8 @@ ${gradeData.constraints}`;
                 <div class="msg-body">${htmlContent}</div>
                 ${role === 'assistant' ? `
                     <div class="msg-actions">
-                        <button class="action-btn copy-btn" data-text="${this.escapeHtml(content)}">${copyBtn}</button>
-                        <button class="action-btn speak-btn" data-text="${this.escapeHtml(content)}">${speakBtn}</button>
+                        <button class="action-btn copy-btn" data-text="${this.escapeHtml(cleanContent)}">${copyBtn}</button>
+                        <button class="action-btn speak-btn" data-text="${this.escapeHtml(cleanContent)}">${speakBtn}</button>
                     </div>
                 ` : ''}
             </div>
@@ -577,6 +665,8 @@ ${gradeData.constraints}`;
 
         container.appendChild(div);
         this.scrollToBottom();
+
+        return div; // Return the element so we can update it later
     }
 
     addSystemMessage(content) {
