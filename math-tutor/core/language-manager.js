@@ -38,9 +38,34 @@ class LanguageManager {
                 feat2: "2D & 3D visualizations",
                 feat3: "Probability models",
                 feat4: "Text-to-speech support",
+                feat5: "Drawing & graphing tools",
+                feat6: "Upload images for review",
                 inputPlaceholder: "Ask a math question...",
                 safetyBadge: "School-Safe AI",
-                newChat: "New Chat"
+                newChat: "New Chat",
+                copyBtn: "📋 Copy",
+                copiedBtn: "✓ Copied",
+                speakBtn: "🔊 Listen",
+                downloadBtn: "⬇️ Download",
+                runCodeBtn: "▶️ Run Code",
+                pythonLoading: "Loading Python...",
+                pythonReady: "Python Ready ✓",
+                pythonError: "Python Error",
+                generatingVisual: "Generating visualization...",
+                uploadImage: "Upload Image",
+                takePhoto: "Take Photo",
+                openDrawing: "Open Drawing Tool",
+                drawingTitle: "Drawing Tool",
+                submitToTutor: "Submit to Tutor",
+                savedConversations: "Saved Conversations",
+                saveCurrentChat: "Save Current Chat",
+                noConversations: "No saved conversations yet.",
+                conversationSaved: "Conversation saved!",
+                lightMode: "Light Mode",
+                darkMode: "Dark Mode",
+                drawOnThis: "Draw on this",
+                hereIsMyWork: "Here's my work. Can you check it?",
+                drawingTip: "💡 Tip: Click the ✏️ button to open the drawing tool and show your work!"
             },
             prompts: {
                 elementary: ["What is multiplication?"],
@@ -130,6 +155,7 @@ class LanguageManager {
             if (el) el.textContent = text;
         };
 
+        // Main UI elements
         setIfExists('app-title', s.appTitle);
         setIfExists('app-subtitle', s.appSubtitle);
         setIfExists('welcome-title', s.welcomeTitle);
@@ -139,11 +165,36 @@ class LanguageManager {
         setIfExists('feat-2', s.feat2);
         setIfExists('feat-3', s.feat3);
         setIfExists('feat-4', s.feat4);
+        setIfExists('feat-5', s.feat5);
+        setIfExists('feat-6', s.feat6);
         setIfExists('safety-badge', s.safetyBadge);
         setIfExists('new-chat-text', s.newChat);
 
+        // Input placeholder
         const input = document.getElementById('chat-input');
         if (input) input.placeholder = s.inputPlaceholder;
+
+        // Button titles/tooltips
+        const uploadBtn = document.getElementById('upload-btn');
+        if (uploadBtn) uploadBtn.title = s.uploadImage;
+
+        const cameraBtn = document.getElementById('camera-btn');
+        if (cameraBtn) cameraBtn.title = s.takePhoto;
+
+        const drawBtn = document.getElementById('draw-btn');
+        if (drawBtn) drawBtn.title = s.openDrawing;
+
+        // Drawing modal elements
+        const submitDrawingBtn = document.getElementById('submit-drawing');
+        if (submitDrawingBtn) {
+            submitDrawingBtn.innerHTML = `📤 ${s.submitToTutor}`;
+        }
+
+        // Conversations modal
+        const saveCurrentBtn = document.getElementById('save-current-chat');
+        if (saveCurrentBtn) {
+            saveCurrentBtn.innerHTML = `💾 ${s.saveCurrentChat}`;
+        }
     }
 
     renderStarterPrompts(grade) {
