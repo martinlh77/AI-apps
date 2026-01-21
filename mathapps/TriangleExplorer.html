@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Triangle Explorer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .tab-button.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .tab-button:hover:not(.active) {
+            background: #f0f0f0;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-height: 600px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .canvas-container {
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fafafa;
+            margin: 20px 0;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 500px;
+        }
+
+        .canvas-container canvas {
+            display: block;
+            background: white;
+        }
+
+        .controls-panel {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .control-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            min-width: 250px;
+        }
+
+        .control-group h3 {
+            margin-bottom: 10px;
+            color: #495057;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+        }
+
+        .btn-danger:hover {
+            background: #c53030;
+        }
+
+        .btn-success {
+            background: #38a169;
+        }
+
+        .btn-success:hover {
+            background: #2f855a;
+        }
+
+        .triangle-info {
+            background: #e8f5e8;
+            border: 1px solid #c3e6c3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .triangle-info h4 {
+            color: #2f855a;
+            margin-bottom: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            padding: 3px 0;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .protractor-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: none;
+            min-width: 200px;
+        }
+
+        .protractor-overlay.active {
+            display: block;
+        }
+
+        .protractor-overlay h4 {
+            margin-bottom: 10px;
+            color: #333;
+            text-align: center;
+        }
+
+        .protractor-display {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .drawing-tools {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .slider-container {
+            margin: 10px 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .drawing-canvas-container {
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            background: white;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .status-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        #loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .controls-panel {
+                flex-direction: column;
+            }
+            
+            .control-group {
+                min-width: auto;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔺 Triangle Explorer</h1>
+            <p>Interactive tool for exploring triangle properties, angles, and measurements</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('explorer')">Triangle Explorer</button>
+            <button class="tab-button" onclick="switchTab('generator')">Triangle Generator</button>
+            <button class="tab-button" onclick="switchTab('analyzer')">Triangle Analyzer</button>
+            <button class="tab-button" onclick="switchTab('drawing')">Drawing Board</button>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loading">Loading interactive canvas...</div>
+
+        <!-- Triangle Explorer Tab -->
+        <div id="explorer" class="tab-content active">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Triangle Type</h3>
+                    <div class="form-group">
+                        <select id="triangleType">
+                            <option value="random">Random Triangle</option>
+                            <option value="equilateral">Equilateral</option>
+                            <option value="isosceles">Isosceles</option>
+                            <option value="scalene">Scalene</option>
+                            <option value="right">Right Triangle</option>
+                            <option value="acute">Acute Triangle</option>
+                            <option value="obtuse">Obtuse Triangle</option>
+                        </select>
+                    </div>
+                    <button class="btn" onclick="generateTriangle()">Generate Triangle</button>
+                    <button class="btn" id="protractorBtn" onclick="toggleProtractor()">📐 Protractor</button>
+                </div>
+
+                <div class="control-group">
+                    <h3>Interactive Controls</h3>
+                    <div class="form-group">
+                        <label>Drag points to modify triangle</label>
+                        <small style="color: #666; display: block;">Click and drag any vertex to reshape</small>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="showAngles" checked> Show angles
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="showSides" checked> Show side lengths
+                        </label>
+                    </div>
+                    <button class="btn" onclick="resetTriangle()">Reset</button>
+                    <button class="btn btn-danger" onclick="clearCanvas()">Clear</button>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <div class="canvas-wrapper" id="explorerCanvas"></div>
+                <div id="protractorOverlay" class="protractor-overlay">
+                    <h4>📐 Protractor</h4>
+                    <div class="protractor-display" id="protractorReading">0°</div>
+                    <div>Place cursor over vertex to measure</div>
+                    <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        Precision: ±1° | Scale: 1px = 0.1°
+                    </div>
+                </div>
+            </div>
+
+            <div id="triangleStatus" class="triangle-info" style="display: none;">
+                <h4>Triangle Properties</h4>
+                <div class="info-row">
+                    <span class="info-label">Type:</span>
+                    <span id="triangleClassification">Unknown</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Area:</span>
+                    <span id="triangleArea">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Perimeter:</span>
+                    <span id="trianglePerimeter">-</span>
+                </div>
+                <div id="angleDetails"></div>
+                <div id="sideDetails"></div>
+            </div>
+        </div>
+
+        <!-- Triangle Generator Tab -->
+        <div id="generator" class="tab-content">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Generate by Type</h3>
+                    <div class="form-group">
+                        <select id="genType" onchange="updateGeneratorInputs()">
+                            <option value="sss">Side-Side-Side (SSS)</option>
+                            <option value="sas">Side-Angle-Side (SAS)</option>
+                            <option value="asa">Angle-Side-Angle (ASA)</option>
+                            <option value="aas">Angle-Angle-Side (AAS)</option>
+                            <option value="hl">Hypotenuse-Leg (HL) - Right Triangle</option>
+                        </select>
+                    </div>
+                    
+                    <div id="sssInputs">
+                        <div class="form-group">
+                            <label>Side A: <span id="sideAUnit">px</span></label>
+                            <input type="number" id="sideA" value="100" min="1" max="500">
+                        </div>
+                        <div class="form-group">
+                            <label>Side B: <span id="sideBUnit">px</span></label>
+                            <input type="number" id="sideB" value="120" min="1" max="500">
+                        </div>
+                        <div class="form-group">
+                            <label>Side C: <span id="sideCUnit">px</span></label>
+                            <input type="number" id="sideC" value="140" min="1" max="500">
+                        </div>
+                    </div>
+
+                    <div id="sasInputs" style="display: none;">
+                        <div class="form-group">
+                            <label>Side A: <span id="sasSideAUnit">px</span></label>
+                            <input type="number" id="sasSideA" value="100" min="1" max="500">
+                        </div>
+                        <div class="form-group">
+                            <label>Angle B: <span id="angleBUnit">°</span></label>
+                            <input type="number" id="angleB" value="60" min="1" max="179">
+                        </div>
+                        <div class="form-group">
+                            <label>Side C: <span id="sasSideCUnit">px</span></label>
+                            <input type="number" id="sasSideC" value="100" min="1" max="500">
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success" onclick="generateFromInputs()">Generate Triangle</button>
+                </div>
+
+                <div class="control-group">
+                    <h3>Advanced Options</h3>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="showConstruction"> Show construction lines
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Scale:</label>
+                        <input type="range" id="scaleSlider" class="slider" min="0.5" max="2" step="0.1" value="1" onchange="updateScale()">
+                        <span id="scaleValue">1.0</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Units:</label>
+                        <select id="units" onchange="updateUnits()">
+                            <option value="px">Pixels</option>
+                            <option value="cm">Centimeters</option>
+                            <option value="in">Inches</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <div class="canvas-wrapper" id="generatorCanvas"></div>
+            </div>
+            
+            <div id="generatorStatus" class="status-message" style="display: none;"></div>
+        </div>
+
+        <!-- Triangle Analyzer Tab -->
+        <div id="analyzer" class="tab-content">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Analyze Triangle</h3>
+                    <div class="form-group">
+                        <select id="analysisMethod" onchange="updateAnalyzerInputs()">
+                            <option value="sides">By Side Lengths</option>
+                            <option value="angles">By Angles</option>
+                            <option value="mixed">Mixed (Sides + Angles)</option>
+                        </select>
+                    </div>
+
+                    <div id="sideAnalysis">
+                        <div class="form-group">
+                            <label>Side A:</label>
+                            <input type="number" id="anaSideA" value="100" min="1" max="500">
+                        </div>
+                        <div class="form-group">
+                            <label>Side B:</label>
+                            <input type="number" id="anaSideB" value="120" min="1" max="500">
+                        </div>
+                        <div class="form-group">
+                            <label>Side C:</label>
+                            <input type="number" id="anaSideC" value="140" min="1" max="500">
+                        </div>
+                    </div>
+
+                    <div id="angleAnalysis" style="display: none;">
+                        <div class="form-group">
+                            <label>Angle A:</label>
+                            <input type="number" id="anaAngleA" value="60" min="1" max="179">
+                        </div>
+                        <div class="form-group">
+                            <label>Angle B:</label>
+                            <input type="number" id="anaAngleB" value="70" min="1" max="179">
+                        </div>
+                        <div class="form-group">
+                            <label>Angle C:</label>
+                            <input type="number" id="anaAngleC" value="50" min="1" max="179">
+                        </div>
+                    </div>
+
+                    <button class="btn" onclick="analyzeTriangle()">Analyze</button>
+                </div>
+
+                <div class="control-group">
+                    <h3>Tolerance Settings</h3>
+                    <div class="slider-container">
+                        <label>Angle tolerance: <span id="angleTolerance">2</span>°</label>
+                        <input type="range" id="angleTolSlider" class="slider" min="0.1" max="10" step="0.1" value="2" oninput="document.getElementById('angleTolerance').textContent = this.value">
+                    </div>
+                    <div class="slider-container">
+                        <label>Side tolerance: <span id="sideTolerance">1</span>%</label>
+                        <input type="range" id="sideTolSlider" class="slider" min="0.1" max="10" step="0.1" value="1" oninput="document.getElementById('sideTolerance').textContent = this.value">
+                    </div>
+                </div>
+            </div>
+
+            <div id="analysisResults" style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #667eea;"></div>
+
+            <div class="canvas-container">
+                <div class="canvas-wrapper" id="analyzerCanvas"></div>
+            </div>
+        </div>
+
+        <!-- Drawing Board Tab -->
+        <div id="drawing" class="tab-content">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <h3>Drawing Tools</h3>
+                    <div class="drawing-tools">
+                        <button class="btn active-tool" onclick="setTool('line')">Line</button>
+                        <button class="btn" onclick="setTool('circle')">Circle</button>
+                        <button class="btn" onclick="setTool('protractor')">📐 Protractor</button>
+                        <button class="btn btn-danger" onclick="clearDrawing()">Clear</button>
+                        <button class="btn btn-success" onclick="saveDrawing()">Save</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Line Width: <span id="lineWidthValue">2</span></label>
+                        <input type="range" id="lineWidth" class="slider" min="1" max="10" value="2" oninput="document.getElementById('lineWidthValue').textContent = this.value">
+                    </div>
+                    
+                    <div style="display: flex; gap: 5px; align-items: center; margin: 10px 0;">
+                        <label>Color:</label>
+                        <input type="color" id="drawColor" class="color-picker" value="#000000">
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Protractor Settings</h3>
+                    <div class="form-group">
+                        <label>Protractor Size: <span id="protractorSizeValue">100</span>px</label>
+                        <input type="range" id="protractorSize" class="slider" min="50" max="200" value="100" oninput="document.getElementById('protractorSizeValue').textContent = this.value">
+                    </div>
+                    <div class="form-group">
+                        <label>Show tick marks</label>
+                        <input type="checkbox" id="showTicks" checked>
+                    </div>
+                    <div class="form-group">
+                        <label>Precision: <span id="precisionValue">1</span>°</label>
+                        <select id="precision">
+                            <option value="1">1°</option>
+                            <option value="5">5°</option>
+                            <option value="10">10°</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="drawing-canvas-container">
+                <canvas id="drawingCanvas" width="800" height="600"></canvas>
+            </div>
+
+            <div style="text-align: center; margin: 15px 0; color: #666;">
+                <p>Click and drag to draw. Use the protractor tool to measure and draw precise angles.</p>
+                <p>Hold Shift while drawing for straight lines (0°, 45°, 90° angles).</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentSketch = null;
+        let currentTab = 'explorer';
+        let trianglePoints = [];
+        let selectedPoint = null;
+        let dragging = false;
+        let protractorActive = false;
+        
+        // Drawing state
+        let drawingMode = 'line';
+        let isDrawing = false;
+        let currentPath = [];
+        let drawings = [];
+        let drawingCanvas, drawingCtx;
+        
+        // Protractor state
+        let protractorBase = null;
+        let protractorAngle = 0;
+        let protractorSize = 100;
+        let protractorPrecision = 1;
+        let showTicks = true;
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hide loading
+            document.getElementById('loading').style.display = 'none';
+            
+            // Setup drawing canvas
+            setupDrawingCanvas();
+            
+            // Create initial sketch for explorer tab
+            createSketch('explorer');
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Initialize tabs
+            updateGeneratorInputs();
+            updateAnalyzerInputs();
+        });
+
+        function setupDrawingCanvas() {
+            drawingCanvas = document.getElementById('drawingCanvas');
+            drawingCtx = drawingCanvas.getContext('2d');
+            
+            // Setup drawing events
+            drawingCanvas.addEventListener('mousedown', handleDrawingMouseDown);
+            drawingCanvas.addEventListener('mousemove', handleDrawingMouseMove);
+            drawingCanvas.addEventListener('mouseup', handleDrawingMouseUp);
+            drawingCanvas.addEventListener('mouseleave', handleDrawingMouseUp);
+        }
+
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    switchTab(e.target.getAttribute('onclick').match(/'([^']+)'/)[1]);
+                });
+            });
+        }
+
+        function createSketch(tabName) {
+            const containerId = tabName === 'drawing' ? 'drawingCanvas' : `${tabName}Canvas`;
+            
+            if (currentSketch) {
+                currentSketch.remove();
+            }
+            
+            if (tabName === 'drawing') {
+                return; // Don't create p5.js sketch for drawing tab
+            }
+            
+            currentSketch = new p5((p) => {
+                let trianglePoints = [];
+                let selectedPoint = null;
+                let dragging = false;
+                let protractorActive = false;
+                let showAngles = true;
+                let showSides = true;
+                let canvasWidth, canvasHeight;
+                let protractorBase = null;
+                let protractorAngle = 0;
+
+                p.setup = function() {
+                    const container = document.getElementById(containerId);
+                    if (!container) return;
+                    
+                    canvasWidth = container.offsetWidth;
+                    canvasHeight = 500;
+                    
+                    let cnv = p.createCanvas(canvasWidth, canvasHeight);
+                    cnv.parent(container);
+                    cnv.style('display', 'block');
+                    
+                    // Initialize triangle
+                    if (tabName === 'explorer') {
+                        generateRandomTriangle();
+                    }
+                };
+
+                p.windowResized = function() {
+                    const container = document.getElementById(containerId);
+                    if (!container) return;
+                    
+                    canvasWidth = container.offsetWidth;
+                    p.resizeCanvas(canvasWidth, canvasHeight);
+                };
+
+                p.draw = function() {
+                    p.background(240, 245, 255);
+                    drawGrid();
+                    
+                    if (trianglePoints.length === 3) {
+                        drawTriangle();
+                        if (tabName === 'explorer' && (showAngles || showSides)) {
+                            drawTriangleLabels();
+                        }
+                        if (protractorActive && tabName === 'explorer') {
+                            drawProtractor();
+                        }
+                    }
+                    
+                    // Update triangle info for explorer tab
+                    if (tabName === 'explorer' && trianglePoints.length === 3) {
+                        updateTriangleInfoLocal(trianglePoints);
+                    }
+                };
+
+                p.mousePressed = function() {
+                    if (tabName !== 'explorer') return;
+                    
+                    selectedPoint = getClosestPoint(p.mouseX, p.mouseY);
+                    if (selectedPoint !== null) {
+                        dragging = true;
+                        return false;
+                    }
+                };
+
+                p.mouseReleased = function() {
+                    if (tabName !== 'explorer') return;
+                    dragging = false;
+                    selectedPoint = null;
+                };
+
+                p.mouseDragged = function() {
+                    if (tabName !== 'explorer' || selectedPoint === null || !dragging) return;
+                    
+                    trianglePoints[selectedPoint].x = p.mouseX;
+                    trianglePoints[selectedPoint].y = p.mouseY;
+                    
+                    if (protractorActive) {
+                        updateProtractorLocal();
+                    }
+                    
+                    return false;
+                };
+
+                function drawGrid() {
+                    p.stroke(220, 225, 230);
+                    p.strokeWeight(1);
+                    
+                    const gridSize = 20;
+                    for (let x = 0; x <= canvasWidth; x += gridSize) {
+                        p.line(x, 0, x, canvasHeight);
+                    }
+                    for (let y = 0; y <= canvasHeight; y += gridSize) {
+                        p.line(0, y, canvasWidth, y);
+                    }
+                }
+
+                function drawTriangle() {
+                    if (trianglePoints.length < 3) return;
+                    
+                    if (!isValidTriangle(...trianglePoints)) {
+                        p.fill(255, 200, 200, 100);
+                        p.stroke(255, 100, 100);
+                        p.strokeWeight(3);
+                    } else {
+                        p.fill(200, 230, 255, 80);
+                        p.stroke(50, 100, 150);
+                        p.strokeWeight(2);
+                    }
+                    
+                    p.beginShape();
+                    for (let pt of trianglePoints) {
+                        p.vertex(pt.x, pt.y);
+                    }
+                    p.endShape(p.CLOSE);
+                    
+                    // Draw vertices
+                    p.fill(100, 150, 200);
+                    p.noStroke();
+                    for (let pt of trianglePoints) {
+                        p.ellipse(pt.x, pt.y, 12, 12);
+                    }
+                }
+
+                function drawTriangleLabels() {
+                    if (trianglePoints.length < 3 || !isValidTriangle(...trianglePoints)) return;
+                    
+                    showAngles = document.getElementById('showAngles').checked;
+                    showSides = document.getElementById('showSides').checked;
+                    
+                    if (showSides) {
+                        drawSideLabels();
+                    }
+                    
+                    if (showAngles) {
+                        drawAngleLabels();
+                    }
+                }
+
+                function drawSideLabels() {
+                    p.stroke(100, 150, 200);
+                    p.strokeWeight(1);
+                    p.fill(50, 100, 150);
+                    p.textSize(14);
+                    p.textAlign(p.CENTER, p.CENTER);
+                    
+                    for (let i = 0; i < 3; i++) {
+                        let p1 = trianglePoints[i];
+                        let p2 = trianglePoints[(i + 1) % 3];
+                        let midX = (p1.x + p2.x) / 2;
+                        let midY = (p1.y + p2.y) / 2;
+                        
+                        let distance = p.dist(p1.x, p1.y, p2.x, p2.y);
+                        let label = distance.toFixed(0);
+                        
+                        // Draw perpendicular tick mark
+                        let angle = p.atan2(p2.y - p1.y, p2.x - p1.x);
+                        let perpAngle = angle + p.PI/2;
+                        let tickLength = 8;
+                        let tickX = midX + p.cos(perpAngle) * tickLength/2;
+                        let tickY = midY + p.sin(perpAngle) * tickLength/2;
+                        p.line(midX, midY, tickX, tickY);
+                        
+                        // Draw label
+                        p.push();
+                        p.translate(midX, midY);
+                        p.rotate(perpAngle);
+                        p.text(label, 0, 5);
+                        p.pop();
+                    }
+                }
+
+                function drawAngleLabels() {
+                    p.fill(150, 50, 100);
+                    p.stroke(150, 50, 100);
+                    p.strokeWeight(1);
+                    p.textSize(12);
+                    p.textAlign(p.CENTER, p.CENTER);
+                    
+                    for (let i = 0; i < 3; i++) {
+                        let p1 = trianglePoints[i];
+                        let p2 = trianglePoints[(i + 1) % 3];
+                        let p3 = trianglePoints[(i + 2) % 3];
+                        
+                        let angle = calculateAngle(p1, p2, p3);
+                        let label = angle.toFixed(0) + '°';
+                        
+                        // Calculate position for angle label
+                        let vec1 = p5.Vector.sub(p.createVector(p1.x, p1.y), p.createVector(p2.x, p2.y));
+                        let vec2 = p5.Vector.sub(p.createVector(p3.x, p3.y), p.createVector(p2.x, p2.y));
+                        let angleBisector = p5.Vector.add(p5.Vector.mult(vec1, 0.3), p5.Vector.mult(vec2, 0.3));
+                        let labelX = p2.x + angleBisector.x;
+                        let labelY = p2.y + angleBisector.y;
+                        
+                        // Draw small arc
+                        let arcRadius = 20;
+                        let startAngle = vec1.heading();
+                        let endAngle = vec2.heading();
+                        if (endAngle < startAngle) endAngle += p.TWO_PI;
+                        
+                        p.noFill();
+                        p.arc(p2.x, p2.y, arcRadius, arcRadius, startAngle, endAngle, p.OPEN);
+                        
+                        // Draw label
+                        p.fill(150, 50, 100);
+                        p.text(label, labelX, labelY);
+                    }
+                }
+
+                function getClosestPoint(x, y, threshold = 15) {
+                    for (let i = 0; i < trianglePoints.length; i++) {
+                        let pt = trianglePoints[i];
+                        let d = p.dist(x, y, pt.x, pt.y);
+                        if (d < threshold) {
+                            return i;
+                        }
+                    }
+                    return null;
+                }
+
+                function isValidTriangle(p1, p2, p3) {
+                    let d12 = p.dist(p1.x, p1.y, p2.x, p2.y);
+                    let d23 = p.dist(p2.x, p2.y, p3.x, p3.y);
+                    let d31 = p.dist(p3.x, p3.y, p1.x, p1.y);
+                    
+                    return d12 + d23 > d31 && 
+                           d23 + d31 > d12 && 
+                           d31 + d12 > d23 &&
+                           d12 > 1 && d23 > 1 && d31 > 1;
+                }
+
+                function calculateAngle(p1, p2, p3) {
+                    let v1 = p5.Vector.sub(p.createVector(p1.x, p1.y), p.createVector(p2.x, p2.y));
+                    let v2 = p5.Vector.sub(p.createVector(p3.x, p3.y), p.createVector(p2.x, p2.y));
+                    let angle = v1.angleBetween(v2);
+                    return p.degrees(angle);
+                }
+
+                function calculateArea(p1, p2, p3) {
+                    return p.abs((p1.x*(p2.y - p3.y) + p2.x*(p3.y - p1.y) + p3.x*(p1.y - p2.y)) / 2);
+                }
+
+                function updateTriangleInfoLocal(points) {
+                    if (points.length < 3 || !isValidTriangle(...points)) {
+                        document.getElementById('triangleStatus').style.display = 'none';
+                        return;
+                    }
+                    
+                    const statusDiv = document.getElementById('triangleStatus');
+                    statusDiv.style.display = 'block';
+                    
+                    let angles = [];
+                    let sides = [];
+                    
+                    for (let i = 0; i < 3; i++) {
+                        let p1 = points[i];
+                        let p2 = points[(i + 1) % 3];
+                        let p3 = points[(i + 2) % 3];
+                        
+                        angles.push(calculateAngle(p1, p2, p3));
+                        sides.push(p.dist(p1.x, p1.y, p2.x, p2.y));
+                    }
+                    
+                    const area = calculateArea(...points);
+                    const perimeter = sides.reduce((a, b) => a + b, 0);
+                    
+                    // Classify triangle
+                    const maxAngle = Math.max(...angles);
+                    const sortedSides = [...sides].sort((a, b) => a - b);
+                    const isEquilateral = sides.every(s => Math.abs(s - sides[0]) < 2);
+                    const isIsosceles = new Set(sides.map(s => Math.round(s))).size === 2;
+                    const isScalene = new Set(sides.map(s => Math.round(s))).size === 3;
+                    const isRight = Math.abs(maxAngle - 90) < 2;
+                    const isAcute = maxAngle < 90;
+                    const isObtuse = maxAngle > 90;
+                    
+                    let classification = 'Scalene';
+                    if (isEquilateral) classification = 'Equilateral';
+                    else if (isIsosceles) classification = 'Isosceles';
+                    else if (isRight) classification = 'Right';
+                    else if (isAcute) classification = 'Acute';
+                    else if (isObtuse) classification = 'Obtuse';
+                    
+                    document.getElementById('triangleClassification').textContent = classification;
+                    document.getElementById('triangleArea').textContent = area.toFixed(1) + ' px²';
+                    document.getElementById('trianglePerimeter').textContent = perimeter.toFixed(1) + ' px';
+                    
+                    // Angle details
+                    let angleHTML = '';
+                    angles.forEach((angle, i) => {
+                        angleHTML += `<div class="info-row">
+                            <span class="info-label">Angle ${String.fromCharCode(65 + i)}:</span>
+                            <span>${angle.toFixed(1)}°</span>
+                        </div>`;
+                    });
+                    document.getElementById('angleDetails').innerHTML = angleHTML;
+                    
+                    // Side details
+                    let sideHTML = '';
+                    sides.forEach((side, i) => {
+                        sideHTML += `<div class="info-row">
+                            <span class="info-label">Side ${String.fromCharCode(65 + ((i+1)%3))}:</span>
+                            <span>${side.toFixed(1)} px</span>
+                        </div>`;
+                    });
+                    document.getElementById('sideDetails').innerHTML = sideHTML;
+                }
+
+                function toggleProtractorLocal() {
+                    protractorActive = !protractorActive;
+                    const overlay = document.getElementById('protractorOverlay');
+                    const btn = document.getElementById('protractorBtn');
+                    
+                    if (protractorActive) {
+                        overlay.classList.add('active');
+                        btn.textContent = '📐 Hide Protractor';
+                        btn.style.background = '#38a169';
+                    } else {
+                        overlay.classList.remove('active');
+                        btn.textContent = '📐 Protractor';
+                        btn.style.background = '';
+                        protractorBase = null;
+                    }
+                }
+
+                function drawProtractor() {
+                    if (!protractorActive) return;
+                    
+                    // Find closest vertex
+                    let closestVertex = null;
+                    let minDist = 30;
+                    
+                    for (let i = 0; i < trianglePoints.length; i++) {
+                        let dist = p.dist(p.mouseX, p.mouseY, trianglePoints[i].x, trianglePoints[i].y);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            closestVertex = i;
+                        }
+                    }
+                    
+                    if (closestVertex !== null) {
+                        let vertex = trianglePoints[closestVertex];
+                        let v1 = trianglePoints[(closestVertex + 1) % 3];
+                        let v2 = trianglePoints[(closestVertex + 2) % 3];
+                        
+                        // Draw protractor circle
+                        p.noFill();
+                        p.stroke(100, 150, 200, 150);
+                        p.strokeWeight(2);
+                        p.ellipse(vertex.x, vertex.y, 80, 80);
+                        
+                        // Draw tick marks
+                        drawProtractorTicks(vertex);
+                        
+                        // Calculate and display angle
+                        let angle1 = p.atan2(v1.y - vertex.y, v1.x - vertex.x);
+                        let angle2 = p.atan2(v2.y - vertex.y, v2.x - vertex.x);
+                        let angleDiff = p.abs(p.degrees(angle2 - angle1));
+                        if (angleDiff > 180) angleDiff = 360 - angleDiff;
+                        
+                        protractorAngle = angleDiff;
+                        if (document.getElementById('protractorReading')) {
+                            document.getElementById('protractorReading').textContent = angleDiff.toFixed(1) + '°';
+                        }
+                        
+                        // Draw angle arc
+                        p.stroke(255, 100, 100, 200);
+                        p.strokeWeight(3);
+                        let startAngle = angle1;
+                        let endAngle = angle2;
+                        if (endAngle < startAngle) {
+                            let temp = startAngle;
+                            startAngle = endAngle;
+                            endAngle = temp;
+                        }
+                        p.arc(vertex.x, vertex.y, 60, 60, startAngle, endAngle);
+                        
+                        // Draw crosshair
+                        p.stroke(100, 150, 200, 150);
+                        p.strokeWeight(1);
+                        p.line(vertex.x - 10, vertex.y, vertex.x + 10, vertex.y);
+                        p.line(vertex.x, vertex.y - 10, vertex.x, vertex.y + 10);
+                        
+                        protractorBase = vertex;
+                    } else {
+                        protractorBase = null;
+                        if (document.getElementById('protractorReading')) {
+                            document.getElementById('protractorReading').textContent = '0°';
+                        }
+                    }
+                }
+
+                function drawProtractorTicks(vertex) {
+                    p.stroke(100, 150, 200, 100);
+                    p.strokeWeight(1);
+                    
+                    for (let i = 0; i <= 360; i += 5) {
+                        let angleRad = p.radians(i);
+                        let x1 = vertex.x + p.cos(angleRad) * 35;
+                        let y1 = vertex.y + p.sin(angleRad) * 35;
+                        let x2 = vertex.x + p.cos(angleRad) * 40;
+                        let y2 = vertex.y + p.sin(angleRad) * 40;
+                        
+                        if (i % 30 === 0) {
+                            p.strokeWeight(2);
+                        } else {
+                            p.strokeWeight(1);
+                        }
+                        
+                        p.line(x1, y1, x2, y2);
+                    }
+                }
+
+                function updateProtractorLocal() {
+                    if (protractorActive && protractorBase) {
+                        // Find which point is the protractor base
+                        let baseIndex = trianglePoints.findIndex(pt => 
+                            p.dist(pt.x, pt.y, protractorBase.x, protractorBase.y) < 5
+                        );
+                        
+                        if (baseIndex !== -1) {
+                            let v1 = trianglePoints[(baseIndex + 1) % 3];
+                            let v2 = trianglePoints[(baseIndex + 2) % 3];
+                            
+                            let angle1 = p.atan2(v1.y - protractorBase.y, v1.x - protractorBase.x);
+                            let angle2 = p.atan2(v2.y - protractorBase.y, v2.x - protractorBase.x);
+                            let angleDiff = p.abs(p.degrees(angle2 - angle1));
+                            if (angleDiff > 180) angleDiff = 360 - angleDiff;
+                            
+                            protractorAngle = angleDiff;
+                            if (document.getElementById('protractorReading')) {
+                                document.getElementById('protractorReading').textContent = angleDiff.toFixed(1) + '°';
+                            }
+                        }
+                    }
+                }
+
+                function generateRandomTriangle() {
+                    trianglePoints = [
+                        p.createVector(p.random(100, canvasWidth-100), p.random(100, canvasHeight-200)),
+                        p.createVector(p.random(100, canvasWidth-100), p.random(100, canvasHeight-200)),
+                        p.createVector(p.random(100, canvasWidth-100), p.random(100, canvasHeight-200))
+                    ];
+                    
+                    // Ensure it's a valid triangle
+                    let attempts = 0;
+                    while (!isValidTriangle(...trianglePoints) && attempts < 100) {
+                        trianglePoints[2] = p.createVector(
+                            p.random(100, canvasWidth-100), 
+                            p.random(100, canvasHeight-200)
+                        );
+                        attempts++;
+                    }
+                }
+
+                function generateEquilateral() {
+                    const centerX = canvasWidth / 2;
+                    const centerY = canvasHeight / 2;
+                    const size = p.min(canvasWidth, canvasHeight) * 0.3;
+                    const height = size * p.sqrt(3) / 2;
+                    
+                    trianglePoints = [
+                        p.createVector(centerX, centerY - height/3),
+                        p.createVector(centerX - size/2, centerY + height/3),
+                        p.createVector(centerX + size/2, centerY + height/3)
+                    ];
+                }
+
+                function generateIsosceles() {
+                    const centerX = canvasWidth / 2;
+                    const centerY = canvasHeight / 2;
+                    const base = 200;
+                    const height = 150;
+                    
+                    trianglePoints = [
+                        p.createVector(centerX, centerY - height),
+                        p.createVector(centerX - base/2, centerY),
+                        p.createVector(centerX + base/2, centerY)
+                    ];
+                }
+
+                function generateScalene() {
+                    trianglePoints = [
+                        p.createVector(200, 100),
+                        p.createVector(500, 200),
+                        p.createVector(300, 400)
+                    ];
+                }
+
+                function generateRight() {
+                    trianglePoints = [
+                        p.createVector(150, canvasHeight - 100),
+                        p.createVector(400, canvasHeight - 100),
+                        p.createVector(150, canvasHeight - 250)
+                    ];
+                }
+
+                function generateAcute() {
+                    trianglePoints = [
+                        p.createVector(250, 150),
+                        p.createVector(450, 200),
+                        p.createVector(350, 350)
+                    ];
+                }
+
+                function generateObtuse() {
+                    trianglePoints = [
+                        p.createVector(100, canvasHeight - 200),
+                        p.createVector(400, canvasHeight - 180),
+                        p.createVector(150, 100)
+                    ];
+                }
+
+                // Make these functions globally accessible
+                window.setLocalTrianglePoints = function(points) {
+                    trianglePoints = points.map(pt => p.createVector(pt.x, pt.y));
+                };
+
+                // Expose functions for global access
+                window.getLocalTrianglePoints = function() {
+                    return trianglePoints.map(pt => ({x: pt.x, y: pt.y}));
+                };
+
+                if (tabName === 'explorer') {
+                    window.toggleProtractor = function() {
+                        toggleProtractorLocal();
+                    };
+                    
+                    window.generateTriangleLocal = function(type) {
+                        switch(type) {
+                            case 'equilateral':
+                                generateEquilateral();
+                                break;
+                            case 'isosceles':
+                                generateIsosceles();
+                                break;
+                            case 'scalene':
+                                generateScalene();
+                                break;
+                            case 'right':
+                                generateRight();
+                                break;
+                            case 'acute':
+                                generateAcute();
+                                break;
+                            case 'obtuse':
+                                generateObtuse();
+                                break;
+                            default:
+                                generateRandomTriangle();
+                        }
+                    };
+                    
+                    window.resetTriangleLocal = function() {
+                        generateRandomTriangle();
+                    };
+                    
+                    window.clearCanvasLocal = function() {
+                        trianglePoints = [];
+                    };
+                }
+
+                if (tabName === 'generator' || tabName === 'analyzer') {
+                    window.updateTriangleDisplay = function(points) {
+                        setLocalTrianglePoints(points);
+                    };
+                }
+            }, containerId);
+        }
+
+        // Global functions
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            currentTab = tabName;
+            
+            // Hide protractor overlay when switching tabs
+            document.getElementById('protractorOverlay').classList.remove('active');
+            protractorActive = false;
+            document.getElementById('protractorBtn').textContent = '📐 Protractor';
+            document.getElementById('protractorBtn').style.background = '';
+            
+            // Create new sketch for the tab
+            if (tabName !== 'drawing') {
+                setTimeout(() => createSketch(tabName), 100);
+            } else {
+                // Redraw drawing canvas
+                drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                drawAllDrawings();
+            }
+            
+            if (tabName === 'generator') {
+                updateGeneratorInputs();
+            } else if (tabName === 'analyzer') {
+                updateAnalyzerInputs();
+            }
+        }
+
+        function updateGeneratorInputs() {
+            const genType = document.getElementById('genType').value;
+            const sssInputs = document.getElementById('sssInputs');
+            const sasInputs = document.getElementById('sasInputs');
+            
+            if (genType === 'sss') {
+                sssInputs.style.display = 'block';
+                sasInputs.style.display = 'none';
+            } else {
+                sssInputs.style.display = 'none';
+                sasInputs.style.display = 'block';
+            }
+        }
+
+        function updateAnalyzerInputs() {
+            const method = document.getElementById('analysisMethod').value;
+            const sideAnalysis = document.getElementById('sideAnalysis');
+            const angleAnalysis = document.getElementById('angleAnalysis');
+            
+            if (method === 'sides' || method === 'mixed') {
+                sideAnalysis.style.display = 'block';
+            } else {
+                sideAnalysis.style.display = 'none';
+            }
+            
+            if (method === 'angles' || method === 'mixed') {
+                angleAnalysis.style.display = 'block';
+            } else {
+                angleAnalysis.style.display = 'none';
+            }
+        }
+
+        function generateTriangle() {
+            if (currentTab !== 'explorer') return;
+            
+            const type = document.getElementById('triangleType').value;
+            if (window.generateTriangleLocal) {
+                window.generateTriangleLocal(type);
+            }
+        }
+
+        function resetTriangle() {
+            if (currentTab === 'explorer' && window.resetTriangleLocal) {
+                window.resetTriangleLocal();
+            } else if (currentTab === 'generator' || currentTab === 'analyzer') {
+                // Generate random triangle for other tabs
+                const sketch = currentSketch;
+                if (sketch && sketch.generateRandomTriangle) {
+                    sketch.generateRandomTriangle();
+                }
+            }
+        }
+
+        function clearCanvas() {
+            if (currentTab === 'explorer' && window.clearCanvasLocal) {
+                window.clearCanvasLocal();
+            }
+        }
+
+        function toggleProtractor() {
+            if (currentTab === 'explorer' && window.toggleProtractor) {
+                window.toggleProtractor();
+            }
+        }
+
+        function generateFromInputs() {
+            const genType = document.getElementById('genType').value;
+            let valid = true;
+            let status = document.getElementById('generatorStatus');
+            
+            try {
+                let points = [];
+                
+                switch(genType) {
+                    case 'sss':
+                        const a = parseFloat(document.getElementById('sideA').value);
+                        const b = parseFloat(document.getElementById('sideB').value);
+                        const c = parseFloat(document.getElementById('sideC').value);
+                        
+                        if (a <= 0 || b <= 0 || c <= 0) {
+                            throw new Error('All sides must be positive');
+                        }
+                        
+                        if (!checkTriangleInequality(a, b, c)) {
+                            throw new Error('Triangle inequality violated');
+                        }
+                        
+                        points = generateSSSTrianglePoints(a, b, c);
+                        break;
+                        
+                    case 'sas':
+                        const sideA = parseFloat(document.getElementById('sasSideA').value);
+                        const angleB = parseFloat(document.getElementById('angleB').value);
+                        const sideC = parseFloat(document.getElementById('sasSideC').value);
+                        
+                        if (sideA <= 0 || sideC <= 0 || angleB <= 0 || angleB >= 180) {
+                            throw new Error('Invalid SAS values');
+                        }
+                        
+                        points = generateSASTrianglePoints(sideA, angleB, sideC);
+                        break;
+                        
+                    default:
+                        points = generateRandomTrianglePoints();
+                }
+                
+                if (window.updateTriangleDisplay) {
+                    window.updateTriangleDisplay(points);
+                }
+                
+                status.textContent = 'Triangle generated successfully!';
+                status.className = 'status-message status-success';
+                
+            } catch (error) {
+                status.textContent = error.message;
+                status.className = 'status-message status-error';
+                valid = false;
+            }
+            
+            status.style.display = 'block';
+            return valid;
+        }
+
+        function checkTriangleInequality(a, b, c) {
+            return a + b > c && b + c > a && c + a > b;
+        }
+
+        function generateSSSTrianglePoints(a, b, c) {
+            // Simple placement - place points to form triangle with given sides
+            const startX = 100;
+            const startY = 400;
+            
+            // Place point A and B
+            const A = {x: startX, y: startY};
+            const B = {x: startX + a, y: startY};
+            
+            // Calculate point C position using intersection of circles
+            // Circle centered at A with radius c
+            // Circle centered at B with radius b
+            const h = Math.sqrt(Math.pow(c, 2) - Math.pow((a/2), 2));
+            const C = {
+                x: startX + a/2,
+                y: startY - h
+            };
+            
+            return [A, B, C];
+        }
+
+        function generateSASTrianglePoints(a, B_deg, c) {
+            const B = B_deg * Math.PI / 180;
+            const startX = 200;
+            const startY = 400;
+            
+            // Place vertex B
+            const B_pos = {x: startX, y: startY};
+            
+            // Calculate positions for A and C
+            const A_pos = {
+                x: startX - a * Math.cos(B/2),
+                y: startY + a * Math.sin(B/2)
+            };
+            
+            const C_pos = {
+                x: startX + c * Math.cos(B/2),
+                y: startY + c * Math.sin(B/2)
+            };
+            
+            return [A_pos, B_pos, C_pos];
+        }
+
+        function generateRandomTrianglePoints() {
+            const points = [
+                {x: 150, y: 300},
+                {x: 350, y: 350},
+                {x: 250, y: 200}
+            ];
+            return points;
+        }
+
+        function updateScale() {
+            const scale = parseFloat(document.getElementById('scaleSlider').value);
+            document.getElementById('scaleValue').textContent = scale;
+            
+            if (window.getLocalTrianglePoints && window.setLocalTrianglePoints) {
+                let points = window.getLocalTrianglePoints();
+                if (points.length === 3) {
+                    const centerX = points.reduce((sum, p) => sum + p.x, 0) / 3;
+                    const centerY = points.reduce((sum, p) => sum + p.y, 0) / 3;
+                    
+                    points = points.map(p => {
+                        let dx = p.x - centerX;
+                        let dy = p.y - centerY;
+                        return {
+                            x: centerX + dx * scale,
+                            y: centerY + dy * scale
+                        };
+                    });
+                    
+                    window.setLocalTrianglePoints(points);
+                }
+            }
+        }
+
+        function updateUnits() {
+            const unit = document.getElementById('units').value;
+            const inputs = document.querySelectorAll('#generator input[type="number"]');
+            
+            inputs.forEach(input => {
+                const unitSpan = document.getElementById(input.id + 'Unit');
+                if (unitSpan) {
+                    unitSpan.textContent = unit;
+                }
+            });
+        }
+
+        function analyzeTriangle() {
+            const method = document.getElementById('analysisMethod').value;
+            const resultsDiv = document.getElementById('analysisResults');
+            let validTriangle = false;
+            let message = '';
+            let type = '';
+            
+            try {
+                if (method === 'sides') {
+                    const a = parseFloat(document.getElementById('anaSideA').value);
+                    const b = parseFloat(document.getElementById('anaSideB').value);
+                    const c = parseFloat(document.getElementById('anaSideC').value);
+                    
+                    if (!checkTriangleInequality(a, b, c)) {
+                        message = '❌ Invalid triangle: Triangle inequality theorem violated';
+                        type = 'error';
+                    } else {
+                        validTriangle = true;
+                        message = analyzeSideTriangle(a, b, c);
+                        type = 'success';
+                        
+                        // Generate visual
+                        const points = generateSSSTrianglePoints(a, b, c);
+                        if (window.updateTriangleDisplay) {
+                            window.updateTriangleDisplay(points);
+                        }
+                    }
+                } else if (method === 'angles') {
+                    const A = parseFloat(document.getElementById('anaAngleA').value);
+                    const B = parseFloat(document.getElementById('anaAngleB').value);
+                    const C = parseFloat(document.getElementById('anaAngleC').value);
+                    
+                    const sum = A + B + C;
+                    if (Math.abs(sum - 180) > 1) {
+                        message = `❌ Invalid angles: Sum should be 180° (current sum: ${sum.toFixed(1)}°)`;
+                        type = 'error';
+                    } else {
+                        validTriangle = true;
+                        message = `✅ Valid triangle with angles ${A}°, ${B}°, ${C}°`;
+                        type = 'success';
+                        
+                        // Generate triangle with given angles
+                        const points = generateAngleTrianglePoints(A, B, C);
+                        if (window.updateTriangleDisplay) {
+                            window.updateTriangleDisplay(points);
+                        }
+                    }
+                }
+                
+                resultsDiv.innerHTML = `<h4>${message}</h4>`;
+                if (type) {
+                    resultsDiv.className = `status-message status-${type}`;
+                }
+                resultsDiv.style.display = 'block';
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<h4>❌ Error: ${error.message}</h4>`;
+                resultsDiv.className = 'status-message status-error';
+                resultsDiv.style.display = 'block';
+            }
+        }
+
+        function analyzeSideTriangle(a, b, c) {
+            const cosC = (a*a + b*b - c*c) / (2 * a * b);
+            const angleC = Math.acos(Math.max(-1, Math.min(1, cosC))) * 180 / Math.PI;
+            
+            let classification = '';
+            if (Math.abs(a - b) < 1 && Math.abs(b - c) < 1) {
+                classification = 'Equilateral';
+            } else if (Math.abs(a - b) < 1 || Math.abs(b - c) < 1 || Math.abs(a - c) < 1) {
+                classification = 'Isosceles';
+            } else {
+                classification = 'Scalene';
+            }
+            
+            if (Math.abs(angleC - 90) < 2) {
+                classification = 'Right ' + classification;
+            } else if (angleC > 90) {
+                classification = 'Obtuse ' + classification;
+            } else {
+                classification = 'Acute ' + classification;
+            }
+            
+            return `
+                <p><strong>Classification:</strong> ${classification}</p>
+                <p><strong>Side lengths:</strong> ${a}, ${b}, ${c}</p>
+                <p><strong>Largest angle:</strong> ${angleC.toFixed(1)}°</p>
+                <p><strong>Possible triangles:</strong> 1 (SSS congruence)</p>
+            `;
+        }
+
+        function generateAngleTrianglePoints(A, B, C) {
+            // Simple placement with given angles
+            const startX = 150;
+            const startY = 400;
+            const sideA = 100;
+            
+            const a_pos = {x: startX, y: startY};
+            const b_pos = {x: startX + sideA, y: startY};
+            
+            const angleA_rad = A * Math.PI / 180;
+            const sideC = sideA * Math.sin(angleA_rad);
+            const c_pos = {
+                x: startX + sideC * Math.cos(angleA_rad),
+                y: startY - sideC * Math.sin(angleA_rad)
+            };
+            
+            return [a_pos, b_pos, c_pos];
+        }
+
+        // Drawing functions
+        function handleDrawingMouseDown(e) {
+            if (currentTab !== 'drawing') return;
+            
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            isDrawing = true;
+            currentPath = [{x, y}];
+            
+            e.preventDefault();
+        }
+
+        function handleDrawingMouseMove(e) {
+            if (!isDrawing || currentTab !== 'drawing') return;
+            
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            currentPath.push({x, y});
+            
+            // Redraw everything
+            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            drawAllDrawings();
+            
+            // Draw current path
+            if (currentPath.length > 1) {
+                drawingCtx.strokeStyle = document.getElementById('drawColor').value;
+                drawingCtx.lineWidth = parseInt(document.getElementById('lineWidth').value);
+                drawingCtx.lineCap = 'round';
+                drawingCtx.lineJoin = 'round';
+                
+                drawingCtx.beginPath();
+                drawingCtx.moveTo(currentPath[0].x, currentPath[0].y);
+                for (let i = 1; i < currentPath.length; i++) {
+                    drawingCtx.lineTo(currentPath[i].x, currentPath[i].y);
+                }
+                drawingCtx.stroke();
+            }
+            
+            e.preventDefault();
+        }
+
+        function handleDrawingMouseUp(e) {
+            if (!isDrawing || currentTab !== 'drawing') return;
+            
+            if (currentPath.length > 1) {
+                drawings.push({
+                    points: [...currentPath],
+                    color: document.getElementById('drawColor').value,
+                    width: parseInt(document.getElementById('lineWidth').value)
+                });
+            }
+            
+            isDrawing = false;
+            currentPath = [];
+        }
+
+        function drawAllDrawings() {
+            drawings.forEach(drawing => {
+                drawingCtx.strokeStyle = drawing.color;
+                drawingCtx.lineWidth = drawing.width;
+                drawingCtx.lineCap = 'round';
+                drawingCtx.lineJoin = 'round';
+                
+                drawingCtx.beginPath();
+                drawingCtx.moveTo(drawing.points[0].x, drawing.points[0].y);
+                for (let i = 1; i < drawing.points.length; i++) {
+                    drawingCtx.lineTo(drawing.points[i].x, drawing.points[i].y);
+                }
+                drawingCtx.stroke();
+            });
+        }
+
+        function setTool(tool) {
+            drawingMode = tool;
+            document.querySelectorAll('#drawing .btn').forEach(btn => {
+                btn.classList.remove('active-tool');
+            });
+            event.target.classList.add('active-tool');
+        }
+
+        function clearDrawing() {
+            if (currentTab !== 'drawing') return;
+            drawings = [];
+            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        }
+
+        function saveDrawing() {
+            if (currentTab !== 'drawing') return;
+            const link = document.createElement('a');
+            link.download = 'triangle-drawing.png';
+            link.href = drawingCanvas.toDataURL();
+            link.click();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            
+            if (currentTab === 'drawing') {
+                switch(e.key.toLowerCase()) {
+                    case 'delete':
+                    case 'backspace':
+                        clearDrawing();
+                        break;
+                    case 's':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault();
+                            saveDrawing();
+                        }
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
