@@ -1,6 +1,7 @@
 /**
  * PythonEngine - Pyodide Integration for Math Visualizations
  * Handles Python code execution, graph generation, and image export
+ * Supports light and dark theme coloring
  */
 
 class PythonEngine {
@@ -59,7 +60,8 @@ def save_plot_as_base64():
     """Save current matplotlib figure as base64 PNG and store it globally"""
     global _last_image_base64
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', facecolor='#1a1a2e', edgecolor='none')
+    plt.savefig(buf, format='png', bbox_inches='tight', 
+                facecolor=plt.gcf().get_facecolor(), edgecolor='none')
     buf.seek(0)
     _last_image_base64 = base64.b64encode(buf.read()).decode('utf-8')
     plt.close('all')
@@ -74,6 +76,27 @@ def clear_last_image():
     """Clear the stored image"""
     global _last_image_base64
     _last_image_base64 = None
+
+def set_theme(dark=True):
+    """Set the color theme for plots"""
+    if dark:
+        plt.style.use('dark_background')
+        plt.rcParams['figure.facecolor'] = '#1a1a2e'
+        plt.rcParams['axes.facecolor'] = '#1a1a2e'
+        plt.rcParams['text.color'] = '#f0f0f0'
+        plt.rcParams['axes.labelcolor'] = '#f0f0f0'
+        plt.rcParams['xtick.color'] = '#f0f0f0'
+        plt.rcParams['ytick.color'] = '#f0f0f0'
+        plt.rcParams['grid.color'] = '#444444'
+    else:
+        plt.style.use('default')
+        plt.rcParams['figure.facecolor'] = '#ffffff'
+        plt.rcParams['axes.facecolor'] = '#ffffff'
+        plt.rcParams['text.color'] = '#1a1a2e'
+        plt.rcParams['axes.labelcolor'] = '#1a1a2e'
+        plt.rcParams['xtick.color'] = '#1a1a2e'
+        plt.rcParams['ytick.color'] = '#1a1a2e'
+        plt.rcParams['grid.color'] = '#cccccc'
 
 def create_coordinate_grid(xmin=-10, xmax=10, ymin=-10, ymax=10):
     """Create a standard coordinate grid"""
@@ -135,6 +158,33 @@ print("Python math engine initialized successfully!")
         }
     }
 
+    /**
+     * Preprocess Python code to ensure it saves the plot correctly
+     * Replaces plt.show() with save_plot_as_base64() and ensures it's called
+     */
+    preprocessCode(code) {
+        let processedCode = code;
+        
+        // Remove any plt.show() calls - they don't work in this environment
+        processedCode = processedCode.replace(/plt\.show\s*\(\s*\)/g, '');
+        
+        // Check if save_plot_as_base64() is already in the code
+        const hasSaveCall = /save_plot_as_base64\s*\(\s*\)/.test(processedCode);
+        
+        // Check if the code creates any plots (has plt. calls that would create figures)
+        const createsFigure = /plt\.(plot|scatter|bar|barh|pie|hist|boxplot|imshow|contour|fill|fill_between|subplots|figure)|ax\.(plot|scatter|bar|barh|pie|hist|add_patch|fill|fill_between|imshow|contour)/.test(processedCode);
+        
+        // If it creates figures but doesn't save, add save_plot_as_base64() at the end
+        if (createsFigure && !hasSaveCall) {
+            // Remove trailing whitespace and add the save call
+            processedCode = processedCode.trimEnd();
+            processedCode += '\n\nsave_plot_as_base64()';
+            console.log('Auto-added save_plot_as_base64() to code');
+        }
+        
+        return processedCode;
+    }
+
     async runCode(code) {
         if (!this.isReady) {
             const initialized = await this.initialize();
@@ -144,6 +194,10 @@ print("Python math engine initialized successfully!")
         }
 
         try {
+            // Preprocess the code to fix common issues
+            const processedCode = this.preprocessCode(code);
+            console.log('Executing preprocessed Python code');
+            
             // Clear any previous image
             await this.pyodide.runPythonAsync(`clear_last_image()`);
 
@@ -156,7 +210,7 @@ sys.stdout = _stdout_capture
             `);
 
             // Run the user code
-            await this.pyodide.runPythonAsync(code);
+            await this.pyodide.runPythonAsync(processedCode);
 
             // Capture stdout
             const stdout = await this.pyodide.runPythonAsync(`
