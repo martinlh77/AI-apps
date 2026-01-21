@@ -1,7 +1,6 @@
 /**
  * PythonEngine - Pyodide Integration for Math Visualizations
  * Handles Python code execution, graph generation, and image export
- * Supports light and dark theme coloring
  */
 
 class PythonEngine {
@@ -60,8 +59,7 @@ def save_plot_as_base64():
     """Save current matplotlib figure as base64 PNG and store it globally"""
     global _last_image_base64
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', 
-                facecolor=plt.gcf().get_facecolor(), edgecolor='none')
+    plt.savefig(buf, format='png', bbox_inches='tight', facecolor='#1a1a2e', edgecolor='none')
     buf.seek(0)
     _last_image_base64 = base64.b64encode(buf.read()).decode('utf-8')
     plt.close('all')
@@ -76,27 +74,6 @@ def clear_last_image():
     """Clear the stored image"""
     global _last_image_base64
     _last_image_base64 = None
-
-def set_theme(dark=True):
-    """Set the color theme for plots"""
-    if dark:
-        plt.style.use('dark_background')
-        plt.rcParams['figure.facecolor'] = '#1a1a2e'
-        plt.rcParams['axes.facecolor'] = '#1a1a2e'
-        plt.rcParams['text.color'] = '#f0f0f0'
-        plt.rcParams['axes.labelcolor'] = '#f0f0f0'
-        plt.rcParams['xtick.color'] = '#f0f0f0'
-        plt.rcParams['ytick.color'] = '#f0f0f0'
-        plt.rcParams['grid.color'] = '#444444'
-    else:
-        plt.style.use('default')
-        plt.rcParams['figure.facecolor'] = '#ffffff'
-        plt.rcParams['axes.facecolor'] = '#ffffff'
-        plt.rcParams['text.color'] = '#1a1a2e'
-        plt.rcParams['axes.labelcolor'] = '#1a1a2e'
-        plt.rcParams['xtick.color'] = '#1a1a2e'
-        plt.rcParams['ytick.color'] = '#1a1a2e'
-        plt.rcParams['grid.color'] = '#cccccc'
 
 def create_coordinate_grid(xmin=-10, xmax=10, ymin=-10, ymax=10):
     """Create a standard coordinate grid"""
@@ -158,93 +135,78 @@ print("Python math engine initialized successfully!")
         }
     }
 
-    /**
-     * Preprocess Python code to ensure it saves the plot correctly
-     * Replaces plt.show() with save_plot_as_base64() and ensures it's called
-     */
-    preprocessCode(code) {
-        let processedCode = code;
-        
-        // Remove any plt.show() calls - they don't work in this environment
-        processedCode = processedCode.replace(/plt\.show\s*\(\s*\)/g, '');
-        
-        // Check if save_plot_as_base64() is already in the code
-        const hasSaveCall = /save_plot_as_base64\s*\(\s*\)/.test(processedCode);
-        
-        // Check if the code creates any plots (has plt. calls that would create figures)
-        const createsFigure = /plt\.(plot|scatter|bar|barh|pie|hist|boxplot|imshow|contour|fill|fill_between|subplots|figure)|ax\.(plot|scatter|bar|barh|pie|hist|add_patch|fill|fill_between|imshow|contour)/.test(processedCode);
-        
-        // If it creates figures but doesn't save, add save_plot_as_base64() at the end
-        if (createsFigure && !hasSaveCall) {
-            // Remove trailing whitespace and add the save call
-            processedCode = processedCode.trimEnd();
-            processedCode += '\n\nsave_plot_as_base64()';
-            console.log('Auto-added save_plot_as_base64() to code');
+async runCode(code) {
+    if (!this.isReady) {
+        const initialized = await this.initialize();
+        if (!initialized) {
+            return { success: false, error: 'Python engine failed to initialize' };
         }
-        
-        return processedCode;
     }
 
-    async runCode(code) {
-        if (!this.isReady) {
-            const initialized = await this.initialize();
-            if (!initialized) {
-                return { success: false, error: 'Python engine failed to initialize' };
-            }
+    try {
+        // Clear any previous image
+        await this.pyodide.runPythonAsync(`clear_last_image()`);
+
+        // IMPORTANT: Replace plt.show() with save_plot_as_base64()
+        // This handles cases where the AI generates plt.show() instead
+        let processedCode = code;
+        if (code.includes('plt.show()')) {
+            processedCode = code.replace(/plt\.show\(\)/g, 'save_plot_as_base64()');
+            console.log('Replaced plt.show() with save_plot_as_base64()');
+        }
+        
+        // Also ensure save_plot_as_base64() is called if matplotlib is used but neither is present
+        if ((code.includes('plt.') || code.includes('matplotlib')) && 
+            !code.includes('save_plot_as_base64()') && 
+            !code.includes('plt.show()')) {
+            processedCode = processedCode + '\nsave_plot_as_base64()';
+            console.log('Appended save_plot_as_base64() to code');
         }
 
-        try {
-            // Preprocess the code to fix common issues
-            const processedCode = this.preprocessCode(code);
-            console.log('Executing preprocessed Python code');
-            
-            // Clear any previous image
-            await this.pyodide.runPythonAsync(`clear_last_image()`);
-
-            // Redirect stdout to capture print statements
-            await this.pyodide.runPythonAsync(`
+        // Redirect stdout to capture print statements
+        await this.pyodide.runPythonAsync(`
 import sys
 from io import StringIO
 _stdout_capture = StringIO()
 sys.stdout = _stdout_capture
-            `);
+        `);
 
-            // Run the user code
-            await this.pyodide.runPythonAsync(processedCode);
+        // Run the user code
+        await this.pyodide.runPythonAsync(processedCode);
 
-            // Capture stdout
-            const stdout = await this.pyodide.runPythonAsync(`
+        // Capture stdout
+        const stdout = await this.pyodide.runPythonAsync(`
 _captured = _stdout_capture.getvalue()
 sys.stdout = sys.__stdout__
 _captured
-            `);
+        `);
 
-            // Check if an image was generated
-            const imageData = await this.pyodide.runPythonAsync(`get_last_image()`);
-            
-            console.log('Python execution complete. Image generated:', imageData ? 'yes (' + imageData.length + ' chars)' : 'no');
-            console.log('Stdout:', stdout || '(empty)');
+        // Check if an image was generated
+        const imageData = await this.pyodide.runPythonAsync(`get_last_image()`);
+        
+        console.log('Python execution complete. Image generated:', imageData ? 'yes (' + imageData.length + ' chars)' : 'no');
+        console.log('Stdout:', stdout || '(empty)');
 
-            return {
-                success: true,
-                result: null,
-                stdout: stdout,
-                image: imageData
-            };
+        return {
+            success: true,
+            result: null,
+            stdout: stdout,
+            image: imageData
+        };
 
-        } catch (error) {
-            console.error('Python execution error:', error);
-            // Reset stdout on error
-            try {
-                await this.pyodide.runPythonAsync(`sys.stdout = sys.__stdout__`);
-            } catch (e) {}
-            
-            return {
-                success: false,
-                error: error.message
-            };
-        }
+    } catch (error) {
+        console.error('Python execution error:', error);
+        // Reset stdout on error
+        try {
+            await this.pyodide.runPythonAsync(`sys.stdout = sys.__stdout__`);
+        } catch (e) {}
+        
+        return {
+            success: false,
+            error: error.message
+        };
     }
+}
 
     async generateGraph(config) {
         const { type, equation, points, options = {} } = config;
