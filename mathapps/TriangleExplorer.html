@@ -100,15 +100,6 @@
         .canvas-container canvas {
             display: block;
             background: white;
-            cursor: default;
-        }
-
-        .canvas-container canvas.draggable {
-            cursor: grab;
-        }
-
-        .canvas-container canvas.dragging {
-            cursor: grabbing;
         }
 
         .controls-panel {
@@ -181,22 +172,11 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
-        .btn.active-tool {
-            background: #5a67d8 !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
         .btn-danger {
             background: #e53e3e;
         }
 
-        .btn-danger:hover:not(:disabled) {
+        .btn-danger:hover {
             background: #c53030;
         }
 
@@ -315,10 +295,6 @@
             align-items: center;
         }
 
-        .drawing-canvas-container canvas {
-            cursor: crosshair;
-        }
-
         .status-message {
             padding: 10px;
             border-radius: 6px;
@@ -352,37 +328,6 @@
             font-size: 18px;
         }
 
-        .tool-info {
-            background: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 6px;
-            padding: 10px;
-            margin: 10px 0;
-            font-size: 14px;
-        }
-
-        .undo-redo-controls {
-            display: flex;
-            gap: 5px;
-            margin: 10px 0;
-        }
-
-        .drawing-history {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        kbd {
-            background: #f0f0f0;
-            border-radius: 3px;
-            border: 1px solid #ccc;
-            padding: 2px 4px;
-            font-family: monospace;
-            font-size: 12px;
-            margin: 0 2px;
-        }
-
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -414,10 +359,10 @@
         </div>
 
         <div class="tabs">
-            <button class="tab-button active" data-tab="explorer">Triangle Explorer</button>
-            <button class="tab-button" data-tab="generator">Triangle Generator</button>
-            <button class="tab-button" data-tab="analyzer">Triangle Analyzer</button>
-            <button class="tab-button" data-tab="drawing">Drawing Board</button>
+            <button class="tab-button active" onclick="switchTab('explorer')">Triangle Explorer</button>
+            <button class="tab-button" onclick="switchTab('generator')">Triangle Generator</button>
+            <button class="tab-button" onclick="switchTab('analyzer')">Triangle Analyzer</button>
+            <button class="tab-button" onclick="switchTab('drawing')">Drawing Board</button>
         </div>
 
         <!-- Loading indicator -->
@@ -445,8 +390,9 @@
 
                 <div class="control-group">
                     <h3>Interactive Controls</h3>
-                    <div class="tool-info">
-                        <strong>💡 How to drag:</strong> Click directly on any blue vertex dot and drag to move it. The cursor will change to a hand when hovering over a draggable point.
+                    <div class="form-group">
+                        <label>Drag points to modify triangle</label>
+                        <small style="color: #666; display: block;">Click and drag any vertex to reshape</small>
                     </div>
                     <div class="form-group">
                         <label>
@@ -468,9 +414,9 @@
                 <div id="protractorOverlay" class="protractor-overlay">
                     <h4>📐 Protractor</h4>
                     <div class="protractor-display" id="protractorReading">0°</div>
-                    <div>Hover over a vertex to measure angle</div>
+                    <div>Place cursor over vertex to measure</div>
                     <div style="margin-top: 10px; font-size: 12px; color: #666;">
-                        Precision: ±1° | Drag vertices to see real-time changes
+                        Precision: ±1° | Scale: 1px = 0.1°
                     </div>
                 </div>
             </div>
@@ -530,7 +476,7 @@
                             <input type="number" id="sasSideA" value="100" min="1" max="500">
                         </div>
                         <div class="form-group">
-                            <label>Angle B (between A & C): <span id="angleBUnit">°</span></label>
+                            <label>Angle B: <span id="angleBUnit">°</span></label>
                             <input type="number" id="angleB" value="60" min="1" max="179">
                         </div>
                         <div class="form-group">
@@ -622,16 +568,16 @@
                     <h3>Tolerance Settings</h3>
                     <div class="slider-container">
                         <label>Angle tolerance: <span id="angleTolerance">2</span>°</label>
-                        <input type="range" id="angleTolSlider" class="slider" min="0.1" max="10" step="0.1" value="2">
+                        <input type="range" id="angleTolSlider" class="slider" min="0.1" max="10" step="0.1" value="2" oninput="document.getElementById('angleTolerance').textContent = this.value">
                     </div>
                     <div class="slider-container">
                         <label>Side tolerance: <span id="sideTolerance">1</span>%</label>
-                        <input type="range" id="sideTolSlider" class="slider" min="0.1" max="10" step="0.1" value="1">
+                        <input type="range" id="sideTolSlider" class="slider" min="0.1" max="10" step="0.1" value="1" oninput="document.getElementById('sideTolerance').textContent = this.value">
                     </div>
                 </div>
             </div>
 
-            <div id="analysisResults" style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #667eea; display: none;"></div>
+            <div id="analysisResults" style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #667eea;"></div>
 
             <div class="canvas-container">
                 <div class="canvas-wrapper" id="analyzerCanvas"></div>
@@ -644,78 +590,52 @@
                 <div class="control-group">
                     <h3>Drawing Tools</h3>
                     <div class="drawing-tools">
-                        <button class="btn active-tool" onclick="setTool('line')">📏 Line</button>
-                        <button class="btn" onclick="setTool('circle')">⭕ Circle</button>
+                        <button class="btn active-tool" onclick="setTool('line')">Line</button>
+                        <button class="btn" onclick="setTool('circle')">Circle</button>
                         <button class="btn" onclick="setTool('protractor')">📐 Protractor</button>
-                    </div>
-                    
-                    <div class="undo-redo-controls">
-                        <button class="btn btn-danger" onclick="undoDrawing()" id="undoBtn">↶ Undo</button>
-                        <button class="btn btn-success" onclick="clearDrawing()">🗑️ Clear All</button>
-                        <button class="btn btn-success" onclick="saveDrawing()">💾 Save</button>
-                    </div>
-                    
-                    <div class="tool-info" id="toolInfo">
-                        <strong>Line Tool:</strong> Click and drag to draw straight lines. Hold <kbd>Shift</kbd> for 0°/45°/90° angles.
+                        <button class="btn btn-danger" onclick="clearDrawing()">Clear</button>
+                        <button class="btn btn-success" onclick="saveDrawing()">Save</button>
                     </div>
                     
                     <div class="form-group">
-                        <label>Line Width: <span id="lineWidthValue">3</span></label>
-                        <input type="range" id="lineWidth" class="slider" min="1" max="20" value="3">
+                        <label>Line Width: <span id="lineWidthValue">2</span></label>
+                        <input type="range" id="lineWidth" class="slider" min="1" max="10" value="2" oninput="document.getElementById('lineWidthValue').textContent = this.value">
                     </div>
                     
                     <div style="display: flex; gap: 5px; align-items: center; margin: 10px 0;">
                         <label>Color:</label>
                         <input type="color" id="drawColor" class="color-picker" value="#000000">
                     </div>
-                    
-                    <div class="drawing-history">
-                        <strong>History:</strong> <span id="historyCount">0</span> objects | Use <kbd>Ctrl+Z</kbd> to undo
-                    </div>
                 </div>
 
                 <div class="control-group">
                     <h3>Protractor Settings</h3>
                     <div class="form-group">
-                        <label>Protractor Size: <span id="protractorSizeValue">120</span>px</label>
-                        <input type="range" id="protractorSize" class="slider" min="50" max="250" value="120">
+                        <label>Protractor Size: <span id="protractorSizeValue">100</span>px</label>
+                        <input type="range" id="protractorSize" class="slider" min="50" max="200" value="100" oninput="document.getElementById('protractorSizeValue').textContent = this.value">
                     </div>
                     <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="showTicks" checked> Show tick marks
-                        </label>
+                        <label>Show tick marks</label>
+                        <input type="checkbox" id="showTicks" checked>
                     </div>
                     <div class="form-group">
-                        <label>Tick Interval: 
-                            <select id="tickInterval">
-                                <option value="1">1°</option>
-                                <option value="5" selected>5°</option>
-                                <option value="10">10°</option>
-                                <option value="15">15°</option>
-                            </select>
-                        </label>
-                    </div>
-                    <div class="tool-info">
-                        <strong>Protractor:</strong> Click to place, drag to rotate. Right-click on protractor to delete it.
+                        <label>Precision: <span id="precisionValue">1</span>°</label>
+                        <select id="precision">
+                            <option value="1">1°</option>
+                            <option value="5">5°</option>
+                            <option value="10">10°</option>
+                        </select>
                     </div>
                 </div>
             </div>
 
             <div class="drawing-canvas-container">
                 <canvas id="drawingCanvas" width="800" height="600"></canvas>
-                <div id="drawingProtractorOverlay" class="protractor-overlay" style="right: auto; left: 10px; top: 10px; display: none;">
-                    <h4>📐 Drawing Protractor</h4>
-                    <div class="protractor-display" id="drawingProtractorReading">0°</div>
-                    <div>Angle: <span id="drawingAngleValue">0°</span></div>
-                    <div style="margin-top: 10px; font-size: 12px; color: #666;">
-                        Drag to rotate | Right-click protractor to delete
-                    </div>
-                </div>
             </div>
 
             <div style="text-align: center; margin: 15px 0; color: #666;">
-                <p><strong>Drawing Tips:</strong> Hold <kbd>Shift</kbd> for straight lines (0°, 45°, 90°). Use <kbd>Ctrl+Z</kbd> to undo, <kbd>Ctrl+S</kbd> to save.</p>
-                <p>Right-click on protractors to delete individual ones. The protractor tool helps create precise geometric constructions.</p>
+                <p>Click and drag to draw. Use the protractor tool to measure and draw precise angles.</p>
+                <p>Hold Shift while drawing for straight lines (0°, 45°, 90° angles).</p>
             </div>
         </div>
     </div>
@@ -724,19 +644,25 @@
         // Global state
         let currentSketch = null;
         let currentTab = 'explorer';
+        let trianglePoints = [];
+        let selectedPoint = null;
+        let dragging = false;
+        let protractorActive = false;
         
         // Drawing state
         let drawingMode = 'line';
         let isDrawing = false;
-        let startPos = {x: 0, y: 0};
-        let currentPos = {x: 0, y: 0};
+        let currentPath = [];
         let drawings = [];
-        let drawingHistory = [];
         let drawingCanvas, drawingCtx;
-        let protractorPreview = null;
-        let isProtractorDragging = false;
-        let draggedProtractorIndex = -1;
         
+        // Protractor state
+        let protractorBase = null;
+        let protractorAngle = 0;
+        let protractorSize = 100;
+        let protractorPrecision = 1;
+        let showTicks = true;
+
         // Initialize app when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             // Hide loading
@@ -745,82 +671,41 @@
             // Setup drawing canvas
             setupDrawingCanvas();
             
-            // Setup event listeners
-            setupEventListeners();
-            
             // Create initial sketch for explorer tab
             createSketch('explorer');
             
-            // Initialize sliders and inputs
-            initializeInputs();
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Initialize tabs
+            updateGeneratorInputs();
+            updateAnalyzerInputs();
         });
 
         function setupDrawingCanvas() {
             drawingCanvas = document.getElementById('drawingCanvas');
             drawingCtx = drawingCanvas.getContext('2d');
-            drawingCtx.imageSmoothingEnabled = true;
             
             // Setup drawing events
             drawingCanvas.addEventListener('mousedown', handleDrawingMouseDown);
             drawingCanvas.addEventListener('mousemove', handleDrawingMouseMove);
             drawingCanvas.addEventListener('mouseup', handleDrawingMouseUp);
             drawingCanvas.addEventListener('mouseleave', handleDrawingMouseUp);
-            drawingCanvas.addEventListener('contextmenu', handleDrawingContextMenu);
-            
-            // Update canvas cursor
-            updateDrawingCursor();
         }
 
         function setupEventListeners() {
             // Tab switching
             document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const tabName = this.getAttribute('data-tab');
-                    switchTab(tabName);
+                btn.addEventListener('click', function(e) {
+                    switchTab(e.target.getAttribute('onclick').match(/'([^']+)'/)[1]);
                 });
             });
-            
-            // Slider events
-            document.getElementById('lineWidth').addEventListener('input', function() {
-                document.getElementById('lineWidthValue').textContent = this.value;
-            });
-            
-            document.getElementById('protractorSize').addEventListener('input', function() {
-                document.getElementById('protractorSizeValue').textContent = this.value;
-                redrawDrawings();
-            });
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', handleKeyPress);
-            
-            // Tolerance sliders
-            document.getElementById('angleTolSlider').addEventListener('input', function() {
-                document.getElementById('angleTolerance').textContent = this.value;
-            });
-            
-            document.getElementById('sideTolSlider').addEventListener('input', function() {
-                document.getElementById('sideTolerance').textContent = this.value;
-            });
-        }
-
-        function initializeInputs() {
-            // Initialize slider displays
-            document.getElementById('lineWidthValue').textContent = document.getElementById('lineWidth').value;
-            document.getElementById('protractorSizeValue').textContent = document.getElementById('protractorSize').value;
-            document.getElementById('angleTolerance').textContent = document.getElementById('angleTolSlider').value;
-            document.getElementById('sideTolerance').textContent = document.getElementById('sideTolSlider').value;
-            
-            // Update form displays
-            updateGeneratorInputs();
-            updateAnalyzerInputs();
-            updateDrawingHistory();
         }
 
         function createSketch(tabName) {
-            const containerId = `${tabName}Canvas`;
+            const containerId = tabName === 'drawing' ? 'drawingCanvas' : `${tabName}Canvas`;
             
-            // Remove existing sketch
-            if (currentSketch && currentSketch.remove) {
+            if (currentSketch) {
                 currentSketch.remove();
             }
             
@@ -829,35 +714,30 @@
             }
             
             currentSketch = new p5((p) => {
-                let localTrianglePoints = [];
-                let localSelectedPoint = null;
-                let localDragging = false;
-                let localProtractorActive = false;
+                let trianglePoints = [];
+                let selectedPoint = null;
+                let dragging = false;
+                let protractorActive = false;
                 let showAngles = true;
                 let showSides = true;
                 let canvasWidth, canvasHeight;
-                let localProtractorBase = null;
-                let localProtractorAngle = 0;
-                let canvasElement = null;
+                let protractorBase = null;
+                let protractorAngle = 0;
 
                 p.setup = function() {
                     const container = document.getElementById(containerId);
                     if (!container) return;
                     
-                    canvasWidth = Math.min(container.offsetWidth - 20, 800);
+                    canvasWidth = container.offsetWidth;
                     canvasHeight = 500;
                     
                     let cnv = p.createCanvas(canvasWidth, canvasHeight);
                     cnv.parent(container);
                     cnv.style('display', 'block');
                     
-                    canvasElement = cnv.elt;
-                    
-                    // Initialize triangle based on tab
+                    // Initialize triangle
                     if (tabName === 'explorer') {
                         generateRandomTriangle();
-                    } else {
-                        generateDefaultTriangle();
                     }
                 };
 
@@ -865,262 +745,199 @@
                     const container = document.getElementById(containerId);
                     if (!container) return;
                     
-                    canvasWidth = Math.min(container.offsetWidth - 20, 800);
+                    canvasWidth = container.offsetWidth;
                     p.resizeCanvas(canvasWidth, canvasHeight);
                 };
 
                 p.draw = function() {
-                    p.background(245, 248, 255);
-                    drawGrid(p, canvasWidth, canvasHeight);
+                    p.background(240, 245, 255);
+                    drawGrid();
                     
-                    // Update cursor based on hovering over points
-                    if (tabName === 'explorer' && canvasElement) {
-                        const hoverPoint = getClosestPoint(p.mouseX, p.mouseY, localTrianglePoints, 20);
-                        if (hoverPoint !== null) {
-                            canvasElement.classList.add('draggable');
-                            if (localDragging) {
-                                canvasElement.classList.add('dragging');
-                            } else {
-                                canvasElement.classList.remove('dragging');
-                            }
-                        } else {
-                            canvasElement.classList.remove('draggable');
-                            canvasElement.classList.remove('dragging');
+                    if (trianglePoints.length === 3) {
+                        drawTriangle();
+                        if (tabName === 'explorer' && (showAngles || showSides)) {
+                            drawTriangleLabels();
+                        }
+                        if (protractorActive && tabName === 'explorer') {
+                            drawProtractor();
                         }
                     }
                     
-                    if (localTrianglePoints.length === 3) {
-                        drawTriangle(p, localTrianglePoints, localSelectedPoint);
-                        if ((tabName === 'explorer' || tabName === 'generator') && (showAngles || showSides)) {
-                            drawTriangleLabels(p, localTrianglePoints);
-                        }
-                        if (localProtractorActive && tabName === 'explorer') {
-                            drawProtractor(p, localTrianglePoints, p.mouseX, p.mouseY);
-                        }
+                    // Update triangle info for explorer tab
+                    if (tabName === 'explorer' && trianglePoints.length === 3) {
+                        updateTriangleInfoLocal(trianglePoints);
                     }
                 };
 
                 p.mousePressed = function() {
-                    if (tabName === 'explorer') {
-                        localSelectedPoint = getClosestPoint(p.mouseX, p.mouseY, localTrianglePoints, 20);
-                        if (localSelectedPoint !== null) {
-                            localDragging = true;
-                            return false;
-                        }
+                    if (tabName !== 'explorer') return;
+                    
+                    selectedPoint = getClosestPoint(p.mouseX, p.mouseY);
+                    if (selectedPoint !== null) {
+                        dragging = true;
+                        return false;
                     }
                 };
 
                 p.mouseReleased = function() {
-                    if (tabName === 'explorer' && localDragging) {
-                        localDragging = false;
-                        localSelectedPoint = null;
-                        updateTriangleInfo(p, localTrianglePoints);
-                        return false;
-                    }
+                    if (tabName !== 'explorer') return;
+                    dragging = false;
+                    selectedPoint = null;
                 };
 
                 p.mouseDragged = function() {
-                    if (tabName === 'explorer' && localDragging && localSelectedPoint !== null) {
-                        // Direct position update - no lerp or smoothing
-                        let newX = p.constrain(p.mouseX, 20, canvasWidth - 20);
-                        let newY = p.constrain(p.mouseY, 20, canvasHeight - 20);
-                        
-                        localTrianglePoints[localSelectedPoint].x = newX;
-                        localTrianglePoints[localSelectedPoint].y = newY;
-                        
-                        // Update protractor in real-time if active
-                        if (localProtractorActive) {
-                            updateProtractorLocal(p, localTrianglePoints, localProtractorBase);
-                        }
-                        
-                        return false;
+                    if (tabName !== 'explorer' || selectedPoint === null || !dragging) return;
+                    
+                    trianglePoints[selectedPoint].x = p.mouseX;
+                    trianglePoints[selectedPoint].y = p.mouseY;
+                    
+                    if (protractorActive) {
+                        updateProtractorLocal();
                     }
+                    
+                    return false;
                 };
 
-                function drawGrid(pInst, w, h) {
-                    pInst.stroke(220, 225, 230);
-                    pInst.strokeWeight(1);
+                function drawGrid() {
+                    p.stroke(220, 225, 230);
+                    p.strokeWeight(1);
                     
-                    const gridSize = 25;
-                    for (let x = 0; x <= w; x += gridSize) {
-                        pInst.line(x, 0, x, h);
+                    const gridSize = 20;
+                    for (let x = 0; x <= canvasWidth; x += gridSize) {
+                        p.line(x, 0, x, canvasHeight);
                     }
-                    for (let y = 0; y <= h; y += gridSize) {
-                        pInst.line(0, y, w, y);
+                    for (let y = 0; y <= canvasHeight; y += gridSize) {
+                        p.line(0, y, canvasWidth, y);
                     }
                 }
 
-                function drawTriangle(pInst, points, selectedIdx) {
-                    if (points.length < 3) return;
+                function drawTriangle() {
+                    if (trianglePoints.length < 3) return;
                     
-                    const valid = isValidTriangle(pInst, ...points);
-                    if (!valid) {
-                        pInst.fill(255, 200, 200, 100);
-                        pInst.stroke(255, 100, 100);
-                        pInst.strokeWeight(3);
+                    if (!isValidTriangle(...trianglePoints)) {
+                        p.fill(255, 200, 200, 100);
+                        p.stroke(255, 100, 100);
+                        p.strokeWeight(3);
                     } else {
-                        pInst.fill(200, 230, 255, 80);
-                        pInst.stroke(50, 100, 150);
-                        pInst.strokeWeight(2);
+                        p.fill(200, 230, 255, 80);
+                        p.stroke(50, 100, 150);
+                        p.strokeWeight(2);
                     }
                     
-                    pInst.beginShape();
-                    for (let pt of points) {
-                        pInst.vertex(pt.x, pt.y);
+                    p.beginShape();
+                    for (let pt of trianglePoints) {
+                        p.vertex(pt.x, pt.y);
                     }
-                    pInst.endShape(pInst.CLOSE);
+                    p.endShape(p.CLOSE);
                     
                     // Draw vertices
-                    pInst.noStroke();
-                    for (let i = 0; i < points.length; i++) {
-                        const pt = points[i];
-                        
-                        // Highlight selected or hovered point
-                        if (localDragging && i === selectedIdx) {
-                            // Dragging - bright red
-                            pInst.fill(255, 50, 50);
-                            pInst.ellipse(pt.x, pt.y, 18, 18);
-                        } else if (i === getClosestPoint(pInst.mouseX, pInst.mouseY, points, 20)) {
-                            // Hovering - light highlight
-                            pInst.fill(150, 200, 255);
-                            pInst.ellipse(pt.x, pt.y, 16, 16);
-                        } else {
-                            // Normal
-                            pInst.fill(100, 150, 200);
-                            pInst.ellipse(pt.x, pt.y, 14, 14);
-                        }
-                        
-                        // Draw point labels
-                        pInst.fill(50, 100, 150);
-                        pInst.textSize(14);
-                        pInst.textAlign(pInst.CENTER, pInst.CENTER);
-                        pInst.textStyle(pInst.BOLD);
-                        pInst.text(String.fromCharCode(65 + i), pt.x, pt.y - 25);
+                    p.fill(100, 150, 200);
+                    p.noStroke();
+                    for (let pt of trianglePoints) {
+                        p.ellipse(pt.x, pt.y, 12, 12);
                     }
                 }
 
-                function drawTriangleLabels(pInst, points) {
-                    if (points.length < 3 || !isValidTriangle(pInst, ...points)) return;
+                function drawTriangleLabels() {
+                    if (trianglePoints.length < 3 || !isValidTriangle(...trianglePoints)) return;
                     
-                    showAngles = document.getElementById('showAngles') ? document.getElementById('showAngles').checked : true;
-                    showSides = document.getElementById('showSides') ? document.getElementById('showSides').checked : true;
+                    showAngles = document.getElementById('showAngles').checked;
+                    showSides = document.getElementById('showSides').checked;
                     
                     if (showSides) {
-                        drawSideLabels(pInst, points);
+                        drawSideLabels();
                     }
                     
                     if (showAngles) {
-                        drawAngleLabels(pInst, points);
+                        drawAngleLabels();
                     }
                 }
 
-                function drawSideLabels(pInst, points) {
-                    pInst.stroke(100, 150, 200);
-                    pInst.strokeWeight(1);
-                    pInst.fill(50, 100, 150);
-                    pInst.textSize(14);
-                    pInst.textAlign(pInst.CENTER, pInst.CENTER);
+                function drawSideLabels() {
+                    p.stroke(100, 150, 200);
+                    p.strokeWeight(1);
+                    p.fill(50, 100, 150);
+                    p.textSize(14);
+                    p.textAlign(p.CENTER, p.CENTER);
                     
                     for (let i = 0; i < 3; i++) {
-                        let p1 = points[i];
-                        let p2 = points[(i + 1) % 3];
+                        let p1 = trianglePoints[i];
+                        let p2 = trianglePoints[(i + 1) % 3];
                         let midX = (p1.x + p2.x) / 2;
                         let midY = (p1.y + p2.y) / 2;
                         
-                        let distance = pInst.dist(p1.x, p1.y, p2.x, p2.y);
+                        let distance = p.dist(p1.x, p1.y, p2.x, p2.y);
                         let label = distance.toFixed(0);
                         
                         // Draw perpendicular tick mark
-                        let angle = pInst.atan2(p2.y - p1.y, p2.x - p1.x);
-                        let perpAngle = angle + pInst.PI / 2;
+                        let angle = p.atan2(p2.y - p1.y, p2.x - p1.x);
+                        let perpAngle = angle + p.PI/2;
                         let tickLength = 8;
-                        let tickX1 = midX - pInst.cos(perpAngle) * tickLength / 2;
-                        let tickY1 = midY - pInst.sin(perpAngle) * tickLength / 2;
-                        let tickX2 = midX + pInst.cos(perpAngle) * tickLength / 2;
-                        let tickY2 = midY + pInst.sin(perpAngle) * tickLength / 2;
+                        let tickX = midX + p.cos(perpAngle) * tickLength/2;
+                        let tickY = midY + p.sin(perpAngle) * tickLength/2;
+                        p.line(midX, midY, tickX, tickY);
                         
-                        pInst.stroke(100, 150, 200);
-                        pInst.line(tickX1, tickY1, tickX2, tickY2);
-                        
-                        // Draw label with background
-                        pInst.fill(255, 255, 255, 220);
-                        pInst.noStroke();
-                        let labelWidth = pInst.textWidth(label) + 10;
-                        let labelHeight = 20;
-                        pInst.rect(midX - labelWidth/2, midY - labelHeight/2, labelWidth, labelHeight, 4);
-                        
-                        pInst.fill(50, 100, 150);
-                        pInst.text(label, midX, midY);
+                        // Draw label
+                        p.push();
+                        p.translate(midX, midY);
+                        p.rotate(perpAngle);
+                        p.text(label, 0, 5);
+                        p.pop();
                     }
                 }
 
-                function drawAngleLabels(pInst, points) {
-                    pInst.fill(150, 50, 100);
-                    pInst.stroke(150, 50, 100);
-                    pInst.strokeWeight(1);
-                    pInst.textSize(12);
-                    pInst.textAlign(pInst.CENTER, pInst.CENTER);
+                function drawAngleLabels() {
+                    p.fill(150, 50, 100);
+                    p.stroke(150, 50, 100);
+                    p.strokeWeight(1);
+                    p.textSize(12);
+                    p.textAlign(p.CENTER, p.CENTER);
                     
                     for (let i = 0; i < 3; i++) {
-                        let p1 = points[i];
-                        let p2 = points[(i + 1) % 3];
-                        let p3 = points[(i + 2) % 3];
+                        let p1 = trianglePoints[i];
+                        let p2 = trianglePoints[(i + 1) % 3];
+                        let p3 = trianglePoints[(i + 2) % 3];
                         
-                        let angle = calculateAngle(pInst, p1, p2, p3);
+                        let angle = calculateAngle(p1, p2, p3);
                         let label = angle.toFixed(0) + '°';
                         
-                        // Calculate center of triangle
-                        let centerX = (p1.x + p2.x + p3.x) / 3;
-                        let centerY = (p1.y + p2.y + p3.y) / 3;
-                        
-                        // Position label between vertex and center
-                        let labelX = (p2.x + centerX) / 2;
-                        let labelY = (p2.y + centerY) / 2;
-                        
-                        // Draw arc indicator
-                        let arcRadius = 20;
+                        // Calculate position for angle label
                         let vec1 = p5.Vector.sub(p.createVector(p1.x, p1.y), p.createVector(p2.x, p2.y));
                         let vec2 = p5.Vector.sub(p.createVector(p3.x, p3.y), p.createVector(p2.x, p2.y));
+                        let angleBisector = p5.Vector.add(p5.Vector.mult(vec1, 0.3), p5.Vector.mult(vec2, 0.3));
+                        let labelX = p2.x + angleBisector.x;
+                        let labelY = p2.y + angleBisector.y;
+                        
+                        // Draw small arc
+                        let arcRadius = 20;
                         let startAngle = vec1.heading();
                         let endAngle = vec2.heading();
+                        if (endAngle < startAngle) endAngle += p.TWO_PI;
                         
-                        pInst.noFill();
-                        pInst.stroke(150, 50, 100);
-                        pInst.strokeWeight(2);
-                        pInst.arc(p2.x, p2.y, arcRadius * 2, arcRadius * 2, startAngle, endAngle);
+                        p.noFill();
+                        p.arc(p2.x, p2.y, arcRadius, arcRadius, startAngle, endAngle, p.OPEN);
                         
-                        // Draw label with background
-                        pInst.fill(255, 255, 255, 220);
-                        pInst.noStroke();
-                        let labelWidth = pInst.textWidth(label) + 8;
-                        let labelHeight = 16;
-                        pInst.rect(labelX - labelWidth/2, labelY - labelHeight/2, labelWidth, labelHeight, 3);
-                        
-                        pInst.fill(150, 50, 100);
-                        pInst.text(label, labelX, labelY);
+                        // Draw label
+                        p.fill(150, 50, 100);
+                        p.text(label, labelX, labelY);
                     }
                 }
 
-                function getClosestPoint(x, y, points, threshold = 20) {
-                    let closestIdx = null;
-                    let minDist = threshold;
-                    
-                    for (let i = 0; i < points.length; i++) {
-                        let pt = points[i];
-                        let d = pInst.dist(x, y, pt.x, pt.y);
-                        if (d < minDist) {
-                            minDist = d;
-                            closestIdx = i;
+                function getClosestPoint(x, y, threshold = 15) {
+                    for (let i = 0; i < trianglePoints.length; i++) {
+                        let pt = trianglePoints[i];
+                        let d = p.dist(x, y, pt.x, pt.y);
+                        if (d < threshold) {
+                            return i;
                         }
                     }
-                    
-                    return closestIdx;
+                    return null;
                 }
 
-                function isValidTriangle(pInst, p1, p2, p3) {
-                    let d12 = pInst.dist(p1.x, p1.y, p2.x, p2.y);
-                    let d23 = pInst.dist(p2.x, p2.y, p3.x, p3.y);
-                    let d31 = pInst.dist(p3.x, p3.y, p1.x, p1.y);
+                function isValidTriangle(p1, p2, p3) {
+                    let d12 = p.dist(p1.x, p1.y, p2.x, p2.y);
+                    let d23 = p.dist(p2.x, p2.y, p3.x, p3.y);
+                    let d31 = p.dist(p3.x, p3.y, p1.x, p1.y);
                     
                     return d12 + d23 > d31 && 
                            d23 + d31 > d12 && 
@@ -1128,144 +945,24 @@
                            d12 > 1 && d23 > 1 && d31 > 1;
                 }
 
-                function calculateAngle(pInst, p1, p2, p3) {
-                    let v1x = p1.x - p2.x;
-                    let v1y = p1.y - p2.y;
-                    let v2x = p3.x - p2.x;
-                    let v2y = p3.y - p2.y;
-                    
-                    let dot = v1x * v2x + v1y * v2y;
-                    let det = v1x * v2y - v1y * v2x;
-                    let angle = Math.atan2(det, dot);
-                    return Math.abs(pInst.degrees(angle));
+                function calculateAngle(p1, p2, p3) {
+                    let v1 = p5.Vector.sub(p.createVector(p1.x, p1.y), p.createVector(p2.x, p2.y));
+                    let v2 = p5.Vector.sub(p.createVector(p3.x, p3.y), p.createVector(p2.x, p2.y));
+                    let angle = v1.angleBetween(v2);
+                    return p.degrees(angle);
                 }
 
-                function calculateArea(pInst, p1, p2, p3) {
-                    return Math.abs((p1.x*(p2.y - p3.y) + p2.x*(p3.y - p1.y) + p3.x*(p1.y - p2.y)) / 2);
+                function calculateArea(p1, p2, p3) {
+                    return p.abs((p1.x*(p2.y - p3.y) + p2.x*(p3.y - p1.y) + p3.x*(p1.y - p2.y)) / 2);
                 }
 
-                function generateRandomTriangle() {
-                    localTrianglePoints = [
-                        p.createVector(p.random(100, canvasWidth-100), p.random(100, canvasHeight-100)),
-                        p.createVector(p.random(100, canvasWidth-100), p.random(100, canvasHeight-100)),
-                        p.createVector(p.random(100, canvasWidth-100), p.random(100, canvasHeight-100))
-                    ];
-                    
-                    // Ensure valid triangle
-                    let attempts = 0;
-                    while (!isValidTriangle(p, ...localTrianglePoints) && attempts < 50) {
-                        localTrianglePoints[2] = p.createVector(
-                            p.random(100, canvasWidth-100), 
-                            p.random(100, canvasHeight-100)
-                        );
-                        attempts++;
-                    }
-                    updateTriangleInfo(p, localTrianglePoints);
-                }
-
-                function generateEquilateral() {
-                    const centerX = canvasWidth / 2;
-                    const centerY = canvasHeight / 3 * 2;
-                    const size = Math.min(canvasWidth, canvasHeight) * 0.25;
-                    const height = size * Math.sqrt(3) / 2;
-                    
-                    localTrianglePoints = [
-                        p.createVector(centerX, centerY - height),
-                        p.createVector(centerX - size/2, centerY),
-                        p.createVector(centerX + size/2, centerY)
-                    ];
-                    updateTriangleInfo(p, localTrianglePoints);
-                }
-
-                function generateIsosceles() {
-                    const centerX = canvasWidth / 2;
-                    const centerY = canvasHeight / 2;
-                    const base = 180;
-                    const height = 140;
-                    
-                    localTrianglePoints = [
-                        p.createVector(centerX, centerY - height),
-                        p.createVector(centerX - base/2, centerY + 20),
-                        p.createVector(centerX + base/2, centerY + 20)
-                    ];
-                    updateTriangleInfo(p, localTrianglePoints);
-                }
-
-                function generateScalene() {
-                    localTrianglePoints = [
-                        p.createVector(120, 80),
-                        p.createVector(380, 120),
-                        p.createVector(250, 320)
-                    ];
-                    const scale = Math.min((canvasWidth-100)/400, (canvasHeight-100)/300);
-                    localTrianglePoints = localTrianglePoints.map(pt => 
-                        p.createVector(pt.x * scale + 50, pt.y * scale + 50)
-                    );
-                    updateTriangleInfo(p, localTrianglePoints);
-                }
-
-                function generateRight() {
-                    const base = 200;
-                    const height = 150;
-                    const startX = 100;
-                    const startY = canvasHeight - 100;
-                    
-                    localTrianglePoints = [
-                        p.createVector(startX, startY),
-                        p.createVector(startX + base, startY),
-                        p.createVector(startX, startY - height)
-                    ];
-                    updateTriangleInfo(p, localTrianglePoints);
-                }
-
-                function generateAcute() {
-                    const centerX = canvasWidth / 2;
-                    const centerY = canvasHeight / 2;
-                    
-                    localTrianglePoints = [
-                        p.createVector(centerX - 80, centerY + 60),
-                        p.createVector(centerX + 100, centerY + 20),
-                        p.createVector(centerX - 20, centerY - 120)
-                    ];
-                    updateTriangleInfo(p, localTrianglePoints);
-                }
-
-                function generateObtuse() {
-                    const startX = 100;
-                    const startY = canvasHeight - 150;
-                    
-                    localTrianglePoints = [
-                        p.createVector(startX, startY),
-                        p.createVector(startX + 250, startY + 30),
-                        p.createVector(startX + 50, startY - 120)
-                    ];
-                    updateTriangleInfo(p, localTrianglePoints);
-                }
-
-                function generateDefaultTriangle() {
-                    localTrianglePoints = [
-                        p.createVector(canvasWidth/4, canvasHeight/3),
-                        p.createVector(canvasWidth/2, canvasHeight*2/3),
-                        p.createVector(canvasWidth*3/4, canvasHeight/2)
-                    ];
-                }
-
-                function updateTriangleInfo(pInst, points) {
-                    if (points.length < 3 || !isValidTriangle(pInst, ...points)) {
-                        if (tabName === 'explorer') {
-                            const statusDiv = document.getElementById('triangleStatus');
-                            if (statusDiv) {
-                                statusDiv.style.display = 'none';
-                            }
-                        }
+                function updateTriangleInfoLocal(points) {
+                    if (points.length < 3 || !isValidTriangle(...points)) {
+                        document.getElementById('triangleStatus').style.display = 'none';
                         return;
                     }
                     
-                    if (tabName !== 'explorer') return;
-                    
                     const statusDiv = document.getElementById('triangleStatus');
-                    if (!statusDiv) return;
-                    
                     statusDiv.style.display = 'block';
                     
                     let angles = [];
@@ -1276,798 +973,354 @@
                         let p2 = points[(i + 1) % 3];
                         let p3 = points[(i + 2) % 3];
                         
-                        angles.push(calculateAngle(pInst, p1, p2, p3));
-                        sides.push(pInst.dist(p1.x, p1.y, p2.x, p2.y));
+                        angles.push(calculateAngle(p1, p2, p3));
+                        sides.push(p.dist(p1.x, p1.y, p2.x, p2.y));
                     }
                     
-                    const area = calculateArea(pInst, ...points);
+                    const area = calculateArea(...points);
                     const perimeter = sides.reduce((a, b) => a + b, 0);
                     
                     // Classify triangle
                     const maxAngle = Math.max(...angles);
-                    const sideTolerance = 5;
-                    const isEquilateral = sides.every(s => Math.abs(s - sides[0]) < sideTolerance);
-                    const isIsosceles = new Set(sides.map(s => Math.round(s / 10) * 10)).size === 2;
+                    const sortedSides = [...sides].sort((a, b) => a - b);
+                    const isEquilateral = sides.every(s => Math.abs(s - sides[0]) < 2);
+                    const isIsosceles = new Set(sides.map(s => Math.round(s))).size === 2;
+                    const isScalene = new Set(sides.map(s => Math.round(s))).size === 3;
+                    const isRight = Math.abs(maxAngle - 90) < 2;
+                    const isAcute = maxAngle < 90;
+                    const isObtuse = maxAngle > 90;
                     
-                    let classification = isEquilateral ? 'Equilateral' : (isIsosceles ? 'Isosceles' : 'Scalene');
+                    let classification = 'Scalene';
+                    if (isEquilateral) classification = 'Equilateral';
+                    else if (isIsosceles) classification = 'Isosceles';
+                    else if (isRight) classification = 'Right';
+                    else if (isAcute) classification = 'Acute';
+                    else if (isObtuse) classification = 'Obtuse';
                     
-                    if (Math.abs(maxAngle - 90) < 3) classification = `Right ${classification}`;
-                    else if (maxAngle > 90) classification = `Obtuse ${classification}`;
-                    else classification = `Acute ${classification}`;
-                    
-                    if (document.getElementById('triangleClassification')) {
-                        document.getElementById('triangleClassification').textContent = classification;
-                    }
-                    if (document.getElementById('triangleArea')) {
-                        document.getElementById('triangleArea').textContent = area.toFixed(1) + ' px²';
-                    }
-                    if (document.getElementById('trianglePerimeter')) {
-                        document.getElementById('trianglePerimeter').textContent = perimeter.toFixed(1) + ' px';
-                    }
+                    document.getElementById('triangleClassification').textContent = classification;
+                    document.getElementById('triangleArea').textContent = area.toFixed(1) + ' px²';
+                    document.getElementById('trianglePerimeter').textContent = perimeter.toFixed(1) + ' px';
                     
                     // Angle details
                     let angleHTML = '';
                     angles.forEach((angle, i) => {
                         angleHTML += `<div class="info-row">
-                            <span class="info-label">∠${String.fromCharCode(65 + i)}:</span>
+                            <span class="info-label">Angle ${String.fromCharCode(65 + i)}:</span>
                             <span>${angle.toFixed(1)}°</span>
                         </div>`;
                     });
-                    if (document.getElementById('angleDetails')) {
-                        document.getElementById('angleDetails').innerHTML = angleHTML;
-                    }
+                    document.getElementById('angleDetails').innerHTML = angleHTML;
                     
                     // Side details
                     let sideHTML = '';
                     sides.forEach((side, i) => {
-                        const oppositeAngle = angles[i];
                         sideHTML += `<div class="info-row">
-                            <span class="info-label">Side ${String.fromCharCode(65 + i)}:</span>
+                            <span class="info-label">Side ${String.fromCharCode(65 + ((i+1)%3))}:</span>
                             <span>${side.toFixed(1)} px</span>
                         </div>`;
                     });
-                    if (document.getElementById('sideDetails')) {
-                        document.getElementById('sideDetails').innerHTML = sideHTML;
+                    document.getElementById('sideDetails').innerHTML = sideHTML;
+                }
+
+                function toggleProtractorLocal() {
+                    protractorActive = !protractorActive;
+                    const overlay = document.getElementById('protractorOverlay');
+                    const btn = document.getElementById('protractorBtn');
+                    
+                    if (protractorActive) {
+                        overlay.classList.add('active');
+                        btn.textContent = '📐 Hide Protractor';
+                        btn.style.background = '#38a169';
+                    } else {
+                        overlay.classList.remove('active');
+                        btn.textContent = '📐 Protractor';
+                        btn.style.background = '';
+                        protractorBase = null;
                     }
                 }
 
-                function drawProtractor(pInst, points, mouseX, mouseY) {
-                    if (!localProtractorActive) return;
+                function drawProtractor() {
+                    if (!protractorActive) return;
                     
+                    // Find closest vertex
                     let closestVertex = null;
-                    let minDist = 25;
+                    let minDist = 30;
                     
-                    for (let i = 0; i < points.length; i++) {
-                        let dist = pInst.dist(mouseX, mouseY, points[i].x, points[i].y);
+                    for (let i = 0; i < trianglePoints.length; i++) {
+                        let dist = p.dist(p.mouseX, p.mouseY, trianglePoints[i].x, trianglePoints[i].y);
                         if (dist < minDist) {
                             minDist = dist;
                             closestVertex = i;
                         }
                     }
                     
-                    if (closestVertex !== null && minDist < 50) {
-                        let vertex = points[closestVertex];
-                        let v1 = points[(closestVertex + 1) % 3];
-                        let v2 = points[(closestVertex + 2) % 3];
+                    if (closestVertex !== null) {
+                        let vertex = trianglePoints[closestVertex];
+                        let v1 = trianglePoints[(closestVertex + 1) % 3];
+                        let v2 = trianglePoints[(closestVertex + 2) % 3];
                         
-                        pInst.noFill();
-                        pInst.stroke(100, 150, 200, 100);
-                        pInst.strokeWeight(2);
-                        pInst.ellipse(vertex.x, vertex.y, 100, 100);
+                        // Draw protractor circle
+                        p.noFill();
+                        p.stroke(100, 150, 200, 150);
+                        p.strokeWeight(2);
+                        p.ellipse(vertex.x, vertex.y, 80, 80);
                         
-                        pInst.stroke(80, 120, 180, 200);
-                        pInst.strokeWeight(2);
-                        pInst.line(vertex.x, vertex.y, v1.x, v1.y);
-                        pInst.line(vertex.x, vertex.y, v2.x, v2.y);
+                        // Draw tick marks
+                        drawProtractorTicks(vertex);
                         
-                        let angle1 = pInst.atan2(v1.y - vertex.y, v1.x - vertex.x);
-                        let angle2 = pInst.atan2(v2.y - vertex.y, v2.x - vertex.x);
-                        let angleDiff = pInst.abs(pInst.degrees(angle2 - angle1));
+                        // Calculate and display angle
+                        let angle1 = p.atan2(v1.y - vertex.y, v1.x - vertex.x);
+                        let angle2 = p.atan2(v2.y - vertex.y, v2.x - vertex.x);
+                        let angleDiff = p.abs(p.degrees(angle2 - angle1));
                         if (angleDiff > 180) angleDiff = 360 - angleDiff;
                         
-                        localProtractorAngle = angleDiff;
-                        
-                        const readingEl = document.getElementById('protractorReading');
-                        if (readingEl) {
-                            readingEl.textContent = `∠${String.fromCharCode(65 + closestVertex)} = ${angleDiff.toFixed(1)}°`;
+                        protractorAngle = angleDiff;
+                        if (document.getElementById('protractorReading')) {
+                            document.getElementById('protractorReading').textContent = angleDiff.toFixed(1) + '°';
                         }
                         
-                        pInst.stroke(255, 100, 100, 200);
-                        pInst.strokeWeight(3);
-                        let startAngle = Math.min(angle1, angle2);
-                        let endAngle = Math.max(angle1, angle2);
-                        if (endAngle - startAngle > pInst.PI) {
-                            startAngle += pInst.TWO_PI;
-                            endAngle += pInst.TWO_PI;
+                        // Draw angle arc
+                        p.stroke(255, 100, 100, 200);
+                        p.strokeWeight(3);
+                        let startAngle = angle1;
+                        let endAngle = angle2;
+                        if (endAngle < startAngle) {
+                            let temp = startAngle;
+                            startAngle = endAngle;
+                            endAngle = temp;
                         }
-                        pInst.arc(vertex.x, vertex.y, 70, 70, startAngle, endAngle);
+                        p.arc(vertex.x, vertex.y, 60, 60, startAngle, endAngle);
                         
-                        pInst.stroke(100, 150, 200, 150);
-                        pInst.strokeWeight(1);
-                        pInst.line(vertex.x - 10, vertex.y, vertex.x + 10, vertex.y);
-                        pInst.line(vertex.x, vertex.y - 10, vertex.x, vertex.y + 10);
+                        // Draw crosshair
+                        p.stroke(100, 150, 200, 150);
+                        p.strokeWeight(1);
+                        p.line(vertex.x - 10, vertex.y, vertex.x + 10, vertex.y);
+                        p.line(vertex.x, vertex.y - 10, vertex.x, vertex.y + 10);
                         
-                        pInst.stroke(100, 150, 200, 120);
-                        for (let i = 0; i <= 180; i += 15) {
-                            let rad = pInst.radians(i) + startAngle;
-                            let x1 = vertex.x + Math.cos(rad) * 30;
-                            let y1 = vertex.y + Math.sin(rad) * 30;
-                            let x2 = vertex.x + Math.cos(rad) * 40;
-                            let y2 = vertex.y + Math.sin(rad) * 40;
-                            pInst.line(x1, y1, x2, y2);
-                            
-                            if (i % 30 === 0) {
-                                pInst.fill(100, 150, 200);
-                                pInst.noStroke();
-                                pInst.textSize(10);
-                                pInst.textAlign(pInst.CENTER, pInst.CENTER);
-                                pInst.text(i.toString(), x2 + 8, y2);
-                            }
-                        }
-                        
-                        localProtractorBase = vertex;
+                        protractorBase = vertex;
                     } else {
-                        localProtractorBase = null;
-                        const readingEl = document.getElementById('protractorReading');
-                        if (readingEl) {
-                            readingEl.textContent = 'Hover over a vertex';
+                        protractorBase = null;
+                        if (document.getElementById('protractorReading')) {
+                            document.getElementById('protractorReading').textContent = '0°';
                         }
                     }
                 }
 
-                function updateProtractorLocal(pInst, points, base) {
-                    if (localProtractorActive && base) {
-                        let baseIndex = -1;
-                        for (let i = 0; i < points.length; i++) {
-                            if (pInst.dist(points[i].x, points[i].y, base.x, base.y) < 10) {
-                                baseIndex = i;
-                                break;
-                            }
+                function drawProtractorTicks(vertex) {
+                    p.stroke(100, 150, 200, 100);
+                    p.strokeWeight(1);
+                    
+                    for (let i = 0; i <= 360; i += 5) {
+                        let angleRad = p.radians(i);
+                        let x1 = vertex.x + p.cos(angleRad) * 35;
+                        let y1 = vertex.y + p.sin(angleRad) * 35;
+                        let x2 = vertex.x + p.cos(angleRad) * 40;
+                        let y2 = vertex.y + p.sin(angleRad) * 40;
+                        
+                        if (i % 30 === 0) {
+                            p.strokeWeight(2);
+                        } else {
+                            p.strokeWeight(1);
                         }
+                        
+                        p.line(x1, y1, x2, y2);
+                    }
+                }
+
+                function updateProtractorLocal() {
+                    if (protractorActive && protractorBase) {
+                        // Find which point is the protractor base
+                        let baseIndex = trianglePoints.findIndex(pt => 
+                            p.dist(pt.x, pt.y, protractorBase.x, protractorBase.y) < 5
+                        );
                         
                         if (baseIndex !== -1) {
-                            let v1 = points[(baseIndex + 1) % 3];
-                            let v2 = points[(baseIndex + 2) % 3];
+                            let v1 = trianglePoints[(baseIndex + 1) % 3];
+                            let v2 = trianglePoints[(baseIndex + 2) % 3];
                             
-                            let angle1 = pInst.atan2(v1.y - base.y, v1.x - base.x);
-                            let angle2 = pInst.atan2(v2.y - base.y, v2.x - base.x);
-                            let angleDiff = pInst.abs(pInst.degrees(angle2 - angle1));
+                            let angle1 = p.atan2(v1.y - protractorBase.y, v1.x - protractorBase.x);
+                            let angle2 = p.atan2(v2.y - protractorBase.y, v2.x - protractorBase.x);
+                            let angleDiff = p.abs(p.degrees(angle2 - angle1));
                             if (angleDiff > 180) angleDiff = 360 - angleDiff;
                             
-                            localProtractorAngle = angleDiff;
-                            const readingEl = document.getElementById('protractorReading');
-                            if (readingEl) {
-                                readingEl.textContent = `∠${String.fromCharCode(65 + baseIndex)} = ${angleDiff.toFixed(1)}°`;
+                            protractorAngle = angleDiff;
+                            if (document.getElementById('protractorReading')) {
+                                document.getElementById('protractorReading').textContent = angleDiff.toFixed(1) + '°';
                             }
                         }
                     }
                 }
 
-                // Expose functions for global access
-                window[`${tabName}Sketch`] = {
-                    getPoints: () => localTrianglePoints.map(pt => ({x: pt.x, y: pt.y})),
-                    setPoints: (points) => {
-                        localTrianglePoints = points.map(pt => p.createVector(pt.x, pt.y));
-                        if (points.length === 3 && isValidTriangle(p, ...localTrianglePoints)) {
-                            updateTriangleInfo(p, localTrianglePoints);
-                        }
-                    },
-                    generate: (type) => {
-                        switch(type) {
-                            case 'equilateral': generateEquilateral(); break;
-                            case 'isosceles': generateIsosceles(); break;
-                            case 'scalene': generateScalene(); break;
-                            case 'right': generateRight(); break;
-                            case 'acute': generateAcute(); break;
-                            case 'obtuse': generateObtuse(); break;
-                            default: generateRandomTriangle(); break;
-                        }
-                    },
-                    reset: () => {
-                        generateRandomTriangle();
-                        localProtractorActive = false;
-                        const overlay = document.getElementById('protractorOverlay');
-                        const btn = document.getElementById('protractorBtn');
-                        if (overlay) overlay.classList.remove('active');
-                        if (btn) {
-                            btn.textContent = '📐 Protractor';
-                            btn.style.background = '';
-                        }
-                    },
-                    clear: () => {
-                        localTrianglePoints = [];
-                        document.getElementById('triangleStatus').style.display = 'none';
-                    },
-                    toggleProtractor: () => {
-                        localProtractorActive = !localProtractorActive;
-                        const overlay = document.getElementById('protractorOverlay');
-                        const btn = document.getElementById('protractorBtn');
-                        
-                        if (localProtractorActive) {
-                            if (overlay) overlay.classList.add('active');
-                            if (btn) {
-                                btn.textContent = '📐 Hide Protractor';
-                                btn.style.background = '#38a169';
-                            }
-                        } else {
-                            if (overlay) overlay.classList.remove('active');
-                            if (btn) {
-                                btn.textContent = '📐 Protractor';
-                                btn.style.background = '';
-                            }
-                            localProtractorBase = null;
-                            const readingEl = document.getElementById('protractorReading');
-                            if (readingEl) readingEl.textContent = '0°';
-                        }
+                function generateRandomTriangle() {
+                    trianglePoints = [
+                        p.createVector(p.random(100, canvasWidth-100), p.random(100, canvasHeight-200)),
+                        p.createVector(p.random(100, canvasWidth-100), p.random(100, canvasHeight-200)),
+                        p.createVector(p.random(100, canvasWidth-100), p.random(100, canvasHeight-200))
+                    ];
+                    
+                    // Ensure it's a valid triangle
+                    let attempts = 0;
+                    while (!isValidTriangle(...trianglePoints) && attempts < 100) {
+                        trianglePoints[2] = p.createVector(
+                            p.random(100, canvasWidth-100), 
+                            p.random(100, canvasHeight-200)
+                        );
+                        attempts++;
                     }
+                }
+
+                function generateEquilateral() {
+                    const centerX = canvasWidth / 2;
+                    const centerY = canvasHeight / 2;
+                    const size = p.min(canvasWidth, canvasHeight) * 0.3;
+                    const height = size * p.sqrt(3) / 2;
+                    
+                    trianglePoints = [
+                        p.createVector(centerX, centerY - height/3),
+                        p.createVector(centerX - size/2, centerY + height/3),
+                        p.createVector(centerX + size/2, centerY + height/3)
+                    ];
+                }
+
+                function generateIsosceles() {
+                    const centerX = canvasWidth / 2;
+                    const centerY = canvasHeight / 2;
+                    const base = 200;
+                    const height = 150;
+                    
+                    trianglePoints = [
+                        p.createVector(centerX, centerY - height),
+                        p.createVector(centerX - base/2, centerY),
+                        p.createVector(centerX + base/2, centerY)
+                    ];
+                }
+
+                function generateScalene() {
+                    trianglePoints = [
+                        p.createVector(200, 100),
+                        p.createVector(500, 200),
+                        p.createVector(300, 400)
+                    ];
+                }
+
+                function generateRight() {
+                    trianglePoints = [
+                        p.createVector(150, canvasHeight - 100),
+                        p.createVector(400, canvasHeight - 100),
+                        p.createVector(150, canvasHeight - 250)
+                    ];
+                }
+
+                function generateAcute() {
+                    trianglePoints = [
+                        p.createVector(250, 150),
+                        p.createVector(450, 200),
+                        p.createVector(350, 350)
+                    ];
+                }
+
+                function generateObtuse() {
+                    trianglePoints = [
+                        p.createVector(100, canvasHeight - 200),
+                        p.createVector(400, canvasHeight - 180),
+                        p.createVector(150, 100)
+                    ];
+                }
+
+                // Make these functions globally accessible
+                window.setLocalTrianglePoints = function(points) {
+                    trianglePoints = points.map(pt => p.createVector(pt.x, pt.y));
                 };
+
+                // Expose functions for global access
+                window.getLocalTrianglePoints = function() {
+                    return trianglePoints.map(pt => ({x: pt.x, y: pt.y}));
+                };
+
+                if (tabName === 'explorer') {
+                    window.toggleProtractor = function() {
+                        toggleProtractorLocal();
+                    };
+                    
+                    window.generateTriangleLocal = function(type) {
+                        switch(type) {
+                            case 'equilateral':
+                                generateEquilateral();
+                                break;
+                            case 'isosceles':
+                                generateIsosceles();
+                                break;
+                            case 'scalene':
+                                generateScalene();
+                                break;
+                            case 'right':
+                                generateRight();
+                                break;
+                            case 'acute':
+                                generateAcute();
+                                break;
+                            case 'obtuse':
+                                generateObtuse();
+                                break;
+                            default:
+                                generateRandomTriangle();
+                        }
+                    };
+                    
+                    window.resetTriangleLocal = function() {
+                        generateRandomTriangle();
+                    };
+                    
+                    window.clearCanvasLocal = function() {
+                        trianglePoints = [];
+                    };
+                }
+
+                if (tabName === 'generator' || tabName === 'analyzer') {
+                    window.updateTriangleDisplay = function(points) {
+                        setLocalTrianglePoints(points);
+                    };
+                }
             }, containerId);
         }
 
         // Global functions
         function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
             
             document.getElementById(tabName).classList.add('active');
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            event.target.classList.add('active');
             
             currentTab = tabName;
             
-            const protractorOverlay = document.getElementById('protractorOverlay');
-            if (protractorOverlay) protractorOverlay.classList.remove('active');
-            
-            const drawingProtractorOverlay = document.getElementById('drawingProtractorOverlay');
-            if (drawingProtractorOverlay) drawingProtractorOverlay.style.display = 'none';
-            
+            // Hide protractor overlay when switching tabs
+            document.getElementById('protractorOverlay').classList.remove('active');
             protractorActive = false;
+            document.getElementById('protractorBtn').textContent = '📐 Protractor';
+            document.getElementById('protractorBtn').style.background = '';
             
-            const protractorBtn = document.getElementById('protractorBtn');
-            if (protractorBtn) {
-                protractorBtn.textContent = '📐 Protractor';
-                protractorBtn.style.background = '';
+            // Create new sketch for the tab
+            if (tabName !== 'drawing') {
+                setTimeout(() => createSketch(tabName), 100);
+            } else {
+                // Redraw drawing canvas
+                drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                drawAllDrawings();
             }
-            
-            setTimeout(() => {
-                if (tabName === 'drawing') {
-                    redrawDrawings();
-                    updateDrawingCursor();
-                    updateDrawingHistory();
-                } else {
-                    createSketch(tabName);
-                }
-            }, 50);
             
             if (tabName === 'generator') {
                 updateGeneratorInputs();
             } else if (tabName === 'analyzer') {
                 updateAnalyzerInputs();
             }
-            
-            updateToolInfo();
         }
 
-        function generateTriangle() {
-            if (currentTab !== 'explorer' || !window.explorerSketch) return;
-            
-            const type = document.getElementById('triangleType').value;
-            window.explorerSketch.generate(type);
-        }
-
-        function resetTriangle() {
-            if (window.explorerSketch) {
-                window.explorerSketch.reset();
-            } else if (window[currentTab + 'Sketch']) {
-                window[currentTab + 'Sketch'].reset();
-            }
-        }
-
-        function clearCanvas() {
-            if (window[currentTab + 'Sketch']) {
-                window[currentTab + 'Sketch'].clear();
-            }
-        }
-
-        function toggleProtractor() {
-            if (currentTab === 'explorer' && window.explorerSketch) {
-                window.explorerSketch.toggleProtractor();
-            }
-        }
-
-        // Drawing board functions (rest remain the same as previous version)
-        function updateDrawingCursor() {
-            if (currentTab !== 'drawing') return;
-            const cursors = {
-                'line': 'crosshair',
-                'circle': 'crosshair',
-                'protractor': 'crosshair'
-            };
-            drawingCanvas.style.cursor = cursors[drawingMode] || 'default';
-        }
-
-        function handleDrawingMouseDown(e) {
-            if (currentTab !== 'drawing') return;
-            
-            const rect = drawingCanvas.getBoundingClientRect();
-            startPos = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-            currentPos = {...startPos};
-            
-            if (drawingMode === 'protractor') {
-                draggedProtractorIndex = getProtractorAtPoint(startPos.x, startPos.y);
-                if (draggedProtractorIndex !== -1) {
-                    isProtractorDragging = true;
-                    protractorPreview = {...drawings[draggedProtractorIndex]};
-                } else {
-                    protractorPreview = {
-                        type: 'protractor',
-                        centerX: startPos.x,
-                        centerY: startPos.y,
-                        angle: 0,
-                        size: parseInt(document.getElementById('protractorSize').value),
-                        showTicks: document.getElementById('showTicks').checked,
-                        tickInterval: parseInt(document.getElementById('tickInterval').value),
-                        isNew: true
-                    };
-                    isProtractorDragging = true;
-                }
-                document.getElementById('drawingProtractorOverlay').style.display = 'block';
-            } else {
-                isDrawing = true;
-                protractorPreview = null;
-            }
-            
-            e.preventDefault();
-        }
-
-        function handleDrawingMouseMove(e) {
-            if (currentTab !== 'drawing') return;
-            
-            const rect = drawingCanvas.getBoundingClientRect();
-            currentPos = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-            
-            if (isDrawing && drawingMode !== 'protractor') {
-                redrawDrawings();
-                
-                drawingCtx.strokeStyle = document.getElementById('drawColor').value;
-                drawingCtx.lineWidth = parseInt(document.getElementById('lineWidth').value);
-                drawingCtx.lineCap = 'round';
-                drawingCtx.lineJoin = 'round';
-                drawingCtx.globalAlpha = 0.7;
-                drawingCtx.setLineDash([5, 5]);
-                
-                let endX = currentPos.x;
-                let endY = currentPos.y;
-                
-                if (e.shiftKey) {
-                    const dx = currentPos.x - startPos.x;
-                    const dy = currentPos.y - startPos.y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    const angle = Math.atan2(dy, dx);
-                    
-                    const snapAngles = [0, Math.PI/4, Math.PI/2, 3*Math.PI/4, Math.PI, -Math.PI/4, -Math.PI/2, -3*Math.PI/4];
-                    let closestAngle = snapAngles.reduce((prev, curr) => 
-                        Math.abs(curr - angle) < Math.abs(prev - angle) ? curr : prev
-                    );
-                    
-                    endX = startPos.x + Math.cos(closestAngle) * dist;
-                    endY = startPos.y + Math.sin(closestAngle) * dist;
-                }
-                
-                drawingCtx.beginPath();
-                drawingCtx.moveTo(startPos.x, startPos.y);
-                drawingCtx.lineTo(endX, endY);
-                drawingCtx.stroke();
-                
-                drawingCtx.setLineDash([]);
-                drawingCtx.globalAlpha = 1.0;
-                
-            } else if (drawingMode === 'protractor' && isProtractorDragging && protractorPreview) {
-                if (protractorPreview.isNew || draggedProtractorIndex === -1) {
-                    protractorPreview.centerX = currentPos.x;
-                    protractorPreview.centerY = currentPos.y;
-                } else {
-                    const dx = currentPos.x - protractorPreview.centerX;
-                    const dy = currentPos.y - protractorPreview.centerY;
-                    protractorPreview.angle = Math.atan2(dy, dx);
-                }
-                
-                redrawDrawings();
-                drawProtractorDrawing(drawingCtx, protractorPreview);
-                
-                let angleValue = 0;
-                if (protractorPreview.isNew) {
-                    angleValue = (protractorPreview.angle * 180 / Math.PI + 90).toFixed(1);
-                } else {
-                    angleValue = (protractorPreview.angle * 180 / Math.PI).toFixed(1);
-                }
-                
-                document.getElementById('drawingAngleValue').textContent = angleValue + '°';
-                document.getElementById('drawingProtractorReading').textContent = angleValue + '°';
-            }
-            
-            e.preventDefault();
-        }
-
-        function handleDrawingMouseUp(e) {
-            if (currentTab !== 'drawing') return;
-            
-            const rect = drawingCanvas.getBoundingClientRect();
-            const endPos = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-            
-            if (isDrawing && drawingMode !== 'protractor') {
-                const lineWidth = parseInt(document.getElementById('lineWidth').value);
-                const color = document.getElementById('drawColor').value;
-                
-                let finalEndX = endPos.x;
-                let finalEndY = endPos.y;
-                
-                if (e.shiftKey) {
-                    const dx = endPos.x - startPos.x;
-                    const dy = endPos.y - startPos.y;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    const angle = Math.atan2(dy, dx);
-                    
-                    const snapAngles = [0, Math.PI/4, Math.PI/2, 3*Math.PI/4, Math.PI, -Math.PI/4, -Math.PI/2, -3*Math.PI/4];
-                    let closestAngle = snapAngles.reduce((prev, curr) => 
-                        Math.abs(curr - angle) < Math.abs(prev - angle) ? curr : prev
-                    );
-                    
-                    finalEndX = startPos.x + Math.cos(closestAngle) * dist;
-                    finalEndY = startPos.y + Math.sin(closestAngle) * dist;
-                }
-                
-                const lineLength = Math.sqrt((finalEndX - startPos.x)**2 + (finalEndY - startPos.y)**2);
-                if (lineLength > 5) {
-                    const newDrawing = {
-                        type: 'line',
-                        startX: startPos.x,
-                        startY: startPos.y,
-                        endX: finalEndX,
-                        endY: finalEndY,
-                        color: color,
-                        width: lineWidth,
-                        timestamp: Date.now()
-                    };
-                    
-                    drawingHistory.push(newDrawing);
-                    drawings.push(newDrawing);
-                    updateDrawingHistory();
-                }
-                
-                isDrawing = false;
-                redrawDrawings();
-                
-            } else if (drawingMode === 'protractor' && isProtractorDragging && protractorPreview) {
-                if (protractorPreview.isNew) {
-                    const newProtractor = {
-                        type: 'protractor',
-                        centerX: protractorPreview.centerX,
-                        centerY: protractorPreview.centerY,
-                        angle: protractorPreview.angle,
-                        size: protractorPreview.size,
-                        showTicks: protractorPreview.showTicks,
-                        tickInterval: protractorPreview.tickInterval,
-                        timestamp: Date.now()
-                    };
-                    
-                    drawingHistory.push(newProtractor);
-                    drawings.push(newProtractor);
-                    updateDrawingHistory();
-                } else if (draggedProtractorIndex !== -1) {
-                    drawings[draggedProtractorIndex] = {...protractorPreview};
-                    drawingHistory.push({...protractorPreview, isUpdate: true});
-                }
-                
-                isProtractorDragging = false;
-                protractorPreview = null;
-                draggedProtractorIndex = -1;
-                redrawDrawings();
-                
-                setTimeout(() => {
-                    document.getElementById('drawingProtractorOverlay').style.display = 'none';
-                }, 1000);
-            }
-            
-            e.preventDefault();
-        }
-
-        function handleDrawingContextMenu(e) {
-            if (currentTab !== 'drawing' || drawingMode !== 'protractor') return;
-            
-            e.preventDefault();
-            
-            const rect = drawingCanvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
-            
-            const protractorIndex = getProtractorAtPoint(mouseX, mouseY);
-            if (protractorIndex !== -1) {
-                const removed = drawings.splice(protractorIndex, 1)[0];
-                if (removed) {
-                    drawingHistory.push({
-                        type: 'remove',
-                        removedItem: removed,
-                        index: protractorIndex,
-                        timestamp: Date.now()
-                    });
-                    updateDrawingHistory();
-                    redrawDrawings();
-                }
-            }
-        }
-
-        function getProtractorAtPoint(x, y, threshold = 20) {
-            for (let i = 0; i < drawings.length; i++) {
-                const drawing = drawings[i];
-                if (drawing.type === 'protractor') {
-                    const dist = Math.sqrt((x - drawing.centerX)**2 + (y - drawing.centerY)**2);
-                    if (dist < threshold) {
-                        return i;
-                    }
-                }
-            }
-            return -1;
-        }
-
-        function redrawDrawings() {
-            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-            
-            drawingCtx.strokeStyle = '#e8e8e8';
-            drawingCtx.lineWidth = 1;
-            const gridSize = 25;
-            for (let x = 0; x < drawingCanvas.width; x += gridSize) {
-                drawingCtx.beginPath();
-                drawingCtx.moveTo(x, 0);
-                drawingCtx.lineTo(x, drawingCanvas.height);
-                drawingCtx.stroke();
-            }
-            for (let y = 0; y < drawingCanvas.height; y += gridSize) {
-                drawingCtx.beginPath();
-                drawingCtx.moveTo(0, y);
-                drawingCtx.lineTo(drawingCanvas.width, y);
-                drawingCtx.stroke();
-            }
-            
-            drawings.forEach(drawing => {
-                if (drawing.type === 'line') {
-                    drawingCtx.strokeStyle = drawing.color;
-                    drawingCtx.lineWidth = drawing.width;
-                    drawingCtx.lineCap = 'round';
-                    drawingCtx.lineJoin = 'round';
-                    
-                    drawingCtx.beginPath();
-                    drawingCtx.moveTo(drawing.startX, drawing.startY);
-                    drawingCtx.lineTo(drawing.endX, drawing.endY);
-                    drawingCtx.stroke();
-                } else if (drawing.type === 'protractor') {
-                    drawProtractorDrawing(drawingCtx, drawing);
-                }
-            });
-            
-            if (protractorPreview && isProtractorDragging) {
-                drawingCtx.globalAlpha = 0.7;
-                if (protractorPreview.type === 'protractor') {
-                    drawProtractorDrawing(drawingCtx, protractorPreview);
-                }
-                drawingCtx.globalAlpha = 1.0;
-            }
-        }
-
-        function drawProtractorDrawing(ctx, protractor) {
-            const centerX = protractor.centerX;
-            const centerY = protractor.centerY;
-            const radius = protractor.size;
-            const startAngle = protractor.angle;
-            
-            ctx.strokeStyle = '#4a90e2';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, radius, startAngle, startAngle + Math.PI);
-            ctx.stroke();
-            
-            if (protractor.showTicks) {
-                const tickInterval = protractor.tickInterval;
-                ctx.strokeStyle = '#4a90e2';
-                
-                for (let i = 0; i <= 180; i += tickInterval) {
-                    const angle = startAngle + (i * Math.PI / 180);
-                    const innerRadius = radius - 15;
-                    const outerRadius = radius - 5;
-                    
-                    const innerX = centerX + Math.cos(angle) * innerRadius;
-                    const innerY = centerY + Math.sin(angle) * innerRadius;
-                    const outerX = centerX + Math.cos(angle) * outerRadius;
-                    const outerY = centerY + Math.sin(angle) * outerRadius;
-                    
-                    ctx.lineWidth = (i % (tickInterval * 3) === 0 || tickInterval === 1) ? 2 : 1;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(innerX, innerY);
-                    ctx.lineTo(outerX, outerY);
-                    ctx.stroke();
-                    
-                    if (i % 30 === 0 && tickInterval <= 5) {
-                        ctx.fillStyle = '#4a90e2';
-                        ctx.font = 'bold 12px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        const labelX = centerX + Math.cos(angle) * (radius + 25);
-                        const labelY = centerY + Math.sin(angle) * (radius + 25);
-                        ctx.fillText(i.toString(), labelX, labelY);
-                    }
-                }
-            }
-            
-            ctx.fillStyle = '#4a90e2';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, 6, 0, 2 * Math.PI);
-            ctx.fill();
-            
-            if (protractorPreview === protractor || draggedProtractorIndex !== -1) {
-                ctx.strokeStyle = '#ff6b6b';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]);
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius + 5, 0, 2 * Math.PI);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
-        }
-
-        function setTool(tool) {
-            drawingMode = tool;
-            document.querySelectorAll('#drawing .btn').forEach(btn => btn.classList.remove('active-tool'));
-            event.target.classList.add('active-tool');
-            
-            isDrawing = false;
-            isProtractorDragging = false;
-            protractorPreview = null;
-            draggedProtractorIndex = -1;
-            document.getElementById('drawingProtractorOverlay').style.display = 'none';
-            
-            updateDrawingCursor();
-            updateToolInfo();
-            redrawDrawings();
-        }
-
-        function undoDrawing() {
-            if (currentTab !== 'drawing' || drawingHistory.length === 0) return;
-            
-            const lastAction = drawingHistory.pop();
-            
-            if (lastAction.type === 'remove') {
-                drawings.splice(lastAction.index, 1);
-            } else if (lastAction.isUpdate) {
-                const index = drawings.findIndex(d => 
-                    d.centerX === lastAction.centerX && d.centerY === lastAction.centerY
-                );
-                if (index !== -1) {
-                    drawings[index] = lastAction.removedItem || lastAction;
-                }
-            } else {
-                const index = drawings.findIndex(d => 
-                    (d.startX === lastAction.startX && d.startY === lastAction.startY &&
-                    d.endX === lastAction.endX && d.endY === lastAction.endY) ||
-                    (d.type === 'protractor' && 
-                    Math.abs(d.centerX - lastAction.centerX) < 5 &&
-                    Math.abs(d.centerY - lastAction.centerY) < 5)
-                );
-                if (index !== -1) {
-                    drawings.splice(index, 1);
-                }
-            }
-            
-            updateDrawingHistory();
-            redrawDrawings();
-            
-            document.getElementById('undoBtn').disabled = drawingHistory.length === 0;
-        }
-
-        function clearDrawing() {
-            if (currentTab !== 'drawing') return;
-            
-            drawingHistory.push({
-                type: 'clearAll',
-                previousDrawings: [...drawings],
-                timestamp: Date.now()
-            });
-            
-            drawings = [];
-            protractorPreview = null;
-            document.getElementById('drawingProtractorOverlay').style.display = 'none';
-            updateDrawingHistory();
-            redrawDrawings();
-        }
-
-        function updateDrawingHistory() {
-            const count = drawings.length;
-            document.getElementById('historyCount').textContent = count;
-            document.getElementById('undoBtn').disabled = drawingHistory.length === 0;
-        }
-
-        function saveDrawing() {
-            if (currentTab !== 'drawing') return;
-            
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = drawingCanvas.width;
-            tempCanvas.height = drawingCanvas.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            redrawDrawings();
-            tempCtx.drawImage(drawingCanvas, 0, 0);
-            
-            const link = document.createElement('a');
-            link.download = `triangle-drawing-${new Date().toISOString().slice(0,10)}.png`;
-            link.href = tempCanvas.toDataURL('image/png');
-            link.click();
-        }
-
-        function handleKeyPress(e) {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || 
-                e.target.tagName === 'SELECT') return;
-            
-            if (currentTab === 'drawing') {
-                switch(e.key.toLowerCase()) {
-                    case 'z':
-                        if (e.ctrlKey || e.metaKey) {
-                            e.preventDefault();
-                            undoDrawing();
-                        }
-                        break;
-                    case 'delete':
-                    case 'backspace':
-                        clearDrawing();
-                        e.preventDefault();
-                        break;
-                    case 's':
-                        if (e.ctrlKey || e.metaKey) {
-                            e.preventDefault();
-                            saveDrawing();
-                        }
-                        break;
-                    case 'escape':
-                        if (isDrawing || isProtractorDragging) {
-                            isDrawing = false;
-                            isProtractorDragging = false;
-                            protractorPreview = null;
-                            draggedProtractorIndex = -1;
-                            document.getElementById('drawingProtractorOverlay').style.display = 'none';
-                            redrawDrawings();
-                            e.preventDefault();
-                        }
-                        break;
-                }
-            } else if (currentTab === 'explorer' && e.key.toLowerCase() === 'p') {
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    toggleProtractor();
-                }
-            }
-        }
-
-        function updateToolInfo() {
-            if (currentTab !== 'drawing') return;
-            
-            const toolInfo = document.getElementById('toolInfo');
-            const tools = {
-                'line': '<strong>Line Tool:</strong> Click and drag to draw straight lines. Hold <kbd>Shift</kbd> for horizontal/vertical/45° lines. <kbd>Ctrl+Z</kbd> to undo.',
-                'circle': '<strong>Circle Tool:</strong> Click and drag to draw circles. Hold <kbd>Shift</kbd> for perfect circles. <kbd>Ctrl+Z</kbd> to undo.',
-                'protractor': '<strong>Protractor Tool:</strong> Click to place, drag to rotate. Right-click on protractor to delete. <kbd>Ctrl+Z</kbd> to undo.'
-            };
-            
-            toolInfo.innerHTML = tools[drawingMode] || tools['line'];
-        }
-
-        // Generator and analyzer functions remain the same
         function updateGeneratorInputs() {
             const genType = document.getElementById('genType').value;
             const sssInputs = document.getElementById('sssInputs');
@@ -2082,14 +1335,65 @@
             }
         }
 
-        function generateFromInputs() {
-            if (!window.generatorSketch) return false;
+        function updateAnalyzerInputs() {
+            const method = document.getElementById('analysisMethod').value;
+            const sideAnalysis = document.getElementById('sideAnalysis');
+            const angleAnalysis = document.getElementById('angleAnalysis');
             
+            if (method === 'sides' || method === 'mixed') {
+                sideAnalysis.style.display = 'block';
+            } else {
+                sideAnalysis.style.display = 'none';
+            }
+            
+            if (method === 'angles' || method === 'mixed') {
+                angleAnalysis.style.display = 'block';
+            } else {
+                angleAnalysis.style.display = 'none';
+            }
+        }
+
+        function generateTriangle() {
+            if (currentTab !== 'explorer') return;
+            
+            const type = document.getElementById('triangleType').value;
+            if (window.generateTriangleLocal) {
+                window.generateTriangleLocal(type);
+            }
+        }
+
+        function resetTriangle() {
+            if (currentTab === 'explorer' && window.resetTriangleLocal) {
+                window.resetTriangleLocal();
+            } else if (currentTab === 'generator' || currentTab === 'analyzer') {
+                // Generate random triangle for other tabs
+                const sketch = currentSketch;
+                if (sketch && sketch.generateRandomTriangle) {
+                    sketch.generateRandomTriangle();
+                }
+            }
+        }
+
+        function clearCanvas() {
+            if (currentTab === 'explorer' && window.clearCanvasLocal) {
+                window.clearCanvasLocal();
+            }
+        }
+
+        function toggleProtractor() {
+            if (currentTab === 'explorer' && window.toggleProtractor) {
+                window.toggleProtractor();
+            }
+        }
+
+        function generateFromInputs() {
             const genType = document.getElementById('genType').value;
+            let valid = true;
             let status = document.getElementById('generatorStatus');
-            let points = [];
             
             try {
+                let points = [];
+                
                 switch(genType) {
                     case 'sss':
                         const a = parseFloat(document.getElementById('sideA').value);
@@ -2097,16 +1401,14 @@
                         const c = parseFloat(document.getElementById('sideC').value);
                         
                         if (a <= 0 || b <= 0 || c <= 0) {
-                            throw new Error('All sides must be positive numbers');
+                            throw new Error('All sides must be positive');
                         }
                         
-                        if (a + b <= c || b + c <= a || c + a <= b) {
+                        if (!checkTriangleInequality(a, b, c)) {
                             throw new Error('Triangle inequality violated');
                         }
                         
-                        points = generateSSSTriangle(a, b, c);
-                        status.textContent = `SSS Triangle generated successfully`;
-                        status.className = 'status-message status-success';
+                        points = generateSSSTrianglePoints(a, b, c);
                         break;
                         
                     case 'sas':
@@ -2118,118 +1420,128 @@
                             throw new Error('Invalid SAS values');
                         }
                         
-                        points = generateSASTriangle(sideA, angleB, sideC);
-                        status.textContent = `SAS Triangle generated successfully`;
-                        status.className = 'status-message status-success';
+                        points = generateSASTrianglePoints(sideA, angleB, sideC);
                         break;
                         
                     default:
-                        points = generateDefaultTrianglePoints();
-                        status.textContent = 'Triangle generated successfully';
-                        status.className = 'status-message status-success';
+                        points = generateRandomTrianglePoints();
                 }
                 
-                window.generatorSketch.setPoints(points);
+                if (window.updateTriangleDisplay) {
+                    window.updateTriangleDisplay(points);
+                }
+                
+                status.textContent = 'Triangle generated successfully!';
+                status.className = 'status-message status-success';
                 
             } catch (error) {
-                status.textContent = `Error: ${error.message}`;
+                status.textContent = error.message;
                 status.className = 'status-message status-error';
-                return false;
+                valid = false;
             }
             
             status.style.display = 'block';
-            return true;
+            return valid;
         }
 
-        function generateSSSTriangle(a, b, c) {
+        function checkTriangleInequality(a, b, c) {
+            return a + b > c && b + c > a && c + a > b;
+        }
+
+        function generateSSSTrianglePoints(a, b, c) {
+            // Simple placement - place points to form triangle with given sides
             const startX = 100;
             const startY = 400;
+            
+            // Place point A and B
             const A = {x: startX, y: startY};
             const B = {x: startX + a, y: startY};
             
-            const cosA = (b*b + a*a - c*c) / (2 * b * a);
-            const angleA = Math.acos(Math.max(-1, Math.min(1, cosA)));
-            const height = b * Math.sin(angleA);
-            
+            // Calculate point C position using intersection of circles
+            // Circle centered at A with radius c
+            // Circle centered at B with radius b
+            const h = Math.sqrt(Math.pow(c, 2) - Math.pow((a/2), 2));
             const C = {
-                x: startX + c * Math.cos(angleA),
-                y: startY - height
+                x: startX + a/2,
+                y: startY - h
             };
             
             return [A, B, C];
         }
 
-        function generateSASTriangle(a, B_deg, c) {
+        function generateSASTrianglePoints(a, B_deg, c) {
             const B = B_deg * Math.PI / 180;
-            const halfB = B / 2;
             const startX = 200;
             const startY = 400;
             
+            // Place vertex B
             const B_pos = {x: startX, y: startY};
             
+            // Calculate positions for A and C
             const A_pos = {
-                x: startX - a * Math.cos(halfB),
-                y: startY + a * Math.sin(halfB)
+                x: startX - a * Math.cos(B/2),
+                y: startY + a * Math.sin(B/2)
             };
             
             const C_pos = {
-                x: startX + c * Math.cos(halfB),
-                y: startY + c * Math.sin(halfB)
+                x: startX + c * Math.cos(B/2),
+                y: startY + c * Math.sin(B/2)
             };
             
             return [A_pos, B_pos, C_pos];
         }
 
-        function generateDefaultTrianglePoints() {
-            return [
+        function generateRandomTrianglePoints() {
+            const points = [
                 {x: 150, y: 300},
                 {x: 350, y: 350},
                 {x: 250, y: 200}
             ];
+            return points;
         }
 
         function updateScale() {
             const scale = parseFloat(document.getElementById('scaleSlider').value);
             document.getElementById('scaleValue').textContent = scale;
             
-            if (window[currentTab + 'Sketch'] && currentTab !== 'drawing') {
-                const points = window[currentTab + 'Sketch'].getPoints();
+            if (window.getLocalTrianglePoints && window.setLocalTrianglePoints) {
+                let points = window.getLocalTrianglePoints();
                 if (points.length === 3) {
                     const centerX = points.reduce((sum, p) => sum + p.x, 0) / 3;
                     const centerY = points.reduce((sum, p) => sum + p.y, 0) / 3;
                     
-                    const scaledPoints = points.map(p => {
-                        const dx = p.x - centerX;
-                        const dy = p.y - centerY;
-                        return {x: centerX + dx * scale, y: centerY + dy * scale};
+                    points = points.map(p => {
+                        let dx = p.x - centerX;
+                        let dy = p.y - centerY;
+                        return {
+                            x: centerX + dx * scale,
+                            y: centerY + dy * scale
+                        };
                     });
                     
-                    window[currentTab + 'Sketch'].setPoints(scaledPoints);
+                    window.setLocalTrianglePoints(points);
                 }
             }
         }
 
         function updateUnits() {
             const unit = document.getElementById('units').value;
-            const unitSpans = document.querySelectorAll('[id$="Unit"]');
+            const inputs = document.querySelectorAll('#generator input[type="number"]');
             
-            unitSpans.forEach(span => {
-                span.textContent = unit;
+            inputs.forEach(input => {
+                const unitSpan = document.getElementById(input.id + 'Unit');
+                if (unitSpan) {
+                    unitSpan.textContent = unit;
+                }
             });
-        }
-
-        function updateAnalyzerInputs() {
-            const method = document.getElementById('analysisMethod').value;
-            const sideAnalysis = document.getElementById('sideAnalysis');
-            const angleAnalysis = document.getElementById('angleAnalysis');
-            
-            sideAnalysis.style.display = (method === 'sides' || method === 'mixed') ? 'block' : 'none';
-            angleAnalysis.style.display = (method === 'angles' || method === 'mixed') ? 'block' : 'none';
         }
 
         function analyzeTriangle() {
             const method = document.getElementById('analysisMethod').value;
             const resultsDiv = document.getElementById('analysisResults');
+            let validTriangle = false;
+            let message = '';
+            let type = '';
             
             try {
                 if (method === 'sides') {
@@ -2237,31 +1549,18 @@
                     const b = parseFloat(document.getElementById('anaSideB').value);
                     const c = parseFloat(document.getElementById('anaSideC').value);
                     
-                    if (a <= 0 || b <= 0 || c <= 0) {
-                        throw new Error('All sides must be positive');
-                    }
-                    
-                    if (a + b <= c || b + c <= a || c + a <= b) {
-                        resultsDiv.innerHTML = `
-                            <h4>❌ Invalid Triangle</h4>
-                            <p>The triangle inequality theorem is violated.</p>
-                            <p>Given sides: ${a}, ${b}, ${c}</p>
-                        `;
-                        resultsDiv.style.borderLeftColor = '#dc3545';
-                        resultsDiv.style.display = 'block';
+                    if (!checkTriangleInequality(a, b, c)) {
+                        message = '❌ Invalid triangle: Triangle inequality theorem violated';
+                        type = 'error';
                     } else {
-                        const analysis = analyzeSideTriangle(a, b, c);
-                        resultsDiv.innerHTML = `
-                            <h4>✅ Valid Triangle</h4>
-                            ${analysis}
-                            <p><strong>Number of possible triangles:</strong> 1 (SSS congruence)</p>
-                        `;
-                        resultsDiv.style.borderLeftColor = '#28a745';
-                        resultsDiv.style.display = 'block';
+                        validTriangle = true;
+                        message = analyzeSideTriangle(a, b, c);
+                        type = 'success';
                         
-                        if (window.analyzerSketch) {
-                            const points = generateSSSTriangle(a, b, c);
-                            window.analyzerSketch.setPoints(points);
+                        // Generate visual
+                        const points = generateSSSTrianglePoints(a, b, c);
+                        if (window.updateTriangleDisplay) {
+                            window.updateTriangleDisplay(points);
                         }
                     }
                 } else if (method === 'angles') {
@@ -2269,94 +1568,201 @@
                     const B = parseFloat(document.getElementById('anaAngleB').value);
                     const C = parseFloat(document.getElementById('anaAngleC').value);
                     
-                    if (A <= 0 || B <= 0 || C <= 0 || A >= 180 || B >= 180 || C >= 180) {
-                        throw new Error('All angles must be between 0° and 180°');
-                    }
-                    
                     const sum = A + B + C;
-                    if (Math.abs(sum - 180) > 0.1) {
-                        resultsDiv.innerHTML = `
-                            <h4>❌ Invalid Triangle</h4>
-                            <p>Angle sum must be exactly 180°.</p>
-                            <p>Given angles: ${A}°, ${B}°, ${C}°</p>
-                            <p>Total: ${sum.toFixed(1)}° (should be 180°)</p>
-                        `;
-                        resultsDiv.style.borderLeftColor = '#dc3545';
-                        resultsDiv.style.display = 'block';
+                    if (Math.abs(sum - 180) > 1) {
+                        message = `❌ Invalid angles: Sum should be 180° (current sum: ${sum.toFixed(1)}°)`;
+                        type = 'error';
                     } else {
-                        const classification = getAngleClassification(A, B, C);
-                        resultsDiv.innerHTML = `
-                            <h4>✅ Valid Triangle</h4>
-                            <p><strong>Type:</strong> ${classification}</p>
-                            <p><strong>Angles:</strong> ${A}°, ${B}°, ${C}°</p>
-                            <p><strong>Number of possible triangles:</strong> Infinite (similar triangles)</p>
-                        `;
-                        resultsDiv.style.borderLeftColor = '#28a745';
-                        resultsDiv.style.display = 'block';
+                        validTriangle = true;
+                        message = `✅ Valid triangle with angles ${A}°, ${B}°, ${C}°`;
+                        type = 'success';
                         
-                        if (window.analyzerSketch) {
-                            const points = generateAngleTriangle(A, B, C);
-                            window.analyzerSketch.setPoints(points);
+                        // Generate triangle with given angles
+                        const points = generateAngleTrianglePoints(A, B, C);
+                        if (window.updateTriangleDisplay) {
+                            window.updateTriangleDisplay(points);
                         }
                     }
                 }
                 
+                resultsDiv.innerHTML = `<h4>${message}</h4>`;
+                if (type) {
+                    resultsDiv.className = `status-message status-${type}`;
+                }
+                resultsDiv.style.display = 'block';
+                
             } catch (error) {
-                resultsDiv.innerHTML = `<h4>❌ Error</h4><p>${error.message}</p>`;
-                resultsDiv.style.borderLeftColor = '#dc3545';
+                resultsDiv.innerHTML = `<h4>❌ Error: ${error.message}</h4>`;
+                resultsDiv.className = 'status-message status-error';
                 resultsDiv.style.display = 'block';
             }
         }
 
         function analyzeSideTriangle(a, b, c) {
-            const cosA = (b*b + c*c - a*a) / (2 * b * c);
-            const cosB = (a*a + c*c - b*b) / (2 * a * c);
             const cosC = (a*a + b*b - c*c) / (2 * a * b);
+            const angleC = Math.acos(Math.max(-1, Math.min(1, cosC))) * 180 / Math.PI;
             
-            const A = Math.acos(Math.max(-1, Math.min(1, cosA))) * 180 / Math.PI;
-            const B = Math.acos(Math.max(-1, Math.min(1, cosB))) * 180 / Math.PI;
-            const C = Math.acos(Math.max(-1, Math.min(1, cosC))) * 180 / Math.PI;
+            let classification = '';
+            if (Math.abs(a - b) < 1 && Math.abs(b - c) < 1) {
+                classification = 'Equilateral';
+            } else if (Math.abs(a - b) < 1 || Math.abs(b - c) < 1 || Math.abs(a - c) < 1) {
+                classification = 'Isosceles';
+            } else {
+                classification = 'Scalene';
+            }
             
-            const sideTolerance = Math.max(a, b, c) * 0.05;
-            const isEquilateral = Math.abs(a - b) < sideTolerance && Math.abs(b - c) < sideTolerance;
-            const isIsosceles = Math.abs(a - b) < sideTolerance || Math.abs(b - c) < sideTolerance || Math.abs(a - c) < sideTolerance;
-            
-            const maxAngle = Math.max(A, B, C);
-            let angleType = 'Acute';
-            if (Math.abs(maxAngle - 90) < 2) angleType = 'Right';
-            else if (maxAngle > 90) angleType = 'Obtuse';
-            
-            let type = isEquilateral ? 'Equilateral' : (isIsosceles ? 'Isosceles' : 'Scalene');
-            type = `${angleType} ${type}`;
-            
-            const area = 0.25 * Math.sqrt((a + b + c) * (-a + b + c) * (a - b + c) * (a + b - c));
+            if (Math.abs(angleC - 90) < 2) {
+                classification = 'Right ' + classification;
+            } else if (angleC > 90) {
+                classification = 'Obtuse ' + classification;
+            } else {
+                classification = 'Acute ' + classification;
+            }
             
             return `
-                <p><strong>Classification:</strong> ${type}</p>
-                <p><strong>Angles:</strong> A=${A.toFixed(1)}°, B=${B.toFixed(1)}°, C=${C.toFixed(1)}°</p>
-                <p><strong>Sides:</strong> a=${a}, b=${b}, c=${c}</p>
-                <p><strong>Area:</strong> ${area.toFixed(1)} square units</p>
+                <p><strong>Classification:</strong> ${classification}</p>
+                <p><strong>Side lengths:</strong> ${a}, ${b}, ${c}</p>
+                <p><strong>Largest angle:</strong> ${angleC.toFixed(1)}°</p>
+                <p><strong>Possible triangles:</strong> 1 (SSS congruence)</p>
             `;
         }
 
-        function getAngleClassification(A, B, C) {
-            const maxAngle = Math.max(A, B, C);
-            let type = 'Scalene';
+        function generateAngleTrianglePoints(A, B, C) {
+            // Simple placement with given angles
+            const startX = 150;
+            const startY = 400;
+            const sideA = 100;
             
-            if (Math.abs(A - B) < 1 && Math.abs(B - C) < 1) type = 'Equilateral';
-            else if (Math.abs(A - B) < 1 || Math.abs(B - C) < 1 || Math.abs(A - C) < 1) type = 'Isosceles';
+            const a_pos = {x: startX, y: startY};
+            const b_pos = {x: startX + sideA, y: startY};
             
-            if (Math.abs(maxAngle - 90) < 1) return `Right ${type}`;
-            else if (maxAngle > 90) return `Obtuse ${type}`;
-            else return `Acute ${type}`;
+            const angleA_rad = A * Math.PI / 180;
+            const sideC = sideA * Math.sin(angleA_rad);
+            const c_pos = {
+                x: startX + sideC * Math.cos(angleA_rad),
+                y: startY - sideC * Math.sin(angleA_rad)
+            };
+            
+            return [a_pos, b_pos, c_pos];
         }
 
-        function generateAngleTriangle(A, B, C) {
-            const a = 100;
-            const b = a * Math.sin(B * Math.PI / 180) / Math.sin(A * Math.PI / 180);
-            const c = a * Math.sin(C * Math.PI / 180) / Math.sin(A * Math.PI / 180);
-            return generateSSSTriangle(a, b, c);
+        // Drawing functions
+        function handleDrawingMouseDown(e) {
+            if (currentTab !== 'drawing') return;
+            
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            isDrawing = true;
+            currentPath = [{x, y}];
+            
+            e.preventDefault();
         }
+
+        function handleDrawingMouseMove(e) {
+            if (!isDrawing || currentTab !== 'drawing') return;
+            
+            const rect = drawingCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            currentPath.push({x, y});
+            
+            // Redraw everything
+            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            drawAllDrawings();
+            
+            // Draw current path
+            if (currentPath.length > 1) {
+                drawingCtx.strokeStyle = document.getElementById('drawColor').value;
+                drawingCtx.lineWidth = parseInt(document.getElementById('lineWidth').value);
+                drawingCtx.lineCap = 'round';
+                drawingCtx.lineJoin = 'round';
+                
+                drawingCtx.beginPath();
+                drawingCtx.moveTo(currentPath[0].x, currentPath[0].y);
+                for (let i = 1; i < currentPath.length; i++) {
+                    drawingCtx.lineTo(currentPath[i].x, currentPath[i].y);
+                }
+                drawingCtx.stroke();
+            }
+            
+            e.preventDefault();
+        }
+
+        function handleDrawingMouseUp(e) {
+            if (!isDrawing || currentTab !== 'drawing') return;
+            
+            if (currentPath.length > 1) {
+                drawings.push({
+                    points: [...currentPath],
+                    color: document.getElementById('drawColor').value,
+                    width: parseInt(document.getElementById('lineWidth').value)
+                });
+            }
+            
+            isDrawing = false;
+            currentPath = [];
+        }
+
+        function drawAllDrawings() {
+            drawings.forEach(drawing => {
+                drawingCtx.strokeStyle = drawing.color;
+                drawingCtx.lineWidth = drawing.width;
+                drawingCtx.lineCap = 'round';
+                drawingCtx.lineJoin = 'round';
+                
+                drawingCtx.beginPath();
+                drawingCtx.moveTo(drawing.points[0].x, drawing.points[0].y);
+                for (let i = 1; i < drawing.points.length; i++) {
+                    drawingCtx.lineTo(drawing.points[i].x, drawing.points[i].y);
+                }
+                drawingCtx.stroke();
+            });
+        }
+
+        function setTool(tool) {
+            drawingMode = tool;
+            document.querySelectorAll('#drawing .btn').forEach(btn => {
+                btn.classList.remove('active-tool');
+            });
+            event.target.classList.add('active-tool');
+        }
+
+        function clearDrawing() {
+            if (currentTab !== 'drawing') return;
+            drawings = [];
+            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        }
+
+        function saveDrawing() {
+            if (currentTab !== 'drawing') return;
+            const link = document.createElement('a');
+            link.download = 'triangle-drawing.png';
+            link.href = drawingCanvas.toDataURL();
+            link.click();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            
+            if (currentTab === 'drawing') {
+                switch(e.key.toLowerCase()) {
+                    case 'delete':
+                    case 'backspace':
+                        clearDrawing();
+                        break;
+                    case 's':
+                        if (e.ctrlKey || e.metaKey) {
+                            e.preventDefault();
+                            saveDrawing();
+                        }
+                        break;
+                }
+            }
+        });
     </script>
 </body>
 </html>
