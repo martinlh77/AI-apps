@@ -1228,29 +1228,39 @@
             videoControlsGroup.style.display = 'block';  
                 
                 durationSelect.innerHTML = '';
-                if (isVeo) {
-                    [4, 6, 8].forEach(val => {
-                        const opt = document.createElement('option');
-                        opt.value = val;
-                        opt.text = `${val} seconds`;
-                        durationSelect.appendChild(opt);
-                    });
-                    audioControlContainer.style.display = 'flex'; 
-                } else if (isSeedance || isSeedancePro) {
-                    const hasCustomKey = apiKeyInput.value.trim().length > 0;
-                    for(let i=2; i<=10; i++) {
-                        const opt = document.createElement('option');
-                        opt.value = i;
-                        opt.text = `${i} seconds`;
-                        if(i===4) opt.selected = true;
-                        if (i > 4 && !hasCustomKey) {
-                            opt.disabled = true;
-                            opt.text += ' (Requires API Key)';
-                        }
-                        durationSelect.appendChild(opt);
-                    }
-                    audioControlContainer.style.display = 'none'; 
-                }
+if (isVeo) {
+    [4, 6, 8].forEach(val => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.text = `${val} seconds`;
+        durationSelect.appendChild(opt);
+    });
+    audioControlContainer.style.display = 'flex'; 
+} else if (isSeedance || isSeedancePro) {
+    const hasCustomKey = apiKeyInput.value.trim().length > 0;
+    for(let i=2; i<=10; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.text = `${i} seconds`;
+        if(i===4) opt.selected = true;
+        if (i > 4 && !hasCustomKey) {
+            opt.disabled = true;
+            opt.text += ' (Requires API Key)';
+        }
+        durationSelect.appendChild(opt);
+    }
+    audioControlContainer.style.display = 'none'; 
+} else if (model === 'wan') {
+    // Wan: 2-15 seconds with audio support
+    for(let i=2; i<=15; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.text = `${i} seconds`;
+        if(i===5) opt.selected = true; // Default to 5 seconds
+        durationSelect.appendChild(opt);
+    }
+    audioControlContainer.style.display = 'flex'; // Wan supports audio
+}
 
             } else {
                 imageDimensionsGroup.style.display = 'grid'; 
