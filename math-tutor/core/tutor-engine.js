@@ -10,7 +10,7 @@ class TutorEngine {
 
         this.models = {
             tutor: 'grok',
-            vision: 'gpt-4.1-mini',
+            vision: 'gemini-fast',
             coder: 'qwen-coder',
             search: 'gemini-search',
             audio: 'openai-audio'
@@ -1149,4 +1149,5 @@ ${gradeData.mathTopics}`;
         return div.innerHTML;
     }
 }
+
 
