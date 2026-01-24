@@ -1280,6 +1280,13 @@ if (isVeo) {
             
             generateBtn.innerText = isVideoModel ? 'Generate Video' : 'Generate / Edit Image';
             
+            // For video models, don't set default dimensions (use aspect ratio instead)
+            // For image models, set default dimensions to 1024x1024
+            if (!isVideoModel) {
+                widthInput.value = DEFAULT_DIMENSION;
+                heightInput.value = DEFAULT_DIMENSION;
+            }
+        }
 
         async function generateImage() {
             if (!promptInput.value.trim()) {
