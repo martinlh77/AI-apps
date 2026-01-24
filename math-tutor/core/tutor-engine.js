@@ -296,7 +296,7 @@ handleDrawingSubmission(imageDataUrl) {
     // Focus input for user to add their comment/question
     const input = document.getElementById('chat-input');
     input.focus();
-}}
+}
 
     // ==================== CONVERSATIONS ====================
 
