@@ -178,6 +178,24 @@ class LanguageManager {
         const uploadBtn = document.getElementById('upload-btn');
         if (uploadBtn) uploadBtn.title = s.uploadImage;
 
+// Update grade select options
+const gradeOptions = document.querySelectorAll('#grade-select option');
+gradeOptions.forEach(opt => {
+    const key = opt.getAttribute('data-translate');
+    if (key && s[key]) {
+        opt.textContent = s[key];
+    }
+});
+
+// Update drawing background select options
+const bgOptions = document.querySelectorAll('#bg-select option');
+bgOptions.forEach(opt => {
+    const key = opt.getAttribute('data-translate');
+    if (key && s[key]) {
+        opt.textContent = s[key];
+    }
+});
+
         const cameraBtn = document.getElementById('camera-btn');
         if (cameraBtn) cameraBtn.title = s.takePhoto;
 
