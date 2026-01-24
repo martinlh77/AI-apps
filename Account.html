@@ -930,6 +930,7 @@
         let sortColumn = null;
         let sortDirection = 'asc';
         const BASE_URL = 'https://gen.pollinations.ai/api/account';
+        const DEFAULT_API_KEY = 'sk_srRmBsaXJzbvAeNQnUK3aPSc4LXVT8Pt'; // Add your default API key here (e.g., 'sk_your_key_here')
         
         // Column definitions
         const columns = [
@@ -989,6 +990,11 @@
         }
         updateTime();
         setInterval(updateTime, 1000);
+
+        // Set default API key if configured
+        if (DEFAULT_API_KEY) {
+            apiKeyInput.value = DEFAULT_API_KEY;
+        }
 
         // Set default dates to last 30 days
         const now = new Date();
