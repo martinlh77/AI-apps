@@ -283,17 +283,20 @@ class TutorEngine {
         }
     }
 
-    handleDrawingSubmission(imageDataUrl) {
-        // Set the drawing as pending image and send
-        this.state.pendingImage = imageDataUrl;
-        
-        const input = document.getElementById('chat-input');
-        if (!input.value.trim()) {
-            input.value = "Here's my work. Can you check it?";
-        }
-        
-        this.sendMessage();
-    }
+handleDrawingSubmission(imageDataUrl) {
+    // Set the drawing as pending image (DO NOT auto-send)
+    this.state.pendingImage = imageDataUrl;
+    
+    // Show preview
+    const preview = document.getElementById('upload-preview');
+    const previewImg = document.getElementById('preview-image');
+    previewImg.src = imageDataUrl;
+    preview.style.display = 'block';
+    
+    // Focus input for user to add their comment/question
+    const input = document.getElementById('chat-input');
+    input.focus();
+}}
 
     // ==================== CONVERSATIONS ====================
 
@@ -524,7 +527,7 @@ class TutorEngine {
             const hasImageAttachment = hasImage;
 
             console.log('Query type:', queryType, 'Wants visual:', wantsVisual, 'Has image:', hasImageAttachment);
-
+            console.log('Calling API...'); 
             let response;
             
             if (hasImageAttachment) {
@@ -1149,5 +1152,3 @@ ${gradeData.mathTopics}`;
         return div.innerHTML;
     }
 }
-
-
