@@ -137,21 +137,38 @@
     cursor: move;
 }
 
-/* Background patterns for canvas */
+/* Background patterns for canvas container - less visible background reference */
 .canvas-bg-grid {
     background-image: 
-        linear-gradient(var(--chart-grid) 1px, transparent 1px),
-        linear-gradient(90deg, var(--chart-grid) 1px, transparent 1px);
+        linear-gradient(rgba(0, 212, 255, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.15) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+[data-theme="light"] .canvas-bg-grid {
+    background-image: 
+        linear-gradient(rgba(0, 153, 204, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 153, 204, 0.15) 1px, transparent 1px);
     background-size: 20px 20px;
 }
 
 .canvas-bg-dots {
-    background-image: radial-gradient(var(--chart-grid) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(0, 212, 255, 0.3) 1.5px, transparent 1.5px);
+    background-size: 20px 20px;
+}
+
+[data-theme="light"] .canvas-bg-dots {
+    background-image: radial-gradient(rgba(0, 153, 204, 0.3) 1.5px, transparent 1.5px);
     background-size: 20px 20px;
 }
 
 .canvas-bg-lined {
-    background-image: linear-gradient(var(--chart-grid) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(0, 212, 255, 0.25) 1px, transparent 1px);
+    background-size: 100% 25px;
+}
+
+[data-theme="light"] .canvas-bg-lined {
+    background-image: linear-gradient(rgba(0, 153, 204, 0.25) 1px, transparent 1px);
     background-size: 100% 25px;
 }
 
