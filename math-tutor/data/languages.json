@@ -56,7 +56,11 @@
       "darkMode": "Dark Mode",
       "drawOnThis": "Draw on this",
       "hereIsMyWork": "Here's my work. Can you check it?",
-      "drawingTip": "💡 Tip: Click the ✏️ button to open the drawing tool and show your work!"
+      "drawingTip": "💡 Tip: Click the ✏️ button to open the drawing tool and show your work!",
+      "gradeElementary": "Elementary (3-5)",
+      "gradeMiddle": "Middle School (6-8)",
+      "gradeHigh": "High School (9-12)",
+      "gradeGeneral": "General / College"
     },
     "prompts": {
       "elementary": [
@@ -158,7 +162,11 @@
       "darkMode": "Modo Oscuro",
       "drawOnThis": "Dibujar en esto",
       "hereIsMyWork": "Aquí está mi trabajo. ¿Puedes revisarlo?",
-      "drawingTip": "💡 Consejo: ¡Haz clic en el botón ✏️ para abrir la herramienta de dibujo y mostrar tu trabajo!"
+      "drawingTip": "💡 Consejo: ¡Haz clic en el botón ✏️ para abrir la herramienta de dibujo y mostrar tu trabajo!",
+      "gradeElementary": "Primaria (3-5)",
+      "gradeMiddle": "Escuela Intermedia (6-8)",
+      "gradeHigh": "Escuela Secundaria (9-12)",
+      "gradeGeneral": "General / Universidad"
     },
     "prompts": {
       "elementary": [
@@ -260,7 +268,11 @@
       "darkMode": "الوضع الداكن",
       "drawOnThis": "ارسم على هذا",
       "hereIsMyWork": "هذا عملي. هل يمكنك التحقق منه؟",
-      "drawingTip": "💡 نصيحة: انقر على زر ✏️ لفتح أداة الرسم وإظهار عملك!"
+      "drawingTip": "💡 نصيحة: انقر على زر ✏️ لفتح أداة الرسم وإظهار عملك!",
+      "gradeElementary": "ابتدائي (3-5)",
+      "gradeMiddle": "المدرسة المتوسطة (6-8)",
+      "gradeHigh": "المدرسة الثانوية (9-12)",
+      "gradeGeneral": "عام / جامعي"
     },
     "prompts": {
       "elementary": [
@@ -362,7 +374,11 @@
       "darkMode": "Mode Sombre",
       "drawOnThis": "Dessiner sur ceci",
       "hereIsMyWork": "Voici mon travail. Pouvez-vous le vérifier?",
-      "drawingTip": "💡 Astuce: Cliquez sur le bouton ✏️ pour ouvrir l'outil de dessin et montrer votre travail!"
+      "drawingTip": "💡 Astuce: Cliquez sur le bouton ✏️ pour ouvrir l'outil de dessin et montrer votre travail!",
+      "gradeElementary": "Élémentaire (3-5)",
+      "gradeMiddle": "Collège (6-8)",
+      "gradeHigh": "Lycée (9-12)",
+      "gradeGeneral": "Général / Université"
     },
     "prompts": {
       "elementary": [
@@ -464,7 +480,11 @@
       "darkMode": "Dunkler Modus",
       "drawOnThis": "Hierauf zeichnen",
       "hereIsMyWork": "Hier ist meine Arbeit. Kannst du sie überprüfen?",
-      "drawingTip": "💡 Tipp: Klicke auf den ✏️ Button, um das Zeichenwerkzeug zu öffnen und deine Arbeit zu zeigen!"
+      "drawingTip": "💡 Tipp: Klicke auf den ✏️ Button, um das Zeichenwerkzeug zu öffnen und deine Arbeit zu zeigen!",
+      "gradeElementary": "Grundschule (3-5)",
+      "gradeMiddle": "Mittelschule (6-8)",
+      "gradeHigh": "Gymnasium (9-12)",
+      "gradeGeneral": "Allgemein / Universität"
     },
     "prompts": {
       "elementary": [
@@ -566,7 +586,11 @@
       "darkMode": "Тёмный Режим",
       "drawOnThis": "Рисовать на этом",
       "hereIsMyWork": "Вот моя работа. Можете проверить?",
-      "drawingTip": "💡 Совет: Нажмите кнопку ✏️, чтобы открыть инструмент рисования и показать свою работу!"
+      "drawingTip": "💡 Совет: Нажмите кнопку ✏️, чтобы открыть инструмент рисования и показать свою работу!",
+      "gradeElementary": "Начальная Школа (3-5)",
+      "gradeMiddle": "Средняя Школа (6-8)",
+      "gradeHigh": "Старшая Школа (9-12)",
+      "gradeGeneral": "Общий / Университет"
     },
     "prompts": {
       "elementary": [
@@ -668,7 +692,11 @@
       "darkMode": "Modalità Scura",
       "drawOnThis": "Disegna su questo",
       "hereIsMyWork": "Ecco il mio lavoro. Puoi controllarlo?",
-      "drawingTip": "💡 Suggerimento: Clicca sul pulsante ✏️ per aprire lo strumento di disegno e mostrare il tuo lavoro!"
+      "drawingTip": "💡 Suggerimento: Clicca sul pulsante ✏️ per aprire lo strumento di disegno e mostrare il tuo lavoro!",
+      "gradeElementary": "Elementare (3-5)",
+      "gradeMiddle": "Scuola Media (6-8)",
+      "gradeHigh": "Scuola Superiore (9-12)",
+      "gradeGeneral": "Generale / Università"
     },
     "prompts": {
       "elementary": [
@@ -770,7 +798,11 @@
       "darkMode": "Modo Escuro",
       "drawOnThis": "Desenhar nisto",
       "hereIsMyWork": "Aqui está meu trabalho. Pode verificar?",
-      "drawingTip": "💡 Dica: Clique no botão ✏️ para abrir a ferramenta de desenho e mostrar seu trabalho!"
+      "drawingTip": "💡 Dica: Clique no botão ✏️ para abrir a ferramenta de desenho e mostrar seu trabalho!",
+      "gradeElementary": "Fundamental (3-5)",
+      "gradeMiddle": "Ensino Fundamental (6-8)",
+      "gradeHigh": "Ensino Médio (9-12)",
+      "gradeGeneral": "Geral / Universidade"
     },
     "prompts": {
       "elementary": [
@@ -872,7 +904,11 @@
       "darkMode": "深色模式",
       "drawOnThis": "在此绘图",
       "hereIsMyWork": "这是我的作业。你能检查一下吗？",
-      "drawingTip": "💡 提示：点击 ✏️ 按钮打开绘图工具并展示你的作业！"
+      "drawingTip": "💡 提示：点击 ✏️ 按钮打开绘图工具并展示你的作业！",
+      "gradeElementary": "小学 (3-5)",
+      "gradeMiddle": "初中 (6-8)",
+      "gradeHigh": "高中 (9-12)",
+      "gradeGeneral": "通用 / 大学"
     },
     "prompts": {
       "elementary": [
@@ -974,7 +1010,11 @@
       "darkMode": "ダークモード",
       "drawOnThis": "これに描く",
       "hereIsMyWork": "これが私の答えです。確認してもらえますか？",
-      "drawingTip": "💡 ヒント：✏️ボタンをクリックして描画ツールを開き、あなたの作業を見せてください！"
+      "drawingTip": "💡 ヒント：✏️ボタンをクリックして描画ツールを開き、あなたの作業を見せてください！",
+      "gradeElementary": "小学校 (3-5)",
+      "gradeMiddle": "中学校 (6-8)",
+      "gradeHigh": "高校 (9-12)",
+      "gradeGeneral": "一般 / 大学"
     },
     "prompts": {
       "elementary": [
@@ -1076,7 +1116,11 @@
       "darkMode": "다크 모드",
       "drawOnThis": "여기에 그리기",
       "hereIsMyWork": "제 작업입니다. 확인해 주시겠어요?",
-      "drawingTip": "💡 팁: ✏️ 버튼을 클릭하여 그리기 도구를 열고 작업을 보여주세요!"
+      "drawingTip": "💡 팁: ✏️ 버튼을 클릭하여 그리기 도구를 열고 작업을 보여주세요!",
+      "gradeElementary": "초등학교 (3-5)",
+      "gradeMiddle": "중학교 (6-8)",
+      "gradeHigh": "고등학교 (9-12)",
+      "gradeGeneral": "일반 / 대학"
     },
     "prompts": {
       "elementary": [
@@ -1178,7 +1222,11 @@
       "darkMode": "डार्क मोड",
       "drawOnThis": "इस पर बनाएं",
       "hereIsMyWork": "यह मेरा काम है। क्या आप इसे जांच सकते हैं?",
-      "drawingTip": "💡 सुझाव: ड्राइंग टूल खोलने और अपना काम दिखाने के लिए ✏️ बटन पर क्लिक करें!"
+      "drawingTip": "💡 सुझाव: ड्राइंग टूल खोलने और अपना काम दिखाने के लिए ✏️ बटन पर क्लिक करें!",
+      "gradeElementary": "प्रारंभिक (3-5)",
+      "gradeMiddle": "मध्य विद्यालय (6-8)",
+      "gradeHigh": "हाई स्कूल (9-12)",
+      "gradeGeneral": "सामान्य / कॉलेज"
     },
     "prompts": {
       "elementary": [
