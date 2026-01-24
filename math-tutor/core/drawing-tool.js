@@ -16,8 +16,11 @@ class DrawingTool {
         this.objects = []; // Store drawn objects for undo/select
         this.currentPath = null;
         this.selectedObject = null;
+        this.selectedObjects = []; // For multi-select (Ctrl-A)
         this.undoStack = [];
+        this.redoStack = [];
         this.maxUndo = 50;
+        this.clipboard = null;
         
         this.lineStartPoint = null;
         this.backgroundImage = null; // For tutor-provided images
@@ -34,6 +37,7 @@ class DrawingTool {
         this.ctx = this.canvas.getContext('2d');
         this.setupEventListeners();
         this.setupToolListeners();
+        this.setupKeyboardShortcuts();
         this.updateCanvasBackground();
     }
 
@@ -118,6 +122,158 @@ class DrawingTool {
         });
     }
 
+    setupKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Only handle shortcuts when drawing modal is open
+            const modal = document.getElementById('drawing-modal');
+            if (!modal || modal.style.display === 'none') return;
+
+            // Delete key - delete selected object(s)
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (this.selectedObject) {
+                    e.preventDefault();
+                    this.deleteSelected();
+                } else if (this.selectedObjects.length > 0) {
+                    e.preventDefault();
+                    this.deleteSelected();
+                }
+            }
+
+            // Ctrl/Cmd shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'c':
+                        e.preventDefault();
+                        this.copy();
+                        break;
+                    case 'v':
+                        e.preventDefault();
+                        this.paste();
+                        break;
+                    case 'a':
+                        e.preventDefault();
+                        this.selectAll();
+                        break;
+                    case 'z':
+                        e.preventDefault();
+                        if (e.shiftKey) {
+                            this.redo();
+                        } else {
+                            this.undo();
+                        }
+                        break;
+                    case 'y':
+                        e.preventDefault();
+                        this.redo();
+                        break;
+                }
+            }
+        });
+    }
+
+    deleteSelected() {
+        if (this.selectedObject) {
+            this.saveUndo();
+            const index = this.objects.indexOf(this.selectedObject);
+            if (index > -1) {
+                this.objects.splice(index, 1);
+            }
+            this.selectedObject = null;
+            this.redraw();
+        } else if (this.selectedObjects.length > 0) {
+            this.saveUndo();
+            this.selectedObjects.forEach(obj => {
+                const index = this.objects.indexOf(obj);
+                if (index > -1) {
+                    this.objects.splice(index, 1);
+                }
+            });
+            this.selectedObjects = [];
+            this.redraw();
+        }
+    }
+
+    copy() {
+        if (this.selectedObject) {
+            this.clipboard = [JSON.parse(JSON.stringify(this.selectedObject))];
+            console.log('Copied 1 object');
+        } else if (this.selectedObjects.length > 0) {
+            this.clipboard = this.selectedObjects.map(obj => JSON.parse(JSON.stringify(obj)));
+            console.log('Copied', this.clipboard.length, 'objects');
+        }
+    }
+
+    paste() {
+        if (!this.clipboard || this.clipboard.length === 0) return;
+
+        this.saveUndo();
+        
+        // Paste with offset so you can see the pasted objects
+        const offset = 20;
+        this.clipboard.forEach(obj => {
+            const newObj = JSON.parse(JSON.stringify(obj));
+            
+            if (newObj.type === 'point') {
+                newObj.x += offset;
+                newObj.y += offset;
+            } else if (newObj.type === 'line') {
+                newObj.x1 += offset;
+                newObj.y1 += offset;
+                newObj.x2 += offset;
+                newObj.y2 += offset;
+            } else if (newObj.type === 'path') {
+                newObj.points = newObj.points.map(p => ({
+                    x: p.x + offset,
+                    y: p.y + offset
+                }));
+            }
+            
+            this.objects.push(newObj);
+        });
+
+        // Select the newly pasted objects
+        this.selectedObjects = this.objects.slice(-this.clipboard.length);
+        this.selectedObject = null;
+        
+        this.redraw();
+        console.log('Pasted', this.clipboard.length, 'objects');
+    }
+
+    selectAll() {
+        this.selectedObjects = [...this.objects];
+        this.selectedObject = null;
+        this.redraw();
+        console.log('Selected all', this.selectedObjects.length, 'objects');
+    }
+
+    undo() {
+        if (this.undoStack.length > 0) {
+            const current = JSON.stringify(this.objects);
+            this.redoStack.push(current);
+            
+            const previous = this.undoStack.pop();
+            this.objects = JSON.parse(previous);
+            
+            this.selectedObject = null;
+            this.selectedObjects = [];
+            this.redraw();
+        }
+    }
+
+    redo() {
+        if (this.redoStack.length > 0) {
+            const current = JSON.stringify(this.objects);
+            this.undoStack.push(current);
+            
+            const next = this.redoStack.pop();
+            this.objects = JSON.parse(next);
+            
+            this.selectedObject = null;
+            this.selectedObjects = [];
+            this.redraw();
+        }
+    }
+
     setTool(tool) {
         this.currentTool = tool;
         
@@ -138,6 +294,7 @@ class DrawingTool {
         
         // Deselect when changing tools
         this.selectedObject = null;
+        this.selectedObjects = [];
         this.redraw();
     }
 
@@ -239,6 +396,14 @@ class DrawingTool {
                     const dy = pos.y - this.lastPos.y;
                     this.moveObject(this.selectedObject, dx, dy);
                     this.redraw();
+                } else if (this.selectedObjects.length > 0) {
+                    // Move all selected objects
+                    const dx = pos.x - this.lastPos.x;
+                    const dy = pos.y - this.lastPos.y;
+                    this.selectedObjects.forEach(obj => {
+                        this.moveObject(obj, dx, dy);
+                    });
+                    this.redraw();
                 }
                 break;
         }
@@ -284,6 +449,7 @@ class DrawingTool {
     addObject(obj) {
         this.saveUndo();
         this.objects.push(obj);
+        this.redoStack = []; // Clear redo stack when new action is performed
         this.redraw();
     }
 
@@ -292,14 +458,8 @@ class DrawingTool {
         if (this.undoStack.length > this.maxUndo) {
             this.undoStack.shift();
         }
-    }
-
-    undo() {
-        if (this.undoStack.length > 0) {
-            const previous = this.undoStack.pop();
-            this.objects = JSON.parse(previous);
-            this.redraw();
-        }
+        // Clear redo stack when new action is performed
+        this.redoStack = [];
     }
 
     eraseAt(pos) {
@@ -356,6 +516,7 @@ class DrawingTool {
 
     selectAt(pos) {
         this.selectedObject = null;
+        this.selectedObjects = [];
         
         // Find object at position (reverse order for top-most first)
         for (let i = this.objects.length - 1; i >= 0; i--) {
@@ -426,7 +587,7 @@ class DrawingTool {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Draw background pattern on canvas
+        // Draw background pattern on canvas (more visible in the actual drawing area)
         this.drawBackground();
         
         // Draw background image if set (from tutor)
@@ -448,19 +609,23 @@ class DrawingTool {
         // Draw selection highlight
         if (this.selectedObject) {
             this.drawSelection(this.selectedObject);
+        } else if (this.selectedObjects.length > 0) {
+            this.selectedObjects.forEach(obj => {
+                this.drawSelection(obj);
+            });
         }
     }
 
     drawBackground() {
         const isDark = document.body.getAttribute('data-theme') !== 'light';
         const bgColor = isDark ? '#1a1a2e' : '#ffffff';
-        const gridColor = isDark ? '#444444' : '#cccccc';
+        const gridColor = isDark ? '#00d4ff' : '#0099cc'; // Much more visible colors
         
         this.ctx.fillStyle = bgColor;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         this.ctx.strokeStyle = gridColor;
-        this.ctx.lineWidth = 0.5;
+        this.ctx.lineWidth = 1; // Thicker lines for visibility
         
         if (this.background === 'grid') {
             // Draw coordinate grid
@@ -468,8 +633,8 @@ class DrawingTool {
             const centerX = this.canvas.width / 2;
             const centerY = this.canvas.height / 2;
             
-            // Draw minor grid
-            this.ctx.globalAlpha = 0.3;
+            // Draw minor grid with better visibility
+            this.ctx.globalAlpha = 0.4; // More visible
             for (let x = 0; x <= this.canvas.width; x += step) {
                 this.ctx.beginPath();
                 this.ctx.moveTo(x, 0);
@@ -483,10 +648,10 @@ class DrawingTool {
                 this.ctx.stroke();
             }
             
-            // Draw axes
+            // Draw axes - more prominent
             this.ctx.globalAlpha = 1;
             this.ctx.strokeStyle = '#d4af37';
-            this.ctx.lineWidth = 1.5;
+            this.ctx.lineWidth = 2;
             
             this.ctx.beginPath();
             this.ctx.moveTo(0, centerY);
@@ -501,16 +666,18 @@ class DrawingTool {
         } else if (this.background === 'dots') {
             const step = 20;
             this.ctx.fillStyle = gridColor;
+            this.ctx.globalAlpha = 0.6; // More visible
             for (let x = step; x < this.canvas.width; x += step) {
                 for (let y = step; y < this.canvas.height; y += step) {
                     this.ctx.beginPath();
-                    this.ctx.arc(x, y, 1, 0, Math.PI * 2);
+                    this.ctx.arc(x, y, 2, 0, Math.PI * 2); // Larger dots
                     this.ctx.fill();
                 }
             }
+            this.ctx.globalAlpha = 1;
         } else if (this.background === 'lined') {
             const step = 25;
-            this.ctx.globalAlpha = 0.5;
+            this.ctx.globalAlpha = 0.5; // More visible
             for (let y = step; y < this.canvas.height; y += step) {
                 this.ctx.beginPath();
                 this.ctx.moveTo(0, y);
@@ -593,6 +760,8 @@ class DrawingTool {
         this.saveUndo();
         this.objects = [];
         this.backgroundImage = null;
+        this.selectedObject = null;
+        this.selectedObjects = [];
         this.redraw();
     }
 
@@ -635,7 +804,10 @@ class DrawingTool {
             if (options.clear !== false) {
                 this.objects = [];
                 this.undoStack = [];
+                this.redoStack = [];
                 this.backgroundImage = null;
+                this.selectedObject = null;
+                this.selectedObjects = [];
             }
             
             // Set background if specified
