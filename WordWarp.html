@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordWarp - Dynamic Story Game</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-dark: #5b4cdb;
+            --secondary: #00cec9;
+            --accent: #fd79a8;
+            --warning: #fdcb6e;
+            --success: #00b894;
+            --danger: #d63031;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-dark: #2d3436;
+            --text-light: #636e72;
+            --border-radius: 16px;
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #fff, #ffeaa7, #fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+            animation: wiggle 2s ease-in-out infinite;
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+
+        .tagline {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-tab:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            animation: fadeInUp 0.5s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .emoji {
+            font-size: 1.8rem;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            min-height: 150px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        /* Range Slider */
+        .slider-container {
+            padding: 10px 0;
+        }
+
+        .slider-value {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .form-range {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(to right, var(--secondary), var(--primary), var(--accent));
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .form-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--primary);
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #00b5b0;
+            transform: translateY(-2px);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-accent:hover {
+            background: #e8679a;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--text-dark);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+
+        .btn-lg {
+            padding: 16px 32px;
+            font-size: 1.125rem;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Input Fields Section */
+        .input-fields-container {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .input-field-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .input-field-item .field-label {
+            min-width: 120px;
+            font-weight: 600;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-field-item .field-type {
+            font-size: 0.8rem;
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        .input-field-item input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .input-field-item input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .input-field-item input.flagged {
+            border-color: var(--danger);
+            background: #fff5f5;
+        }
+
+        .btn-randomize {
+            padding: 8px 12px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-randomize:hover {
+            background: #00b5b0;
+            transform: scale(1.1);
+        }
+
+        /* Story Display */
+        .story-display {
+            background: #fafafa;
+            padding: 30px;
+            border-radius: 12px;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            white-space: pre-wrap;
+            border: 1px solid #e0e0e0;
+        }
+
+        .story-display .replaced-word {
+            background: linear-gradient(135deg, var(--warning), #ffeaa7);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .story-display .blank {
+            border-bottom: 2px solid var(--text-dark);
+            padding: 0 20px;
+            margin: 0 5px;
+        }
+
+        /* Tabs for story views */
+        .story-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            background: #f0f0f0;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .story-tab {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .story-tab.active {
+            background: white;
+            box-shadow: var(--shadow-sm);
+            color: var(--primary);
+        }
+
+        /* Image Display */
+        .image-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .generated-image {
+            max-width: 100%;
+            max-height: 600px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        /* History */
+        .history-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .history-item-title {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .history-item-meta {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .history-item-preview {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Loading States */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f0f0f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: var(--text-light);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-bottom: 10px;
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 350px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+            color: var(--text-light);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Section Visibility */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Tabs for source selection */
+        .source-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            background: #f0f0f0;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .source-tab {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .source-tab.active {
+            background: white;
+            box-shadow: var(--shadow-sm);
+            color: var(--primary);
+        }
+
+        .source-content {
+            display: none;
+        }
+
+        .source-content.active {
+            display: block;
+        }
+
+        /* File upload styling */
+        .file-upload-area {
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary);
+            background: #f0f0ff;
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--primary);
+            background: #f0f0ff;
+        }
+
+        .file-upload-area input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .file-upload-text {
+            color: var(--text-light);
+        }
+
+        .file-upload-text strong {
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .input-field-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .input-field-item .field-label {
+                min-width: auto;
+                margin-bottom: 5px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Poem Type Selector */
+        .poem-types {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .poem-type-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .poem-type-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .poem-type-btn.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary-dark);
+        }
+
+        /* Floating Fun Elements */
+        .fun-emoji {
+            position: fixed;
+            font-size: 2rem;
+            opacity: 0.1;
+            animation: float 20s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(5deg); }
+            50% { transform: translateY(-10px) rotate(-5deg); }
+            75% { transform: translateY(-30px) rotate(3deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Floating Emojis -->
+    <div class="fun-emoji" style="top: 10%; left: 5%;">📝</div>
+    <div class="fun-emoji" style="top: 30%; right: 10%;">🎭</div>
+    <div class="fun-emoji" style="top: 60%; left: 8%;">✨</div>
+    <div class="fun-emoji" style="top: 80%; right: 5%;">🌈</div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="logo">🎪 WordWarp 🎪</h1>
+            <p class="tagline">Where Stories Get Wonderfully Weird!</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-section="create">✨ Create</button>
+            <button class="nav-tab" data-section="fill">📝 Fill Words</button>
+            <button class="nav-tab" data-section="result">📖 The Warp</button>
+            <button class="nav-tab" data-section="history">📚 History</button>
+        </nav>
+
+        <!-- Create Section -->
+        <section class="section active" id="section-create">
+            <div class="card">
+                <h2 class="card-title"><span class="emoji">⚙️</span> Story Settings</h2>
+
+                <!-- Source Selection Tabs -->
+                <div class="source-tabs">
+                    <button class="source-tab active" data-source="generate">🤖 Generate Story</button>
+                    <button class="source-tab" data-source="custom">📄 Use Custom Text</button>
+                </div>
+
+                <!-- Generate Story Options -->
+                <div class="source-content active" id="source-generate">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">📏 Length & Style</label>
+                            <select class="form-select" id="lengthStyle">
+                                <option value="phrase">🤪 Outlandish Nonsense Phrase</option>
+                                <option value="sentence">😜 Wacky Sentence</option>
+                                <option value="paragraph" selected>🥜 Nutty Paragraph</option>
+                                <option value="shortstory">🤨 Quirky Short Story</option>
+                                <option value="prose">😂 Goofy Prose</option>
+                                <option value="chapter">🤯 Absurd Chapter</option>
+                                <option value="poem">🎭 Preposterous Poem</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">📚 Topic Category</label>
+                            <select class="form-select" id="topicCategory">
+                                <optgroup label="Fiction">
+                                    <option value="story">Story - General fictional narrative</option>
+                                    <option value="shortstory">Short Story - Brief fictional narrative</option>
+                                    <option value="fable">Fable - Short story with a moral lesson</option>
+                                    <option value="fairytale">Fairy Tale - Magical story</option>
+                                    <option value="myth">Myth - Traditional story</option>
+                                    <option value="legend">Legend - Semi-historical narrative</option>
+                                    <option value="fantasy">Fantasy - Magical/supernatural elements</option>
+                                    <option value="scifi">Science Fiction - Speculative fiction</option>
+                                    <option value="mystery">Mystery - Solving a crime or puzzle</option>
+                                    <option value="thriller">Thriller - Suspenseful story</option>
+                                    <option value="romance">Romance - Romantic relationships</option>
+                                    <option value="horror">Horror - Frightening fiction</option>
+                                </optgroup>
+                                <optgroup label="Poetry/Verse">
+                                    <option value="ballad">Ballad - Narrative poem</option>
+                                    <option value="epicpoem">Epic Poem - Heroic deeds</option>
+                                    <option value="nurseryrhyme">Nursery Rhyme - Short children's poem</option>
+                                </optgroup>
+                                <optgroup label="Non-Fiction">
+                                    <option value="article">Article - Factual piece</option>
+                                    <option value="essay">Essay - Short composition</option>
+                                    <option value="report">Report - Formal account</option>
+                                    <option value="memoir">Memoir - Personal account</option>
+                                    <option value="review">Review - Critical evaluation</option>
+                                    <option value="howto">How-to/Instructional - Step-by-step guide</option>
+                                </optgroup>
+                                <optgroup label="Academic/Professional">
+                                    <option value="casestudy">Case Study - Detailed analysis</option>
+                                    <option value="whitepaper">White Paper - Authoritative report</option>
+                                </optgroup>
+                                <optgroup label="Business/Professional">
+                                    <option value="businessletter">Business Letter - Formal correspondence</option>
+                                    <option value="proposal">Proposal - Plan or suggestion</option>
+                                    <option value="memo">Memo - Brief internal communication</option>
+                                    <option value="pressrelease">Press Release - Official statement</option>
+                                </optgroup>
+                                <optgroup label="Creative Non-Fiction">
+                                    <option value="personalessay">Personal Essay - Reflective writing</option>
+                                    <option value="travelwriting">Travel Writing - Journey accounts</option>
+                                    <option value="foodwriting">Food Writing - Cuisine and dining</option>
+                                    <option value="naturewriting">Nature Writing - Natural world</option>
+                                </optgroup>
+                                <optgroup label="Drama/Performance">
+                                    <option value="play">Play/Drama - Theatrical performance</option>
+                                    <option value="screenplay">Screenplay - Film or television</option>
+                                    <option value="monologue">Monologue - Solo performance</option>
+                                </optgroup>
+                                <optgroup label="Digital/Modern">
+                                    <option value="blogpost">Blog Post - Online article</option>
+                                    <option value="socialmedia">Social Media Post - Brief content</option>
+                                </optgroup>
+                                <optgroup label="Other Forms">
+                                    <option value="speech">Speech - Text for oral delivery</option>
+                                    <option value="letter">Letter - Personal correspondence</option>
+                                    <option value="recipe">Recipe - Food instructions</option>
+                                    <option value="lyrics">Lyrics - Words to songs</option>
+                                    <option value="satire">Satire - Humorous critique</option>
+                                    <option value="parody">Parody - Humorous imitation</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Poem Types (shown only when poem is selected) -->
+                    <div class="form-group hidden" id="poemTypesContainer">
+                        <label class="form-label">🎭 Poem Type</label>
+                        <div class="poem-types" id="poemTypes">
+                            <button class="poem-type-btn selected" data-type="limerick">Limerick</button>
+                            <button class="poem-type-btn" data-type="haiku">Haiku</button>
+                            <button class="poem-type-btn" data-type="sonnet">Sonnet</button>
+                            <button class="poem-type-btn" data-type="acrostic">Acrostic</button>
+                            <button class="poem-type-btn" data-type="tanka">Tanka</button>
+                            <button class="poem-type-btn" data-type="ode">Ode</button>
+                            <button class="poem-type-btn" data-type="elegy">Elegy</button>
+                            <button class="poem-type-btn" data-type="ballad">Ballad</button>
+                            <button class="poem-type-btn" data-type="freeverse">Free Verse</button>
+                            <button class="poem-type-btn" data-type="rhyming">Rhyming</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">📝 Custom Topic (Optional)</label>
+                        <input type="text" class="form-input" id="customTopic" placeholder="e.g., 'A day at the zoo' or leave blank for random">
+                        <div class="btn-group" style="margin-top: 10px;">
+                            <button class="btn btn-outline btn-sm" id="randomizeTopic">🎲 Random Topic</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Text Input -->
+                <div class="source-content" id="source-custom">
+                    <div class="form-group">
+                        <label class="form-label">📁 Upload a Text File</label>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <input type="file" id="fileInput" accept=".txt,.text">
+                            <div class="file-upload-icon">📄</div>
+                            <div class="file-upload-text">
+                                <strong>Click to upload</strong> or drag and drop<br>
+                                <small>TXT files only</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">✏️ Or Paste/Type Your Text</label>
+                        <textarea class="form-textarea" id="customTextInput" placeholder="Paste or type your story, poem, article, etc. here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Common Settings -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">🤖 Text Model</label>
+                        <select class="form-select" id="textModel">
+                            <option value="nova-fast" selected>Nova Fast (Recommended)</option>
+                            <option value="gemini-fast">Gemini Fast</option>
+                            <option value="mistral">Mistral</option>
+                            <option value="openai">OpenAI</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">🎨 Image Model</label>
+                        <select class="form-select" id="imageModel">
+                            <option value="zimage" selected>ZImage (Recommended)</option>
+                            <option value="flux">Flux</option>
+                            <option value="turbo">Turbo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">🔄 Replacement Density</label>
+                    <div class="slider-container">
+                        <div class="slider-value"><span id="densityValue">30</span>%</div>
+                        <input type="range" class="form-range" id="density" min="0" max="100" value="30">
+                    </div>
+                    <p style="text-align: center; color: var(--text-light); font-size: 0.9rem;">
+                        How many words should be replaced? More = More chaos! 🎉
+                    </p>
+                </div>
+
+                <div class="btn-group" style="margin-top: 30px;">
+                    <button class="btn btn-primary btn-lg" id="generateStory">
+                        🚀 Generate Story
+                    </button>
+                    <button class="btn btn-secondary btn-lg" id="generateBlankOnly">
+                        📄 Blank Template Only
+                    </button>
+                    <button class="btn btn-warning btn-lg" id="randomizeAll">
+                        🎲 Randomize Everything
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fill Words Section -->
+        <section class="section" id="section-fill">
+            <div class="card">
+                <h2 class="card-title"><span class="emoji">📝</span> Fill in the Blanks!</h2>
+                
+                <div class="btn-group" style="margin-bottom: 20px;">
+                    <button class="btn btn-secondary" id="randomizeAllWords">
+                        🎲 Randomize All Words
+                    </button>
+                    <button class="btn btn-outline" id="clearAllWords">
+                        🗑️ Clear All
+                    </button>
+                </div>
+
+                <div class="input-fields-container" id="inputFieldsContainer">
+                    <!-- Input fields will be generated here -->
+                </div>
+
+                <div class="btn-group" style="margin-top: 30px;">
+                    <button class="btn btn-primary btn-lg" id="submitWords">
+                        ✨ Create The Warp!
+                    </button>
+                    <button class="btn btn-outline" id="backToSettings">
+                        ← Back to Settings
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Result Section -->
+        <section class="section" id="section-result">
+            <div class="card">
+                <h2 class="card-title"><span class="emoji">📖</span> Your WordWarp Creation!</h2>
+
+                <div class="story-tabs">
+                    <button class="story-tab active" data-view="warp">🌀 The Warp</button>
+                    <button class="story-tab" data-view="original">📄 Original</button>
+                    <button class="story-tab" data-view="blank">📝 Blank Version</button>
+                </div>
+
+                <div class="story-display" id="storyDisplay">
+                    <!-- Story content will appear here -->
+                </div>
+
+                <div class="image-container" id="imageContainer">
+                    <h3 style="margin-bottom: 15px; color: var(--primary);">🎨 Visual Interpretation</h3>
+                    <div id="imageLoading" class="loading hidden">
+                        <div class="spinner"></div>
+                        <p class="loading-text">Generating your wacky image...</p>
+                    </div>
+                    <img id="generatedImage" class="generated-image hidden" alt="Generated illustration">
+                </div>
+
+                <div class="btn-group" style="margin-top: 30px;">
+                    <button class="btn btn-primary" id="downloadStory">
+                        📥 Download Story
+                    </button>
+                    <button class="btn btn-secondary" id="downloadBlank">
+                        📄 Download Blank Template
+                    </button>
+                    <button class="btn btn-accent" id="rerunStory">
+                        🔄 Change Words
+                    </button>
+                    <button class="btn btn-warning" id="newStory">
+                        ✨ New Story
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- History Section -->
+        <section class="section" id="section-history">
+            <div class="card">
+                <h2 class="card-title"><span class="emoji">📚</span> Your WordWarp History</h2>
+                
+                <div class="btn-group" style="margin-bottom: 20px;">
+                    <button class="btn btn-danger btn-sm" id="clearHistory">
+                        🗑️ Clear All History
+                    </button>
+                </div>
+
+                <div id="historyContainer">
+                    <!-- History items will be generated here -->
+                </div>
+
+                <p id="noHistory" style="text-align: center; color: var(--text-light); padding: 40px;">
+                    No warped stories yet! Go create some chaos! 🎪
+                </p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="modal-overlay hidden" id="loadingOverlay">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p class="loading-text" id="loadingText">Generating your story...</p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // WORDWARP - DYNAMIC STORY GAME
+        // ============================================
+
+        const API_KEY = 'pk_8CQPK8dxqANijjhy';
+        const TEXT_ENDPOINT = 'https://gen.pollinations.ai/text/';
+        const IMAGE_ENDPOINT = 'https://gen.pollinations.ai/image/';
+        const API_DELAY = 1750; // 1.75 seconds between API calls for rate limiting
+
+        // App State
+        const state = {
+            originalStory: '',
+            rawStory: '', // The story before any placeholder processing
+            blankStory: '',
+            warpedStory: '',
+            placeholders: [],
+            userInputs: {},
+            currentView: 'warp',
+            selectedPoemType: 'limerick',
+            sourceMode: 'generate', // 'generate' or 'custom'
+            history: JSON.parse(localStorage.getItem('wordwarp_history') || '[]')
+        };
+
+        // Length/Style configurations
+        const lengthConfig = {
+            phrase: { name: 'Outlandish Nonsense Phrase', instructions: 'Generate a single phrase of completely random, nonsensical but grammatically correct words (5-10 words).' },
+            sentence: { name: 'Wacky Sentence', instructions: 'Generate a single creative sentence (10-20 words).' },
+            paragraph: { name: 'Nutty Paragraph', instructions: 'Generate a single paragraph of 3-8 sentences.' },
+            shortstory: { name: 'Quirky Short Story', instructions: 'Generate a short story of 3-5 paragraphs.' },
+            prose: { name: 'Goofy Prose', instructions: 'Generate a story of 500-1500 words.' },
+            chapter: { name: 'Absurd Chapter', instructions: 'Generate a chapter-length story of 1500-3000 words that stands on its own.' },
+            poem: { name: 'Preposterous Poem', instructions: 'Generate a poem' }
+        };
+
+        // Word type definitions for better prompting
+        const wordTypeDefinitions = {
+            noun: 'a single common noun (person, place, thing, or idea) - ONE WORD ONLY',
+            verb: 'a single action verb in base form - ONE WORD ONLY',
+            verb_ing: 'a single verb ending in -ing - ONE WORD ONLY',
+            verb_past: 'a single verb in past tense - ONE WORD ONLY',
+            adjective: 'a single descriptive adjective - ONE WORD ONLY',
+            adverb: 'a single adverb (often ends in -ly) - ONE WORD ONLY',
+            plural_noun: 'a single plural noun - ONE WORD ONLY',
+            name: 'a single first name - ONE WORD ONLY',
+            proper_noun: 'a single proper noun (name of specific person, place, or thing) - ONE WORD ONLY',
+            place: 'a single place name - ONE OR TWO WORDS MAX',
+            animal: 'a single animal name - ONE WORD ONLY',
+            food: 'a single food item - ONE OR TWO WORDS MAX',
+            color: 'a single color - ONE WORD ONLY',
+            number: 'a single number or number word - ONE WORD ONLY',
+            emotion: 'a single emotion word - ONE WORD ONLY',
+            body_part: 'a single body part - ONE OR TWO WORDS MAX',
+            occupation: 'a single job or occupation - ONE OR TWO WORDS MAX',
+            exclamation: 'a single exclamation or interjection - ONE WORD ONLY',
+            time_period: 'a single time period - ONE OR TWO WORDS MAX',
+            measurement: 'a single unit of measurement - ONE WORD ONLY',
+            container: 'a single type of container - ONE WORD ONLY',
+            furniture: 'a single piece of furniture - ONE OR TWO WORDS MAX',
+            vehicle: 'a single type of vehicle - ONE OR TWO WORDS MAX',
+            weather: 'a single weather term - ONE WORD ONLY',
+            clothing: 'a single clothing item - ONE OR TWO WORDS MAX',
+            sport: 'a single sport name - ONE OR TWO WORDS MAX',
+            celebrity: 'a single celebrity name (first and last) - TWO WORDS MAX',
+            fictional_character: 'a single fictional character name - TWO WORDS MAX',
+            planet: 'a single planet name - ONE WORD ONLY',
+            liquid: 'a single type of liquid - ONE WORD ONLY',
+            sound: 'a single onomatopoeia or sound word - ONE WORD ONLY',
+            texture: 'a single texture word - ONE WORD ONLY',
+            flavor: 'a single flavor or taste word - ONE WORD ONLY',
+            temperature: 'a single temperature descriptor - ONE WORD ONLY',
+            size: 'a single size descriptor - ONE WORD ONLY'
+        };
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+
+        function generateSeed() {
+            return Math.floor(Math.random() * 1000000000);
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <span>${type === 'success' ? '✓' : type === 'error' ? '✗' : '⚠'}</span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function showLoading(text = 'Generating your story...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        function switchSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`section-${sectionId}`).classList.add('active');
+            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+        }
+
+        // Match the case of the new word to the original word
+        function matchCase(newWord, originalWord) {
+            if (!originalWord || !newWord) return newWord;
+            
+            // Check if original is all uppercase
+            if (originalWord === originalWord.toUpperCase() && originalWord !== originalWord.toLowerCase()) {
+                return newWord.toUpperCase();
+            }
+            
+            // Check if original is all lowercase
+            if (originalWord === originalWord.toLowerCase()) {
+                return newWord.toLowerCase();
+            }
+            
+            // Check if original is capitalized (first letter uppercase, rest lowercase)
+            if (originalWord[0] === originalWord[0].toUpperCase() && 
+                originalWord.slice(1) === originalWord.slice(1).toLowerCase()) {
+                // Handle multi-word strings
+                return newWord.split(' ').map(w => 
+                    w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+                ).join(' ');
+            }
+            
+            // Default: return as-is but ensure first letter matches original's first letter case
+            if (originalWord[0] === originalWord[0].toUpperCase()) {
+                return newWord.charAt(0).toUpperCase() + newWord.slice(1).toLowerCase();
+            } else {
+                return newWord.toLowerCase();
+            }
+        }
+
+        // ============================================
+        // API FUNCTIONS
+        // ============================================
+
+        async function callTextAPI(prompt, model = 'nova-fast') {
+            const encodedPrompt = encodeURIComponent(prompt);
+            const url = `${TEXT_ENDPOINT}${encodedPrompt}?model=${model}&seed=${generateSeed()}&key=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('API request failed');
+                return await response.text();
+            } catch (error) {
+                console.error('Text API Error:', error);
+                throw error;
+            }
+        }
+
+        async function fetchImageAsBlob(prompt, model = 'zimage') {
+            const encodedPrompt = encodeURIComponent(prompt);
+            const url = `${IMAGE_ENDPOINT}${encodedPrompt}?model=${model}&seed=${generateSeed()}&private=true&nologo=true&enhance=true&safe=true&width=1024&height=1024&key=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Image API request failed');
+                const blob = await response.blob();
+                return URL.createObjectURL(blob);
+            } catch (error) {
+                console.error('Image API Error:', error);
+                throw error;
+            }
+        }
+
+        // ============================================
+        // STORY GENERATION
+        // ============================================
+
+        async function generateStory() {
+            if (state.sourceMode === 'custom') {
+                await processCustomText();
+                return;
+            }
+
+            const lengthStyle = document.getElementById('lengthStyle').value;
+            const topicCategory = document.getElementById('topicCategory').value;
+            const customTopic = document.getElementById('customTopic').value;
+            const density = parseInt(document.getElementById('density').value);
+            const textModel = document.getElementById('textModel').value;
+            const poemType = state.selectedPoemType;
+
+            showLoading('Crafting your story template...');
+
+            try {
+                // Build the prompt
+                let lengthInstructions = lengthConfig[lengthStyle].instructions;
+                if (lengthStyle === 'poem') {
+                    lengthInstructions += ` of type: ${poemType}`;
+                }
+
+                const topic = customTopic || topicCategory;
+                
+                const prompt = `You are creating content for a "Mad Libs" style word game. Your task is to write a ${lengthConfig[lengthStyle].name} about "${topic}".
+
+CRITICAL INSTRUCTIONS:
+1. ${lengthInstructions}
+2. The content must be 100% appropriate for middle school students - no violence, gore, sexual content, drugs, or profanity.
+3. Make it fun, creative, and light-hearted!
+4. Replace approximately ${density}% of the words with placeholders in this exact format: [type:original_word]
+
+PLACEHOLDER FORMAT RULES:
+- Use brackets with the word type and the ORIGINAL WORD separated by a colon
+- The original word should be the actual word you would use in that position
+- Examples: [noun:cat], [verb:jumped], [adjective:happy], [name:Sarah], [place:Paris]
+- IMPORTANT: Each placeholder must contain exactly ONE word as the original
+- If you need to replace a character name, use the SAME placeholder format throughout the story
+- For example, if you introduce [name:Alex], then every time that character appears, use [name:Alex] again
+- Available types: noun, verb, adjective, adverb, proper_noun, name, place, animal, food, color, number, emotion, body_part, occupation, verb_ing, verb_past, plural_noun, exclamation, time_period, measurement, container, furniture, vehicle, weather, clothing, sport, celebrity, fictional_character, planet, liquid, sound, texture, flavor, temperature, size
+
+Write the story now with placeholders embedded. Remember: each placeholder should contain only ONE original word, and repeated references to the same thing should use the SAME placeholder:`;
+
+                const storyWithPlaceholders = await callTextAPI(prompt, textModel);
+                
+                // Process the story with placeholders
+                processStoryWithPlaceholders(storyWithPlaceholders);
+
+                hideLoading();
+                renderInputFields();
+                switchSection('fill');
+                showToast('Story generated! Now fill in the blanks!', 'success');
+
+            } catch (error) {
+                hideLoading();
+                showToast('Failed to generate story. Please try again.', 'error');
+                console.error(error);
+            }
+        }
+
+        async function processCustomText() {
+            const customText = document.getElementById('customTextInput').value.trim();
+            const density = parseInt(document.getElementById('density').value);
+            const textModel = document.getElementById('textModel').value;
+
+            if (!customText) {
+                showToast('Please enter or upload some text first.', 'warning');
+                return;
+            }
+
+            showLoading('Processing your text...');
+
+            try {
+                const prompt = `You are preparing text for a "Mad Libs" style word game. Take the following text and replace approximately ${density}% of the words with placeholders.
+
+RULES:
+1. Use the format [type:original_word] where type is the part of speech and original_word is the word being replaced
+2. Each placeholder must contain exactly ONE word
+3. If a word (like a character name) appears multiple times, use the SAME placeholder each time
+4. Available types: noun, verb, adjective, adverb, proper_noun, name, place, animal, food, color, number, emotion, body_part, occupation, verb_ing, verb_past, plural_noun, exclamation, time_period, measurement, container, furniture, vehicle, weather, clothing, sport, celebrity, fictional_character, planet, liquid, sound, texture, flavor, temperature, size
+5. Keep the text structure and meaning intact
+6. Make sure each placeholder replaces only ONE word, not phrases
+
+Original text:
+${customText}
+
+Return the text with placeholders:`;
+
+                const storyWithPlaceholders = await callTextAPI(prompt, textModel);
+                
+                // Process the story with placeholders
+                processStoryWithPlaceholders(storyWithPlaceholders);
+
+                hideLoading();
+                renderInputFields();
+                switchSection('fill');
+                showToast('Text processed! Now fill in the blanks!', 'success');
+
+            } catch (error) {
+                hideLoading();
+                showToast('Failed to process text. Please try again.', 'error');
+                console.error(error);
+            }
+        }
+
+        function processStoryWithPlaceholders(storyWithPlaceholders) {
+            // Parse placeholders - now tracking original words
+            const placeholderRegex = /\[([^\]]+)\]/g;
+            const placeholders = [];
+            let match;
+            const placeholderMap = new Map(); // Maps original word to placeholder info
+            
+            // Store the raw story for reference
+            state.rawStory = storyWithPlaceholders;
+
+            while ((match = placeholderRegex.exec(storyWithPlaceholders)) !== null) {
+                const fullPlaceholder = match[0];
+                const content = match[1];
+                const colonIndex = content.indexOf(':');
+                
+                let type, originalWord;
+                if (colonIndex !== -1) {
+                    type = content.substring(0, colonIndex).trim().toLowerCase();
+                    originalWord = content.substring(colonIndex + 1).trim();
+                } else {
+                    type = content.trim().toLowerCase();
+                    originalWord = content.trim();
+                }
+                
+                // Create a unique key based on type and original word
+                const key = `${type}:${originalWord.toLowerCase()}`;
+                
+                if (!placeholderMap.has(key)) {
+                    const placeholderId = `placeholder_${placeholders.length}`;
+                    const placeholderInfo = {
+                        original: fullPlaceholder,
+                        type: type || 'word',
+                        originalWord: originalWord,
+                        id: placeholderId,
+                        occurrences: [fullPlaceholder]
+                    };
+                    placeholderMap.set(key, placeholderInfo);
+                    placeholders.push(placeholderInfo);
+                } else {
+                    // Track additional occurrences of the same placeholder
+                    const existingPlaceholder = placeholderMap.get(key);
+                    if (!existingPlaceholder.occurrences.includes(fullPlaceholder)) {
+                        existingPlaceholder.occurrences.push(fullPlaceholder);
+                    }
+                }
+            }
+
+            // Mark all placeholders in the story with unique markers
+            let markedStory = storyWithPlaceholders;
+            placeholders.forEach(placeholder => {
+                placeholder.occurrences.forEach(occurrence => {
+                    const escapedOccurrence = occurrence.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(escapedOccurrence, 'g');
+                    markedStory = markedStory.replace(regex, `___PLACEHOLDER_${placeholder.id}___`);
+                });
+            });
+
+            state.originalStory = markedStory;
+            state.placeholders = placeholders;
+            state.userInputs = {};
+        }
+
+        async function generateBlankTemplate() {
+            if (state.sourceMode === 'custom') {
+                const customText = document.getElementById('customTextInput').value.trim();
+                if (!customText) {
+                    showToast('Please enter or upload some text first.', 'warning');
+                    return;
+                }
+            }
+
+            const lengthStyle = document.getElementById('lengthStyle').value;
+            const topicCategory = document.getElementById('topicCategory').value;
+            const customTopic = document.getElementById('customTopic').value;
+            const density = parseInt(document.getElementById('density').value);
+            const textModel = document.getElementById('textModel').value;
+
+            showLoading('Creating blank template...');
+
+            try {
+                let prompt;
+                if (state.sourceMode === 'custom') {
+                    const customText = document.getElementById('customTextInput').value.trim();
+                    prompt = `Take the following text and replace approximately ${density}% of words with blanks showing the word type in parentheses.
+Format: _________(noun), _________(verb), etc.
+
+Original text:
+${customText}
+
+Return the text with blanks:`;
+                } else {
+                    const topic = customTopic || topicCategory;
+                    let lengthInstructions = lengthConfig[lengthStyle].instructions;
+                    
+                    prompt = `Create a ${lengthConfig[lengthStyle].name} about "${topic}" for a Mad Libs game.
+${lengthInstructions}
+Replace approximately ${density}% of words with blanks showing the word type in parentheses.
+Format: _________(noun), _________(verb), etc.
+Keep it appropriate for middle school students - fun and light-hearted!`;
+                }
+
+                const blankTemplate = await callTextAPI(prompt, textModel);
+                
+                state.blankStory = blankTemplate;
+                state.originalStory = '';
+                state.warpedStory = '';
+                state.placeholders = [];
+
+                hideLoading();
+                
+                // Show result with blank view
+                document.getElementById('storyDisplay').innerHTML = formatBlankStory(blankTemplate);
+                document.getElementById('imageContainer').classList.add('hidden');
+                state.currentView = 'blank';
+                
+                // Update tabs
+                document.querySelectorAll('.story-tab').forEach(t => t.classList.remove('active'));
+                document.querySelector('[data-view="blank"]').classList.add('active');
+                
+                switchSection('result');
+                showToast('Blank template ready for download!', 'success');
+
+            } catch (error) {
+                hideLoading();
+                showToast('Failed to generate template. Please try again.', 'error');
+            }
+        }
+
+        // ============================================
+        // INPUT FIELD MANAGEMENT
+        // ============================================
+
+        function renderInputFields() {
+            const container = document.getElementById('inputFieldsContainer');
+            container.innerHTML = '';
+
+            state.placeholders.forEach((placeholder, index) => {
+                const fieldDiv = document.createElement('div');
+                fieldDiv.className = 'input-field-item';
+                fieldDiv.innerHTML = `
+                    <div class="field-label">
+                        ${index + 1}. <span class="field-type">${placeholder.type}</span>
+                    </div>
+                    <input type="text" 
+                           id="input_${placeholder.id}" 
+                           placeholder="Enter a ${placeholder.type}..."
+                           data-placeholder-id="${placeholder.id}">
+                    <button class="btn-randomize" onclick="randomizeWord('${placeholder.id}')" title="Randomize this word">
+                        🎲
+                    </button>
+                `;
+                container.appendChild(fieldDiv);
+            });
+        }
+
+        async function randomizeWord(placeholderId) {
+            const placeholder = state.placeholders.find(p => p.id === placeholderId);
+            if (!placeholder) return;
+
+            const input = document.getElementById(`input_${placeholderId}`);
+            const originalValue = input.value;
+            input.value = '...';
+            input.disabled = true;
+
+            try {
+                // Get the word type definition or create a default one
+                const typeDefinition = wordTypeDefinitions[placeholder.type] || `a single ${placeholder.type} - ONE WORD ONLY`;
+                
+                const prompt = `Generate exactly ONE word for a Mad Libs game.
+
+WORD TYPE REQUIRED: ${typeDefinition}
+
+STRICT RULES:
+- Output ONLY the word itself, nothing else
+- NO explanations, NO punctuation, NO quotes
+- Must be exactly ONE word (or two words ONLY if the type specifically allows it like "celebrity" or "fictional_character")
+- Must be family-friendly and fun
+- Must match the word type exactly
+- Output in lowercase
+
+YOUR SINGLE WORD:`;
+
+                let word = await callTextAPI(prompt, document.getElementById('textModel').value);
+                
+                // Clean up the response - take only the first word(s) based on type
+                word = word.trim().replace(/['".,!?]/g, '').split('\n')[0].trim();
+                
+                // For types that should be single words, take only the first word
+                const singleWordTypes = ['noun', 'verb', 'verb_ing', 'verb_past', 'adjective', 'adverb', 
+                    'plural_noun', 'name', 'animal', 'color', 'number', 'emotion', 'exclamation', 
+                    'measurement', 'container', 'weather', 'liquid', 'sound', 'texture', 'flavor', 
+                    'temperature', 'size', 'planet'];
+                
+                if (singleWordTypes.includes(placeholder.type)) {
+                    word = word.split(/\s+/)[0];
+                } else {
+                    // For types that allow two words, take at most two
+                    const words = word.split(/\s+/);
+                    word = words.slice(0, 2).join(' ');
+                }
+                
+                // Match the case of the original word
+                word = matchCase(word, placeholder.originalWord);
+                
+                input.value = word;
+                state.userInputs[placeholderId] = word;
+                showToast(`Generated: ${word}`, 'success');
+            } catch (error) {
+                input.value = originalValue;
+                showToast('Failed to generate word. Please try again.', 'error');
+            }
+
+            input.disabled = false;
+        }
+
+        async function randomizeAllWords() {
+            showLoading('Randomizing all words...');
+            
+            for (let i = 0; i < state.placeholders.length; i++) {
+                const placeholder = state.placeholders[i];
+                await randomizeWord(placeholder.id);
+                
+                // Add delay between API calls for rate limiting (except after last one)
+                if (i < state.placeholders.length - 1) {
+                    await delay(API_DELAY);
+                }
+            }
+            
+            hideLoading();
+            showToast('All words randomized!', 'success');
+        }
+
+        function clearAllWords() {
+            state.placeholders.forEach(p => {
+                const input = document.getElementById(`input_${p.id}`);
+                if (input) input.value = '';
+            });
+            state.userInputs = {};
+            showToast('All words cleared!', 'success');
+        }
+
+        // ============================================
+        // INPUT VALIDATION (simplified - no content filtering)
+        // ============================================
+
+        function validateInputs() {
+            for (const placeholder of state.placeholders) {
+                const input = document.getElementById(`input_${placeholder.id}`);
+                const value = input.value.trim();
+                
+                if (!value) {
+                    showToast(`Please fill in: ${placeholder.type}`, 'warning');
+                    input.focus();
+                    return false;
+                }
+
+                state.userInputs[placeholder.id] = value;
+            }
+            return true;
+        }
+
+        // ============================================
+        // STORY COMPLETION
+        // ============================================
+
+        async function submitWords() {
+            if (!validateInputs()) return;
+
+            showLoading('Creating The Warp...');
+
+            try {
+                // Create the warped story
+                let warpedStory = state.originalStory;
+                
+                // Replace all placeholder markers with user inputs
+                state.placeholders.forEach(placeholder => {
+                    const value = state.userInputs[placeholder.id];
+                    const regex = new RegExp(`___PLACEHOLDER_${placeholder.id}___`, 'g');
+                    warpedStory = warpedStory.replace(regex, `【${value}】`);
+                });
+
+                // Create clean original version (showing original words in brackets)
+                let cleanOriginal = state.originalStory;
+                state.placeholders.forEach(placeholder => {
+                    const regex = new RegExp(`___PLACEHOLDER_${placeholder.id}___`, 'g');
+                    cleanOriginal = cleanOriginal.replace(regex, `[${placeholder.originalWord}]`);
+                });
+
+                // Create blank version
+                let blankVersion = state.originalStory;
+                state.placeholders.forEach(placeholder => {
+                    const regex = new RegExp(`___PLACEHOLDER_${placeholder.id}___`, 'g');
+                    blankVersion = blankVersion.replace(regex, `_________(${placeholder.type})`);
+                });
+
+                state.warpedStory = warpedStory;
+                state.blankStory = blankVersion;
+                state.originalStory = cleanOriginal;
+
+                hideLoading();
+                displayResult();
+                
+                // Generate image
+                await generateImage();
+
+                // Save to history
+                saveToHistory();
+
+            } catch (error) {
+                hideLoading();
+                showToast('Something went wrong. Please try again.', 'error');
+                console.error(error);
+            }
+        }
+
+        async function generateImage() {
+            const imageContainer = document.getElementById('imageContainer');
+            const imageLoading = document.getElementById('imageLoading');
+            const generatedImage = document.getElementById('generatedImage');
+            
+            imageContainer.classList.remove('hidden');
+            imageLoading.classList.remove('hidden');
+            generatedImage.classList.add('hidden');
+
+            try {
+                // Generate image prompt from warped story
+                const imagePromptRequest = `Based on this story, create a single short, vivid image description (max 100 words) that captures the funniest or most absurd moment. Keep it family-friendly and whimsical. Story: "${state.warpedStory.substring(0, 500)}"`;
+                
+                let imagePrompt = await callTextAPI(imagePromptRequest, 'nova-fast');
+                imagePrompt = imagePrompt.substring(0, 200); // Limit prompt length
+
+                // Add delay before image generation
+                await delay(API_DELAY);
+
+                const imageModel = document.getElementById('imageModel').value;
+                
+                // Fetch image as blob
+                const blobUrl = await fetchImageAsBlob(imagePrompt, imageModel);
+                
+                generatedImage.src = blobUrl;
+                generatedImage.onload = () => {
+                    imageLoading.classList.add('hidden');
+                    generatedImage.classList.remove('hidden');
+                };
+
+                generatedImage.onerror = () => {
+                    imageLoading.classList.add('hidden');
+                    showToast('Image generation failed.', 'error');
+                };
+
+            } catch (error) {
+                imageLoading.classList.add('hidden');
+                showToast('Could not generate image.', 'error');
+                console.error('Image generation error:', error);
+            }
+        }
+
+        // ============================================
+        // DISPLAY FUNCTIONS
+        // ============================================
+
+        function displayResult() {
+            switchSection('result');
+            updateStoryView('warp');
+        }
+
+        function updateStoryView(view) {
+            state.currentView = view;
+            const display = document.getElementById('storyDisplay');
+            
+            document.querySelectorAll('.story-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[data-view="${view}"]`).classList.add('active');
+
+            switch(view) {
+                case 'warp':
+                    display.innerHTML = formatWarpedStory(state.warpedStory);
+                    break;
+                case 'original':
+                    display.innerHTML = formatOriginalStory(state.originalStory);
+                    break;
+                case 'blank':
+                    display.innerHTML = formatBlankStory(state.blankStory);
+                    break;
+            }
+        }
+
+        function formatWarpedStory(text) {
+            return text.replace(/【([^】]+)】/g, '<span class="replaced-word">$1</span>');
+        }
+
+        function formatOriginalStory(text) {
+            return text.replace(/\[([^\]]+)\]/g, '<span style="color: var(--primary); font-weight: 600;">[$1]</span>');
+        }
+
+        function formatBlankStory(text) {
+            return text.replace(/_________\(([^)]+)\)/g, '<span class="blank"></span> <em style="color: var(--text-light);">($1)</em>');
+        }
+
+        // ============================================
+        // HISTORY MANAGEMENT
+        // ============================================
+
+        function saveToHistory() {
+            const historyItem = {
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                settings: {
+                    lengthStyle: document.getElementById('lengthStyle').value,
+                    topicCategory: document.getElementById('topicCategory').value,
+                    density: document.getElementById('density').value
+                },
+                originalStory: state.originalStory,
+                blankStory: state.blankStory,
+                warpedStory: state.warpedStory,
+                placeholders: state.placeholders,
+                userInputs: state.userInputs
+            };
+
+            state.history.unshift(historyItem);
+            if (state.history.length > 50) state.history.pop(); // Limit history
+            
+            localStorage.setItem('wordwarp_history', JSON.stringify(state.history));
+            renderHistory();
+            showToast('Saved to history!', 'success');
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            const noHistory = document.getElementById('noHistory');
+
+            if (state.history.length === 0) {
+                container.innerHTML = '';
+                noHistory.classList.remove('hidden');
+                return;
+            }
+
+            noHistory.classList.add('hidden');
+            container.innerHTML = state.history.map(item => `
+                <div class="history-item" data-id="${item.id}">
+                    <div class="history-item-header">
+                        <div>
+                            <div class="history-item-title">${lengthConfig[item.settings.lengthStyle]?.name || 'Story'}</div>
+                            <div class="history-item-meta">${item.date} • ${item.settings.density}% replaced</div>
+                        </div>
+                    </div>
+                    <div class="history-item-preview">${stripTags(item.warpedStory).substring(0, 200)}...</div>
+                    <div class="btn-group">
+                        <button class="btn btn-primary btn-sm" onclick="loadHistoryItem(${item.id})">
+                            📖 View
+                        </button>
+                        <button class="btn btn-accent btn-sm" onclick="rerunHistoryItem(${item.id})">
+                            🔄 Re-run
+                        </button>
+                        <button class="btn btn-outline btn-sm" onclick="downloadHistoryItem(${item.id})">
+                            📥 Download
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteHistoryItem(${item.id})">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function stripTags(html) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || '';
+        }
+
+        function loadHistoryItem(id) {
+            const item = state.history.find(h => h.id === id);
+            if (!item) return;
+
+            state.originalStory = item.originalStory;
+            state.blankStory = item.blankStory;
+            state.warpedStory = item.warpedStory;
+            state.placeholders = item.placeholders;
+            state.userInputs = item.userInputs;
+
+            displayResult();
+            
+            // Hide image container when loading from history
+            document.getElementById('imageContainer').classList.add('hidden');
+        }
+
+        function rerunHistoryItem(id) {
+            const item = state.history.find(h => h.id === id);
+            if (!item) return;
+
+            // Need to reconstruct the original story with markers for re-running
+            let markedStory = item.originalStory;
+            item.placeholders.forEach(placeholder => {
+                const escapedWord = placeholder.originalWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`\\[${escapedWord}\\]`, 'g');
+                markedStory = markedStory.replace(regex, `___PLACEHOLDER_${placeholder.id}___`);
+            });
+
+            state.originalStory = markedStory;
+            state.placeholders = item.placeholders;
+            state.userInputs = {};
+
+            renderInputFields();
+            
+            // Pre-fill inputs
+            Object.keys(item.userInputs).forEach(key => {
+                const input = document.getElementById(`input_${key}`);
+                if (input) input.value = item.userInputs[key];
+            });
+
+            switchSection('fill');
+            showToast('Ready to change words!', 'success');
+        }
+
+        function downloadHistoryItem(id) {
+            const item = state.history.find(h => h.id === id);
+            if (!item) return;
+
+            downloadText(stripTags(item.warpedStory.replace(/【([^】]+)】/g, '[$1]')), `wordwarp_story_${id}.txt`);
+        }
+
+        function deleteHistoryItem(id) {
+            state.history = state.history.filter(h => h.id !== id);
+            localStorage.setItem('wordwarp_history', JSON.stringify(state.history));
+            renderHistory();
+            showToast('Deleted from history', 'success');
+        }
+
+        function clearAllHistory() {
+            if (!confirm('Are you sure you want to clear all history?')) return;
+            state.history = [];
+            localStorage.setItem('wordwarp_history', '[]');
+            renderHistory();
+            showToast('History cleared!', 'success');
+        }
+
+        // ============================================
+        // DOWNLOAD FUNCTIONS
+        // ============================================
+
+        function downloadText(content, filename) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadStory() {
+            const content = stripTags(state.warpedStory.replace(/【([^】]+)】/g, '**$1**'));
+            downloadText(content, 'wordwarp_story.txt');
+            showToast('Story downloaded!', 'success');
+        }
+
+        function downloadBlank() {
+            const content = stripTags(state.blankStory);
+            downloadText(content, 'wordwarp_blank_template.txt');
+            showToast('Blank template downloaded!', 'success');
+        }
+
+        // ============================================
+        // TOPIC RANDOMIZATION
+        // ============================================
+
+        async function randomizeTopic() {
+            const input = document.getElementById('customTopic');
+            input.value = 'Generating...';
+            input.disabled = true;
+
+            try {
+                const prompt = 'Generate a single creative, fun, and family-friendly story topic idea (5-10 words max). Just the topic, nothing else. Make it quirky and interesting!';
+                let topic = await callTextAPI(prompt, document.getElementById('textModel').value);
+                topic = topic.trim().replace(/['"]/g, '').split('\n')[0];
+                input.value = topic;
+                showToast('Random topic generated!', 'success');
+            } catch (error) {
+                input.value = '';
+                showToast('Failed to generate topic', 'error');
+            }
+
+            input.disabled = false;
+        }
+
+        async function randomizeEverything() {
+            showLoading('Randomizing all settings...');
+            
+            // Random length
+            const lengthOptions = ['phrase', 'sentence', 'paragraph', 'shortstory', 'prose', 'poem'];
+            const randomLength = lengthOptions[Math.floor(Math.random() * lengthOptions.length)];
+            document.getElementById('lengthStyle').value = randomLength;
+            togglePoemTypes();
+
+            // Random topic category
+            const topicSelect = document.getElementById('topicCategory');
+            const options = topicSelect.options;
+            topicSelect.selectedIndex = Math.floor(Math.random() * options.length);
+
+            // Random density
+            document.getElementById('density').value = Math.floor(Math.random() * 60) + 20;
+            document.getElementById('densityValue').textContent = document.getElementById('density').value;
+
+            // Random custom topic
+            await randomizeTopic();
+
+            hideLoading();
+            showToast('All settings randomized!', 'success');
+        }
+
+        // ============================================
+        // FILE UPLOAD HANDLING
+        // ============================================
+
+        function setupFileUpload() {
+            const fileUploadArea = document.getElementById('fileUploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const customTextInput = document.getElementById('customTextInput');
+
+            fileUploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.add('dragover');
+            });
+
+            fileUploadArea.addEventListener('dragleave', () => {
+                fileUploadArea.classList.remove('dragover');
+            });
+
+            fileUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    handleFile(fileInput.files[0]);
+                }
+            });
+
+            function handleFile(file) {
+                if (!file.name.endsWith('.txt') && !file.name.endsWith('.text')) {
+                    showToast('Please upload a .txt file', 'warning');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    customTextInput.value = e.target.result;
+                    showToast('File loaded successfully!', 'success');
+                };
+                reader.onerror = () => {
+                    showToast('Error reading file', 'error');
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Navigation tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    switchSection(tab.dataset.section);
+                });
+            });
+
+            // Source tabs
+            document.querySelectorAll('.source-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.source-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.source-content').forEach(c => c.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById(`source-${tab.dataset.source}`).classList.add('active');
+                    state.sourceMode = tab.dataset.source;
+                });
+            });
+
+            // Story view tabs
+            document.querySelectorAll('.story-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    updateStoryView(tab.dataset.view);
+                });
+            });
+
+            // Poem type buttons
+            document.querySelectorAll('.poem-type-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.poem-type-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    state.selectedPoemType = btn.dataset.type;
+                });
+            });
+
+            // Length style change
+            document.getElementById('lengthStyle').addEventListener('change', togglePoemTypes);
+
+            // Density slider
+            document.getElementById('density').addEventListener('input', (e) => {
+                document.getElementById('densityValue').textContent = e.target.value;
+            });
+
+            // Main buttons
+            document.getElementById('generateStory').addEventListener('click', generateStory);
+            document.getElementById('generateBlankOnly').addEventListener('click', generateBlankTemplate);
+            document.getElementById('randomizeAll').addEventListener('click', randomizeEverything);
+            document.getElementById('randomizeTopic').addEventListener('click', randomizeTopic);
+            document.getElementById('randomizeAllWords').addEventListener('click', randomizeAllWords);
+            document.getElementById('clearAllWords').addEventListener('click', clearAllWords);
+            document.getElementById('submitWords').addEventListener('click', submitWords);
+            document.getElementById('backToSettings').addEventListener('click', () => switchSection('create'));
+            document.getElementById('downloadStory').addEventListener('click', downloadStory);
+            document.getElementById('downloadBlank').addEventListener('click', downloadBlank);
+            document.getElementById('rerunStory').addEventListener('click', () => {
+                // Reconstruct marked story for re-running
+                let markedStory = state.originalStory;
+                state.placeholders.forEach(placeholder => {
+                    const escapedWord = placeholder.originalWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    const regex = new RegExp(`\\[${escapedWord}\\]`, 'g');
+                    markedStory = markedStory.replace(regex, `___PLACEHOLDER_${placeholder.id}___`);
+                });
+                state.originalStory = markedStory;
+
+                renderInputFields();
+                Object.keys(state.userInputs).forEach(key => {
+                    const input = document.getElementById(`input_${key}`);
+                    if (input) input.value = state.userInputs[key];
+                });
+                switchSection('fill');
+            });
+            document.getElementById('newStory').addEventListener('click', () => {
+                state.originalStory = '';
+                state.blankStory = '';
+                state.warpedStory = '';
+                state.placeholders = [];
+                state.userInputs = {};
+                switchSection('create');
+            });
+            document.getElementById('clearHistory').addEventListener('click', clearAllHistory);
+
+            // Initialize
+            renderHistory();
+            togglePoemTypes();
+            setupFileUpload();
+        });
+
+        function togglePoemTypes() {
+            const lengthStyle = document.getElementById('lengthStyle').value;
+            const poemContainer = document.getElementById('poemTypesContainer');
+            
+            if (lengthStyle === 'poem') {
+                poemContainer.classList.remove('hidden');
+            } else {
+                poemContainer.classList.add('hidden');
+            }
+        }
+
+        // Make functions globally accessible
+        window.randomizeWord = randomizeWord;
+        window.loadHistoryItem = loadHistoryItem;
+        window.rerunHistoryItem = rerunHistoryItem;
+        window.downloadHistoryItem = downloadHistoryItem;
+        window.deleteHistoryItem = deleteHistoryItem;
+    </script>
+</body>
+</html>
