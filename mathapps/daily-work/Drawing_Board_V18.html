@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vector Drawing Board – Freeform Quadrilaterals</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; }
+    body { min-height: 100vh; transition: background 0.3s, color 0.3s; }
+    #canvas {
+      display: block;
+      margin: 0 auto;
+      border-radius: 1rem;
+      box-shadow: 0 4px 32px #0006;
+      touch-action: none;
+      max-width: 100vw;
+      background: transparent;
+      transition: background 0.3s;
+    }
+    @media (max-width: 600px) {
+      #canvas { height: 40vh; }
+    }
+    .color-swatch {
+      width: 28px; height: 28px; border-radius: 9999px; border: 2px solid #444; margin: 0 2px; display: inline-block; cursor: pointer;
+    }
+    .color-swatch.selected { border: 3px solid #3b82f6 }
+    .size-btn { width: 28px; height: 28px; border-radius: 9999px; margin: 0 2px; border: 2px solid #444; background: #222; color: #fff; font-weight: bold; cursor: pointer;}
+    .size-btn.selected { border: 3px solid #3b82f6; background: #3b82f6; }
+    .mode-toggle { cursor: pointer; }
+    .hidden { display: none !important; }
+    .light-mode { background: #f6f7fb !important; color: #222 !important; }
+    .light-mode #canvas { box-shadow: 0 4px 32px #aaa6; background: transparent !important;}
+    .light-mode .text-gray-100, .light-mode .text-gray-400 { color:#222 !important;}
+    .light-mode .bg-gray-700 { background: #e5e7eb !important;}
+    .light-mode .bg-blue-500 { background: #2563eb !important; }
+    .light-mode .bg-blue-600 { background: #1d4ed8 !important; }
+    .light-mode .bg-green-600 { background: #16a34a !important; }
+    .light-mode .bg-red-600 { background: #dc2626 !important; }
+    .light-mode .bg-gray-800 { background: #f6f7fb !important; color:#222 !important;}
+    .light-mode input, .light-mode textarea { color:#222 !important;}
+    .triangle-type-select,.quad-type-select {
+      background: #222;
+      color: #fff;
+      border-radius: 0.375rem;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid #444;
+      font-size: 0.93rem;
+      margin-left: 0.2rem;
+    }
+    .light-mode .triangle-type-select,
+    .light-mode .quad-type-select {
+      background: #f6f7fb;
+      color: #222;
+      border: 1px solid #bbb;
+    }
+    .vertex-handle {
+      cursor: pointer;
+    }
+    /* NEW: Assignment Navigation Bar */
+    #assignmentBar {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+      border: 1px solid #3b82f6;
+      border-radius: 12px;
+      padding: 12px 20px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    #assignmentBar.active {
+      display: flex;
+    }
+    .nav-btn {
+      background: #3b82f6;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: #2563eb;
+      transform: scale(1.05);
+    }
+    .nav-btn:disabled {
+      background: #4b5563;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+    .copy-all-btn {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .copy-all-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center px-2 py-4 min-h-screen bg-[#151922] text-gray-100" id="root">
+  <div class="w-full flex items-center justify-between max-w-4xl mb-3 px-2">
+    <h1 class="text-2xl md:text-3xl font-bold mb-2">Vector Drawing Board</h1>
+    <button id="modeToggle" class="mode-toggle px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow flex items-center gap-2">
+      <span id="modeIcon">🌙</span>
+      <span id="modeLabel" class="hidden md:inline">Dark Mode</span>
+    </button>
+  </div>
+
+  <!-- NEW: Assignment Navigation Bar -->
+  <div id="assignmentBar" class="w-full max-w-4xl flex flex-col md:flex-row items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <button id="prevBtn" class="nav-btn" onclick="prevQuestion()">← Previous</button>
+      <div class="text-center">
+        <div id="questionIndicator" class="text-lg font-bold text-blue-300">Question 1 of 1</div>
+        <div id="questionTitle" class="text-sm text-gray-300"></div>
+      </div>
+      <button id="nextBtn" class="nav-btn" onclick="nextQuestion()">Next →</button>
+    </div>
+    <button class="copy-all-btn" onclick="copyAllWork()">📋 Copy All Answers</button>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-2 items-center mb-2">
+    <input type="file" id="imageUpload" accept="image/*" class="block px-2 py-1 rounded bg-gray-800 text-gray-200 border-0">
+    <span class="text-gray-400">or</span>
+    <input type="text" id="imageUrl" placeholder="Image URL" class="px-2 py-1 rounded bg-gray-800 text-gray-200 border-0 w-48">
+    <button id="loadImageBtn" class="bg-blue-600 text-white px-3 py-1 rounded font-semibold">Load Image</button>
+    <button id="clearImageBtn" class="bg-gray-700 text-white px-3 py-1 rounded font-semibold">Clear Image</button>
+  </div>
+  <div class="flex flex-wrap gap-2 md:gap-5 items-center mb-4 px-2 w-full max-w-4xl justify-center">
+    <button id="pointerBtn" class="px-3 py-2 rounded-lg bg-blue-500 text-white font-semibold shadow active:scale-95 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M7 6h10M7 18h10" stroke-linecap="round"/>
+      </svg>Pointer
+    </button>
+    <button id="penBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M16 3l5 5-13 13-5 1 1-5L16 3z"/>
+      </svg>Pen
+    </button>
+    <button id="eraserBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="17" width="18" height="4" rx="2"/>
+        <rect x="7" y="3" width="10" height="14" rx="2"/>
+      </svg>Eraser
+    </button>
+    <button id="rectBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+      </svg>Rectangle
+    </button>
+    <button id="circleBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /></svg>
+      Circle
+    </button>
+    <div class="flex items-center">
+      <button id="triangleBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polygon points="12 4 20 20 4 20"/>
+        </svg>
+        Triangle
+      </button>
+      <select id="triangleTypeSelect" class="triangle-type-select ml-1">
+        <option value="isosceles">Isosceles</option>
+        <option value="right">Right</option>
+        <option value="freeform">Freeform</option>
+      </select>
+    </div>
+    <div class="flex items-center">
+      <button id="quadBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polygon points="4 4 20 4 20 20 4 20"/>
+        </svg>
+        Quadrilateral
+      </button>
+      <select id="quadTypeSelect" class="quad-type-select ml-1">
+        <option value="freeform">Freeform</option>
+      </select>
+    </div>
+    <button id="lineBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <line x1="4" y1="20" x2="20" y2="4"/>
+      </svg>
+      Line
+    </button>
+    <button id="undoBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95" title="Undo">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l-4-4 4-4m-4 4h14"/></svg>
+    </button>
+    <button id="redoBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95" title="Redo">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4 4-4 4m4-4H5"/></svg>
+    </button>
+    <button id="deleteBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95" title="Delete">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+    <button id="resetBtn" class="px-3 py-2 rounded-lg bg-red-600 text-white font-semibold shadow active:scale-95" title="Reset">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6 0a9 9 0 11-6-8.28"/></svg>
+    </button>
+    <button id="saveBtn" class="px-3 py-2 rounded-lg bg-green-600 text-white font-semibold shadow active:scale-95" title="Save">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10V4h10v6M7 10h10"/></svg>
+    </button>
+    <button id="copyBtn" class="px-3 py-2 rounded-lg bg-purple-600 text-white font-semibold shadow active:scale-95" title="Copy to Clipboard">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+    </button>
+  </div>
+  <div class="flex flex-wrap gap-4 items-center mb-3 px-2 w-full max-w-4xl justify-center">
+    <div class="flex items-center gap-2">
+      <span class="text-gray-400 text-sm">Pen Color:</span>
+      <div id="penColorSwatches" class="flex items-center"></div>
+      <input type="color" id="penColorPicker" value="#ffffff" class="rounded-full border-0 w-8 h-8 p-0 bg-transparent cursor-pointer">
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-gray-400 text-sm">Pen Size:</span>
+      <button class="size-btn" data-size="2">S</button>
+      <button class="size-btn" data-size="5">M</button>
+      <button class="size-btn" data-size="10">L</button>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-gray-400 text-sm">Shape Color:</span>
+      <div id="rectColorSwatches" class="flex items-center"></div>
+      <input type="color" id="rectColorPicker" value="#4f93fa" class="rounded-full border-0 w-8 h-8 p-0 bg-transparent cursor-pointer">
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-gray-400 text-sm">Background:</span>
+      <div id="bgColorSwatches" class="flex items-center"></div>
+      <input type="color" id="bgColorPicker" value="#151922" class="rounded-full border-0 w-8 h-8 p-0 bg-transparent cursor-pointer">
+    </div>
+  </div>
+  <div class="w-full flex justify-center">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div class="text-gray-400 text-xs mt-3 text-center max-w-2xl">
+    <b>Pointer Tool:</b> Select objects (any shape), drag to move, drag handles to resize/rotate.<br>
+    <b>Eraser:</b> Draws with background color using current pen size.<br>
+    <b>Triangles:</b> Use the triangle picker to choose Isosceles, Right, or <b>Freeform</b> (edit all points!).<br>
+    <b>Quadrilaterals:</b> Use the quad tool, then click four times to create a freeform quadrilateral. Drag any vertex to edit.<br>
+    <b>Delete:</b> Select and press the trash button or [Del]/[Backspace].<br>
+    Undo/Redo for all actions, including background color and image. Save canvas as PNG. Import an image for tracing or annotation!<br>
+    <b>Shapes:</b> Rectangle, Circle, Triangle (multiple types!), Quadrilateral (freeform!), Line, Freehand.
+  </div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const pointerBtn = document.getElementById('pointerBtn');
+const penBtn = document.getElementById('penBtn');
+const eraserBtn = document.getElementById('eraserBtn');
+const rectBtn = document.getElementById('rectBtn');
+const circleBtn = document.getElementById('circleBtn');
+const triangleBtn = document.getElementById('triangleBtn');
+const lineBtn = document.getElementById('lineBtn');
+const quadBtn = document.getElementById('quadBtn');
+const triangleTypeSelect = document.getElementById('triangleTypeSelect');
+const quadTypeSelect = document.getElementById('quadTypeSelect');
+const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
+const deleteBtn = document.getElementById('deleteBtn');
+const resetBtn = document.getElementById('resetBtn');
+const saveBtn = document.getElementById('saveBtn');
+const copyBtn = document.getElementById('copyBtn');
+const imageUpload = document.getElementById('imageUpload');
+const imageUrl = document.getElementById('imageUrl');
+const loadImageBtn = document.getElementById('loadImageBtn');
+const clearImageBtn = document.getElementById('clearImageBtn');
+const penColorSwatches = document.getElementById('penColorSwatches');
+const penColorPicker = document.getElementById('penColorPicker');
+const rectColorSwatches = document.getElementById('rectColorSwatches');
+const rectColorPicker = document.getElementById('rectColorPicker');
+const bgColorSwatches = document.getElementById('bgColorSwatches');
+const bgColorPicker = document.getElementById('bgColorPicker');
+const sizeBtns = document.querySelectorAll('.size-btn');
+const root = document.getElementById('root');
+const modeToggle = document.getElementById('modeToggle');
+const modeIcon = document.getElementById('modeIcon');
+const modeLabel = document.getElementById('modeLabel');
+
+let tool = 'pointer';
+let objects = [];
+let history = [];
+let historyIndex = -1;
+let selectedIdx = -1;
+let dragging = false;
+let dragType = null;
+let currentStroke = null;
+let drawingShape = null;
+let resizeDir = null;
+let startBox = null;
+let startMouse = null;
+let currentPenColor = "#ffffff";
+let currentPenSize = 5;
+let currentRectColor = "#4f93fa";
+let currentBgColor = "#151922";
+let backgroundImageObj = null;
+let backgroundImageNaturalSize = null;
+let backgroundImageSrc = null;
+let isDarkMode = true;
+let currentTriangleType = "isosceles";
+let currentQuadType = "freeform";
+let freeformTriangleDrawingState = null;
+let freeformQuadDrawingState = null;
+let draggingVertexIndex = null;
+let draggingQuadVertexIndex = null;
+
+// NEW: Multi-Question Assignment System
+let assignmentMode = false;
+let assignmentData = null;
+let currentQuestionIndex = 0;
+let allQuestionsWork = []; // Array of {objects, history, historyIndex, bgColor, backgroundImageSrc, backgroundImageNaturalSize}
+
+const SWATCH_COLORS = [
+  "#ffffff", "#111111", "#ff0000", "#0000ff", "#008000", "#ffff00", "#800080"
+];
+const PEN_COLORS = SWATCH_COLORS;
+const RECT_COLORS = SWATCH_COLORS;
+const BG_COLORS = SWATCH_COLORS;
+
+// --- Mode toggle ---
+function setMode(dark) {
+  isDarkMode = dark;
+  if (dark) {
+    root.classList.remove("light-mode");
+    modeIcon.textContent = "🌙";
+    modeLabel.textContent = "Dark Mode";
+  } else {
+    root.classList.add("light-mode");
+    modeIcon.textContent = "☀️";
+    modeLabel.textContent = "Light Mode";
+  }
+  draw();
+}
+modeToggle.onclick = () => setMode(!isDarkMode);
+
+// --- History (now includes image info and bg color) ---
+function saveHistory() {
+  history = history.slice(0, historyIndex + 1);
+  history.push({
+    objects: JSON.parse(JSON.stringify(objects)),
+    backgroundImageSrc: backgroundImageSrc,
+    backgroundImageNaturalSize: backgroundImageNaturalSize ? {...backgroundImageNaturalSize} : null,
+    bgColor: currentBgColor
+  });
+  historyIndex++;
+  updateUndoRedo();
+  
+  // NEW: Auto-save to allQuestionsWork if in assignment mode
+  if (assignmentMode) {
+    saveCurrentQuestionState();
+  }
+}
+function restoreHistory(idx) {
+  if (idx < 0 || idx >= history.length) return;
+  const state = history[idx];
+  objects = JSON.parse(JSON.stringify(state.objects));
+  selectedIdx = -1;
+  currentBgColor = state.bgColor || SWATCH_COLORS[1];
+  bgColorPicker.value = currentBgColor;
+  renderColorSwatches();
+  if (state.backgroundImageSrc) {
+    loadImage(state.backgroundImageSrc, true, state.backgroundImageNaturalSize);
+  } else {
+    backgroundImageObj = null;
+    backgroundImageSrc = null;
+    backgroundImageNaturalSize = null;
+    fitCanvasToImage();
+  }
+  draw();
+  updateUndoRedo();
+}
+function updateUndoRedo() {
+  undoBtn.disabled = historyIndex <= 0;
+  redoBtn.disabled = historyIndex >= history.length - 1;
+  undoBtn.classList.toggle('opacity-40', undoBtn.disabled);
+  redoBtn.classList.toggle('opacity-40', redoBtn.disabled);
+  deleteBtn.disabled = selectedIdx < 0;
+  deleteBtn.classList.toggle('opacity-40', deleteBtn.disabled);
+}
+
+// --- Tool selection ---
+function setTool(t) {
+  tool = t;
+  [pointerBtn, penBtn, eraserBtn, rectBtn, circleBtn, triangleBtn, quadBtn, lineBtn].forEach(btn => {
+    if (!btn) return;
+    btn.className = btn.className.replace("bg-blue-500", "bg-gray-700");
+  });
+  if (t === "pointer") pointerBtn.className = pointerBtn.className.replace("bg-gray-700", "bg-blue-500");
+  if (t === "pen") penBtn.className = penBtn.className.replace("bg-gray-700", "bg-blue-500");
+  if (t === "eraser") eraserBtn.className = eraserBtn.className.replace("bg-gray-700", "bg-blue-500");
+  if (t === "rect") rectBtn.className = rectBtn.className.replace("bg-gray-700", "bg-blue-500");
+  if (t === "circle") circleBtn.className = circleBtn.className.replace("bg-gray-700", "bg-blue-500");
+  if (t === "triangle") triangleBtn.className = triangleBtn.className.replace("bg-gray-700", "bg-blue-500");
+  if (t === "quad") quadBtn.className = quadBtn.className.replace("bg-gray-700", "bg-blue-500");
+  if (t === "line") lineBtn.className = lineBtn.className.replace("bg-gray-700", "bg-blue-500");
+  selectedIdx = -1;
+  dragging = false;
+  dragType = null;
+  freeformTriangleDrawingState = null;
+  freeformQuadDrawingState = null;
+  draggingVertexIndex = null;
+  draggingQuadVertexIndex = null;
+  draw();
+  updateUndoRedo();
+}
+pointerBtn.onclick = () => setTool("pointer");
+penBtn.onclick = () => setTool("pen");
+eraserBtn.onclick = () => setTool("eraser");
+rectBtn.onclick = () => setTool("rect");
+circleBtn.onclick = () => setTool("circle");
+triangleBtn.onclick = () => setTool("triangle");
+quadBtn.onclick = () => setTool("quad");
+lineBtn.onclick = () => setTool("line");
+triangleTypeSelect.onchange = e => currentTriangleType = e.target.value;
+quadTypeSelect.onchange = e => currentQuadType = e.target.value;
+
+undoBtn.onclick = () => {
+  if (historyIndex > 0) {
+    historyIndex--;
+    restoreHistory(historyIndex);
+  }
+};
+redoBtn.onclick = () => {
+  if (historyIndex < history.length - 1) {
+    historyIndex++;
+    restoreHistory(historyIndex);
+  }
+};
+resetBtn.onclick = () => {
+  objects = [];
+  selectedIdx = -1;
+  backgroundImageObj = null;
+  backgroundImageSrc = null;
+  backgroundImageNaturalSize = null;
+  currentBgColor = "#151922";
+  bgColorPicker.value = currentBgColor;
+  renderColorSwatches();
+  fitCanvasToImage();
+  saveHistory();
+  draw();
+};
+saveBtn.onclick = () => {
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL("image/png");
+  link.download = 'drawing.png';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+// Copy to Clipboard functionality
+copyBtn.onclick = () => {
+  if (!navigator.clipboard || !navigator.clipboard.write) {
+    alert('Copy to clipboard is only supported in secure contexts (HTTPS/localhost).');
+    return;
+  }
+
+  canvas.toBlob(function(blob) {
+    if (blob) {
+      try {
+        const item = new ClipboardItem({'image/png': blob});
+        navigator.clipboard.write([item]).then(function() {
+        }, function(err) {
+          console.error('Could not copy drawing: ', err);
+          alert('Failed to copy drawing to clipboard. Check the console for errors.');
+        });
+      } catch (e) {
+        console.error('Error creating clipboard item:', e);
+        alert('Failed to copy drawing to clipboard. The browser might not support copying image data directly.');
+      }
+    } else {
+      alert('Could not convert canvas to image data.');
+    }
+  }, 'image/png');
+};
+deleteBtn.onclick = function() {
+  if(selectedIdx>=0) {
+    objects.splice(selectedIdx,1);
+    selectedIdx = -1;
+    saveHistory();
+    draw();
+  }
+};
+
+// --- Responsive canvas, image fit ---
+function fitCanvasToImage() {
+  if (backgroundImageObj && backgroundImageNaturalSize) {
+    let maxW = Math.min(window.innerWidth - 24, 1024);
+    let maxH = Math.min(window.innerHeight - 200, 600);
+    let imgW = backgroundImageNaturalSize.width;
+    let imgH = backgroundImageNaturalSize.height;
+    let scale = Math.min(maxW / imgW, maxH / imgH, 1);
+    canvas.width = Math.round(imgW * scale);
+    canvas.height = Math.round(imgH * scale);
+  } else {
+    let w = Math.min(window.innerWidth - 24, 1024);
+    let h = Math.min(window.innerHeight - 200, 600);
+    if(window.innerWidth<600) h = Math.max(220, window.innerHeight-260);
+    canvas.width = w;
+    canvas.height = h;
+  }
+  draw();
+}
+window.addEventListener('resize', fitCanvasToImage);
+
+// --- Drawing ---
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = currentBgColor;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.restore();
+  if (backgroundImageObj) {
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    ctx.drawImage(backgroundImageObj, 0, 0, canvas.width, canvas.height);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+  objects.forEach((obj, i) => {
+    drawShape(obj, i === selectedIdx);
+  });
+  if (drawingShape) drawShape(drawingShape, false, true);
+  if (currentStroke) drawPen(currentStroke, false);
+  if (tool === "pointer" && selectedIdx >= 0) {
+    drawHandles(objects[selectedIdx]);
+  }
+  if (tool === "triangle" && currentTriangleType === "freeform" && freeformTriangleDrawingState && freeformTriangleDrawingState.points.length > 0) {
+    drawFreeformTriangleDraft();
+  }
+  if (tool === "quad" && currentQuadType === "freeform" && freeformQuadDrawingState && freeformQuadDrawingState.points.length > 0) {
+    drawFreeformQuadDraft();
+  }
+  updateUndoRedo();
+}
+function drawShape(obj, selected, ghost) {
+  if (obj.type === 'rect') drawRect(obj, selected, ghost);
+  else if (obj.type === 'circle') drawCircle(obj, selected, ghost);
+  else if (obj.type === 'triangle') {
+    if (obj.triangleType === "freeform") drawFreeformTriangle(obj, selected, ghost);
+    else drawTriangle(obj, selected, ghost);
+  }
+  else if (obj.type === 'quad') {
+    if (obj.quadType === "freeform") drawFreeformQuad(obj, selected, ghost);
+  }
+  else if (obj.type === 'line') drawLine(obj, selected, ghost);
+  else if (obj.type === 'pen' || obj.type === 'eraser') drawPen(obj, selected);
+}
+function drawRect(obj, selected, ghost) {
+  ctx.save();
+  ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
+  ctx.rotate(obj.angle || 0);
+  ctx.globalAlpha = ghost ? 0.45 : 0.9;
+  ctx.fillStyle = obj.color || "#4f93fa";
+  ctx.strokeStyle = selected ? "#facc15" : "#222";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.rect(-Math.abs(obj.w)/2, -Math.abs(obj.h)/2, Math.abs(obj.w), Math.abs(obj.h));
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.stroke();
+  ctx.restore();
+}
+function drawCircle(obj, selected, ghost) {
+  ctx.save();
+  ctx.translate(obj.cx, obj.cy);
+  ctx.rotate(obj.angle || 0);
+  ctx.globalAlpha = ghost ? 0.45 : 0.9;
+  ctx.beginPath();
+  ctx.arc(0, 0, obj.r, 0, Math.PI*2);
+  ctx.fillStyle = obj.color || "#4f93fa";
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = selected ? "#facc15" : "#222";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
+function getTrianglePoints(obj) {
+  let {cx, cy, w, h, angle=0, triangleType="isosceles"} = obj;
+  if (!triangleType) triangleType = "isosceles";
+  let pts = [];
+  if (triangleType === "isosceles") {
+    pts = [
+      {x: 0, y: -h/2},
+      {x: -w/2, y: h/2},
+      {x: w/2, y: h/2}
+    ];
+  } else if (triangleType === "right") {
+    pts = [
+      {x: -w/2, y: h/2},
+      {x: -w/2, y: -h/2},
+      {x: w/2, y: h/2}
+    ];
+  }
+  return pts;
+}
+function drawTriangle(obj, selected, ghost) {
+  ctx.save();
+  ctx.translate(obj.cx, obj.cy);
+  ctx.rotate(obj.angle || 0);
+  ctx.globalAlpha = ghost ? 0.45 : 0.9;
+  let pts = getTrianglePoints(obj);
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  ctx.lineTo(pts[1].x, pts[1].y);
+  ctx.lineTo(pts[2].x, pts[2].y);
+  ctx.closePath();
+  ctx.fillStyle = obj.color || "#4f93fa";
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = selected ? "#facc15" : "#222";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+}
+function drawFreeformTriangle(obj, selected, ghost) {
+  ctx.save();
+  ctx.globalAlpha = ghost ? 0.45 : 0.9;
+  ctx.beginPath();
+  ctx.moveTo(obj.points[0].x, obj.points[0].y);
+  ctx.lineTo(obj.points[1].x, obj.points[1].y);
+  ctx.lineTo(obj.points[2].x, obj.points[2].y);
+  ctx.closePath();
+  ctx.fillStyle = obj.color || "#4f93fa";
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = selected ? "#facc15" : "#222";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  if(selected) {
+    for(let i=0; i<3; ++i) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(obj.points[i].x, obj.points[i].y, 10, 0, Math.PI*2);
+      ctx.fillStyle = "#fff";
+      ctx.globalAlpha = 1;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#facc15";
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+function drawFreeformTriangleDraft() {
+  ctx.save();
+  ctx.globalAlpha = 0.4;
+  let pts = freeformTriangleDrawingState.points;
+  if(pts.length === 1) {
+    ctx.beginPath();
+    ctx.arc(pts[0].x, pts[0].y, 5, 0, Math.PI*2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+  } else if(pts.length === 2) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawFreeformQuad(obj, selected, ghost) {
+  ctx.save();
+  ctx.globalAlpha = ghost ? 0.45 : 0.9;
+  ctx.beginPath();
+  ctx.moveTo(obj.points[0].x, obj.points[0].y);
+  ctx.lineTo(obj.points[1].x, obj.points[1].y);
+  ctx.lineTo(obj.points[2].x, obj.points[2].y);
+  ctx.lineTo(obj.points[3].x, obj.points[3].y);
+  ctx.closePath();
+  ctx.fillStyle = obj.color || "#4f93fa";
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = selected ? "#facc15" : "#222";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  if(selected) {
+    for(let i=0; i<4; ++i) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(obj.points[i].x, obj.points[i].y, 10, 0, Math.PI*2);
+      ctx.fillStyle = "#fff";
+      ctx.globalAlpha = 1;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#facc15";
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+function drawFreeformQuadDraft() {
+  ctx.save();
+  ctx.globalAlpha = 0.4;
+  let pts = freeformQuadDrawingState.points;
+  if(pts.length === 1) {
+    ctx.beginPath();
+    ctx.arc(pts[0].x, pts[0].y, 5, 0, Math.PI*2);
+    ctx.fillStyle = "#fff";
+    ctx.fill();
+  } else if(pts.length === 2) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  } else if(pts.length === 3) {
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    ctx.lineTo(pts[1].x, pts[1].y);
+    ctx.lineTo(pts[2].x, pts[2].y);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawLine(obj, selected, ghost) {
+  ctx.save();
+  ctx.globalAlpha = ghost ? 0.45 : 0.9;
+  ctx.strokeStyle = obj.color || "#4f93fa";
+  ctx.lineWidth = obj.size || 5;
+  ctx.beginPath();
+  ctx.moveTo(obj.x1, obj.y1);
+  ctx.lineTo(obj.x2, obj.y2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  if(selected) {
+    ctx.save();
+    ctx.strokeStyle="#facc15";
+    ctx.lineWidth = (obj.size||5)+6;
+    ctx.globalAlpha=0.2;
+    ctx.beginPath();
+    ctx.moveTo(obj.x1, obj.y1);
+    ctx.lineTo(obj.x2, obj.y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function drawPen(obj, selected) {
+  ctx.save();
+  ctx.strokeStyle = obj.type === "eraser" ? currentBgColor : obj.color;
+  ctx.lineWidth = obj.size;
+  ctx.lineJoin = ctx.lineCap = "round";
+  ctx.beginPath();
+  obj.points.forEach((pt, idx) => {
+    if (idx === 0) ctx.moveTo(pt.x, pt.y);
+    else ctx.lineTo(pt.x, pt.y);
+  });
+  ctx.stroke();
+  if(selected) {
+    ctx.save();
+    ctx.strokeStyle="#facc15";
+    ctx.lineWidth = Math.max(obj.size+5,10);
+    ctx.globalAlpha=0.3;
+    ctx.beginPath();
+    obj.points.forEach((pt, idx) => {
+      if (idx === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function drawHandles(obj) {
+  ctx.save();
+  if(obj.type==="rect") {
+    ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
+    ctx.rotate(obj.angle || 0);
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "#facc15";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-Math.abs(obj.w)/2, -Math.abs(obj.h)/2, Math.abs(obj.w), Math.abs(obj.h));
+    ctx.setLineDash([]);
+    const handleSize = 16;
+    const handles = [
+      [-Math.abs(obj.w)/2, -Math.abs(obj.h)/2, 'nw'],
+      [ Math.abs(obj.w)/2, -Math.abs(obj.h)/2, 'ne'],
+      [-Math.abs(obj.w)/2,  Math.abs(obj.h)/2, 'sw'],
+      [ Math.abs(obj.w)/2,  Math.abs(obj.h)/2, 'se']
+    ];
+    for (const [x, y] of handles) {
+      ctx.beginPath();
+      ctx.arc(x, y, handleSize/2, 0, Math.PI*2);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+      ctx.strokeStyle = "#facc15";
+      ctx.stroke();
+    }
+    let rx = 0, ry = -Math.abs(obj.h)/2 - 32;
+    ctx.beginPath();
+    ctx.arc(rx, ry, handleSize/2, 0, Math.PI*2);
+    ctx.fillStyle = "#f59e42";
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, -Math.abs(obj.h)/2);
+    ctx.lineTo(rx, ry + handleSize/2);
+    ctx.strokeStyle="#f59e42";
+    ctx.stroke();
+  } else if(obj.type==="circle") {
+    ctx.setLineDash([4,4]);
+    ctx.strokeStyle="#facc15";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(obj.cx, obj.cy, obj.r, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    let handleSize=16;
+    let r=obj.r;
+    let angle=obj.angle||0;
+    let rx = obj.cx + r * Math.cos(angle - Math.PI/4);
+    let ry = obj.cy + r * Math.sin(angle - Math.PI/4);
+    ctx.beginPath();
+    ctx.arc(rx, ry, handleSize/2, 0, Math.PI*2);
+    ctx.fillStyle="#fff";
+    ctx.fill();
+    ctx.strokeStyle="#facc15";
+    ctx.stroke();
+
+    let rotHx = obj.cx + r * Math.cos(angle - Math.PI/2) - 28 * Math.sin(angle - Math.PI/2);
+    let rotHy = obj.cy + r * Math.sin(angle - Math.PI/2) + 28 * Math.cos(angle - Math.PI/2);
+    ctx.beginPath();
+    ctx.arc(rotHx, rotHy, handleSize/2, 0, Math.PI*2);
+    ctx.fillStyle = "#f59e42";
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(obj.cx + r * Math.cos(angle - Math.PI/2), obj.cy + r * Math.sin(angle - Math.PI/2));
+    ctx.lineTo(rotHx, rotHy + handleSize/2 * Math.cos(angle));
+    ctx.strokeStyle="#f59e42";
+    ctx.stroke();
+  } else if(obj.type==="triangle" && obj.triangleType!=="freeform") {
+    ctx.save();
+    ctx.translate(obj.cx, obj.cy);
+    ctx.rotate(obj.angle || 0);
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "#facc15";
+    ctx.lineWidth = 2;
+    let pts = getTrianglePoints(obj);
+    let xMin = Math.min(...pts.map(p=>p.x)), xMax = Math.max(...pts.map(p=>p.x));
+    let yMin = Math.min(...pts.map(p=>p.y)), yMax = Math.max(...pts.map(p=>p.y));
+    ctx.strokeRect(xMin, yMin, xMax-xMin, yMax-yMin);
+    ctx.setLineDash([]);
+    const handleSize = 16;
+    const handles = [
+      [xMin, yMin],
+      [xMax, yMin],
+      [xMin, yMax],
+      [xMax, yMax]
+    ];
+    for (const [x, y] of handles) {
+      ctx.beginPath();
+      ctx.arc(x, y, handleSize/2, 0, Math.PI*2);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+      ctx.strokeStyle = "#facc15";
+      ctx.stroke();
+    }
+    let rx = (xMin+xMax)/2, ry = yMin - 32;
+    ctx.beginPath();
+    ctx.arc(rx, ry, handleSize/2, 0, Math.PI*2);
+    ctx.fillStyle = "#f59e42";
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo((xMin+xMax)/2, yMin);
+    ctx.lineTo(rx, ry + handleSize/2);
+    ctx.strokeStyle="#f59e42";
+    ctx.stroke();
+    ctx.restore();
+  } else if(obj.type==="triangle" && obj.triangleType==="freeform") {
+  } else if(obj.type==="quad" && obj.quadType==="freeform") {
+  } else if(obj.type==="line") {
+    ctx.setLineDash([4,4]);
+    ctx.strokeStyle="#facc15";
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(obj.x1,obj.y1);
+    ctx.lineTo(obj.x2,obj.y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    let handleSize=16;
+    [ [obj.x1,obj.y1], [obj.x2,obj.y2]].forEach(([x,y])=>{
+      ctx.beginPath();
+      ctx.arc(x, y, handleSize/2, 0, Math.PI*2);
+      ctx.fillStyle="#fff";
+      ctx.fill();
+      ctx.strokeStyle="#facc15";
+      ctx.stroke();
+    });
+  }
+  ctx.restore();
+}
+// --- Hit tests, geometry helpers --- 
+function getMousePos(e) {
+  const rect = canvas.getBoundingClientRect();
+  let clientX, clientY;
+  if (e.touches && e.touches[0]) {
+    clientX = e.touches[0].clientX;
+    clientY = e.touches[0].clientY;
+  } else {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  }
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return {
+    x: (clientX - rect.left) * scaleX,
+    y: (clientY - rect.top) * scaleY
+  };
+}
+function rotatePoint(x, y, cx, cy, angle) {
+  let dx = x - cx, dy = y - cy;
+  let rx = dx * Math.cos(angle) - dy * Math.sin(angle);
+  let ry = dx * Math.sin(angle) + dy * Math.cos(angle);
+  return {x: rx + cx, y: ry + cy};
+}
+function pointInRotRect(px, py, obj) {
+  let cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
+  let angle = -(obj.angle || 0);
+  let {x, y} = rotatePoint(px, py, cx, cy, angle);
+  let x0 = obj.x, y0 = obj.y, x1 = obj.x + Math.abs(obj.w), y1 = obj.y + Math.abs(obj.h);
+  return x >= Math.min(x0,x1) && x <= Math.max(x0,x1) && y >= Math.min(y0,y1) && y <= Math.max(y0,y1);
+}
+function pointInCircle(px, py, obj) {
+  let cx = obj.cx, cy = obj.cy;
+  let angle = -(obj.angle || 0);
+  let {x, y} = rotatePoint(px, py, cx, cy, angle);
+  return Math.hypot(x-cx, y-cy) <= obj.r;
+}
+function pointInTriangle(px, py, obj) {
+  if(obj.triangleType === "freeform") {
+    return pointInPolygon(px, py, obj.points);
+  }
+  let cx = obj.cx, cy = obj.cy;
+  let angle = -(obj.angle || 0);
+  let {x, y} = rotatePoint(px, py, cx, cy, angle);
+  let pts = getTrianglePoints({...obj, cx: 0, cy: 0});
+  let p = {x, y};
+  function sign(p1, p2, p3) { return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y); }
+  let b1 = sign(p, pts[0], pts[1]) < 0;
+  let b2 = sign(p, pts[1], pts[2]) < 0;
+  let b3 = sign(p, pts[2], pts[0]) < 0;
+  return (b1 == b2) && (b2 == b3);
+}
+function pointInQuad(px, py, obj) {
+  if(obj.type !== "quad" || obj.quadType !== "freeform") return false;
+  let pts = obj.points;
+  return pointInPolygon(px, py, pts);
+}
+function pointInPolygon(px, py, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    let xi = pts[i].x, yi = pts[i].y;
+    let xj = pts[j].x, yj = pts[j].y;
+    if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi + 1e-10) + xi)) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+function pointNearLine(px, py, obj) {
+  let minDist = Math.max(12, (obj.size||5)+8);
+  let {x1,y1,x2,y2} = obj;
+  let dx = x2-x1, dy = y2-y1;
+  let t = ((px-x1)*dx+(py-y1)*dy)/(dx*dx+dy*dy);
+  t=Math.max(0,Math.min(1,t));
+  let ex = x1 + t*dx, ey = y1 + t*dy;
+  let dist = Math.hypot(px-ex,py-ey);
+  return dist < minDist;
+}
+function isPointNearStroke(px, py, obj) {
+  if(obj.type!=="pen" && obj.type!=="eraser") return false;
+  let minDist = Math.max(12, obj.size+8);
+  for(let i=0;i<obj.points.length-1;i++) {
+    let a=obj.points[i], b=obj.points[i+1];
+    let dx = b.x - a.x, dy = b.y - a.y;
+    let t = ((px - a.x) * dx + (py - a.y) * dy) / (dx*dx + dy*dy);
+    t=Math.max(0,Math.min(1,t));
+    let ex = a.x + t*dx, ey = a.y + t*dy;
+    let dist = Math.hypot(px-ex,py-ey);
+    if(dist < minDist) return true;
+  }
+  return false;
+}
+// --- Event handlers ---
+function canvasDown(e) {
+  e.preventDefault();
+  const {x:mx, y:my} = getMousePos(e);
+  startMouse = {x: mx, y: my};
+  if (tool === "pointer") {
+    selectedIdx = -1;
+    let hit = -1;
+    for (let i = objects.length-1; i >= 0; i--) {
+      let obj = objects[i];
+      if(obj.type==="triangle" && obj.triangleType==="freeform") {
+        for(let j=0;j<3;++j) {
+          if(Math.hypot(mx-obj.points[j].x, my-obj.points[j].y)<16) {
+            selectedIdx = i;
+            dragging = true;
+            draggingVertexIndex = j;
+            startBox = JSON.parse(JSON.stringify(obj));
+            startMouse = {x: mx, y: my};
+            draw();
+            return;
+          }
+        }
+      }
+      if(obj.type==="quad" && obj.quadType==="freeform") {
+        for(let j=0;j<4;++j) {
+          if(Math.hypot(mx-obj.points[j].x, my-obj.points[j].y)<16) {
+            selectedIdx = i;
+            dragging = true;
+            draggingQuadVertexIndex = j;
+            startBox = JSON.parse(JSON.stringify(obj));
+            startMouse = {x: mx, y: my};
+            draw();
+            return;
+          }
+        }
+      }
+      let h = hitTestHandle(obj, mx, my);
+      if (h) {
+        selectedIdx = i;
+        dragType = h.type;
+        resizeDir = h.dir;
+        startBox = JSON.parse(JSON.stringify(obj));
+        startMouse = {x: mx, y: my};
+        if (dragType === "rotate") {
+          let cx, cy;
+          if(obj.type==="rect") {
+             cx = obj.x + obj.w/2; cy = obj.y + obj.h/2;
+          } else if(obj.type==="circle" || (obj.type==="triangle" && obj.triangleType!=="freeform")) {
+             cx = obj.cx; cy = obj.cy;
+          }
+          dragRotationStart = {x: mx, y: my};
+          dragAngleStart = obj.angle || 0;
+        }
+        dragging = true;
+        draw();
+        return;
+      }
+
+      let found = false;
+      if(obj.type==="rect" && pointInRotRect(mx, my, obj)) found=true;
+      else if(obj.type==="circle" && pointInCircle(mx, my, obj)) found=true;
+      else if(obj.type==="triangle" && pointInTriangle(mx, my, obj)) found=true;
+      else if(obj.type==="quad" && pointInQuad(mx, my, obj)) found=true;
+      else if(obj.type==="line" && pointNearLine(mx, my, obj)) found=true;
+      else if((obj.type==="pen"||obj.type==="eraser") && isPointNearStroke(mx, my, obj)) found=true;
+
+      if(found) {
+        hit = i;
+        break;
+      }
+    }
+
+    if (hit >= 0) {
+      selectedIdx = hit;
+      dragType = "move";
+      startBox = JSON.parse(JSON.stringify(objects[hit]));
+      dragging = true;
+    }
+    draw();
+  } else if (tool === "pen" || tool === "eraser") {
+    currentStroke = {
+      type: tool,
+      size: currentPenSize,
+      color: currentPenColor,
+      points: [{x: mx, y: my}]
+    };
+    dragging = true;
+  } else if (tool === "triangle" && currentTriangleType === "freeform") {
+    if(!freeformTriangleDrawingState) {
+      freeformTriangleDrawingState = { points: [{x:mx, y:my}] };
+    } else if (freeformTriangleDrawingState.points.length < 3) {
+      freeformTriangleDrawingState.points.push({x:mx, y:my});
+    }
+    if (freeformTriangleDrawingState.points.length === 3) {
+      objects.push({
+        type: 'triangle',
+        points: freeformTriangleDrawingState.points,
+        triangleType: currentTriangleType,
+        color: currentRectColor
+      });
+      freeformTriangleDrawingState = null;
+      saveHistory();
+    }
+    draw();
+  } else if (tool === "quad" && currentQuadType === "freeform") {
+    if(!freeformQuadDrawingState) {
+      freeformQuadDrawingState = { points: [{x:mx, y:my}] };
+    } else if (freeformQuadDrawingState.points.length < 4) {
+      freeformQuadDrawingState.points.push({x:mx, y:my});
+    }
+    if (freeformQuadDrawingState.points.length === 4) {
+      objects.push({
+        type: 'quad',
+        points: freeformQuadDrawingState.points,
+        quadType: currentQuadType,
+        color: currentRectColor
+      });
+      freeformQuadDrawingState = null;
+      saveHistory();
+    }
+    draw();
+  } else if (tool === "rect" || tool === "circle" || tool === "triangle" || tool === "line") {
+    drawingShape = { type: tool, color: currentRectColor };
+    if(tool==="rect") {
+      drawingShape.x = mx;
+      drawingShape.y = my;
+      drawingShape.w = 0;
+      drawingShape.h = 0;
+      drawingShape.angle = 0;
+    }
+    if(tool==="circle") {
+      drawingShape.cx = mx;
+      drawingShape.cy = my;
+      drawingShape.r = 0;
+      drawingShape.angle = 0;
+    }
+    if(tool==="triangle") {
+      drawingShape.cx = mx;
+      drawingShape.cy = my;
+      drawingShape.w = 0;
+      drawingShape.h = 0;
+      drawingShape.angle = 0;
+    }
+    if(tool==="line") {
+      drawingShape.x1 = mx;
+      drawingShape.y1 = my;
+      drawingShape.x2 = mx;
+      drawingShape.y2 = my;
+      drawingShape.size = currentPenSize;
+    }
+    dragging = true;
+  }
+}
+function canvasMove(e) {
+  const {x:mx, y:my} = getMousePos(e);
+  if (tool === "pointer" && dragging && selectedIdx >= 0) {
+    let obj = objects[selectedIdx];
+    let deltaX = mx - startMouse.x;
+    let deltaY = my - startMouse.y;
+
+    if(obj.type==="triangle" && obj.triangleType==="freeform") {
+      if(draggingVertexIndex!==null) {
+        obj.points[draggingVertexIndex] = {x:mx, y:my};
+        draw();
+      } else if(dragType==="move") {
+        for(let i=0;i<3;++i) {
+          obj.points[i].x = startBox.points[i].x + deltaX;
+          obj.points[i].y = startBox.points[i].y + deltaY;
+        }
+        draw();
+      } else if(dragType==="rotate") {
+        let cx = (startBox.points[0].x + startBox.points[1].x + startBox.points[2].x)/3;
+        let cy = (startBox.points[0].y + startBox.points[1].y + startBox.points[2].y)/3;
+        let angleDiff = Math.atan2(my - cy, mx - cx) - Math.atan2(dragRotationStart.y - cy, dragRotationStart.x - cx);
+        let newAngle = dragAngleStart + angleDiff;
+        let originalPoints = startBox.points;
+        obj.points = originalPoints.map(p => {
+          let dx = p.x - cx;
+          let dy = p.y - cy;
+          let r = Math.hypot(dx, dy);
+          let startAngle = Math.atan2(dy, dx);
+          return {
+            x: cx + r * Math.cos(startAngle + angleDiff),
+            y: cy + r * Math.sin(startAngle + angleDiff)
+          };
+        });
+        draw();
+      } else if(dragType==="resize") {
+      }
+    } else if(obj.type==="quad" && obj.quadType==="freeform") {
+      if(draggingQuadVertexIndex!==null) {
+        obj.points[draggingQuadVertexIndex] = {x:mx, y:my};
+        draw();
+      } else if(dragType==="move") {
+        for(let i=0;i<4;++i) {
+          obj.points[i].x = startBox.points[i].x + deltaX;
+          obj.points[i].y = startBox.points[i].y + deltaY;
+        }
+        draw();
+      }
+    } else if (obj.type === "rect" && dragType === "move") {
+      obj.x = startBox.x + deltaX;
+      obj.y = startBox.y + deltaY;
+      draw();
+    } else if(obj.type==="rect" && dragType === "resize") {
+      let box = startBox;
+      let angle = box.angle || 0;
+      let cx = box.x + box.w/2, cy = box.y + box.h/2;
+      let {x:rotatedMx, y:rotatedMy} = rotatePoint(mx, my, cx, cy, -angle);
+      let {x:rotatedStartx, y:rotatedStarty} = rotatePoint(startMouse.x, startMouse.y, cx, cy, -angle);
+      let dx = rotatedMx - rotatedStartx;
+      let dy = rotatedMy - rotatedStarty;
+
+      let rx = rotatedMx, ry = rotatedMy;
+      let x0 = Math.min(box.x, box.x + box.w), y0 = Math.min(box.y, box.y + box.h);
+      let x1 = Math.max(box.x, box.x + box.w), y1 = Math.max(box.y, box.y + box.h);
+      let minW=10, minH=10;
+
+      let tempRectX = box.x, tempRectY = box.y, tempRectW = box.w, tempRectH = box.h;
+      let tempRectCx = box.x + box.w/2, tempRectCy = box.y + box.h/2;
+
+      let newLocalX, newLocalY, newLocalW, newLocalH;
+
+      if (resizeDir==='nw') {
+        let newX = x1 + dx;
+        let newY = y1 + dy;
+        newLocalX = Math.min(rx, x1);
+        newLocalY = Math.min(ry, y1);
+        newLocalW = Math.max(x1 - rx, minW);
+        newLocalH = Math.max(y1 - ry, minH);
+      }
+      if (resizeDir==='ne') {
+        newLocalX = Math.min(x0, rx);
+        newLocalY = Math.min(ry, y1);
+        newLocalW = Math.max(rx - x0, minW);
+        newLocalH = Math.max(y1 - ry, minH);
+      }
+      if (resizeDir==='sw') {
+        newLocalX = Math.min(rx, x1);
+        newLocalY = Math.min(y0, ry);
+        newLocalW = Math.max(x1 - rx, minW);
+        newLocalH = Math.max(ry - y0, minH);
+      }
+      if (resizeDir==='se') {
+        newLocalX = Math.min(x0, rx);
+        newLocalY = Math.min(y0, ry);
+        newLocalW = Math.max(rx - x0, minW);
+        newLocalH = Math.max(ry - y0, minH);
+      }
+
+      let newLocalCx = newLocalX + newLocalW/2;
+      let newLocalCy = newLocalY + newLocalH/2;
+      let newGlobalCenter = rotatePoint(newLocalCx, newLocalCy, tempRectCx, tempRectCy, angle);
+
+      obj.w = newLocalW;
+      obj.h = newLocalH;
+      obj.cx = newGlobalCenter.x;
+      obj.cy = newGlobalCenter.y;
+
+      obj.x = newGlobalCenter.x - obj.w/2;
+      obj.y = newGlobalCenter.y - obj.h/2;
+
+      draw();
+
+    } else if(obj.type==="rect" && dragType === "rotate") {
+      let box = startBox;
+      let cx = box.x + box.w/2, cy = box.y + box.h/2;
+      let a1 = Math.atan2(startMouse.y-cy, startMouse.x-cx);
+      let a2 = Math.atan2(my-cy, mx-cx);
+      obj.angle = (box.angle||0) + (a2 - a1);
+      draw();
+    } else if(obj.type==="circle" && dragType==="resize") {
+      let box = startBox;
+      let cx=box.cx,cy=box.cy,angle=-(box.angle||0);
+      let {x, y}=rotatePoint(mx,my,cx,cy,angle);
+      obj.r = Math.max(Math.hypot(x-cx, y-cy), 10);
+      draw();
+    } else if(obj.type==="circle" && dragType==="move") {
+      obj.cx = startBox.cx + deltaX;
+      obj.cy = startBox.cy + deltaY;
+      draw();
+    } else if(obj.type==="circle" && dragType==="rotate") {
+      let box = startBox;
+      let cx=box.cx, cy=box.cy;
+      let a1 = Math.atan2(startMouse.y-cy, startMouse.x-cx);
+      let a2 = Math.atan2(my-cy, mx-cx);
+      obj.angle = (box.angle||0) + (a2 - a1);
+      draw();
+    } else if(obj.type==="triangle" && obj.triangleType!=="freeform" && dragType==="move") {
+      obj.cx = startBox.cx + deltaX;
+      obj.cy = startBox.cy + deltaY;
+      draw();
+    } else if(obj.type==="triangle" && obj.triangleType!=="freeform" && dragType==="resize") {
+      let box = startBox;
+      let angle = box.angle || 0;
+      let cx = box.cx, cy = box.cy;
+      let {x:rotatedMx, y:rotatedMy} = rotatePoint(mx, my, cx, cy, -angle);
+      let {x:rotatedStartx, y:rotatedStarty} = rotatePoint(startMouse.x, startMouse.y, cx, cy, -angle);
+      let dx = rotatedMx - rotatedStartx;
+      let dy = rotatedMy - rotatedStarty;
+
+      let rx = rotatedMx, ry = rotatedMy;
+      let minW=10, minH=10;
+      let tempRectCx = box.cx, tempRectCy = box.cy;
+
+      let newLocalX, newLocalY, newLocalW, newLocalH;
+
+      let maxW=0, maxH=0;
+      let tPts = getTrianglePoints(box);
+      let xMin = Math.min(...tPts.map(p=>p.x)), xMax = Math.max(...tPts.map(p=>p.x));
+      let yMin = Math.min(...tPts.map(p=>p.y)), yMax = Math.max(...tPts.map(p=>p.y));
+
+      let halfW = (xMax-xMin)/2;
+      let halfH = (yMax-yMin)/2;
+
+      let bbX0 = cx - halfW;
+      let bbY0 = cy - halfH;
+      let bbX1 = cx + halfW;
+      let bbY1 = cy + halfH;
+
+      if (resizeDir==='nw') {
+        newLocalX = Math.min(rx, bbX1);
+        newLocalY = Math.min(ry, bbY1);
+        newLocalW = Math.max(bbX1 - rx, minW);
+        newLocalH = Math.max(bbY1 - ry, minH);
+      }
+      if (resizeDir==='ne') {
+        newLocalX = Math.min(bbX0, rx);
+        newLocalY = Math.min(ry, bbY1);
+        newLocalW = Math.max(rx - bbX0, minW);
+        newLocalH = Math.max(bbY1 - ry, minH);
+      }
+      if (resizeDir==='sw') {
+        newLocalX = Math.min(rx, bbX1);
+        newLocalY = Math.min(bbY0, ry);
+        newLocalW = Math.max(bbX1 - rx, minW);
+        newLocalH = Math.max(ry - bbY0, minH);
+      }
+      if (resizeDir==='se') {
+        newLocalX = Math.min(bbX0, rx);
+        newLocalY = Math.min(bbY0, ry);
+        newLocalW = Math.max(rx - bbX0, minW);
+        newLocalH = Math.max(ry - bbY0, minH);
+      }
+      let newLocalCx = newLocalX + newLocalW/2;
+      let newLocalCy = newLocalY + newLocalH/2;
+      let newGlobalCenter = rotatePoint(newLocalCx, newLocalCy, tempRectCx, tempRectCy, angle);
+      obj.w = newLocalW;
+      obj.h = newLocalH;
+      obj.cx = newGlobalCenter.x;
+      obj.cy = newGlobalCenter.y;
+      draw();
+    } else if(obj.type==="triangle" && obj.triangleType!=="freeform" && dragType==="rotate") {
+      let box = startBox;
+      let cx=box.cx, cy=box.cy;
+      let a1 = Math.atan2(startMouse.y-cy, startMouse.x-cx);
+      let a2 = Math.atan2(my-cy, mx-cx);
+      obj.angle = (box.angle||0) + (a2 - a1);
+      draw();
+    } else if(obj.type==="line" && dragType==="move") {
+      obj.x1 = startBox.x1 + deltaX;
+      obj.y1 = startBox.y1 + deltaY;
+      obj.x2 = startBox.x2 + deltaX;
+      obj.y2 = startBox.y2 + deltaY;
+      draw();
+    } else if(obj.type==="line" && dragType==="resize" && resizeDir==="start") {
+      obj.x1 = mx;
+      obj.y1=my;
+      draw();
+    } else if(obj.type==="line" && dragType==="resize" && resizeDir==="end") {
+      obj.x2 = mx;
+      obj.y2=my;
+      draw();
+    } else if((obj.type==="pen" || obj.type==="eraser") && dragType==="move") {
+      for(let i=0;i<obj.points.length;i++) {
+        obj.points[i].x = startBox.points[i].x + deltaX;
+        obj.points[i].y = startBox.points[i].y + deltaY;
+      }
+      draw();
+    }
+  } else if ((tool === "pen" || tool === "eraser") && dragging && currentStroke) {
+    currentStroke.points.push({x: mx, y: my});
+    draw();
+  } else if (tool === "rect" && dragging && drawingShape) {
+    drawingShape.w = mx - drawingShape.x;
+    drawingShape.h = my - drawingShape.y;
+    draw();
+  } else if (tool === "circle" && dragging && drawingShape) {
+    drawingShape.r = Math.max(Math.hypot(mx - drawingShape.cx, my - drawingShape.cy), 5);
+    draw();
+  } else if (tool === "triangle" && dragging && drawingShape && currentTriangleType!=="freeform") {
+    drawingShape.w = Math.abs(mx - drawingShape.cx) * 2;
+    drawingShape.h = Math.abs(my - drawingShape.cy) * 2;
+    draw();
+  } else if (tool === "line" && dragging && drawingShape) {
+    drawingShape.x2 = mx;
+    drawingShape.y2 = my;
+    draw();
+  }
+}
+function canvasUp(e) {
+  if (tool === "pointer" && dragging && selectedIdx >= 0) {
+    if(JSON.stringify(objects[selectedIdx]) !== JSON.stringify(startBox)) {
+      saveHistory();
+    }
+    draggingVertexIndex = null;
+    draggingQuadVertexIndex = null;
+  }
+  if ((tool === "pen" || tool === "eraser") && dragging && currentStroke) {
+    if (currentStroke.points.length > 1) {
+      objects.push(currentStroke);
+      saveHistory();
+    }
+    currentStroke = null;
+  }
+  if (tool === "rect" && dragging && drawingShape) {
+    let r = drawingShape;
+    if (r.w < 0) { r.x += r.w; r.w = -r.w; }
+    if (r.h < 0) { r.y += r.h; r.h = -r.h; }
+    if (Math.abs(r.w) > 5 && Math.abs(r.h) > 5) objects.push({type:'rect', x:r.x, y:r.y, w:r.w, h:r.h, angle:0, color:currentRectColor});
+    drawingShape = null;
+    saveHistory();
+  }
+  if (tool === "circle" && dragging && drawingShape) {
+    if (drawingShape.r > 5) objects.push({...drawingShape, angle:0});
+    drawingShape = null;
+    saveHistory();
+  }
+  if (tool === "triangle" && dragging && drawingShape && currentTriangleType!=="freeform") {
+    if (drawingShape.w > 5 && drawingShape.h > 5) objects.push({...drawingShape, angle:0, triangleType: currentTriangleType});
+    drawingShape = null;
+    saveHistory();
+  }
+  if (tool === "line" && dragging && drawingShape) {
+    if (Math.abs(drawingShape.x2 - drawingShape.x1) > 5 || Math.abs(drawingShape.y2 - drawingShape.y1) > 5) objects.push({...drawingShape});
+    drawingShape = null;
+    saveHistory();
+  }
+  dragging = false;
+  dragType = null;
+  resizeDir = null;
+  startBox = null;
+  startMouse = null;
+  draw();
+}
+canvas.addEventListener('mousedown', canvasDown);
+canvas.addEventListener('mousemove', canvasMove);
+canvas.addEventListener('mouseup', canvasUp);
+canvas.addEventListener('mouseleave', canvasUp);
+canvas.addEventListener('touchstart', e => {canvasDown(e);});
+canvas.addEventListener('touchmove', e => {canvasMove(e); e.preventDefault();});
+canvas.addEventListener('touchend', canvasUp);
+window.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') undoBtn.click();
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) redoBtn.click();
+  if ((e.key === "Delete" || e.key === "Backspace") && selectedIdx >= 0) {
+    e.preventDefault();
+    deleteBtn.click();
+  }
+});
+// --- Handle resize/rotate handles ---
+function hitTestHandle(obj, mx, my) {
+  let handleSize = 16;
+  if(obj.type==="rect") {
+    let cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
+    let angle = -(obj.angle || 0);
+    let {x, y} = rotatePoint(mx, my, cx, cy, angle);
+    let x0 = obj.x, y0 = obj.y, x1 = obj.x + Math.abs(obj.w), y1 = obj.y + Math.abs(obj.h);
+    const handles = [
+      [x0, y0, 'nw'], [x1, y0, 'ne'], [x0, y1, 'sw'], [x1, y1, 'se']
+    ];
+    for (const [hx, hy, dir] of handles) {
+      if (Math.hypot(x - hx, y - hy) < handleSize) {
+        return {type: "resize", dir: dir};
+      }
+    }
+    let rotHandleLocalX = 0;
+    let rotHandleLocalY = -Math.abs(obj.h)/2 - 32;
+    let rotHx = cx + rotHandleLocalX * Math.cos(angle) - rotHandleLocalY * Math.sin(angle);
+    let rotHy = cy + rotHandleLocalX * Math.sin(angle) + rotHandleLocalY * Math.cos(angle);
+
+    if(Math.hypot(mx-rotHx,my-rotHy)<handleSize) return {type:"rotate"};
+    return null;
+  }
+  if(obj.type==="circle") {
+    let cx = obj.cx, cy = obj.cy;
+    let angle = obj.angle || 0;
+    let r=obj.r;
+    let rx = obj.cx + r * Math.cos(angle - Math.PI/4);
+    let ry = obj.cy + r * Math.sin(angle - Math.PI/4);
+    if(Math.hypot(mx-rx,my-ry)<handleSize) return {type:"resize"};
+
+    let rotHx = obj.cx + r * Math.cos(angle - Math.PI/2) - 28 * Math.sin(angle - Math.PI/2);
+    let rotHy = obj.cy + r * Math.sin(angle - Math.PI/2) + 28 * Math.cos(angle - Math.PI/2);
+    if(Math.hypot(mx-rotHx,my-rotHy)<handleSize) return {type:"rotate"};
+    return null;
+  }
+  if(obj.type==="triangle" && obj.triangleType!=="freeform") {
+    let cx = obj.cx, cy = obj.cy;
+    let angle = -(obj.angle || 0);
+    let {x, y} = rotatePoint(mx, my, cx, cy, angle);
+
+    let tPts = getTrianglePoints(obj);
+    let xMin = Math.min(...tPts.map(p=>p.x)), xMax = Math.max(...tPts.map(p=>p.x));
+    let yMin = Math.min(...tPts.map(p=>p.y)), yMax = Math.max(...tPts.map(p=>p.y));
+
+    const handles = [
+      [xMin, yMin, 'nw'], [xMax, yMin, 'ne'], [xMin, yMax, 'sw'], [xMax, yMax, 'se']
+    ];
+    for (const [hx, hy, dir] of handles) {
+      if (Math.hypot(x - hx, y - hy) < handleSize) {
+        return {type: "resize", dir: dir};
+      }
+    }
+    let rotHandleLocalX = (xMin+xMax)/2;
+    let rotHandleLocalY = yMin - 32;
+
+    let rotHx = cx + rotHandleLocalX * Math.cos(angle) - rotHandleLocalY * Math.sin(angle);
+    let rotHy = cy + rotHandleLocalX * Math.sin(angle) + rotHandleLocalY * Math.cos(angle);
+
+    if(Math.hypot(mx-rotHx,my-rotHy)<handleSize) return {type:"rotate"};
+    return null;
+  }
+  if(obj.type==="line") {
+    if(Math.hypot(mx-obj.x1,my-obj.y1)<handleSize) return {type:"resize",dir:"start"};
+    if(Math.hypot(mx-obj.x2,my-obj.y2)<handleSize) return {type:"resize",dir:"end"};
+    return null;
+  }
+  return null;
+}
+// --- Image import ---
+function loadImage(src, silent, naturalSizeOverride) {
+  const img = new window.Image();
+  img.crossOrigin = "anonymous";
+  img.onload = function() {
+    if (!naturalSizeOverride) {
+      backgroundImageNaturalSize = { width: this.naturalWidth, height: this.naturalHeight };
+    } else {
+      backgroundImageNaturalSize = naturalSizeOverride;
+    }
+    backgroundImageObj = this;
+    backgroundImageSrc = src;
+    fitCanvasToImage();
+    if (!silent) saveHistory();
+  };
+  img.onerror = function() {
+    console.error("Failed to load image from URL/file.");
+    alert("Failed to load image from URL/file.");
+    backgroundImageObj = null;
+    backgroundImageSrc = null;
+    backgroundImageNaturalSize = null;
+    fitCanvasToImage();
+    if (!silent) saveHistory();
+  };
+  img.src = src;
+}
+imageUpload.onchange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      loadImage(e.target.result, false);
+    };
+    reader.readAsDataURL(file);
+  }
+};
+loadImageBtn.onclick = () => {
+  if (imageUrl.value.trim()) {
+    loadImage(imageUrl.value.trim(), false);
+  }
+};
+clearImageBtn.onclick = () => {
+  backgroundImageObj = null;
+  backgroundImageSrc = null;
+  backgroundImageNaturalSize = null;
+  fitCanvasToImage();
+  saveHistory();
+};
+// --- Color Swatch/Picker Handlers ---
+function renderColorSwatches() {
+  penColorSwatches.innerHTML = '';
+  PEN_COLORS.forEach(col => {
+    const btn = document.createElement('div');
+    btn.className = 'color-swatch' + (col.toLowerCase() === currentPenColor.toLowerCase() ? ' selected' : '');
+    btn.style.background = col;
+    btn.onclick = () => {
+      currentPenColor = col;
+      penColorPicker.value = col;
+      renderColorSwatches();
+    };
+    penColorSwatches.appendChild(btn);
+  });
+  penColorPicker.value = currentPenColor;
+
+  rectColorSwatches.innerHTML = '';
+  RECT_COLORS.forEach(col => {
+    const btn = document.createElement('div');
+    btn.className = 'color-swatch' + (col.toLowerCase() === currentRectColor.toLowerCase() ? ' selected' : '');
+    btn.style.background = col;
+    btn.onclick = () => {
+      currentRectColor = col;
+      rectColorPicker.value = col;
+      renderColorSwatches();
+    };
+    rectColorSwatches.appendChild(btn);
+  });
+  rectColorPicker.value = currentRectColor;
+
+  bgColorSwatches.innerHTML = '';
+  BG_COLORS.forEach(col => {
+    const btn = document.createElement('div');
+    btn.className = 'color-swatch' + (col.toLowerCase() === currentBgColor.toLowerCase() ? ' selected' : '');
+    btn.style.background = col;
+    btn.onclick = () => {
+      currentBgColor = col;
+      bgColorPicker.value = col;
+      draw();
+      renderColorSwatches();
+      saveHistory();
+    };
+    bgColorSwatches.appendChild(btn);
+  });
+  bgColorPicker.value = currentBgColor;
+}
+penColorPicker.addEventListener('change', e => {
+  currentPenColor = e.target.value;
+  renderColorSwatches();
+});
+rectColorPicker.addEventListener('change', e => {
+  currentRectColor = e.target.value;
+  renderColorSwatches();
+});
+bgColorPicker.addEventListener('change', e => {
+  currentBgColor = e.target.value;
+  renderColorSwatches();
+  draw();
+  saveHistory();
+});
+
+// --- Pen size ---
+sizeBtns.forEach(btn => {
+  btn.onclick = () => {
+    sizeBtns.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    currentPenSize = parseInt(btn.dataset.size);
+  };
+});
+
+// =====================================================
+// NEW: MULTI-QUESTION ASSIGNMENT SYSTEM
+// =====================================================
+
+const assignmentBar = document.getElementById('assignmentBar');
+const questionIndicator = document.getElementById('questionIndicator');
+const questionTitle = document.getElementById('questionTitle');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+// Save current question state to allQuestionsWork
+function saveCurrentQuestionState() {
+  if (!assignmentMode || !assignmentData) return;
+  allQuestionsWork[currentQuestionIndex] = {
+    objects: JSON.parse(JSON.stringify(objects)),
+    history: JSON.parse(JSON.stringify(history)),
+    historyIndex: historyIndex,
+    bgColor: currentBgColor,
+    backgroundImageSrc: backgroundImageSrc,
+    backgroundImageNaturalSize: backgroundImageNaturalSize ? {...backgroundImageNaturalSize} : null
+  };
+}
+
+// Load question state from allQuestionsWork
+function loadQuestionState(index) {
+  const state = allQuestionsWork[index];
+  if (state && state.objects) {
+    objects = JSON.parse(JSON.stringify(state.objects));
+    history = JSON.parse(JSON.stringify(state.history));
+    historyIndex = state.historyIndex;
+    currentBgColor = state.bgColor || "#151922";
+    bgColorPicker.value = currentBgColor;
+    renderColorSwatches();
+    if (state.backgroundImageSrc) {
+      loadImage(state.backgroundImageSrc, true, state.backgroundImageNaturalSize);
+    } else {
+      backgroundImageObj = null;
+      backgroundImageSrc = null;
+      backgroundImageNaturalSize = null;
+      fitCanvasToImage();
+    }
+  } else {
+    // Fresh question - load the image from assignment data
+    objects = [];
+    history = [];
+    historyIndex = -1;
+    selectedIdx = -1;
+    currentBgColor = "#151922";
+    bgColorPicker.value = currentBgColor;
+    renderColorSwatches();
+    
+    const q = assignmentData.questions[index];
+    if (q && q.image) {
+      loadImage(q.image, true);
+    } else {
+      backgroundImageObj = null;
+      backgroundImageSrc = null;
+      backgroundImageNaturalSize = null;
+      fitCanvasToImage();
+    }
+    saveHistory();
+  }
+  draw();
+}
+
+// Update the navigation UI
+function updateAssignmentUI() {
+  if (!assignmentMode || !assignmentData) return;
+  const total = assignmentData.questions.length;
+  questionIndicator.textContent = `Question ${currentQuestionIndex + 1} of ${total}`;
+  const q = assignmentData.questions[currentQuestionIndex];
+  questionTitle.textContent = q.title || '';
+  
+  prevBtn.disabled = currentQuestionIndex === 0;
+  nextBtn.disabled = currentQuestionIndex === total - 1;
+}
+
+// Navigate to previous question
+function prevQuestion() {
+  if (currentQuestionIndex > 0) {
+    saveCurrentQuestionState();
+    currentQuestionIndex--;
+    loadQuestionState(currentQuestionIndex);
+    updateAssignmentUI();
+  }
+}
+
+// Navigate to next question
+function nextQuestion() {
+  if (currentQuestionIndex < assignmentData.questions.length - 1) {
+    saveCurrentQuestionState();
+    currentQuestionIndex++;
+    loadQuestionState(currentQuestionIndex);
+    updateAssignmentUI();
+  }
+}
+
+// Copy all work as a single stitched image
+async function copyAllWork() {
+  if (!assignmentMode || !assignmentData) {
+    // If not in assignment mode, just copy the current canvas
+    copyBtn.click();
+    return;
+  }
+
+  // Save current work first
+  saveCurrentQuestionState();
+
+  const total = assignmentData.questions.length;
+  const padding = 20;
+  const headerHeight = 40;
+  
+  // Calculate final canvas dimensions
+  const singleWidth = canvas.width;
+  const singleHeight = canvas.height;
+  const finalWidth = singleWidth + (padding * 2);
+  const finalHeight = (singleHeight + headerHeight) * total + padding * (total + 1);
+
+  // Create the final canvas
+  const finalCanvas = document.createElement('canvas');
+  finalCanvas.width = finalWidth;
+  finalCanvas.height = finalHeight;
+  const fctx = finalCanvas.getContext('2d');
+
+  // Fill background
+  fctx.fillStyle = '#1f2937';
+  fctx.fillRect(0, 0, finalWidth, finalHeight);
+
+  // Draw assignment title at top
+  fctx.fillStyle = '#ffffff';
+  fctx.font = 'bold 18px sans-serif';
+  fctx.textAlign = 'center';
+  fctx.fillText(assignmentData.title || 'Assignment', finalWidth / 2, padding + 20);
+
+  // Store current state
+  const originalIndex = currentQuestionIndex;
+  const originalObjects = JSON.parse(JSON.stringify(objects));
+  const originalHistory = JSON.parse(JSON.stringify(history));
+  const originalHistoryIndex = historyIndex;
+  const originalBgColor = currentBgColor;
+  const originalBgImageSrc = backgroundImageSrc;
+  const originalBgImageNaturalSize = backgroundImageNaturalSize ? {...backgroundImageNaturalSize} : null;
+
+  // Render each question
+  for (let i = 0; i < total; i++) {
+    const yOffset = padding + (i * (singleHeight + headerHeight + padding)) + headerHeight;
+    
+    // Draw question header
+    fctx.fillStyle = '#3b82f6';
+    fctx.fillRect(padding, yOffset - headerHeight, singleWidth, headerHeight);
+    fctx.fillStyle = '#ffffff';
+    fctx.font = 'bold 14px sans-serif';
+    fctx.textAlign = 'left';
+    const qTitle = assignmentData.questions[i].title || `Question ${i + 1}`;
+    fctx.fillText(`Q${i + 1}: ${qTitle}`, padding + 10, yOffset - 12);
+
+    // Load question state and render
+    loadQuestionState(i);
+    
+    // Wait for any images to load
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Draw the canvas content
+    fctx.drawImage(canvas, padding, yOffset);
+    
+    // Draw border
+    fctx.strokeStyle = '#4b5563';
+    fctx.lineWidth = 2;
+    fctx.strokeRect(padding, yOffset, singleWidth, singleHeight);
+  }
+
+  // Restore original state
+  objects = originalObjects;
+  history = originalHistory;
+  historyIndex = originalHistoryIndex;
+  currentBgColor = originalBgColor;
+  bgColorPicker.value = currentBgColor;
+  renderColorSwatches();
+  if (originalBgImageSrc) {
+    loadImage(originalBgImageSrc, true, originalBgImageNaturalSize);
+  } else {
+    backgroundImageObj = null;
+    backgroundImageSrc = null;
+    backgroundImageNaturalSize = null;
+    fitCanvasToImage();
+  }
+  currentQuestionIndex = originalIndex;
+  updateAssignmentUI();
+  draw();
+
+  // Copy to clipboard
+  finalCanvas.toBlob(function(blob) {
+    if (blob && navigator.clipboard && navigator.clipboard.write) {
+      try {
+        const item = new ClipboardItem({'image/png': blob});
+        navigator.clipboard.write([item]).then(function() {
+          alert('All answers copied to clipboard! You can now paste into your assignment.');
+        }, function(err) {
+          console.error('Could not copy:', err);
+          // Fallback: download
+          downloadFallback(finalCanvas);
+        });
+      } catch (e) {
+        console.error('Error:', e);
+        downloadFallback(finalCanvas);
+      }
+    } else {
+      downloadFallback(finalCanvas);
+    }
+  }, 'image/png');
+}
+
+function downloadFallback(canvas) {
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL('image/png');
+  link.download = 'my-answers.png';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  alert('Image downloaded! Please upload it to your assignment.');
+}
+
+// Load assignment from URL parameter
+async function loadAssignmentFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const assignmentID = urlParams.get('assignment');
+  
+  if (!assignmentID) {
+    // No assignment - run in normal standalone mode
+    return;
+  }
+
+  // Show loading state
+  assignmentBar.classList.add('active');
+  questionIndicator.textContent = 'Loading assignment...';
+  questionTitle.textContent = '';
+
+  try {
+    // Fetch the assignments.json from your GitHub repo
+    const jsonURL = 'https://martinlh77.github.io/AI-apps/mathapps/daily-work/assignments.json';
+    const response = await fetch(jsonURL);
+    
+    if (!response.ok) {
+      throw new Error('Could not load assignments file');
+    }
+    
+    const assignments = await response.json();
+    
+    // Find the matching assignment
+    const assignment = assignments.find(a => a.id === assignmentID);
+    
+    if (!assignment) {
+      throw new Error(`Assignment "${assignmentID}" not found`);
+    }
+    
+    if (!assignment.questions || assignment.questions.length === 0) {
+      throw new Error('Assignment has no questions');
+    }
+
+    // Initialize assignment mode
+    assignmentMode = true;
+    assignmentData = assignment;
+    currentQuestionIndex = 0;
+    allQuestionsWork = new Array(assignment.questions.length).fill(null);
+
+    // Load the first question
+    loadQuestionState(0);
+    updateAssignmentUI();
+
+  } catch (err) {
+    console.error('Error loading assignment:', err);
+    assignmentBar.classList.remove('active');
+    alert('Error loading assignment: ' + err.message);
+  }
+}
+
+// Initialization
+setTool("pointer");
+renderColorSwatches();
+sizeBtns[1].classList.add('selected');
+fitCanvasToImage();
+saveHistory();
+
+// Load assignment if URL parameter exists
+loadAssignmentFromURL();
+</script>
+</body>
+</html>
