@@ -57,7 +57,6 @@
     .vertex-handle {
       cursor: pointer;
     }
-    /* NEW: Assignment Navigation Bar */
     #assignmentBar {
       background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
       border: 1px solid #3b82f6;
@@ -99,9 +98,13 @@
       transition: all 0.2s;
       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
-    .copy-all-btn:hover {
+    .copy-all-btn:hover:not(:disabled) {
       transform: scale(1.05);
       box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+    .copy-all-btn:disabled {
+      opacity: 0.7;
+      cursor: wait;
     }
   </style>
 </head>
@@ -114,7 +117,6 @@
     </button>
   </div>
 
-  <!-- NEW: Assignment Navigation Bar -->
   <div id="assignmentBar" class="w-full max-w-4xl flex flex-col md:flex-row items-center justify-between gap-3">
     <div class="flex items-center gap-3">
       <button id="prevBtn" class="nav-btn" onclick="prevQuestion()">← Previous</button>
@@ -311,12 +313,14 @@ let freeformTriangleDrawingState = null;
 let freeformQuadDrawingState = null;
 let draggingVertexIndex = null;
 let draggingQuadVertexIndex = null;
+let dragRotationStart = null;
+let dragAngleStart = 0;
 
-// NEW: Multi-Question Assignment System
+// Multi-Question Assignment System
 let assignmentMode = false;
 let assignmentData = null;
 let currentQuestionIndex = 0;
-let allQuestionsWork = []; // Array of {objects, history, historyIndex, bgColor, backgroundImageSrc, backgroundImageNaturalSize}
+let allQuestionsWork = [];
 
 const SWATCH_COLORS = [
   "#ffffff", "#111111", "#ff0000", "#0000ff", "#008000", "#ffff00", "#800080"
@@ -341,7 +345,7 @@ function setMode(dark) {
 }
 modeToggle.onclick = () => setMode(!isDarkMode);
 
-// --- History (now includes image info and bg color) ---
+// --- History ---
 function saveHistory() {
   history = history.slice(0, historyIndex + 1);
   history.push({
@@ -353,11 +357,11 @@ function saveHistory() {
   historyIndex++;
   updateUndoRedo();
   
-  // NEW: Auto-save to allQuestionsWork if in assignment mode
   if (assignmentMode) {
     saveCurrentQuestionState();
   }
 }
+
 function restoreHistory(idx) {
   if (idx < 0 || idx >= history.length) return;
   const state = history[idx];
@@ -377,6 +381,7 @@ function restoreHistory(idx) {
   draw();
   updateUndoRedo();
 }
+
 function updateUndoRedo() {
   undoBtn.disabled = historyIndex <= 0;
   redoBtn.disabled = historyIndex >= history.length - 1;
@@ -411,6 +416,7 @@ function setTool(t) {
   draw();
   updateUndoRedo();
 }
+
 pointerBtn.onclick = () => setTool("pointer");
 penBtn.onclick = () => setTool("pen");
 eraserBtn.onclick = () => setTool("eraser");
@@ -428,12 +434,14 @@ undoBtn.onclick = () => {
     restoreHistory(historyIndex);
   }
 };
+
 redoBtn.onclick = () => {
   if (historyIndex < history.length - 1) {
     historyIndex++;
     restoreHistory(historyIndex);
   }
 };
+
 resetBtn.onclick = () => {
   objects = [];
   selectedIdx = -1;
@@ -447,6 +455,7 @@ resetBtn.onclick = () => {
   saveHistory();
   draw();
 };
+
 saveBtn.onclick = () => {
   const link = document.createElement('a');
   link.href = canvas.toDataURL("image/png");
@@ -455,13 +464,12 @@ saveBtn.onclick = () => {
   link.click();
   document.body.removeChild(link);
 };
-// Copy to Clipboard functionality
+
 copyBtn.onclick = () => {
   if (!navigator.clipboard || !navigator.clipboard.write) {
     alert('Copy to clipboard is only supported in secure contexts (HTTPS/localhost).');
     return;
   }
-
   canvas.toBlob(function(blob) {
     if (blob) {
       try {
@@ -469,17 +477,18 @@ copyBtn.onclick = () => {
         navigator.clipboard.write([item]).then(function() {
         }, function(err) {
           console.error('Could not copy drawing: ', err);
-          alert('Failed to copy drawing to clipboard. Check the console for errors.');
+          alert('Failed to copy drawing to clipboard.');
         });
       } catch (e) {
         console.error('Error creating clipboard item:', e);
-        alert('Failed to copy drawing to clipboard. The browser might not support copying image data directly.');
+        alert('Failed to copy drawing to clipboard.');
       }
     } else {
       alert('Could not convert canvas to image data.');
     }
   }, 'image/png');
 };
+
 deleteBtn.onclick = function() {
   if(selectedIdx>=0) {
     objects.splice(selectedIdx,1);
@@ -541,6 +550,7 @@ function draw() {
   }
   updateUndoRedo();
 }
+
 function drawShape(obj, selected, ghost) {
   if (obj.type === 'rect') drawRect(obj, selected, ghost);
   else if (obj.type === 'circle') drawCircle(obj, selected, ghost);
@@ -554,6 +564,7 @@ function drawShape(obj, selected, ghost) {
   else if (obj.type === 'line') drawLine(obj, selected, ghost);
   else if (obj.type === 'pen' || obj.type === 'eraser') drawPen(obj, selected);
 }
+
 function drawRect(obj, selected, ghost) {
   ctx.save();
   ctx.translate(obj.x + obj.w/2, obj.y + obj.h/2);
@@ -569,6 +580,7 @@ function drawRect(obj, selected, ghost) {
   ctx.stroke();
   ctx.restore();
 }
+
 function drawCircle(obj, selected, ghost) {
   ctx.save();
   ctx.translate(obj.cx, obj.cy);
@@ -584,6 +596,7 @@ function drawCircle(obj, selected, ghost) {
   ctx.stroke();
   ctx.restore();
 }
+
 function getTrianglePoints(obj) {
   let {cx, cy, w, h, angle=0, triangleType="isosceles"} = obj;
   if (!triangleType) triangleType = "isosceles";
@@ -603,6 +616,7 @@ function getTrianglePoints(obj) {
   }
   return pts;
 }
+
 function drawTriangle(obj, selected, ghost) {
   ctx.save();
   ctx.translate(obj.cx, obj.cy);
@@ -622,6 +636,7 @@ function drawTriangle(obj, selected, ghost) {
   ctx.stroke();
   ctx.restore();
 }
+
 function drawFreeformTriangle(obj, selected, ghost) {
   ctx.save();
   ctx.globalAlpha = ghost ? 0.45 : 0.9;
@@ -636,7 +651,6 @@ function drawFreeformTriangle(obj, selected, ghost) {
   ctx.strokeStyle = selected ? "#facc15" : "#222";
   ctx.lineWidth = 2;
   ctx.stroke();
-
   if(selected) {
     for(let i=0; i<3; ++i) {
       ctx.save();
@@ -653,6 +667,7 @@ function drawFreeformTriangle(obj, selected, ghost) {
   }
   ctx.restore();
 }
+
 function drawFreeformTriangleDraft() {
   ctx.save();
   ctx.globalAlpha = 0.4;
@@ -672,6 +687,7 @@ function drawFreeformTriangleDraft() {
   }
   ctx.restore();
 }
+
 function drawFreeformQuad(obj, selected, ghost) {
   ctx.save();
   ctx.globalAlpha = ghost ? 0.45 : 0.9;
@@ -687,7 +703,6 @@ function drawFreeformQuad(obj, selected, ghost) {
   ctx.strokeStyle = selected ? "#facc15" : "#222";
   ctx.lineWidth = 2;
   ctx.stroke();
-
   if(selected) {
     for(let i=0; i<4; ++i) {
       ctx.save();
@@ -704,6 +719,7 @@ function drawFreeformQuad(obj, selected, ghost) {
   }
   ctx.restore();
 }
+
 function drawFreeformQuadDraft() {
   ctx.save();
   ctx.globalAlpha = 0.4;
@@ -731,6 +747,7 @@ function drawFreeformQuadDraft() {
   }
   ctx.restore();
 }
+
 function drawLine(obj, selected, ghost) {
   ctx.save();
   ctx.globalAlpha = ghost ? 0.45 : 0.9;
@@ -754,6 +771,7 @@ function drawLine(obj, selected, ghost) {
   }
   ctx.restore();
 }
+
 function drawPen(obj, selected) {
   ctx.save();
   ctx.strokeStyle = obj.type === "eraser" ? currentBgColor : obj.color;
@@ -780,6 +798,7 @@ function drawPen(obj, selected) {
   }
   ctx.restore();
 }
+
 function drawHandles(obj) {
   ctx.save();
   if(obj.type==="rect") {
@@ -836,7 +855,6 @@ function drawHandles(obj) {
     ctx.fill();
     ctx.strokeStyle="#facc15";
     ctx.stroke();
-
     let rotHx = obj.cx + r * Math.cos(angle - Math.PI/2) - 28 * Math.sin(angle - Math.PI/2);
     let rotHy = obj.cy + r * Math.sin(angle - Math.PI/2) + 28 * Math.cos(angle - Math.PI/2);
     ctx.beginPath();
@@ -890,8 +908,6 @@ function drawHandles(obj) {
     ctx.strokeStyle="#f59e42";
     ctx.stroke();
     ctx.restore();
-  } else if(obj.type==="triangle" && obj.triangleType==="freeform") {
-  } else if(obj.type==="quad" && obj.quadType==="freeform") {
   } else if(obj.type==="line") {
     ctx.setLineDash([4,4]);
     ctx.strokeStyle="#facc15";
@@ -913,6 +929,7 @@ function drawHandles(obj) {
   }
   ctx.restore();
 }
+
 // --- Hit tests, geometry helpers --- 
 function getMousePos(e) {
   const rect = canvas.getBoundingClientRect();
@@ -931,12 +948,14 @@ function getMousePos(e) {
     y: (clientY - rect.top) * scaleY
   };
 }
+
 function rotatePoint(x, y, cx, cy, angle) {
   let dx = x - cx, dy = y - cy;
   let rx = dx * Math.cos(angle) - dy * Math.sin(angle);
   let ry = dx * Math.sin(angle) + dy * Math.cos(angle);
   return {x: rx + cx, y: ry + cy};
 }
+
 function pointInRotRect(px, py, obj) {
   let cx = obj.x + obj.w/2, cy = obj.y + obj.h/2;
   let angle = -(obj.angle || 0);
@@ -944,12 +963,14 @@ function pointInRotRect(px, py, obj) {
   let x0 = obj.x, y0 = obj.y, x1 = obj.x + Math.abs(obj.w), y1 = obj.y + Math.abs(obj.h);
   return x >= Math.min(x0,x1) && x <= Math.max(x0,x1) && y >= Math.min(y0,y1) && y <= Math.max(y0,y1);
 }
+
 function pointInCircle(px, py, obj) {
   let cx = obj.cx, cy = obj.cy;
   let angle = -(obj.angle || 0);
   let {x, y} = rotatePoint(px, py, cx, cy, angle);
   return Math.hypot(x-cx, y-cy) <= obj.r;
 }
+
 function pointInTriangle(px, py, obj) {
   if(obj.triangleType === "freeform") {
     return pointInPolygon(px, py, obj.points);
@@ -965,11 +986,13 @@ function pointInTriangle(px, py, obj) {
   let b3 = sign(p, pts[2], pts[0]) < 0;
   return (b1 == b2) && (b2 == b3);
 }
+
 function pointInQuad(px, py, obj) {
   if(obj.type !== "quad" || obj.quadType !== "freeform") return false;
   let pts = obj.points;
   return pointInPolygon(px, py, pts);
 }
+
 function pointInPolygon(px, py, pts) {
   let inside = false;
   for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
@@ -981,6 +1004,7 @@ function pointInPolygon(px, py, pts) {
   }
   return inside;
 }
+
 function pointNearLine(px, py, obj) {
   let minDist = Math.max(12, (obj.size||5)+8);
   let {x1,y1,x2,y2} = obj;
@@ -991,6 +1015,7 @@ function pointNearLine(px, py, obj) {
   let dist = Math.hypot(px-ex,py-ey);
   return dist < minDist;
 }
+
 function isPointNearStroke(px, py, obj) {
   if(obj.type!=="pen" && obj.type!=="eraser") return false;
   let minDist = Math.max(12, obj.size+8);
@@ -1005,6 +1030,7 @@ function isPointNearStroke(px, py, obj) {
   }
   return false;
 }
+
 // --- Event handlers ---
 function canvasDown(e) {
   e.preventDefault();
@@ -1062,7 +1088,6 @@ function canvasDown(e) {
         draw();
         return;
       }
-
       let found = false;
       if(obj.type==="rect" && pointInRotRect(mx, my, obj)) found=true;
       else if(obj.type==="circle" && pointInCircle(mx, my, obj)) found=true;
@@ -1070,13 +1095,11 @@ function canvasDown(e) {
       else if(obj.type==="quad" && pointInQuad(mx, my, obj)) found=true;
       else if(obj.type==="line" && pointNearLine(mx, my, obj)) found=true;
       else if((obj.type==="pen"||obj.type==="eraser") && isPointNearStroke(mx, my, obj)) found=true;
-
       if(found) {
         hit = i;
         break;
       }
     }
-
     if (hit >= 0) {
       selectedIdx = hit;
       dragType = "move";
@@ -1158,6 +1181,7 @@ function canvasDown(e) {
     dragging = true;
   }
 }
+
 function canvasMove(e) {
   const {x:mx, y:my} = getMousePos(e);
   if (tool === "pointer" && dragging && selectedIdx >= 0) {
@@ -1179,7 +1203,6 @@ function canvasMove(e) {
         let cx = (startBox.points[0].x + startBox.points[1].x + startBox.points[2].x)/3;
         let cy = (startBox.points[0].y + startBox.points[1].y + startBox.points[2].y)/3;
         let angleDiff = Math.atan2(my - cy, mx - cx) - Math.atan2(dragRotationStart.y - cy, dragRotationStart.x - cx);
-        let newAngle = dragAngleStart + angleDiff;
         let originalPoints = startBox.points;
         obj.points = originalPoints.map(p => {
           let dx = p.x - cx;
@@ -1192,7 +1215,6 @@ function canvasMove(e) {
           };
         });
         draw();
-      } else if(dragType==="resize") {
       }
     } else if(obj.type==="quad" && obj.quadType==="freeform") {
       if(draggingQuadVertexIndex!==null) {
@@ -1214,23 +1236,13 @@ function canvasMove(e) {
       let angle = box.angle || 0;
       let cx = box.x + box.w/2, cy = box.y + box.h/2;
       let {x:rotatedMx, y:rotatedMy} = rotatePoint(mx, my, cx, cy, -angle);
-      let {x:rotatedStartx, y:rotatedStarty} = rotatePoint(startMouse.x, startMouse.y, cx, cy, -angle);
-      let dx = rotatedMx - rotatedStartx;
-      let dy = rotatedMy - rotatedStarty;
-
       let rx = rotatedMx, ry = rotatedMy;
       let x0 = Math.min(box.x, box.x + box.w), y0 = Math.min(box.y, box.y + box.h);
       let x1 = Math.max(box.x, box.x + box.w), y1 = Math.max(box.y, box.y + box.h);
       let minW=10, minH=10;
-
-      let tempRectX = box.x, tempRectY = box.y, tempRectW = box.w, tempRectH = box.h;
       let tempRectCx = box.x + box.w/2, tempRectCy = box.y + box.h/2;
-
       let newLocalX, newLocalY, newLocalW, newLocalH;
-
       if (resizeDir==='nw') {
-        let newX = x1 + dx;
-        let newY = y1 + dy;
         newLocalX = Math.min(rx, x1);
         newLocalY = Math.min(ry, y1);
         newLocalW = Math.max(x1 - rx, minW);
@@ -1254,21 +1266,16 @@ function canvasMove(e) {
         newLocalW = Math.max(rx - x0, minW);
         newLocalH = Math.max(ry - y0, minH);
       }
-
       let newLocalCx = newLocalX + newLocalW/2;
       let newLocalCy = newLocalY + newLocalH/2;
       let newGlobalCenter = rotatePoint(newLocalCx, newLocalCy, tempRectCx, tempRectCy, angle);
-
       obj.w = newLocalW;
       obj.h = newLocalH;
       obj.cx = newGlobalCenter.x;
       obj.cy = newGlobalCenter.y;
-
       obj.x = newGlobalCenter.x - obj.w/2;
       obj.y = newGlobalCenter.y - obj.h/2;
-
       draw();
-
     } else if(obj.type==="rect" && dragType === "rotate") {
       let box = startBox;
       let cx = box.x + box.w/2, cy = box.y + box.h/2;
@@ -1302,29 +1309,19 @@ function canvasMove(e) {
       let angle = box.angle || 0;
       let cx = box.cx, cy = box.cy;
       let {x:rotatedMx, y:rotatedMy} = rotatePoint(mx, my, cx, cy, -angle);
-      let {x:rotatedStartx, y:rotatedStarty} = rotatePoint(startMouse.x, startMouse.y, cx, cy, -angle);
-      let dx = rotatedMx - rotatedStartx;
-      let dy = rotatedMy - rotatedStarty;
-
       let rx = rotatedMx, ry = rotatedMy;
       let minW=10, minH=10;
       let tempRectCx = box.cx, tempRectCy = box.cy;
-
-      let newLocalX, newLocalY, newLocalW, newLocalH;
-
-      let maxW=0, maxH=0;
       let tPts = getTrianglePoints(box);
       let xMin = Math.min(...tPts.map(p=>p.x)), xMax = Math.max(...tPts.map(p=>p.x));
       let yMin = Math.min(...tPts.map(p=>p.y)), yMax = Math.max(...tPts.map(p=>p.y));
-
       let halfW = (xMax-xMin)/2;
       let halfH = (yMax-yMin)/2;
-
       let bbX0 = cx - halfW;
       let bbY0 = cy - halfH;
       let bbX1 = cx + halfW;
       let bbY1 = cy + halfH;
-
+      let newLocalX, newLocalY, newLocalW, newLocalH;
       if (resizeDir==='nw') {
         newLocalX = Math.min(rx, bbX1);
         newLocalY = Math.min(ry, bbY1);
@@ -1405,6 +1402,7 @@ function canvasMove(e) {
     draw();
   }
 }
+
 function canvasUp(e) {
   if (tool === "pointer" && dragging && selectedIdx >= 0) {
     if(JSON.stringify(objects[selectedIdx]) !== JSON.stringify(startBox)) {
@@ -1450,6 +1448,7 @@ function canvasUp(e) {
   startMouse = null;
   draw();
 }
+
 canvas.addEventListener('mousedown', canvasDown);
 canvas.addEventListener('mousemove', canvasMove);
 canvas.addEventListener('mouseup', canvasUp);
@@ -1457,6 +1456,7 @@ canvas.addEventListener('mouseleave', canvasUp);
 canvas.addEventListener('touchstart', e => {canvasDown(e);});
 canvas.addEventListener('touchmove', e => {canvasMove(e); e.preventDefault();});
 canvas.addEventListener('touchend', canvasUp);
+
 window.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'z') undoBtn.click();
   if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) redoBtn.click();
@@ -1465,6 +1465,7 @@ window.addEventListener('keydown', e => {
     deleteBtn.click();
   }
 });
+
 // --- Handle resize/rotate handles ---
 function hitTestHandle(obj, mx, my) {
   let handleSize = 16;
@@ -1485,7 +1486,6 @@ function hitTestHandle(obj, mx, my) {
     let rotHandleLocalY = -Math.abs(obj.h)/2 - 32;
     let rotHx = cx + rotHandleLocalX * Math.cos(angle) - rotHandleLocalY * Math.sin(angle);
     let rotHy = cy + rotHandleLocalX * Math.sin(angle) + rotHandleLocalY * Math.cos(angle);
-
     if(Math.hypot(mx-rotHx,my-rotHy)<handleSize) return {type:"rotate"};
     return null;
   }
@@ -1496,7 +1496,6 @@ function hitTestHandle(obj, mx, my) {
     let rx = obj.cx + r * Math.cos(angle - Math.PI/4);
     let ry = obj.cy + r * Math.sin(angle - Math.PI/4);
     if(Math.hypot(mx-rx,my-ry)<handleSize) return {type:"resize"};
-
     let rotHx = obj.cx + r * Math.cos(angle - Math.PI/2) - 28 * Math.sin(angle - Math.PI/2);
     let rotHy = obj.cy + r * Math.sin(angle - Math.PI/2) + 28 * Math.cos(angle - Math.PI/2);
     if(Math.hypot(mx-rotHx,my-rotHy)<handleSize) return {type:"rotate"};
@@ -1506,11 +1505,9 @@ function hitTestHandle(obj, mx, my) {
     let cx = obj.cx, cy = obj.cy;
     let angle = -(obj.angle || 0);
     let {x, y} = rotatePoint(mx, my, cx, cy, angle);
-
     let tPts = getTrianglePoints(obj);
     let xMin = Math.min(...tPts.map(p=>p.x)), xMax = Math.max(...tPts.map(p=>p.x));
     let yMin = Math.min(...tPts.map(p=>p.y)), yMax = Math.max(...tPts.map(p=>p.y));
-
     const handles = [
       [xMin, yMin, 'nw'], [xMax, yMin, 'ne'], [xMin, yMax, 'sw'], [xMax, yMax, 'se']
     ];
@@ -1521,10 +1518,8 @@ function hitTestHandle(obj, mx, my) {
     }
     let rotHandleLocalX = (xMin+xMax)/2;
     let rotHandleLocalY = yMin - 32;
-
     let rotHx = cx + rotHandleLocalX * Math.cos(angle) - rotHandleLocalY * Math.sin(angle);
     let rotHy = cy + rotHandleLocalX * Math.sin(angle) + rotHandleLocalY * Math.cos(angle);
-
     if(Math.hypot(mx-rotHx,my-rotHy)<handleSize) return {type:"rotate"};
     return null;
   }
@@ -1535,6 +1530,7 @@ function hitTestHandle(obj, mx, my) {
   }
   return null;
 }
+
 // --- Image import ---
 function loadImage(src, silent, naturalSizeOverride) {
   const img = new window.Image();
@@ -1552,7 +1548,6 @@ function loadImage(src, silent, naturalSizeOverride) {
   };
   img.onerror = function() {
     console.error("Failed to load image from URL/file.");
-    alert("Failed to load image from URL/file.");
     backgroundImageObj = null;
     backgroundImageSrc = null;
     backgroundImageNaturalSize = null;
@@ -1561,6 +1556,7 @@ function loadImage(src, silent, naturalSizeOverride) {
   };
   img.src = src;
 }
+
 imageUpload.onchange = (e) => {
   const file = e.target.files[0];
   if (file) {
@@ -1571,11 +1567,13 @@ imageUpload.onchange = (e) => {
     reader.readAsDataURL(file);
   }
 };
+
 loadImageBtn.onclick = () => {
   if (imageUrl.value.trim()) {
     loadImage(imageUrl.value.trim(), false);
   }
 };
+
 clearImageBtn.onclick = () => {
   backgroundImageObj = null;
   backgroundImageSrc = null;
@@ -1583,6 +1581,7 @@ clearImageBtn.onclick = () => {
   fitCanvasToImage();
   saveHistory();
 };
+
 // --- Color Swatch/Picker Handlers ---
 function renderColorSwatches() {
   penColorSwatches.innerHTML = '';
@@ -1629,14 +1628,17 @@ function renderColorSwatches() {
   });
   bgColorPicker.value = currentBgColor;
 }
+
 penColorPicker.addEventListener('change', e => {
   currentPenColor = e.target.value;
   renderColorSwatches();
 });
+
 rectColorPicker.addEventListener('change', e => {
   currentRectColor = e.target.value;
   renderColorSwatches();
 });
+
 bgColorPicker.addEventListener('change', e => {
   currentBgColor = e.target.value;
   renderColorSwatches();
@@ -1654,7 +1656,7 @@ sizeBtns.forEach(btn => {
 });
 
 // =====================================================
-// NEW: MULTI-QUESTION ASSIGNMENT SYSTEM
+// MULTI-QUESTION ASSIGNMENT SYSTEM
 // =====================================================
 
 const assignmentBar = document.getElementById('assignmentBar');
@@ -1663,7 +1665,6 @@ const questionTitle = document.getElementById('questionTitle');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 
-// Save current question state to allQuestionsWork
 function saveCurrentQuestionState() {
   if (!assignmentMode || !assignmentData) return;
   allQuestionsWork[currentQuestionIndex] = {
@@ -1672,11 +1673,12 @@ function saveCurrentQuestionState() {
     historyIndex: historyIndex,
     bgColor: currentBgColor,
     backgroundImageSrc: backgroundImageSrc,
-    backgroundImageNaturalSize: backgroundImageNaturalSize ? {...backgroundImageNaturalSize} : null
+    backgroundImageNaturalSize: backgroundImageNaturalSize ? {...backgroundImageNaturalSize} : null,
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height
   };
 }
 
-// Load question state from allQuestionsWork
 function loadQuestionState(index) {
   const state = allQuestionsWork[index];
   if (state && state.objects) {
@@ -1695,7 +1697,6 @@ function loadQuestionState(index) {
       fitCanvasToImage();
     }
   } else {
-    // Fresh question - load the image from assignment data
     objects = [];
     history = [];
     historyIndex = -1;
@@ -1703,7 +1704,6 @@ function loadQuestionState(index) {
     currentBgColor = "#151922";
     bgColorPicker.value = currentBgColor;
     renderColorSwatches();
-    
     const q = assignmentData.questions[index];
     if (q && q.image) {
       loadImage(q.image, true);
@@ -1718,19 +1718,16 @@ function loadQuestionState(index) {
   draw();
 }
 
-// Update the navigation UI
 function updateAssignmentUI() {
   if (!assignmentMode || !assignmentData) return;
   const total = assignmentData.questions.length;
   questionIndicator.textContent = `Question ${currentQuestionIndex + 1} of ${total}`;
   const q = assignmentData.questions[currentQuestionIndex];
   questionTitle.textContent = q.title || '';
-  
   prevBtn.disabled = currentQuestionIndex === 0;
   nextBtn.disabled = currentQuestionIndex === total - 1;
 }
 
-// Navigate to previous question
 function prevQuestion() {
   if (currentQuestionIndex > 0) {
     saveCurrentQuestionState();
@@ -1740,7 +1737,6 @@ function prevQuestion() {
   }
 }
 
-// Navigate to next question
 function nextQuestion() {
   if (currentQuestionIndex < assignmentData.questions.length - 1) {
     saveCurrentQuestionState();
@@ -1750,10 +1746,233 @@ function nextQuestion() {
   }
 }
 
+// Helper: Load an image and return a Promise
+function loadImageAsync(src) {
+  return new Promise((resolve) => {
+    if (!src) {
+      resolve(null);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+// Helper: Render a single object to a given context (with optional scaling)
+function renderObjectToContext(ctx, obj, bgColor, scaleX = 1, scaleY = 1) {
+  ctx.save();
+  
+  if (obj.type === 'rect') {
+    const x = obj.x * scaleX;
+    const y = obj.y * scaleY;
+    const w = obj.w * scaleX;
+    const h = obj.h * scaleY;
+    ctx.translate(x + w/2, y + h/2);
+    ctx.rotate(obj.angle || 0);
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = obj.color || "#4f93fa";
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.rect(-Math.abs(w)/2, -Math.abs(h)/2, Math.abs(w), Math.abs(h));
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.stroke();
+  } 
+  else if (obj.type === 'circle') {
+    const cx = obj.cx * scaleX;
+    const cy = obj.cy * scaleY;
+    const r = obj.r * Math.min(scaleX, scaleY);
+    ctx.translate(cx, cy);
+    ctx.rotate(obj.angle || 0);
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI*2);
+    ctx.fillStyle = obj.color || "#4f93fa";
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  else if (obj.type === 'triangle') {
+    if (obj.triangleType === "freeform") {
+      ctx.globalAlpha = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(obj.points[0].x * scaleX, obj.points[0].y * scaleY);
+      ctx.lineTo(obj.points[1].x * scaleX, obj.points[1].y * scaleY);
+      ctx.lineTo(obj.points[2].x * scaleX, obj.points[2].y * scaleY);
+      ctx.closePath();
+      ctx.fillStyle = obj.color || "#4f93fa";
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else {
+      const cx = obj.cx * scaleX;
+      const cy = obj.cy * scaleY;
+      const w = obj.w * scaleX;
+      const h = obj.h * scaleY;
+      ctx.translate(cx, cy);
+      ctx.rotate(obj.angle || 0);
+      ctx.globalAlpha = 0.9;
+      let pts;
+      if (obj.triangleType === "right") {
+        pts = [
+          {x: -w/2, y: h/2},
+          {x: -w/2, y: -h/2},
+          {x: w/2, y: h/2}
+        ];
+      } else {
+        pts = [
+          {x: 0, y: -h/2},
+          {x: -w/2, y: h/2},
+          {x: w/2, y: h/2}
+        ];
+      }
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      ctx.lineTo(pts[1].x, pts[1].y);
+      ctx.lineTo(pts[2].x, pts[2].y);
+      ctx.closePath();
+      ctx.fillStyle = obj.color || "#4f93fa";
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+  else if (obj.type === 'quad' && obj.quadType === "freeform") {
+    ctx.globalAlpha = 0.9;
+    ctx.beginPath();
+    ctx.moveTo(obj.points[0].x * scaleX, obj.points[0].y * scaleY);
+    ctx.lineTo(obj.points[1].x * scaleX, obj.points[1].y * scaleY);
+    ctx.lineTo(obj.points[2].x * scaleX, obj.points[2].y * scaleY);
+    ctx.lineTo(obj.points[3].x * scaleX, obj.points[3].y * scaleY);
+    ctx.closePath();
+    ctx.fillStyle = obj.color || "#4f93fa";
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = "#222";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+  else if (obj.type === 'line') {
+    ctx.globalAlpha = 0.9;
+    ctx.strokeStyle = obj.color || "#4f93fa";
+    ctx.lineWidth = (obj.size || 5) * Math.min(scaleX, scaleY);
+    ctx.beginPath();
+    ctx.moveTo(obj.x1 * scaleX, obj.y1 * scaleY);
+    ctx.lineTo(obj.x2 * scaleX, obj.y2 * scaleY);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  else if (obj.type === 'pen' || obj.type === 'eraser') {
+    ctx.strokeStyle = obj.type === "eraser" ? bgColor : obj.color;
+    ctx.lineWidth = obj.size * Math.min(scaleX, scaleY);
+    ctx.lineJoin = ctx.lineCap = "round";
+    ctx.beginPath();
+    obj.points.forEach((pt, idx) => {
+      const px = pt.x * scaleX;
+      const py = pt.y * scaleY;
+      if (idx === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+  }
+  
+  ctx.restore();
+}
+
+// Render a single question to an off-screen canvas
+async function renderQuestionToCanvas(questionIndex) {
+  const state = allQuestionsWork[questionIndex];
+  const qData = assignmentData.questions[questionIndex];
+  
+  // Create off-screen canvas
+  const offCanvas = document.createElement('canvas');
+  const offCtx = offCanvas.getContext('2d');
+  
+  // Determine the image source for this question
+  let imageSrc = null;
+  if (state && state.backgroundImageSrc) {
+    imageSrc = state.backgroundImageSrc;
+  } else if (qData && qData.image) {
+    imageSrc = qData.image;
+  }
+  
+  // Load the background image for this question
+  let bgImg = null;
+  if (imageSrc) {
+    bgImg = await loadImageAsync(imageSrc);
+  }
+  
+  // Determine canvas size based on the image or saved canvas size
+  let targetWidth = 800;
+  let targetHeight = 600;
+  
+  if (bgImg) {
+    targetWidth = bgImg.naturalWidth;
+    targetHeight = bgImg.naturalHeight;
+  } else if (state && state.canvasWidth && state.canvasHeight) {
+    targetWidth = state.canvasWidth;
+    targetHeight = state.canvasHeight;
+  }
+  
+  // Cap the size to reasonable dimensions
+  const maxWidth = 1024;
+  const maxHeight = 800;
+  const scale = Math.min(maxWidth / targetWidth, maxHeight / targetHeight, 1);
+  const finalWidth = Math.round(targetWidth * scale);
+  const finalHeight = Math.round(targetHeight * scale);
+  
+  offCanvas.width = finalWidth;
+  offCanvas.height = finalHeight;
+  
+  // Draw background color
+  const bgColor = (state && state.bgColor) ? state.bgColor : '#151922';
+  offCtx.fillStyle = bgColor;
+  offCtx.fillRect(0, 0, finalWidth, finalHeight);
+  
+  // Draw background image
+  if (bgImg) {
+    offCtx.globalAlpha = 0.95;
+    offCtx.drawImage(bgImg, 0, 0, finalWidth, finalHeight);
+    offCtx.globalAlpha = 1;
+  }
+  
+  // Draw all objects for this question
+  const questionObjects = (state && state.objects) ? state.objects : [];
+  
+  // Calculate scale factors based on the saved canvas size vs render size
+  let objScaleX = 1;
+  let objScaleY = 1;
+  
+  if (state && state.canvasWidth && state.canvasHeight) {
+    objScaleX = finalWidth / state.canvasWidth;
+    objScaleY = finalHeight / state.canvasHeight;
+  }
+  
+  questionObjects.forEach(obj => {
+    renderObjectToContext(offCtx, obj, bgColor, objScaleX, objScaleY);
+  });
+  
+  return {
+    canvas: offCanvas,
+    width: finalWidth,
+    height: finalHeight,
+    title: qData.title || `Question ${questionIndex + 1}`
+  };
+}
+
 // Copy all work as a single stitched image
 async function copyAllWork() {
   if (!assignmentMode || !assignmentData) {
-    // If not in assignment mode, just copy the current canvas
     copyBtn.click();
     return;
   }
@@ -1764,105 +1983,102 @@ async function copyAllWork() {
   const total = assignmentData.questions.length;
   const padding = 20;
   const headerHeight = 40;
+  const normalizedWidth = 800;
   
-  // Calculate final canvas dimensions
-  const singleWidth = canvas.width;
-  const singleHeight = canvas.height;
-  const finalWidth = singleWidth + (padding * 2);
-  const finalHeight = (singleHeight + headerHeight) * total + padding * (total + 1);
+  // Show loading indicator
+  const copyAllBtn = document.querySelector('.copy-all-btn');
+  const originalText = copyAllBtn.innerHTML;
+  copyAllBtn.innerHTML = '⏳ Generating...';
+  copyAllBtn.disabled = true;
 
-  // Create the final canvas
-  const finalCanvas = document.createElement('canvas');
-  finalCanvas.width = finalWidth;
-  finalCanvas.height = finalHeight;
-  const fctx = finalCanvas.getContext('2d');
-
-  // Fill background
-  fctx.fillStyle = '#1f2937';
-  fctx.fillRect(0, 0, finalWidth, finalHeight);
-
-  // Draw assignment title at top
-  fctx.fillStyle = '#ffffff';
-  fctx.font = 'bold 18px sans-serif';
-  fctx.textAlign = 'center';
-  fctx.fillText(assignmentData.title || 'Assignment', finalWidth / 2, padding + 20);
-
-  // Store current state
-  const originalIndex = currentQuestionIndex;
-  const originalObjects = JSON.parse(JSON.stringify(objects));
-  const originalHistory = JSON.parse(JSON.stringify(history));
-  const originalHistoryIndex = historyIndex;
-  const originalBgColor = currentBgColor;
-  const originalBgImageSrc = backgroundImageSrc;
-  const originalBgImageNaturalSize = backgroundImageNaturalSize ? {...backgroundImageNaturalSize} : null;
-
-  // Render each question
-  for (let i = 0; i < total; i++) {
-    const yOffset = padding + (i * (singleHeight + headerHeight + padding)) + headerHeight;
+  try {
+    // Render each question to its own canvas
+    const renderedQuestions = [];
+    for (let i = 0; i < total; i++) {
+      const rendered = await renderQuestionToCanvas(i);
+      renderedQuestions.push(rendered);
+    }
     
-    // Draw question header
-    fctx.fillStyle = '#3b82f6';
-    fctx.fillRect(padding, yOffset - headerHeight, singleWidth, headerHeight);
-    fctx.fillStyle = '#ffffff';
-    fctx.font = 'bold 14px sans-serif';
-    fctx.textAlign = 'left';
-    const qTitle = assignmentData.questions[i].title || `Question ${i + 1}`;
-    fctx.fillText(`Q${i + 1}: ${qTitle}`, padding + 10, yOffset - 12);
-
-    // Load question state and render
-    loadQuestionState(i);
+    // Calculate final dimensions
+    let totalHeight = padding;
+    const scaledHeights = [];
     
-    // Wait for any images to load
-    await new Promise(resolve => setTimeout(resolve, 100));
+    for (let i = 0; i < renderedQuestions.length; i++) {
+      const r = renderedQuestions[i];
+      const aspectRatio = r.height / r.width;
+      const scaledHeight = Math.round(normalizedWidth * aspectRatio);
+      scaledHeights.push(scaledHeight);
+      totalHeight += headerHeight + scaledHeight + padding;
+    }
     
-    // Draw the canvas content
-    fctx.drawImage(canvas, padding, yOffset);
+    const finalWidth = normalizedWidth + (padding * 2);
+    const finalHeight = totalHeight;
+
+    // Create the final canvas
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = finalWidth;
+    finalCanvas.height = finalHeight;
+    const fctx = finalCanvas.getContext('2d');
+
+    // Fill background
+    fctx.fillStyle = '#1f2937';
+    fctx.fillRect(0, 0, finalWidth, finalHeight);
+
+    // Draw each question
+    let yOffset = padding;
     
-    // Draw border
-    fctx.strokeStyle = '#4b5563';
-    fctx.lineWidth = 2;
-    fctx.strokeRect(padding, yOffset, singleWidth, singleHeight);
-  }
+    for (let i = 0; i < renderedQuestions.length; i++) {
+      const r = renderedQuestions[i];
+      const scaledHeight = scaledHeights[i];
+      
+      // Draw question header
+      fctx.fillStyle = '#3b82f6';
+      fctx.fillRect(padding, yOffset, normalizedWidth, headerHeight);
+      fctx.fillStyle = '#ffffff';
+      fctx.font = 'bold 16px sans-serif';
+      fctx.textAlign = 'left';
+      fctx.fillText(`Q${i + 1}: ${r.title}`, padding + 12, yOffset + 26);
+      
+      yOffset += headerHeight;
+      
+      // Draw the question's canvas content (scaled to normalizedWidth)
+      fctx.drawImage(r.canvas, padding, yOffset, normalizedWidth, scaledHeight);
+      
+      // Draw border
+      fctx.strokeStyle = '#4b5563';
+      fctx.lineWidth = 2;
+      fctx.strokeRect(padding, yOffset, normalizedWidth, scaledHeight);
+      
+      yOffset += scaledHeight + padding;
+    }
 
-  // Restore original state
-  objects = originalObjects;
-  history = originalHistory;
-  historyIndex = originalHistoryIndex;
-  currentBgColor = originalBgColor;
-  bgColorPicker.value = currentBgColor;
-  renderColorSwatches();
-  if (originalBgImageSrc) {
-    loadImage(originalBgImageSrc, true, originalBgImageNaturalSize);
-  } else {
-    backgroundImageObj = null;
-    backgroundImageSrc = null;
-    backgroundImageNaturalSize = null;
-    fitCanvasToImage();
-  }
-  currentQuestionIndex = originalIndex;
-  updateAssignmentUI();
-  draw();
-
-  // Copy to clipboard
-  finalCanvas.toBlob(function(blob) {
-    if (blob && navigator.clipboard && navigator.clipboard.write) {
-      try {
-        const item = new ClipboardItem({'image/png': blob});
-        navigator.clipboard.write([item]).then(function() {
-          alert('All answers copied to clipboard! You can now paste into your assignment.');
-        }, function(err) {
-          console.error('Could not copy:', err);
-          // Fallback: download
+    // Copy to clipboard
+    finalCanvas.toBlob(function(blob) {
+      if (blob && navigator.clipboard && navigator.clipboard.write) {
+        try {
+          const item = new ClipboardItem({'image/png': blob});
+          navigator.clipboard.write([item]).then(function() {
+            alert('✅ All answers copied to clipboard!\n\nYou can now paste (Ctrl+V) into your Canvas assignment.');
+          }, function(err) {
+            console.error('Could not copy:', err);
+            downloadFallback(finalCanvas);
+          });
+        } catch (e) {
+          console.error('Error:', e);
           downloadFallback(finalCanvas);
-        });
-      } catch (e) {
-        console.error('Error:', e);
+        }
+      } else {
         downloadFallback(finalCanvas);
       }
-    } else {
-      downloadFallback(finalCanvas);
-    }
-  }, 'image/png');
+    }, 'image/png');
+
+  } catch (err) {
+    console.error('Error generating final image:', err);
+    alert('Error generating image. Please try again.');
+  } finally {
+    copyAllBtn.innerHTML = originalText;
+    copyAllBtn.disabled = false;
+  }
 }
 
 function downloadFallback(canvas) {
@@ -1881,17 +2097,14 @@ async function loadAssignmentFromURL() {
   const assignmentID = urlParams.get('assignment');
   
   if (!assignmentID) {
-    // No assignment - run in normal standalone mode
     return;
   }
 
-  // Show loading state
   assignmentBar.classList.add('active');
   questionIndicator.textContent = 'Loading assignment...';
   questionTitle.textContent = '';
 
   try {
-    // Fetch the assignments.json from your GitHub repo
     const jsonURL = 'https://martinlh77.github.io/AI-apps/mathapps/daily-work/assignments.json';
     const response = await fetch(jsonURL);
     
@@ -1900,8 +2113,6 @@ async function loadAssignmentFromURL() {
     }
     
     const assignments = await response.json();
-    
-    // Find the matching assignment
     const assignment = assignments.find(a => a.id === assignmentID);
     
     if (!assignment) {
@@ -1912,13 +2123,11 @@ async function loadAssignmentFromURL() {
       throw new Error('Assignment has no questions');
     }
 
-    // Initialize assignment mode
     assignmentMode = true;
     assignmentData = assignment;
     currentQuestionIndex = 0;
     allQuestionsWork = new Array(assignment.questions.length).fill(null);
 
-    // Load the first question
     loadQuestionState(0);
     updateAssignmentUI();
 
@@ -1935,8 +2144,6 @@ renderColorSwatches();
 sizeBtns[1].classList.add('selected');
 fitCanvasToImage();
 saveHistory();
-
-// Load assignment if URL parameter exists
 loadAssignmentFromURL();
 </script>
 </body>
