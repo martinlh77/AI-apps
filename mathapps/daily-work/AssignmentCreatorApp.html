@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Assignment Creator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card { background: #1f2937; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #374151; }
+        body { background: #111827; color: #f3f4f6; font-family: sans-serif; }
+        input, select { background: #374151; border: 1px solid #4b5563; color: white; padding: 8px; border-radius: 6px; width: 100%; }
+        label { display: block; font-size: 0.875rem; color: #9ca3af; margin-bottom: 4px; margin-top: 12px;}
+        button { transition: all 0.2s; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body class="p-4 md:p-8 max-w-4xl mx-auto">
+
+    <header class="mb-8 border-b border-gray-700 pb-4">
+        <h1 class="text-3xl font-bold text-blue-400">Math Assignment Creator</h1>
+        <p class="text-gray-400">Build assignments and push them directly to GitHub.</p>
+    </header>
+
+    <!-- SECTION 1: SETTINGS -->
+    <details class="card" id="settingsSection">
+        <summary class="text-xl font-semibold cursor-pointer text-gray-200">⚙️ GitHub Configuration</summary>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div>
+                <label>GitHub Token (PAT)</label>
+                <input type="password" id="ghToken" placeholder="github_pat_...">
+            </div>
+            <div>
+                <label>Username</label>
+                <input type="text" id="ghOwner" placeholder="martinlh77">
+            </div>
+            <div>
+                <label>Repository Name</label>
+                <input type="text" id="ghRepo" placeholder="AI-apps">
+            </div>
+            <div>
+                <label>File Path</label>
+                <input type="text" id="ghPath" placeholder="mathapps/daily-work/assignments.json">
+            </div>
+        </div>
+        <button onclick="saveSettings()" class="mt-4 bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-bold text-sm">Save Settings Locally</button>
+    </details>
+
+    <!-- SECTION 2: ASSIGNMENT INFO -->
+    <div class="card">
+        <h2 class="text-xl font-semibold mb-4 text-gray-200">📝 Assignment Details</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label>Assignment Title</label>
+                <input type="text" id="assignTitle" placeholder="e.g., Weekly Math Quiz #4">
+            </div>
+            <div>
+                <label>Assignment ID (Unique, no spaces)</label>
+                <input type="text" id="assignID" placeholder="e.g., jan-27-quiz">
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3: QUESTIONS -->
+    <div class="card">
+        <h2 class="text-xl font-semibold mb-4 text-gray-200">❓ Questions</h2>
+        <div id="questionsList" class="space-y-6">
+            <!-- Questions injected here -->
+        </div>
+        <button onclick="addQuestion()" class="mt-6 w-full py-3 border-2 border-dashed border-gray-600 rounded-lg text-gray-400 hover:border-blue-500 hover:text-blue-500 font-bold">+ Add Another Question</button>
+    </div>
+
+    <!-- SECTION 4: ACTIONS -->
+    <div class="flex flex-col gap-4">
+        <button onclick="pushToGitHub()" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg">
+            🚀 Push Assignment to GitHub
+        </button>
+        <div id="statusOutput" class="hidden p-4 rounded-lg text-center font-mono text-sm"></div>
+    </div>
+
+    <script>
+        let questions = [];
+
+        // --- Init & Settings ---
+        window.onload = () => {
+            document.getElementById('ghToken').value = localStorage.getItem('ghToken') || '';
+            document.getElementById('ghOwner').value = localStorage.getItem('ghOwner') || 'martinlh77';
+            document.getElementById('ghRepo').value = localStorage.getItem('ghRepo') || 'AI-apps';
+            document.getElementById('ghPath').value = localStorage.getItem('ghPath') || 'mathapps/daily-work/assignments.json';
+            
+            if (!localStorage.getItem('ghToken')) {
+                document.getElementById('settingsSection').open = true;
+            }
+            addQuestion(); // Start with one question
+        };
+
+        function saveSettings() {
+            localStorage.setItem('ghToken', document.getElementById('ghToken').value);
+            localStorage.setItem('ghOwner', document.getElementById('ghOwner').value);
+            localStorage.setItem('ghRepo', document.getElementById('ghRepo').value);
+            localStorage.setItem('ghPath', document.getElementById('ghPath').value);
+            alert("Settings saved to browser memory!");
+        }
+
+        // --- Question Management ---
+        function addQuestion() {
+            const id = Date.now();
+            const qObj = { id, title: '', image: '' };
+            questions.push(qObj);
+            renderQuestions();
+        }
+
+        function removeQuestion(id) {
+            questions = questions.filter(q => q.id !== id);
+            renderQuestions();
+        }
+
+        function updateQ(id, field, value) {
+            const q = questions.find(q => q.id === id);
+            if (q) q[field] = value;
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsList');
+            container.innerHTML = '';
+            questions.forEach((q, index) => {
+                const div = document.createElement('div');
+                div.className = "bg-gray-800 p-4 rounded-lg border border-gray-700 relative";
+                div.innerHTML = `
+                    <button onclick="removeQuestion(${q.id})" class="absolute top-2 right-2 text-red-400 hover:text-red-300">✕</button>
+                    <h3 class="text-blue-400 font-bold mb-2">Question ${index + 1}</h3>
+                    <label>Question Prompt / Instructions</label>
+                    <input type="text" value="${q.title}" onchange="updateQ(${q.id}, 'title', this.value)" placeholder="e.g., Draw a quadrilateral with two right angles.">
+                    
+                    <div class="mt-4 flex flex-col md:flex-row gap-4 items-end">
+                        <div class="flex-grow">
+                            <label>Image Source (Catbox URL)</label>
+                            <input type="text" id="url-${q.id}" value="${q.image}" onchange="updateQ(${q.id}, 'image', this.value)" placeholder="https://files.catbox.moe/...">
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="file" id="file-${q.id}" class="hidden" onchange="uploadToCatbox(${q.id})">
+                            <button onclick="document.getElementById('file-${q.id}').click()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded text-sm font-bold whitespace-nowrap">
+                                📁 Upload File
+                            </button>
+                        </div>
+                    </div>
+                    <div id="loader-${q.id}" class="hidden text-xs text-blue-400 mt-2">Uploading to Catbox...</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- Catbox API ---
+        async function uploadToCatbox(qId) {
+            const fileInput = document.getElementById(`file-${qId}`);
+            const loader = document.getElementById(`loader-${qId}`);
+            if (!fileInput.files[0]) return;
+
+            loader.classList.remove('hidden');
+            
+            const formData = new FormData();
+            formData.append('reqtype', 'fileupload');
+            formData.append('fileToUpload', fileInput.files[0]);
+
+            try {
+                // Using a CORS proxy because Catbox doesn't allow direct browser uploads from different domains
+                const response = await fetch('https://corsproxy.io/?' + encodeURIComponent('https://catbox.moe/user/api.php'), {
+                    method: 'POST',
+                    body: formData
+                });
+                const url = await response.text();
+                
+                if (url.includes('https://files.catbox.moe/')) {
+                    document.getElementById(`url-${qId}`).value = url;
+                    updateQ(qId, 'image', url);
+                    loader.innerText = "✅ Upload Successful!";
+                } else {
+                    throw new Error(url);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Upload failed. Try entering the URL manually or check your internet.");
+                loader.innerText = "❌ Upload Failed";
+            }
+        }
+
+        // --- GitHub API Logic ---
+        async function pushToGitHub() {
+            const btn = document.getElementById('submitBtn');
+            const status = document.getElementById('statusOutput');
+            const token = document.getElementById('ghToken').value;
+            const owner = document.getElementById('ghOwner').value;
+            const repo = document.getElementById('ghRepo').value;
+            const path = document.getElementById('ghPath').value;
+            const assignTitle = document.getElementById('assignTitle').value;
+            const assignID = document.getElementById('assignID').value;
+
+            if (!token || !assignID) return alert("Please fill in the Token and Assignment ID.");
+
+            btn.disabled = true;
+            btn.innerText = "Connecting to GitHub...";
+            status.className = "p-4 rounded-lg text-center font-mono text-sm bg-gray-800 text-blue-400 block";
+            status.innerText = "Fetching current assignments.json...";
+
+            try {
+                const apiBase = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+                const headers = { 
+                    "Authorization": `token ${token}`,
+                    "Accept": "application/vnd.github.v3+json"
+                };
+
+                // 1. Get the current file (to get the 'sha')
+                const getRes = await fetch(apiBase, { headers });
+                if (!getRes.ok) throw new Error("Could not find assignments.json. Check your path.");
+                const fileData = await getRes.json();
+                const currentSHA = fileData.sha;
+                const existingContent = JSON.parse(atob(fileData.content));
+
+                // 2. Add the new assignment
+                const newAssignment = {
+                    id: assignID,
+                    title: assignTitle,
+                    date: new Date().toLocaleDateString(),
+                    questions: questions.map(q => ({ title: q.title, image: q.image }))
+                };
+
+                // Check if ID already exists and update or add
+                const index = existingContent.findIndex(a => a.id === assignID);
+                if (index > -1) {
+                    existingContent[index] = newAssignment;
+                } else {
+                    existingContent.push(newAssignment);
+                }
+
+                // 3. Push back to GitHub
+                status.innerText = "Pushing updates to GitHub...";
+                const updateRes = await fetch(apiBase, {
+                    method: 'PUT',
+                    headers,
+                    body: JSON.stringify({
+                        message: `Add assignment: ${assignTitle}`,
+                        content: btoa(JSON.stringify(existingContent, null, 2)),
+                        sha: currentSHA
+                    })
+                });
+
+                if (updateRes.ok) {
+                    const boardUrl = `https://${owner}.github.io/${repo}/mathapps/daily-work/Drawing_Board_V17.html?assignment=${assignID}`;
+                    status.className = "p-4 rounded-lg text-center font-mono text-sm bg-green-900 text-green-300 block";
+                    status.innerHTML = `
+                        <strong>Success!</strong> Assignment is live.<br><br>
+                        <div class="bg-black p-2 rounded mt-2 select-all">${boardUrl}</div>
+                        <p class="mt-2 text-xs">Copy this link into Nearpod or Canvas.</p>
+                    `;
+                } else {
+                    throw new Error("Failed to update file.");
+                }
+
+            } catch (err) {
+                status.className = "p-4 rounded-lg text-center font-mono text-sm bg-red-900 text-red-300 block";
+                status.innerText = "Error: " + err.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "🚀 Push Assignment to GitHub";
+            }
+        }
+    </script>
+</body>
+</html>
