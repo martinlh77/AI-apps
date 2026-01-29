@@ -356,7 +356,7 @@ async function generateImage() {
     els.btnGenLoader.classList.remove('hidden');
 
     // ADDED: &_t=${Date.now()} to prevent caching
-    const url = `https://gen.pollinations.ai/api/generate/image/${encodeURIComponent(prompt)}?model=${model}&seed=${seed}&enhance=true&nologo=true&width=1024&height=1024&key=${POLLINATIONS_KEY}&_t=${Date.now()}`;
+    const url = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?model=${model}&seed=${seed}&enhance=true&nologo=true&width=1024&height=1024&key=${POLLINATIONS_KEY}&_t=${Date.now()}`;
     
     try {
         await loadAndDisplayImage(url);
@@ -908,5 +908,6 @@ if (pos.x >= globalX && pos.x <= globalX + p.width &&
 </body>
 
 </html>
+
 
 
