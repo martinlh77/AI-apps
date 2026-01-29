@@ -1238,7 +1238,11 @@ flux<!DOCTYPE html>
             </div>`;
     };
 
-    marked.use({ renderer });
+   marked.use({ 
+    renderer,
+    gfm: true,
+    breaks: true 
+});
 
     // --- Preview Functions ---
     window.previewCode = function(codeId, lang) {
@@ -2853,6 +2857,7 @@ flux<!DOCTYPE html>
 </body>
 
 </html>
+
 
 
 
