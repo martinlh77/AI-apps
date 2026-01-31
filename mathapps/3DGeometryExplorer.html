@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Advanced Geometry Explorer</title>
+   <style>
+       * {
+           margin: 0;
+           padding: 0;
+           box-sizing: border-box;
+       }
+       
+       body {
+           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+           background: #0f172a;
+           color: #e2e8f0;
+           overflow: hidden;
+       }
+       
+       #canvas-container {
+           position: absolute;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           z-index: 1;
+       }
+       
+       #ui-panel {
+           position: absolute;
+           right: 20px;
+           top: 20px;
+           width: 400px;
+           background: rgba(15, 23, 42, 0.95);
+           backdrop-filter: blur(12px);
+           border: 1px solid rgba(148, 163, 184, 0.2);
+           border-radius: 16px;
+           padding: 24px;
+           z-index: 10;
+           max-height: 90vh;
+           overflow-y: auto;
+           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+       }
+       
+       h1 {
+           font-size: 1.5rem;
+           margin-bottom: 4px;
+           background: linear-gradient(135deg, #60a5fa, #a855f7);
+           -webkit-background-clip: text;
+           -webkit-text-fill-color: transparent;
+       }
+       
+       .subtitle {
+           font-size: 0.875rem;
+           color: #94a3b8;
+           margin-bottom: 24px;
+       }
+       
+       .control-group {
+           margin-bottom: 20px;
+           padding-bottom: 20px;
+           border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+       }
+       
+       .control-group:last-child {
+           border-bottom: none;
+       }
+       
+       label {
+           display: block;
+           font-size: 0.875rem;
+           font-weight: 600;
+           margin-bottom: 8px;
+           color: #cbd5e1;
+           text-transform: uppercase;
+           letter-spacing: 0.05em;
+       }
+       
+       .shape-selector {
+           display: grid;
+           grid-template-columns: 1fr 1fr 1fr;
+           gap: 8px;
+           margin-bottom: 16px;
+       }
+       
+       .shape-btn {
+           background: rgba(30, 41, 59, 0.8);
+           border: 2px solid transparent;
+           color: #94a3b8;
+           padding: 12px;
+           border-radius: 8px;
+           cursor: pointer;
+           font-weight: 600;
+           transition: all 0.2s;
+           text-align: center;
+       }
+       
+       .shape-btn:hover {
+           background: rgba(51, 65, 85, 0.8);
+           color: #e2e8f0;
+       }
+       
+       .shape-btn.active {
+           background: rgba(96, 165, 250, 0.2);
+           border-color: #60a5fa;
+           color: #60a5fa;
+       }
+       
+       select {
+           width: 100%;
+           padding: 10px;
+           background: rgba(30, 41, 59, 0.8);
+           border: 1px solid #475569;
+           color: #e2e8f0;
+           border-radius: 6px;
+           font-size: 0.875rem;
+           cursor: pointer;
+           margin-bottom: 12px;
+       }
+       
+       .input-grid {
+           display: grid;
+           grid-template-columns: 1fr 1fr;
+           gap: 12px;
+           margin-bottom: 12px;
+       }
+       
+       .input-group {
+           display: flex;
+           flex-direction: column;
+       }
+       
+       .input-group label {
+           font-size: 0.75rem;
+           margin-bottom: 4px;
+           text-transform: none;
+           color: #94a3b8;
+       }
+       
+       input[type="number"] {
+           background: rgba(30, 41, 59, 0.8);
+           border: 1px solid #475569;
+           color: #e2e8f0;
+           padding: 8px 12px;
+           border-radius: 6px;
+           font-size: 0.875rem;
+           width: 100%;
+       }
+       
+       input[type="number"]:focus {
+           outline: none;
+           border-color: #60a5fa;
+       }
+       
+       input[type="range"] {
+           width: 100%;
+           height: 6px;
+           background: #334155;
+           border-radius: 3px;
+           outline: none;
+           -webkit-appearance: none;
+           margin-bottom: 8px;
+       }
+       
+       input[type="range"]::-webkit-slider-thumb {
+           -webkit-appearance: none;
+           width: 18px;
+           height: 18px;
+           background: #60a5fa;
+           border-radius: 50%;
+           cursor: pointer;
+       }
+       
+       input[type="color"] {
+           width: 100%;
+           height: 40px;
+           border: none;
+           border-radius: 6px;
+           cursor: pointer;
+           background: transparent;
+       }
+       
+       .value-display {
+           text-align: right;
+           font-size: 0.875rem;
+           color: #60a5fa;
+           font-weight: 600;
+       }
+       
+       .toggle-group {
+           display: flex;
+           gap: 8px;
+           flex-wrap: wrap;
+       }
+       
+       .toggle-btn {
+           background: rgba(30, 41, 59, 0.8);
+           border: 1px solid #475569;
+           color: #94a3b8;
+           padding: 8px 16px;
+           border-radius: 6px;
+           cursor: pointer;
+           font-size: 0.875rem;
+           transition: all 0.2s;
+       }
+       
+       .toggle-btn.active {
+           background: #60a5fa;
+           color: #0f172a;
+           border-color: #60a5fa;
+       }
+       
+       .control-row {
+           display: flex;
+           align-items: center;
+           gap: 12px;
+           margin-top: 12px;
+       }
+       
+       .play-pause-btn {
+           background: #ef4444;
+           color: white;
+           border: none;
+           width: 40px;
+           height: 40px;
+           border-radius: 8px;
+           cursor: pointer;
+           font-size: 1.25rem;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           transition: all 0.2s;
+           flex-shrink: 0;
+       }
+       
+       .play-pause-btn.playing {
+           background: #10b981;
+       }
+       
+       .checkbox-container {
+           display: flex;
+           align-items: center;
+           gap: 8px;
+           margin-top: 12px;
+           cursor: pointer;
+       }
+       
+       .checkbox-container input[type="checkbox"] {
+           width: 18px;
+           height: 18px;
+           accent-color: #60a5fa;
+       }
+       
+       .color-grid {
+           display: grid;
+           grid-template-columns: 1fr 1fr;
+           gap: 12px;
+       }
+       
+       .n-gon-info {
+           background: rgba(96, 165, 250, 0.1);
+           padding: 12px;
+           border-radius: 8px;
+           margin-top: 12px;
+           font-size: 0.875rem;
+           color: #94a3b8;
+       }
+       
+       .progression-bar {
+           height: 4px;
+           background: #334155;
+           border-radius: 2px;
+           margin-top: 8px;
+           overflow: hidden;
+       }
+       
+       .progression-fill {
+           height: 100%;
+           background: linear-gradient(90deg, #60a5fa, #a855f7);
+           border-radius: 2px;
+           transition: width 0.3s ease;
+       }
+       
+       .calculated-value {
+           background: rgba(96, 165, 250, 0.1);
+           padding: 8px 12px;
+           border-radius: 6px;
+           font-size: 0.875rem;
+           color: #60a5fa;
+           margin-top: 8px;
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+       }
+       
+       .hidden {
+           display: none !important;
+       }
+       
+       .radio-group {
+           display: flex;
+           gap: 12px;
+           margin-bottom: 12px;
+       }
+       
+       .radio-option {
+           display: flex;
+           align-items: center;
+           gap: 6px;
+           cursor: pointer;
+           font-size: 0.875rem;
+           color: #94a3b8;
+       }
+       
+       .radio-option input {
+           accent-color: #60a5fa;
+       }
+   </style>
+</head>
+<body>
+   <div id="canvas-container"></div>
+   
+   <div id="ui-panel">
+       <h1>Geometry Explorer</h1>
+       <div class="subtitle">Polygon to Circle Progression</div>
+       
+       <div class="control-group">
+           <label>Select Shape</label>
+           <div class="shape-selector">
+               <button class="shape-btn active" data-shape="sphere">Sphere</button>
+               <button class="shape-btn" data-shape="cylinder">Cylinder</button>
+               <button class="shape-btn" data-shape="cone">Cone</button>
+               <button class="shape-btn" data-shape="prism">Prism</button>
+               <button class="shape-btn" data-shape="pyramid">Pyramid</button>
+           </div>
+           
+           <div id="detail-controls">
+               <label>Surface Detail (Polyhedron → Smooth)</label>
+               <div style="margin-bottom: 8px;">
+                   <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                       <span style="font-size: 0.875rem; color: #94a3b8;">Segments: <span id="detail-display" class="value-display">64</span></span>
+                   </div>
+                   <input type="range" id="detail-slider" min="3" max="64" step="1" value="64">
+               </div>
+               
+               <div class="n-gon-info" id="progression-info">
+                   <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                       <span>Surface smoothness:</span>
+                       <span id="smoothness-percent">100%</span>
+                   </div>
+                   <div class="progression-bar">
+                       <div class="progression-fill" id="progression-bar" style="width: 100%"></div>
+                   </div>
+                   <div style="margin-top: 8px; font-size: 0.75rem; color: #64748b;" id="progression-label">
+                       Near-perfect sphere
+                   </div>
+               </div>
+           </div>
+       </div>
+       
+       <div class="control-group" id="dimensions-group">
+           <label>Dimensions</label>
+           
+           <div id="cone-cylinder-controls" class="hidden">
+               <div class="input-grid">
+                   <div class="input-group">
+                       <label>Radius (r)</label>
+                       <input type="number" id="input-radius" value="2" min="0.1" step="0.1">
+                   </div>
+                   <div class="input-group">
+                       <label>Height (h)</label>
+                       <input type="number" id="input-height-rot" value="4" min="0.1" step="0.1">
+                   </div>
+               </div>
+               
+               <div class="calculated-value hidden" id="slant-row">
+                   <span>Slant Height:</span>
+                   <span id="slant-val">4.47</span>
+               </div>
+           </div>
+           
+           <div id="sphere-controls">
+               <div class="input-grid">
+                   <div class="input-group">
+                       <label>Radius (r)</label>
+                       <input type="number" id="input-radius-sphere" value="2" min="0.1" step="0.1">
+                   </div>
+                   <div class="input-group">
+                       <label>Diameter (⌀)</label>
+                       <input type="number" id="input-diameter" value="4" min="0.1" step="0.1">
+                   </div>
+               </div>
+           </div>
+           
+           <div id="prism-pyramid-controls" class="hidden">
+               <div class="radio-group">
+                   <label class="radio-option">
+                       <input type="radio" name="dim-mode" value="side" checked> Side Length
+                   </label>
+                   <label class="radio-option">
+                       <input type="radio" name="dim-mode" value="radius"> Circumradius
+                   </label>
+               </div>
+               
+               <div class="input-grid">
+                   <div class="input-group">
+                       <label id="base-dim-label">Base Side (s)</label>
+                       <input type="number" id="input-base-dim" value="2" min="0.1" step="0.1">
+                   </div>
+                   <div class="input-group">
+                       <label>Height (h)</label>
+                       <input type="number" id="input-height-poly" value="3" min="0.1" step="0.1">
+                   </div>
+               </div>
+               
+               <select id="base-shape" style="margin-top: 8px;">
+                   <option value="triangle">Triangle (3 sides)</option>
+                   <option value="square" selected>Square (4 sides)</option>
+                   <option value="pentagon">Pentagon (5 sides)</option>
+                   <option value="hexagon">Hexagon (6 sides)</option>
+                   <option value="octagon">Octagon (8 sides)</option>
+                   <option value="decagon">Decagon (10 sides)</option>
+                   <option value="dodecagon">Dodecagon (12 sides)</option>
+                   <option value="ngon">N-Gon (3-64 sides)</option>
+               </select>
+               
+               <div id="n-gon-controls" class="hidden">
+                   <div style="margin-top: 8px;">
+                       <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                           <span style="font-size: 0.875rem; color: #94a3b8;">Sides: <span id="n-sides-display" class="value-display">8</span></span>
+                       </div>
+                       <input type="range" id="n-sides" min="3" max="64" step="1" value="8">
+                   </div>
+                   
+                   <div class="n-gon-info" style="margin-top: 8px;">
+                       <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                           <span>Polygon similarity to circle:</span>
+                           <span id="poly-circle-percent">89%</span>
+                       </div>
+                       <div class="progression-bar">
+                           <div class="progression-fill" id="poly-progression-bar" style="width: 89%"></div>
+                       </div>
+                   </div>
+               </div>
+           </div>
+           
+           <div class="calculated-value" style="margin-top: 12px;">
+               <span>Volume:</span>
+               <span id="volume-display">33.51</span>
+           </div>
+           
+           <div class="calculated-value">
+               <span>Surface Area:</span>
+               <span id="area-display">50.27</span>
+           </div>
+           
+           <div class="checkbox-container">
+               <input type="checkbox" id="show-measurements" checked>
+               <label for="show-measurements">Show Dimensional Lines</label>
+           </div>
+       </div>
+       
+       <div class="control-group">
+           <label>Colors & Appearance</label>
+           <div class="color-grid">
+               <div class="color-group">
+                   <label>Object Color</label>
+                   <input type="color" id="color-object" value="#3b82f6">
+               </div>
+               <div class="color-group">
+                   <label>Background</label>
+                   <input type="color" id="color-bg" value="#0f172a">
+               </div>
+               <div class="color-group">
+                   <label>Wireframe</label>
+                   <input type="color" id="color-wire" value="#60a5fa">
+               </div>
+               <div class="color-group">
+                   <label>Measurements</label>
+                   <input type="color" id="color-measure" value="#fbbf24">
+               </div>
+           </div>
+       </div>
+       
+       <div class="control-group">
+           <label>Visualization</label>
+           
+           <div class="toggle-group">
+               <button class="toggle-btn active" id="btn-solid">Solid</button>
+               <button class="toggle-btn" id="btn-wireframe">Wireframe</button>
+               <button class="toggle-btn" id="btn-both">Both</button>
+           </div>
+           
+           <div class="control-row">
+               <button class="play-pause-btn" id="play-pause">▶</button>
+               <div style="flex: 1;">
+                   <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                       <span style="font-size: 0.875rem; color: #94a3b8;">Rotation Speed</span>
+                       <span class="value-display" id="speed-val">1x</span>
+                   </div>
+                   <input type="range" id="speed" min="0" max="5" step="0.5" value="1">
+               </div>
+           </div>
+       </div>
+   </div>
+
+   <script type="importmap">
+       {
+           "imports": {
+               "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+               "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+           }
+       }
+   </script>
+
+   <script type="module">
+       import * as THREE from 'three';
+       import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+       // Scene setup
+       const scene = new THREE.Scene();
+       scene.background = new THREE.Color(0x0f172a);
+       scene.fog = new THREE.Fog(0x0f172a, 10, 50);
+
+       const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+       camera.position.set(8, 6, 8);
+
+       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+       renderer.setSize(window.innerWidth, window.innerHeight);
+       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+       renderer.shadowMap.enabled = true;
+       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+       document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+       // Lighting
+       const ambientLight = new THREE.AmbientLight(0x404040, 2);
+       scene.add(ambientLight);
+
+       const mainLight = new THREE.DirectionalLight(0xffffff, 2);
+       mainLight.position.set(5, 10, 7);
+       mainLight.castShadow = true;
+       mainLight.shadow.mapSize.width = 2048;
+       mainLight.shadow.mapSize.height = 2048;
+       scene.add(mainLight);
+
+       const rimLight = new THREE.DirectionalLight(0x60a5fa, 1);
+       rimLight.position.set(-5, 0, -5);
+       scene.add(rimLight);
+
+       const fillLight = new THREE.PointLight(0xa855f7, 0.5);
+       fillLight.position.set(-5, 2, 5);
+       scene.add(fillLight);
+
+       // Grid
+       const gridHelper = new THREE.GridHelper(20, 20, 0x334155, 0x1e293b);
+       scene.add(gridHelper);
+
+       // Controls
+       const controls = new OrbitControls(camera, renderer.domElement);
+       controls.enableDamping = true;
+       controls.dampingFactor = 0.05;
+
+       // State - START PAUSED
+       let currentMesh = null;
+       let wireframeMesh = null;
+       let measurementGroup = null;
+       let currentShape = 'sphere';
+       let isRotating = false; // Default paused
+       let autoRotateSpeed = 0.01;
+       let dimMode = 'side';
+
+       // Colors
+       let colors = {
+           object: 0x3b82f6,
+           background: 0x0f172a,
+           wireframe: 0x60a5fa,
+           measurement: 0xfbbf24
+       };
+
+       // Materials
+       let solidMaterial = new THREE.MeshStandardMaterial({
+           color: colors.object,
+           metalness: 0.3,
+           roughness: 0.4
+       });
+
+       let wireframeMaterial = new THREE.MeshBasicMaterial({
+           color: colors.wireframe,
+           wireframe: true,
+           transparent: true,
+           opacity: 0.3
+       });
+
+       let measurementMaterial = new THREE.LineBasicMaterial({ 
+           color: colors.measurement, 
+           linewidth: 3 
+       });
+
+       // Helper: Create measurement with leader line
+       function createMeasurement(text, startPoint, direction, length = 2) {
+           const endPoint = new THREE.Vector3().copy(startPoint).add(
+               new THREE.Vector3().copy(direction).multiplyScalar(length)
+           );
+           
+           // Leader line
+           const lineGeo = new THREE.BufferGeometry().setFromPoints([startPoint, endPoint]);
+           const line = new THREE.Line(lineGeo, measurementMaterial);
+           
+           // Dot at anchor
+           const dotGeo = new THREE.SphereGeometry(0.06, 16, 16);
+           const dotMat = new THREE.MeshBasicMaterial({ color: colors.measurement });
+           const dot = new THREE.Mesh(dotGeo, dotMat);
+           dot.position.copy(startPoint);
+           
+           // Label sprite
+           const canvas = document.createElement('canvas');
+           const ctx = canvas.getContext('2d');
+           canvas.width = 256;
+           canvas.height = 64;
+           ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+           ctx.fillRect(0, 0, 256, 64);
+           ctx.strokeStyle = '#' + new THREE.Color(colors.measurement).getHexString();
+           ctx.lineWidth = 3;
+           ctx.strokeRect(0, 0, 256, 64);
+           ctx.font = 'bold 24px Arial';
+           ctx.fillStyle = '#' + new THREE.Color(colors.measurement).getHexString();
+           ctx.textAlign = 'center';
+           ctx.textBaseline = 'middle';
+           ctx.fillText(text, 128, 32);
+           
+           const texture = new THREE.CanvasTexture(canvas);
+           const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture }));
+           sprite.position.copy(endPoint);
+           sprite.scale.set(2, 0.5, 1);
+           
+           return { line, dot, sprite };
+       }
+
+       function clearMeasurements() {
+           if (measurementGroup) {
+               scene.remove(measurementGroup);
+               measurementGroup.traverse(child => {
+                   if (child.geometry) child.geometry.dispose();
+               });
+           }
+           measurementGroup = new THREE.Group();
+           scene.add(measurementGroup);
+       }
+
+       function addMeasurement(text, anchor, dir, dist = 2) {
+           const { line, dot, sprite } = createMeasurement(text, anchor, dir, dist);
+           measurementGroup.add(line);
+           measurementGroup.add(dot);
+           measurementGroup.add(sprite);
+       }
+
+       // Math helpers
+       function getCircumradiusFromSide(side, n) {
+           return side / (2 * Math.sin(Math.PI / n));
+       }
+
+       function getSideFromCircumradius(r, n) {
+           return 2 * r * Math.sin(Math.PI / n);
+       }
+
+       function getPolyhedronLabel(segments) {
+           if (segments <= 4) return "Tetrahedron/Cube-like (angular)";
+           if (segments <= 6) return "Hexagonal prism style";
+           if (segments <= 8) return "Octagonal (stop sign)";
+           if (segments <= 12) return "Dodecagon (coin-like)";
+           if (segments <= 20) return "Icosahedron (geodesic)";
+           if (segments <= 32) return "High detail (soccer ball)";
+           return "Near-perfect sphere";
+       }
+
+       function getPolygonCirclePercent(n) {
+           // Calculate how close an n-gon perimeter is to a circle
+           const polygonPerimeter = n * 2 * Math.sin(Math.PI / n);
+           const circleCircumference = 2 * Math.PI;
+           return Math.min(100, (polygonPerimeter / circleCircumference) * 100);
+       }
+
+       // Create geometries
+       function createSphere(radius, segments) {
+           return new THREE.SphereGeometry(radius, segments, Math.floor(segments / 2));
+       }
+
+       function createCylinder(radius, height, segments) {
+           return new THREE.CylinderGeometry(radius, radius, height, segments);
+       }
+
+       function createCone(radius, height, segments) {
+           return new THREE.ConeGeometry(radius, height, segments);
+       }
+
+       function createPrism(baseType, sideLength, height, nSides) {
+           let n;
+           switch(baseType) {
+               case 'triangle': n = 3; break;
+               case 'square': n = 4; break;
+               case 'pentagon': n = 5; break;
+               case 'hexagon': n = 6; break;
+               case 'octagon': n = 8; break;
+               case 'decagon': n = 10; break;
+               case 'dodecagon': n = 12; break;
+               case 'ngon': n = nSides; break;
+               default: n = 4;
+           }
+           
+           const radius = getCircumradiusFromSide(sideLength, n);
+           return new THREE.CylinderGeometry(radius, radius, height, n);
+       }
+
+       function createPyramid(baseType, sideLength, height, nSides) {
+           let n;
+           switch(baseType) {
+               case 'triangle': n = 3; break;
+               case 'square': n = 4; break;
+               case 'pentagon': n = 5; break;
+               case 'hexagon': n = 6; break;
+               case 'octagon': n = 8; break;
+               case 'decagon': n = 10; break;
+               case 'dodecagon': n = 12; break;
+               case 'ngon': n = nSides; break;
+               default: n = 4;
+           }
+           
+           const radius = getCircumradiusFromSide(sideLength, n);
+           return new THREE.ConeGeometry(radius, height, n);
+       }
+
+       // Update measurements for each shape
+       function updateMeasurementsForShape(shape, params) {
+           clearMeasurements();
+           if (!document.getElementById('show-measurements').checked) return;
+           
+           const { radius, height, segments } = params;
+           
+           if (shape === 'sphere') {
+               const y = radius;
+               // Diameter horizontal
+               addMeasurement(`⌀${(radius*2).toFixed(2)}`, 
+                   new THREE.Vector3(0, y, radius + 0.3), 
+                   new THREE.Vector3(0, 0.3, 1), 2);
+               
+               // Radius vertical
+               addMeasurement(`r=${radius.toFixed(2)}`, 
+                   new THREE.Vector3(radius + 0.5, y, 0), 
+                   new THREE.Vector3(1, 0.2, 0), 1.5);
+           }
+           else if (shape === 'cylinder') {
+               const y = height / 2;
+               // Height
+               addMeasurement(`h=${height.toFixed(2)}`, 
+                   new THREE.Vector3(-radius - 0.8, y, 0), 
+                   new THREE.Vector3(-1, 0, 0), 1.5);
+               
+               // Diameter at base
+               addMeasurement(`⌀${(radius*2).toFixed(2)}`, 
+                   new THREE.Vector3(0, 0, radius + 0.5), 
+                   new THREE.Vector3(0, 0, 1), 2);
+               
+               // Radius at top
+               addMeasurement(`r=${radius.toFixed(2)}`, 
+                   new THREE.Vector3(radius, height, 0), 
+                   new THREE.Vector3(1, 0.3, 0), 1.5);
+           }
+           else if (shape === 'cone') {
+               const y = height / 2;
+               // Height
+               addMeasurement(`h=${height.toFixed(2)}`, 
+                   new THREE.Vector3(-radius - 1, y, 0), 
+                   new THREE.Vector3(-1, 0, 0), 2);
+               
+               // Base diameter
+               addMeasurement(`⌀${(radius*2).toFixed(2)}`, 
+                   new THREE.Vector3(0, 0, radius + 0.5), 
+                   new THREE.Vector3(0, 0, 1), 2);
+               
+               // Slant height
+               const slant = Math.sqrt(radius*radius + height*height);
+               addMeasurement(`s=${slant.toFixed(2)}`, 
+                   new THREE.Vector3(radius * 0.7, height * 0.6, radius * 0.5), 
+                   new THREE.Vector3(0.5, 0.5, 1), 2);
+           }
+           else if (shape === 'prism' || shape === 'pyramid') {
+               const { sideLength, n } = params;
+               const r = getCircumradiusFromSide(sideLength, n);
+               const y = height / 2;
+               
+               // Height
+               addMeasurement(`h=${height.toFixed(2)}`, 
+                   new THREE.Vector3(-r - 0.8, y, 0), 
+                   new THREE.Vector3(-1, 0, 0), 1.5);
+               
+               // Side length
+               const angle = Math.PI / n;
+               const edgePoint = new THREE.Vector3(r * Math.cos(angle), y, r * Math.sin(angle));
+               addMeasurement(`s=${sideLength.toFixed(2)}`, 
+                   edgePoint, 
+                   new THREE.Vector3(0.5, 0, 1).normalize(), 2);
+               
+               // Circumradius
+               addMeasurement(`R=${r.toFixed(2)}`, 
+                   new THREE.Vector3(r, y + height*0.3, 0), 
+                   new THREE.Vector3(1, 0.3, 0), 1.5);
+           }
+       }
+
+       function updateShape() {
+           if (currentMesh) {
+               scene.remove(currentMesh);
+               currentMesh.geometry.dispose();
+           }
+           if (wireframeMesh) {
+               scene.remove(wireframeMesh);
+               wireframeMesh.geometry.dispose();
+           }
+
+           const mode = document.querySelector('.toggle-btn.active').id;
+           let segments, geometry, volume = 0, area = 0, yOffset = 0;
+           let measParams = {};
+
+           if (currentShape === 'sphere') {
+               const radius = parseFloat(document.getElementById('input-radius-sphere').value) || 2;
+               document.getElementById('input-diameter').value = (radius * 2).toFixed(2);
+               segments = parseInt(document.getElementById('detail-slider').value);
+               
+               geometry = createSphere(radius, segments);
+               volume = (4/3) * Math.PI * radius * radius * radius;
+               area = 4 * Math.PI * radius * radius;
+               yOffset = radius;
+               measParams = { radius, height: radius * 2, segments };
+           }
+           else if (currentShape === 'cylinder') {
+               const radius = parseFloat(document.getElementById('input-radius').value) || 2;
+               const height = parseFloat(document.getElementById('input-height-rot').value) || 4;
+               segments = parseInt(document.getElementById('detail-slider').value);
+               
+               geometry = createCylinder(radius, height, segments);
+               volume = Math.PI * radius * radius * height;
+               area = 2 * Math.PI * radius * (radius + height);
+               yOffset = height / 2;
+               measParams = { radius, height, segments };
+           }
+           else if (currentShape === 'cone') {
+               const radius = parseFloat(document.getElementById('input-radius').value) || 2;
+               const height = parseFloat(document.getElementById('input-height-rot').value) || 4;
+               segments = parseInt(document.getElementById('detail-slider').value);
+               const slant = Math.sqrt(radius*radius + height*height);
+               
+               geometry = createCone(radius, height, segments);
+               volume = (1/3) * Math.PI * radius * radius * height;
+               area = Math.PI * radius * (radius + slant);
+               yOffset = height / 2;
+               measParams = { radius, height, segments };
+               
+               document.getElementById('slant-val').textContent = slant.toFixed(2);
+           }
+           else if (currentShape === 'prism') {
+               const baseType = document.getElementById('base-shape').value;
+               const nSides = parseInt(document.getElementById('n-sides').value) || 8;
+               let n;
+               switch(baseType) {
+                   case 'triangle': n = 3; break;
+                   case 'square': n = 4; break;
+                   case 'pentagon': n = 5; break;
+                   case 'hexagon': n = 6; break;
+                   case 'octagon': n = 8; break;
+                   case 'decagon': n = 10; break;
+                   case 'dodecagon': n = 12; break;
+                   case 'ngon': n = nSides; break;
+                   default: n = 4;
+               }
+               
+               // Update polygon progression display for prism
+               if (baseType === 'ngon' || n > 4) {
+                   const similarity = getPolygonCirclePercent(n);
+                   document.getElementById('poly-circle-percent').textContent = Math.round(similarity) + '%';
+                   document.getElementById('poly-progression-bar').style.width = similarity + '%';
+               }
+               
+               const dimMode = document.querySelector('input[name="dim-mode"]:checked').value;
+               let sideLength;
+               if (dimMode === 'side') {
+                   sideLength = parseFloat(document.getElementById('input-base-dim').value) || 2;
+               } else {
+                   const r = parseFloat(document.getElementById('input-base-dim').value) || 2;
+                   sideLength = getSideFromCircumradius(r, n);
+               }
+               
+               const height = parseFloat(document.getElementById('input-height-poly').value) || 3;
+               const r = getCircumradiusFromSide(sideLength, n);
+               
+               geometry = createPrism(baseType, sideLength, height, nSides);
+               const baseArea = (n * sideLength * sideLength) / (4 * Math.tan(Math.PI / n));
+               volume = baseArea * height;
+               area = 2 * baseArea + n * sideLength * height;
+               yOffset = height / 2;
+               measParams = { radius: r, height, sideLength, n, segments: n };
+           }
+           else if (currentShape === 'pyramid') {
+               const baseType = document.getElementById('base-shape').value;
+               const nSides = parseInt(document.getElementById('n-sides').value) || 8;
+               let n;
+               switch(baseType) {
+                   case 'triangle': n = 3; break;
+                   case 'square': n = 4; break;
+                   case 'pentagon': n = 5; break;
+                   case 'hexagon': n = 6; break;
+                   case 'octagon': n = 8; break;
+                   case 'decagon': n = 10; break;
+                   case 'dodecagon': n = 12; break;
+                   case 'ngon': n = nSides; break;
+                   default: n = 4;
+               }
+               
+               // Update polygon progression display for pyramid
+               if (baseType === 'ngon' || n > 4) {
+                   const similarity = getPolygonCirclePercent(n);
+                   document.getElementById('poly-circle-percent').textContent = Math.round(similarity) + '%';
+                   document.getElementById('poly-progression-bar').style.width = similarity + '%';
+               }
+               
+               const dimMode = document.querySelector('input[name="dim-mode"]:checked').value;
+               let sideLength;
+               if (dimMode === 'side') {
+                   sideLength = parseFloat(document.getElementById('input-base-dim').value) || 2;
+               } else {
+                   const r = parseFloat(document.getElementById('input-base-dim').value) || 2;
+                   sideLength = getSideFromCircumradius(r, n);
+               }
+               
+               const height = parseFloat(document.getElementById('input-height-poly').value) || 3;
+               const r = getCircumradiusFromSide(sideLength, n);
+               
+               geometry = createPyramid(baseType, sideLength, height, nSides);
+               const baseArea = (n * sideLength * sideLength) / (4 * Math.tan(Math.PI / n));
+               volume = (1/3) * baseArea * height;
+               const slant = Math.sqrt(r*r + height*height);
+               area = baseArea + (n * sideLength * slant / 2);
+               yOffset = height / 2;
+               measParams = { radius: r, height, sideLength, n, segments: n };
+           }
+
+           // Create meshes
+           if (mode !== 'btn-wireframe') {
+               currentMesh = new THREE.Mesh(geometry, solidMaterial);
+               currentMesh.castShadow = true;
+               currentMesh.receiveShadow = true;
+               currentMesh.position.y = yOffset;
+               scene.add(currentMesh);
+           }
+
+           if (mode === 'btn-wireframe' || mode === 'btn-both') {
+               wireframeMesh = new THREE.Mesh(geometry, wireframeMaterial);
+               wireframeMesh.position.y = yOffset;
+               scene.add(wireframeMesh);
+           }
+
+           // Update measurements
+           updateMeasurementsForShape(currentShape, measParams);
+
+           // Update UI stats
+           document.getElementById('volume-display').textContent = volume.toFixed(2);
+           document.getElementById('area-display').textContent = area.toFixed(2);
+           
+           // Update progression display for smooth shapes
+           if (currentShape === 'sphere' || currentShape === 'cylinder' || currentShape === 'cone') {
+               document.getElementById('detail-display').textContent = segments;
+               const percent = Math.min(100, (segments / 64) * 100);
+               document.getElementById('smoothness-percent').textContent = Math.round(percent) + '%';
+               document.getElementById('progression-bar').style.width = percent + '%';
+               document.getElementById('progression-label').textContent = getPolyhedronLabel(segments);
+           }
+       }
+
+       function updateUI() {
+           // Hide all specific controls first
+           document.getElementById('cone-cylinder-controls').classList.add('hidden');
+           document.getElementById('sphere-controls').classList.add('hidden');
+           document.getElementById('prism-pyramid-controls').classList.add('hidden');
+           document.getElementById('slant-row').classList.add('hidden');
+           
+           // Show/hide surface detail controls based on shape
+           const detailControls = document.getElementById('detail-controls');
+           if (currentShape === 'prism' || currentShape === 'pyramid') {
+               detailControls.classList.add('hidden');
+           } else {
+               detailControls.classList.remove('hidden');
+               // Reset to 64 for smooth shapes
+               document.getElementById('detail-slider').value = 64;
+               document.getElementById('detail-display').textContent = '64';
+           }
+           
+           // Show appropriate dimension controls
+           if (currentShape === 'sphere') {
+               document.getElementById('sphere-controls').classList.remove('hidden');
+           }
+           else if (currentShape === 'cylinder' || currentShape === 'cone') {
+               document.getElementById('cone-cylinder-controls').classList.remove('hidden');
+               if (currentShape === 'cone') {
+                   document.getElementById('slant-row').classList.remove('hidden');
+               }
+           }
+           else if (currentShape === 'prism' || currentShape === 'pyramid') {
+               document.getElementById('prism-pyramid-controls').classList.remove('hidden');
+               const baseType = document.getElementById('base-shape').value;
+               if (baseType === 'ngon') {
+                   document.getElementById('n-gon-controls').classList.remove('hidden');
+               } else {
+                   document.getElementById('n-gon-controls').classList.add('hidden');
+               }
+           }
+       }
+
+       // Event Listeners
+       document.querySelectorAll('.shape-btn').forEach(btn => {
+           btn.addEventListener('click', (e) => {
+               document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+               e.target.classList.add('active');
+               currentShape = e.target.dataset.shape;
+               updateUI();
+               updateShape();
+           });
+       });
+
+       document.getElementById('detail-slider').addEventListener('input', (e) => {
+           document.getElementById('detail-display').textContent = e.target.value;
+           updateShape();
+       });
+
+       document.getElementById('n-sides').addEventListener('input', (e) => {
+           document.getElementById('n-sides-display').textContent = e.target.value;
+           updateShape();
+       });
+
+       // FIXED: Added updateShape() call to base-shape change listener
+       document.getElementById('base-shape').addEventListener('change', () => {
+           updateUI();
+           updateShape();
+       });
+
+       // Dimension inputs
+       ['input-radius', 'input-height-rot', 'input-radius-sphere', 'input-diameter', 
+        'input-base-dim', 'input-height-poly'].forEach(id => {
+           const el = document.getElementById(id);
+           if (el) {
+               el.addEventListener('input', (e) => {
+                   if (id === 'input-diameter') {
+                       document.getElementById('input-radius-sphere').value = (parseFloat(e.target.value) / 2).toFixed(2);
+                   } else if (id === 'input-radius-sphere') {
+                       document.getElementById('input-diameter').value = (parseFloat(e.target.value) * 2).toFixed(2);
+                   }
+                   updateShape();
+               });
+           }
+       });
+
+       document.querySelectorAll('input[name="dim-mode"]').forEach(radio => {
+           radio.addEventListener('change', (e) => {
+               const label = document.getElementById('base-dim-label');
+               label.textContent = e.target.value === 'side' ? 'Base Side (s)' : 'Circumradius (R)';
+               updateShape();
+           });
+       });
+
+       document.querySelectorAll('.toggle-btn').forEach(btn => {
+           btn.addEventListener('click', (e) => {
+               document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+               e.target.classList.add('active');
+               updateShape();
+           });
+       });
+
+       // Colors
+       document.getElementById('color-object').addEventListener('input', (e) => {
+           colors.object = new THREE.Color(e.target.value);
+           solidMaterial.color = colors.object;
+       });
+
+       document.getElementById('color-bg').addEventListener('input', (e) => {
+           colors.background = new THREE.Color(e.target.value);
+           scene.background = colors.background;
+           scene.fog.color = colors.background;
+       });
+
+       document.getElementById('color-wire').addEventListener('input', (e) => {
+           colors.wireframe = new THREE.Color(e.target.value);
+           wireframeMaterial.color = colors.wireframe;
+       });
+
+       document.getElementById('color-measure').addEventListener('input', (e) => {
+           colors.measurement = new THREE.Color(e.target.value);
+           measurementMaterial.color = colors.measurement;
+           updateShape();
+       });
+
+       // Play/Pause
+       const playPauseBtn = document.getElementById('play-pause');
+       playPauseBtn.addEventListener('click', () => {
+           isRotating = !isRotating;
+           playPauseBtn.textContent = isRotating ? '⏸' : '▶';
+           playPauseBtn.classList.toggle('playing', isRotating);
+       });
+
+       document.getElementById('show-measurements').addEventListener('change', updateShape);
+
+       document.getElementById('speed').addEventListener('input', (e) => {
+           autoRotateSpeed = parseFloat(e.target.value) * 0.01;
+           document.getElementById('speed-val').textContent = e.target.value + 'x';
+       });
+
+       window.addEventListener('resize', () => {
+           camera.aspect = window.innerWidth / window.innerHeight;
+           camera.updateProjectionMatrix();
+           renderer.setSize(window.innerWidth, window.innerHeight);
+       });
+
+       // Animation loop
+       function animate() {
+           requestAnimationFrame(animate);
+           
+           if (isRotating) {
+               const rot = autoRotateSpeed;
+               if (currentMesh) currentMesh.rotation.y += rot;
+               if (wireframeMesh) wireframeMesh.rotation.y += rot;
+               if (measurementGroup) measurementGroup.rotation.y += rot;
+           }
+           
+           controls.update();
+           renderer.render(scene, camera);
+       }
+
+       // Initialize
+       updateUI();
+       updateShape();
+       animate();
+   </script>
+</body>
+</html>
