@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Mad Gab - AI Generated</title>
+   <style>
+       * {
+           margin: 0;
+           padding: 0;
+           box-sizing: border-box;
+       }
+       
+       body {
+           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+           min-height: 100vh;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           padding: 20px;
+       }
+       
+       .container {
+           background: white;
+           border-radius: 20px;
+           box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+           max-width: 600px;
+           width: 100%;
+           padding: 40px;
+           position: relative;
+       }
+       
+       h1 {
+           text-align: center;
+           color: #333;
+           margin-bottom: 10px;
+           font-size: 2.5em;
+       }
+       
+       .subtitle {
+           text-align: center;
+           color: #666;
+           margin-bottom: 30px;
+           font-style: italic;
+       }
+       
+       .mode-toggle {
+           display: flex;
+           justify-content: center;
+           gap: 10px;
+           margin-bottom: 30px;
+       }
+       
+       .mode-btn {
+           padding: 10px 20px;
+           border: 2px solid #667eea;
+           background: white;
+           color: #667eea;
+           border-radius: 25px;
+           cursor: pointer;
+           transition: all 0.3s;
+           font-weight: bold;
+       }
+       
+       .mode-btn.active {
+           background: #667eea;
+           color: white;
+       }
+       
+       .game-area {
+           text-align: center;
+           min-height: 300px;
+           display: flex;
+           flex-direction: column;
+           justify-content: center;
+       }
+       
+       .gibberish {
+           font-size: 2.2em;
+           font-weight: bold;
+           color: #764ba2;
+           margin-bottom: 30px;
+           line-height: 1.4;
+           text-transform: uppercase;
+           letter-spacing: 2px;
+           min-height: 100px;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           flex-wrap: wrap;
+       }
+       
+       .category-tag {
+           display: inline-block;
+           background: #f0f0f0;
+           padding: 5px 15px;
+           border-radius: 15px;
+           font-size: 0.8em;
+           color: #666;
+           margin-bottom: 20px;
+       }
+       
+       .input-area {
+           display: flex;
+           flex-direction: column;
+           gap: 15px;
+       }
+       
+       input[type="text"] {
+           padding: 15px;
+           font-size: 1.2em;
+           border: 3px solid #ddd;
+           border-radius: 10px;
+           text-align: center;
+           transition: border-color 0.3s;
+       }
+       
+       input[type="text"]:focus {
+           outline: none;
+           border-color: #667eea;
+       }
+       
+       .btn-group {
+           display: flex;
+           gap: 10px;
+           justify-content: center;
+       }
+       
+       button {
+           padding: 12px 30px;
+           font-size: 1.1em;
+           border: none;
+           border-radius: 25px;
+           cursor: pointer;
+           transition: transform 0.2s, box-shadow 0.2s;
+           font-weight: bold;
+       }
+       
+       button:hover {
+           transform: translateY(-2px);
+           box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+       }
+       
+       .submit-btn {
+           background: #667eea;
+           color: white;
+       }
+       
+       .skip-btn {
+           background: #ff6b6b;
+           color: white;
+       }
+       
+       .start-btn {
+           background: #48bb78;
+           color: white;
+           font-size: 1.3em;
+           padding: 15px 40px;
+       }
+       
+       .feedback {
+           margin-top: 20px;
+           font-size: 1.2em;
+           font-weight: bold;
+           min-height: 30px;
+       }
+       
+       .correct {
+           color: #48bb78;
+       }
+       
+       .incorrect {
+           color: #ff6b6b;
+       }
+       
+       .info-bar {
+           display: flex;
+           justify-content: space-between;
+           margin-top: 20px;
+           padding: 15px;
+           background: #f7fafc;
+           border-radius: 10px;
+           font-weight: bold;
+       }
+       
+       .timer {
+           color: #e53e3e;
+           font-size: 1.2em;
+       }
+       
+       .loading {
+           display: none;
+           text-align: center;
+           color: #667eea;
+           font-style: italic;
+       }
+       
+       .spinner {
+           border: 4px solid #f3f3f3;
+           border-top: 4px solid #667eea;
+           border-radius: 50%;
+           width: 40px;
+           height: 40px;
+           animation: spin 1s linear infinite;
+           margin: 20px auto;
+       }
+       
+       @keyframes spin {
+           0% { transform: rotate(0deg); }
+           100% { transform: rotate(360deg); }
+       }
+       
+       .queue-status {
+           font-size: 0.8em;
+           color: #999;
+           text-align: center;
+           margin-top: 10px;
+       }
+       
+       .used-concepts {
+           margin-top: 20px;
+           padding: 10px;
+           background: #fef5f5;
+           border-radius: 8px;
+           font-size: 0.85em;
+           color: #666;
+           max-height: 100px;
+           overflow-y: auto;
+       }
+       
+       .hidden {
+           display: none !important;
+       }
+   </style>
+</head>
+<body>
+   <div class="container">
+       <h1>🗣️ Mad Gab</h1>
+       <p class="subtitle">It's not what you see, it's what you hear!</p>
+       
+       <div class="mode-toggle">
+           <button class="mode-btn active" onclick="game.setMode('casual')">Casual (No Timer)</button>
+           <button class="mode-btn" onclick="game.setMode('timed')">Timed (60s)</button>
+       </div>
+       
+       <div id="startScreen" class="game-area">
+           <p style="font-size: 1.2em; margin-bottom: 30px; color: #555;">
+               I'll generate unique phrases using AI. Listen to the sounds, don't read the words!<br><br>
+               <small style="color: #888;">(Don't worry about spelling - I understand typos!)</small>
+           </p>
+           <button class="start-btn" onclick="game.start()">Start Game</button>
+           <div class="loading" id="initialLoading">
+               <div class="spinner"></div>
+               <p>Generating fresh phrases...</p>
+           </div>
+       </div>
+       
+       <div id="gameScreen" class="game-area hidden">
+           <div class="category-tag" id="categoryDisplay">Category</div>
+           <div class="gibberish" id="gibberishDisplay">Loading...</div>
+           
+           <div class="input-area">
+               <input type="text" id="answerInput" placeholder="Type what you hear..." autocomplete="off">
+               <div class="btn-group">
+                   <button class="submit-btn" onclick="game.checkAnswer()">Submit</button>
+                   <button class="skip-btn" onclick="game.skip()">Skip (-1)</button>
+               </div>
+           </div>
+           
+           <div class="feedback" id="feedback"></div>
+           
+           <div class="info-bar">
+               <div>Score: <span id="score">0</span></div>
+               <div id="timerDisplay" class="timer hidden">Time: <span id="timeLeft">60</span>s</div>
+               <div>Streak: <span id="streak">0</span></div>
+           </div>
+           
+           <div class="queue-status" id="queueStatus">Buffer: 0 phrases ready</div>
+       </div>
+       
+       <div id="endScreen" class="game-area hidden">
+           <h2 style="color: #764ba2; margin-bottom: 20px;">Game Over!</h2>
+           <p style="font-size: 1.5em; margin-bottom: 20px;">Final Score: <span id="finalScore">0</span></p>
+           <p style="margin-bottom: 30px; color: #666;">Phrases solved: <span id="solvedCount">0</span></p>
+           <button class="start-btn" onclick="game.restart()">Play Again</button>
+       </div>
+   </div>
+
+   <script>
+       // API Configuration
+       const API_KEY = 'pk_8CQPK8dxqANijjhy';
+       const MODEL = 'nova-fast'; // or 'gemini-fast'
+       const BATCH_SIZE = 10;
+       
+       class PhraseGenerator {
+           constructor() {
+               this.queue = [];
+               this.usedAnswers = new Set();
+               this.usedConcepts = new Set();
+               this.generating = false;
+           }
+           
+           async ensureBuffer() {
+               if (this.queue.length < 3 && !this.generating) {
+                   await this.generateBatch();
+               }
+           }
+           
+           async generateBatch() {
+               this.generating = true;
+               document.getElementById('queueStatus').textContent = 'Generating new phrases...';
+               
+               try {
+                   const prompt = this.buildPrompt();
+                   const seed = Math.floor(Math.random() * 1000000);
+                   const url = `https://gen.pollinations.ai/text/${encodeURIComponent(prompt)}?model=${MODEL}&seed=${seed}&stream=false&key=${API_KEY}`;
+                   
+                   const response = await fetch(url);
+                   const text = await response.text();
+                   
+                   // Parse JSON from response (handle potential markdown)
+                   let jsonStr = text;
+                   if (text.includes('```')) {
+                       jsonStr = text.split('```')[1].replace('json', '');
+                   }
+                   
+                   const phrases = JSON.parse(jsonStr);
+                   
+                   // Filter out any duplicates and add to queue
+                   phrases.forEach(phrase => {
+                       const normalized = phrase.answer.toLowerCase().trim();
+                       if (!this.usedAnswers.has(normalized)) {
+                           this.usedAnswers.add(normalized);
+                           this.usedConcepts.add(phrase.category);
+                           this.queue.push(phrase);
+                       }
+                   });
+                   
+               } catch (error) {
+                   console.error('Generation error:', error);
+                   // Fallback to prevent game breaking
+                   if (this.queue.length === 0) {
+                       this.queue.push({
+                           gibberish: "Eye Am Bay Sick",
+                           answer: "I am basic",
+                           category: "Self-deprecating"
+                       });
+                   }
+               }
+               
+               this.generating = false;
+               this.updateStatus();
+           }
+           
+           buildPrompt() {
+               const usedList = Array.from(this.usedAnswers).slice(-20).join(', ');
+               const categories = ['common phrases', 'movie titles', 'song lyrics', 'famous quotes', 'idioms', 'celebrity names', 'everyday objects', 'brand names', 'historical figures', 'book titles'];
+               
+               // Pick 3 random categories to focus on for variety
+               const shuffled = categories.sort(() => 0.5 - Math.random());
+               const focusCategories = shuffled.slice(0, 3).join(', ');
+               
+               return `Generate ${BATCH_SIZE} unique Mad Gab phrases. Each should be a real phrase from these categories: ${focusCategories}. 
+               
+               Format as strict JSON array: [{"gibberish": "phonetic spelling", "answer": "actual phrase", "category": "category name"}]
+               
+               Rules:
+               1. Gibberish must sound like the answer when spoken aloud (e.g., "Dew Wut Eye Say" = "Do what I say")
+               2. Avoid these already used answers: ${usedList || 'none yet'}
+               3. Ensure variety - mix short and long phrases
+               4. Make them solvable but challenging (medium difficulty)
+               5. Categories should vary within the batch
+               6. Return ONLY the JSON array, no markdown, no explanation`;
+           }
+           
+           getNext() {
+               if (this.queue.length === 0) return null;
+               const phrase = this.queue.shift();
+               this.ensureBuffer(); // Trigger background refill
+               this.updateStatus();
+               return phrase;
+           }
+           
+           updateStatus() {
+               const status = document.getElementById('queueStatus');
+               if (status) {
+                   status.textContent = `Buffer: ${this.queue.length} phrases ready`;
+               }
+           }
+           
+           peekConcepts() {
+               return Array.from(this.usedConcepts).slice(-10);
+           }
+       }
+       
+       class FuzzyMatcher {
+           static normalize(str) {
+               return str.toLowerCase()
+                   .replace(/[^a-z0-9\s]/g, '')
+                   .replace(/\s+/g, ' ')
+                   .trim();
+           }
+           
+           static levenshteinDistance(s1, s2) {
+               const matrix = [];
+               for (let i = 0; i <= s2.length; i++) {
+                   matrix[i] = [i];
+               }
+               for (let j = 0; j <= s1.length; j++) {
+                   matrix[0][j] = j;
+               }
+               for (let i = 1; i <= s2.length; i++) {
+                   for (let j = 1; j <= s1.length; j++) {
+                       if (s2.charAt(i-1) === s1.charAt(j-1)) {
+                           matrix[i][j] = matrix[i-1][j-1];
+                       } else {
+                           matrix[i][j] = Math.min(
+                               matrix[i-1][j-1] + 1,
+                               matrix[i][j-1] + 1,
+                               matrix[i-1][j] + 1
+                           );
+                       }
+                   }
+               }
+               return matrix[s2.length][s1.length];
+           }
+           
+           static isSimilar(input, target) {
+               const normInput = this.normalize(input);
+               const normTarget = this.normalize(target);
+               
+               if (normInput === normTarget) return true;
+               
+               // Allow for minor typos based on length
+               const maxDistance = Math.floor(normTarget.length * 0.25); // 25% tolerance
+               const distance = this.levenshteinDistance(normInput, normTarget);
+               
+               return distance <= maxDistance;
+           }
+       }
+       
+       class Game {
+           constructor() {
+               this.generator = new PhraseGenerator();
+               this.score = 0;
+               this.streak = 0;
+               this.mode = 'casual';
+               this.timer = null;
+               this.timeLeft = 60;
+               this.currentPhrase = null;
+               this.solvedCount = 0;
+               this.isPlaying = false;
+           }
+           
+           setMode(mode) {
+               this.mode = mode;
+               document.querySelectorAll('.mode-btn').forEach(btn => {
+                   btn.classList.toggle('active', 
+                       (mode === 'casual' && btn.textContent.includes('Casual')) ||
+                       (mode === 'timed' && btn.textContent.includes('Timed'))
+                   );
+               });
+           }
+           
+           async start() {
+               document.getElementById('startScreen').classList.add('hidden');
+               document.getElementById('initialLoading').style.display = 'block';
+               
+               // Pre-generate buffer
+               await this.generator.generateBatch();
+               
+               document.getElementById('initialLoading').style.display = 'none';
+               document.getElementById('gameScreen').classList.remove('hidden');
+               
+               if (this.mode === 'timed') {
+                   document.getElementById('timerDisplay').classList.remove('hidden');
+                   this.startTimer();
+               }
+               
+               this.isPlaying = true;
+               this.nextPhrase();
+           }
+           
+           startTimer() {
+               this.timeLeft = 60;
+               this.updateTimerDisplay();
+               this.timer = setInterval(() => {
+                   this.timeLeft--;
+                   this.updateTimerDisplay();
+                   if (this.timeLeft <= 0) {
+                       this.endGame();
+                   }
+               }, 1000);
+           }
+           
+           updateTimerDisplay() {
+               document.getElementById('timeLeft').textContent = this.timeLeft;
+           }
+           
+           nextPhrase() {
+               this.currentPhrase = this.generator.getNext();
+               if (!this.currentPhrase) {
+                   // Shouldn't happen with buffering, but handle gracefully
+                   document.getElementById('gibberishDisplay').textContent = "Generating...";
+                   setTimeout(() => this.nextPhrase(), 1000);
+                   return;
+               }
+               
+               document.getElementById('gibberishDisplay').textContent = this.currentPhrase.gibberish;
+               document.getElementById('categoryDisplay').textContent = this.currentPhrase.category;
+               document.getElementById('answerInput').value = '';
+               document.getElementById('feedback').textContent = '';
+               document.getElementById('answerInput').focus();
+               
+               // Ensure buffer is maintained
+               this.generator.ensureBuffer();
+           }
+           
+           checkAnswer() {
+               if (!this.isPlaying || !this.currentPhrase) return;
+               
+               const input = document.getElementById('answerInput').value;
+               if (!input.trim()) return;
+               
+               const isCorrect = FuzzyMatcher.isSimilar(input, this.currentPhrase.answer);
+               
+               if (isCorrect) {
+                   this.handleCorrect();
+               } else {
+                   this.handleIncorrect();
+               }
+           }
+           
+           handleCorrect() {
+               this.score += 10 + (this.streak * 2);
+               this.streak++;
+               this.solvedCount++;
+               this.updateStats();
+               
+               document.getElementById('feedback').innerHTML = 
+                   `<span class="correct">✓ Correct! "${this.currentPhrase.answer}"</span>`;
+               
+               setTimeout(() => this.nextPhrase(), 1500);
+           }
+           
+           handleIncorrect() {
+               this.streak = 0;
+               this.updateStats();
+               document.getElementById('feedback').innerHTML = 
+                   `<span class="incorrect">✗ Not quite... Keep trying!</span>`;
+               
+               // Shake effect
+               const input = document.getElementById('answerInput');
+               input.style.borderColor = '#ff6b6b';
+               setTimeout(() => {
+                   input.style.borderColor = '#ddd';
+               }, 500);
+           }
+           
+           skip() {
+               if (!this.isPlaying || !this.currentPhrase) return;
+               
+               this.score = Math.max(0, this.score - 1);
+               this.streak = 0;
+               this.updateStats();
+               
+               document.getElementById('feedback').innerHTML = 
+                   `<span class="incorrect">Skipped: "${this.currentPhrase.answer}"</span>`;
+               
+               setTimeout(() => this.nextPhrase(), 1500);
+           }
+           
+           updateStats() {
+               document.getElementById('score').textContent = this.score;
+               document.getElementById('streak').textContent = this.streak;
+           }
+           
+           endGame() {
+               this.isPlaying = false;
+               clearInterval(this.timer);
+               
+               document.getElementById('gameScreen').classList.add('hidden');
+               document.getElementById('endScreen').classList.remove('hidden');
+               document.getElementById('finalScore').textContent = this.score;
+               document.getElementById('solvedCount').textContent = this.solvedCount;
+           }
+           
+           restart() {
+               this.score = 0;
+               this.streak = 0;
+               this.solvedCount = 0;
+               this.generator = new PhraseGenerator(); // Fresh session
+               
+               document.getElementById('endScreen').classList.add('hidden');
+               document.getElementById('startScreen').classList.remove('hidden');
+               document.getElementById('timerDisplay').classList.add('hidden');
+               this.updateStats();
+           }
+       }
+       
+       const game = new Game();
+       
+       // Enter key support
+       document.getElementById('answerInput').addEventListener('keypress', (e) => {
+           if (e.key === 'Enter') game.checkAnswer();
+       });
+       
+       // Prevent space from skipping in input
+       document.addEventListener('keydown', (e) => {
+           if (e.code === 'Space' && document.activeElement !== document.getElementById('answerInput')) {
+               e.preventDefault();
+           }
+       });
+   </script>
+</body>
+</html>
