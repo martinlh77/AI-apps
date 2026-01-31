@@ -1200,7 +1200,12 @@ flux<!DOCTYPE html>
     const mediaClearBtn = document.getElementById('media-clear-btn');
     
     // --- Initialization ---
-    if(USER_API_TOKEN) tokenInput.value = USER_API_TOKEN;
+    const savedToken = localStorage.getItem('userApiToken');
+if (savedToken) {
+    tokenInput.value = savedToken;  // Use saved user token
+} else if (USER_API_TOKEN) {
+    tokenInput.value = USER_API_TOKEN;  // Fallback to hard-coded only if no saved token
+}
 
     // --- Markdown Renderer Setup with Preview Button ---
     const renderer = new marked.Renderer();
@@ -1238,7 +1243,7 @@ flux<!DOCTYPE html>
             </div>`;
     };
 
-   marked.use({ 
+marked.use({ 
     renderer,
     gfm: true,
     breaks: true 
@@ -1415,6 +1420,16 @@ flux<!DOCTYPE html>
         e.preventDefault();
         settingsPanel.classList.remove('open');
     });
+
+// Save token to localStorage when user changes it
+tokenInput.addEventListener('change', function() {
+    if (this.value.trim()) {
+        localStorage.setItem('userApiToken', this.value.trim());
+        showNotification('API Token saved for future sessions!');
+    } else {
+        localStorage.removeItem('userApiToken'); // Clear saved token if field is emptied
+    }
+});
     
     themeToggle.addEventListener('click', function(e) {
         e.preventDefault();
@@ -2857,13 +2872,3 @@ flux<!DOCTYPE html>
 </body>
 
 </html>
-
-
-
-
-
-
-
-
-
-
