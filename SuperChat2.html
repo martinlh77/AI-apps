@@ -1,4 +1,4 @@
-flux<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -32,6 +32,9 @@ flux<!DOCTYPE html>
             --preview-bg: #ffffff;
             --media-studio-bg: #1e293b;
             --media-card-bg: #334155;
+            --byop-bg: #fff3cd;
+            --byop-border: #ffc107;
+            --byop-text: #856404;
         }
 
         [data-theme="dark"] {
@@ -40,6 +43,7 @@ flux<!DOCTYPE html>
             --text-color: #e0e0e0;
             --input-bg: #2c2c2c;
             --border-color: #444;
+            --user-msg-bg: #0056b3;
             --user-msg-bg: #0056b3;
             --ai-msg-bg: #333333;
             --ai-msg-text: #e0e0e0;
@@ -54,6 +58,9 @@ flux<!DOCTYPE html>
             --preview-bg: #1e1e1e;
             --media-studio-bg: #0f172a;
             --media-card-bg: #1e293b;
+            --byop-bg: #2d2818;
+            --byop-border: #ffc107;
+            --byop-text: #ffc107;
         }
 
         * { box-sizing: border-box; }
@@ -276,6 +283,30 @@ flux<!DOCTYPE html>
         .settings-group select, .settings-group input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); }
         .close-settings { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 1.2rem; }
 
+        /* BYOP Info Box */
+        .byop-info {
+            background: var(--byop-bg);
+            border: 1px solid var(--byop-border);
+            color: var(--byop-text);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+        }
+        .byop-info h4 {
+            margin: 0 0 8px 0;
+            font-size: 0.95rem;
+        }
+        .byop-info p {
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+        }
+        .byop-info a {
+            color: var(--byop-text);
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
         /* Audio Controls */
         .audio-controls { 
             margin-top: 10px; 
@@ -320,6 +351,71 @@ flux<!DOCTYPE html>
         }
         .notification.show {
             transform: translateX(0);
+        }
+
+        /* Drag and Drop Overlay */
+        .drag-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 123, 255, 0.15);
+            border: 4px dashed var(--user-msg-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(3px);
+        }
+
+        .drag-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .drag-overlay-content {
+            background: var(--chat-bg);
+            padding: 40px 60px;
+            border-radius: 16px;
+            border: 3px solid var(--user-msg-bg);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .drag-overlay.active .drag-overlay-content {
+            transform: scale(1);
+        }
+
+        .drag-overlay-content i {
+            font-size: 4rem;
+            color: var(--user-msg-bg);
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .drag-overlay-content h3 {
+            margin: 0 0 10px 0;
+            color: var(--text-color);
+            font-size: 1.8rem;
+        }
+
+        .drag-overlay-content p {
+            margin: 0;
+            color: var(--text-color);
+            opacity: 0.8;
+            font-size: 1rem;
+        }
+
+        /* Visual feedback on chat container */
+        #chat-container.drag-over {
+            background: rgba(0, 123, 255, 0.05);
+            box-shadow: inset 0 0 20px rgba(0, 123, 255, 0.2);
         }
 
         /* TTS Modal */
@@ -668,12 +764,23 @@ flux<!DOCTYPE html>
             width: auto;
         }
 
+        /* Paid model indicator in selects */
+        option.paid-model-option {
+            color: #ffc107;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             #preview-panel { width: 100%; right: -100%; }
             .message-wrapper { max-width: 95%; }
             .media-studio-grid {
                 grid-template-columns: 1fr;
+            }
+            .drag-overlay-content {
+                padding: 30px 40px;
+            }
+            .drag-overlay-content h3 {
+                font-size: 1.4rem;
             }
         }
     </style>
@@ -756,9 +863,16 @@ flux<!DOCTYPE html>
             <button id="theme-toggle" type="button" style="width:100%; padding:8px; cursor:pointer;">Switch to Dark Mode</button>
         </div>
 
+        <div class="byop-info">
+            <h4><i class="fas fa-flower"></i> Bring Your Own Pollen (BYOP)</h4>
+            <p>This app uses a shared API key by default. To access premium models (marked with 🔒), enter your own API key from <a href="https://enter.pollinations.ai" target="_blank">enter.pollinations.ai</a>.</p>
+            <p style="font-size: 0.8em; margin-top: 8px;">With your own key, you pay for your own usage and unlock premium models.</p>
+        </div>
+
         <div class="settings-group">
-            <label>Token Key</label>
-            <input type="password" id="api-token" placeholder="Enter Bearer Token">
+            <label>API Key <small style="font-weight: normal; opacity: 0.7;">(Required for premium models)</small></label>
+            <input type="password" id="api-token" placeholder="Enter your personal API key (sk_...)">
+            <small style="color:var(--text-color); opacity:0.7; display: block; margin-top: 4px;">Enter your own key to unlock 🔒 premium models</small>
         </div>
 
         <!-- System Message -->
@@ -800,9 +914,9 @@ flux<!DOCTYPE html>
                 <option value="nomnom">NomNom by Itachi🔍</option>
                 <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
                 <option value="gemini-search">Gemini-Search👁️🔍</option>
-                <option value="gemini-legacy">Gemini-Legacy 2.5 Pro🎙️👁️🔍🧠💻</option>
-                <option value="gemini-large">Gemini-Large🎙️👁️👂🧠💻🔍</option>
-                <option value="claude-large">Claude-Large👁️💻</option>
+                <option value="gemini-legacy" class="paid-model-option" style="display: none;">Gemini-Legacy 2.5 Pro🎙️👁️🔍🧠💻 🔒</option>
+                <option value="gemini-large" class="paid-model-option" style="display: none;">Gemini-Large🎙️👁️👂🧠💻🔍 🔒</option>
+                <option value="claude-large" class="paid-model-option" style="display: none;">Claude-Large👁️💻 🔒</option>
                 <option value="openai-large">Openai-Large👁️💻</option>
                 <option value="openai-audio">OpenAI Audio 🎙️👁️👂🗣️(Voice)</option>
             </select>
@@ -885,9 +999,10 @@ flux<!DOCTYPE html>
                 <option value="turbo">Turbo</option>
                 <option value="kontext">Kontext</option>
                 <option value="seedream">SeeDream</option>
-                <option value="seedream-pro">SeeDream Pro</option>
+                <option value="seedream-pro" class="paid-model-option" style="display: none;">SeeDream Pro 🔒</option>
                 <option value="nanobanana">NanoBanana</option>
-                <option value="nanobanana-pro">NanoBanana Pro</option>
+                <option value="nanobanana-pro" class="paid-model-option" style="display: none;">NanoBanana Pro 🔒</option>
+                <option value="gptimage-large" class="paid-model-option" style="display: none;">GPTImage Large 🔒</option>
             </select>
         </div>
 
@@ -896,7 +1011,7 @@ flux<!DOCTYPE html>
             <select id="default-video-model">
                 <option value="seedance" selected>Seedance</option>
                 <option value="seedance-pro">Seedance Pro</option>
-                <option value="veo">Veo</option>
+                <option value="veo" class="paid-model-option" style="display: none;">Veo 🔒</option>
             </select>
         </div>
 
@@ -958,18 +1073,20 @@ flux<!DOCTYPE html>
                                 <option value="zimage" selected>ZImage</option>
                                 <option value="flux">Flux</option>
                                 <option value="turbo">Turbo</option>
+                                <option value="gptimage">GPTImage</option>
+                                <option value="gptimage-large" class="paid-model-option" style="display: none;">GPTImage Large 🔒</option>
                             </optgroup>
                             <optgroup label="Editor Models">
                                 <option value="kontext">Kontext</option>
                                 <option value="seedream">SeeDream</option>
-                                <option value="seedream-pro">SeeDream Pro</option>
+                                <option value="seedream-pro" class="paid-model-option" style="display: none;">SeeDream Pro 🔒</option>
                                 <option value="nanobanana">NanoBanana</option>
-                                <option value="nanobanana-pro">NanoBanana Pro</option>
+                                <option value="nanobanana-pro" class="paid-model-option" style="display: none;">NanoBanana Pro 🔒</option>
                             </optgroup>
                             <optgroup label="Video Models">
                                 <option value="seedance">Seedance</option>
                                 <option value="seedance-pro">Seedance Pro</option>
-                                <option value="veo">Veo</option>
+                                <option value="veo" class="paid-model-option" style="display: none;">Veo 🔒</option>
                             </optgroup>
                         </select>
                     </div>
@@ -1107,11 +1224,31 @@ flux<!DOCTYPE html>
 
     <div id="notification" class="notification"></div>
 
+    <!-- Drag and Drop Overlay -->
+    <div id="drag-overlay" class="drag-overlay">
+        <div class="drag-overlay-content">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <h3>Drop files here</h3>
+            <p>Images, audio, code, and text files accepted</p>
+        </div>
+    </div>
+
 <script>
     // --- Configuration ---
     const USER_API_TOKEN = "pk_OIQlw5rh71ylmlqV";
     const API_URL = "https://gen.pollinations.ai/v1/chat/completions";
     const IMAGE_API_URL = "https://gen.pollinations.ai/image";
+    
+    // --- BYOP Policy: Paid-only models ---
+    const PAID_ONLY_MODELS = [
+        "seedream-pro",
+        "gptimage-large",
+        "nanobanana-pro",
+        "veo",
+        "gemini-large",
+        "gemini-legacy",
+        "claude-large"
+    ];
     
     // --- State ---
     let conversationHistory = [];
@@ -1122,6 +1259,7 @@ flux<!DOCTYPE html>
     let sessions = {};
     let currentPreviewCode = { html: '', css: '', js: '' };
     let abortController = null;
+    let dragCounter = 0;
 
     // Media Studio State
     let mediaState = {
@@ -1156,6 +1294,7 @@ flux<!DOCTYPE html>
     const previewIframe = document.getElementById('preview-iframe');
     const refreshPreview = document.getElementById('refresh-preview');
     const openNewTab = document.getElementById('open-new-tab');
+    const dragOverlay = document.getElementById('drag-overlay');
     
     // Media Studio Elements
     const mediaStudioBtn = document.getElementById('media-studio-btn');
@@ -1198,14 +1337,56 @@ flux<!DOCTYPE html>
     const mediaRegenerateBtn = document.getElementById('media-regenerate-btn');
     const mediaInsertChatBtn = document.getElementById('media-insert-chat-btn');
     const mediaClearBtn = document.getElementById('media-clear-btn');
+
+    // --- BYOP Policy Functions ---
+    function hasUserProvidedOwnKey() {
+        const currentToken = tokenInput.value.trim();
+        // User has provided their own key if it's not empty and different from the hardcoded public token
+        return currentToken && currentToken !== USER_API_TOKEN;
+    }
+
+    function updatePaidModelOptions() {
+        const hasKey = hasUserProvidedOwnKey();
+        const paidOptions = document.querySelectorAll('.paid-model-option');
+        
+        paidOptions.forEach(option => {
+            option.style.display = hasKey ? 'block' : 'none';
+        });
+        
+        // If currently selected model is paid and user removed key, switch to default
+        const selects = [
+            document.getElementById('model-select'), 
+            document.getElementById('media-model-select'), 
+            document.getElementById('default-image-model'), 
+            document.getElementById('default-video-model')
+        ];
+        
+        selects.forEach(select => {
+            if (!select) return;
+            const currentValue = select.value;
+            if (PAID_ONLY_MODELS.includes(currentValue) && !hasKey) {
+                // Reset to first available free option
+                for (let i = 0; i < select.options.length; i++) {
+                    if (!PAID_ONLY_MODELS.includes(select.options[i].value)) {
+                        select.selectedIndex = i;
+                        break;
+                    }
+                }
+                showNotification('Switched to free model - premium models require your own API key');
+            }
+        });
+    }
     
     // --- Initialization ---
     const savedToken = localStorage.getItem('userApiToken');
-if (savedToken) {
-    tokenInput.value = savedToken;  // Use saved user token
-} else if (USER_API_TOKEN) {
-    tokenInput.value = USER_API_TOKEN;  // Fallback to hard-coded only if no saved token
-}
+    if (savedToken) {
+        tokenInput.value = savedToken;
+    } else if (USER_API_TOKEN) {
+        tokenInput.value = USER_API_TOKEN;
+    }
+    
+    // Check paid model visibility on init
+    updatePaidModelOptions();
 
     // --- Markdown Renderer Setup with Preview Button ---
     const renderer = new marked.Renderer();
@@ -1421,15 +1602,16 @@ marked.use({
         settingsPanel.classList.remove('open');
     });
 
-// Save token to localStorage when user changes it
-tokenInput.addEventListener('change', function() {
-    if (this.value.trim()) {
-        localStorage.setItem('userApiToken', this.value.trim());
-        showNotification('API Token saved for future sessions!');
-    } else {
-        localStorage.removeItem('userApiToken'); // Clear saved token if field is emptied
-    }
-});
+    // Save token to localStorage and update paid model visibility
+    tokenInput.addEventListener('change', function() {
+        if (this.value.trim()) {
+            localStorage.setItem('userApiToken', this.value.trim());
+            showNotification('API Token saved! Premium models unlocked if valid.');
+        } else {
+            localStorage.removeItem('userApiToken');
+        }
+        updatePaidModelOptions();
+    });
     
     themeToggle.addEventListener('click', function(e) {
         e.preventDefault();
@@ -1472,9 +1654,6 @@ tokenInput.addEventListener('change', function() {
         }
     });
 
-    fileInput.addEventListener('change', handleFileUpload);
-    
-   
     // Reset buttons
     resetChatBtn.addEventListener('click', function(e) {
         e.preventDefault();
@@ -1502,10 +1681,86 @@ tokenInput.addEventListener('change', function() {
         createNewSession();
     });
 
-    // --- File Upload Logic ---
-    function handleFileUpload(e) {
-        const files = Array.from(e.target.files);
+    // --- Drag and Drop Event Listeners ---
+    // Prevent default browser behavior (opening files in new tab)
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        window.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Show overlay when files enter window
+    window.addEventListener('dragenter', (e) => {
+        if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+            dragCounter++;
+            dragOverlay.classList.add('active');
+            chatContainer.classList.add('drag-over');
+        }
+    });
+
+    // Hide overlay when files leave window
+    window.addEventListener('dragleave', (e) => {
+        dragCounter--;
+        if (dragCounter === 0) {
+            dragOverlay.classList.remove('active');
+            chatContainer.classList.remove('drag-over');
+        }
+    });
+
+    // Handle the drop
+    window.addEventListener('drop', (e) => {
+        dragCounter = 0;
+        dragOverlay.classList.remove('active');
+        chatContainer.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            processFiles(files);
+            // Scroll to show the file previews
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                filePreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+    });
+
+    // Optional: Allow dropping specifically on chat container for instant upload
+    chatContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        chatContainer.classList.add('drag-over');
+    });
+    
+    chatContainer.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        chatContainer.classList.remove('drag-over');
+    });
+    
+    chatContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        chatContainer.classList.remove('drag-over');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            processFiles(files);
+        }
+    });
+
+    // --- File Upload Logic (Modified for Drag & Drop) ---
+    
+    // Process files from either input or drop
+    function processFiles(fileList) {
+        const files = Array.from(fileList);
+        if (files.length === 0) return;
+        
         files.forEach(file => {
+            // Skip directories and empty files
+            if (file.size === 0 || file.type === '') {
+                showNotification(`Skipped: ${file.name} (not a valid file)`);
+                return;
+            }
+            
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const content = evt.target.result;
@@ -1521,6 +1776,11 @@ tokenInput.addEventListener('change', function() {
                     mime: file.type
                 });
                 renderFilePreviews();
+                showNotification(`Added: ${file.name}`);
+            };
+            
+            reader.onerror = function() {
+                showNotification(`Failed to read: ${file.name}`);
             };
             
             if (file.type.startsWith('image') || file.type.startsWith('audio')) {
@@ -1529,8 +1789,14 @@ tokenInput.addEventListener('change', function() {
                 reader.readAsText(file);
             }
         });
+    }
+
+    function handleFileUpload(e) {
+        processFiles(e.target.files);
         fileInput.value = '';
     }
+
+    fileInput.addEventListener('change', handleFileUpload);
 
     function renderFilePreviews() {
         filePreview.innerHTML = '';
@@ -1737,6 +2003,12 @@ tokenInput.addEventListener('change', function() {
 
         const modelSelect = document.getElementById('model-select');
         let model = modelSelect.value;
+        
+        // Check if trying to use paid model without own key
+        if (PAID_ONLY_MODELS.includes(model) && !hasUserProvidedOwnKey()) {
+            showNotification("🔒 Premium models require your own API key. Enter your key in settings.");
+            return;
+        }
         
         const seed = regenerateSeed !== null ? regenerateSeed : Math.floor(Math.random() * 10000);
 
@@ -2389,11 +2661,36 @@ tokenInput.addEventListener('change', function() {
         mediaModelSelect.value = defaultImageModel;
         mediaWidth.value = defaultSize;
         mediaHeight.value = defaultSize;
+        
+        // Check if selected model is paid and user doesn't have key
+        if (PAID_ONLY_MODELS.includes(mediaModelSelect.value) && !hasUserProvidedOwnKey()) {
+            showNotification('Please enter your own API key to use premium models');
+            // Reset to first free option
+            for (let i = 0; i < mediaModelSelect.options.length; i++) {
+                if (!PAID_ONLY_MODELS.includes(mediaModelSelect.options[i].value)) {
+                    mediaModelSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
     }
 
     // --- Media Studio UI Updates ---
     mediaModeSelect.addEventListener('change', updateMediaStudioUI);
-    mediaModelSelect.addEventListener('change', updateMediaStudioUI);
+    mediaModelSelect.addEventListener('change', function() {
+        // Check if user selected a paid model without having their own key
+        if (PAID_ONLY_MODELS.includes(this.value) && !hasUserProvidedOwnKey()) {
+            showNotification('🔒 This model requires your own API key. Please add your key in Settings.');
+            // Revert to first free option
+            for (let i = 0; i < this.options.length; i++) {
+                if (!PAID_ONLY_MODELS.includes(this.options[i].value)) {
+                    this.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        updateMediaStudioUI();
+    });
 
     function updateMediaStudioUI() {
         const mode = mediaModeSelect.value;
@@ -2458,10 +2755,8 @@ tokenInput.addEventListener('change', function() {
                 mediaModelSelect.value = 'seedance';
             }
         } else {
-            // Show all models
-            Array.from(mediaModelSelect.options).forEach(opt => {
-                opt.style.display = 'block';
-            });
+            // Show all models (respecting paid-only visibility)
+            updatePaidModelOptions();
         }
     }
 
@@ -2552,6 +2847,13 @@ tokenInput.addEventListener('change', function() {
         
         if (!prompt) {
             showNotification('Please enter a prompt');
+            return;
+        }
+        
+        // Check if trying to use paid model without own key
+        const selectedModel = mediaModelSelect.value;
+        if (PAID_ONLY_MODELS.includes(selectedModel) && !hasUserProvidedOwnKey()) {
+            showNotification('🔒 This premium model requires your own API key. Please add your key in Settings.');
             return;
         }
         
@@ -2864,9 +3166,10 @@ tokenInput.addEventListener('change', function() {
     // --- Initialize App ---
     loadAllDataFromStorage();
 
-    console.log("Chat application with media studio initialized successfully!");
+    console.log("Chat application with BYOP policy and drag-drop support initialized successfully!");
     console.log("Press Ctrl+Shift+P to toggle code preview");
     console.log("Click the camera icon to open the Media Studio");
+    console.log("Premium models (🔒) require your own API key from enter.pollinations.ai");
 
 </script>
 </body>
