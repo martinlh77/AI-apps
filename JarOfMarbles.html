@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Marble Guess 3D</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: #1a1a2e;
+            color: white;
+            touch-action: none; /* Only prevent default touch actions on body, not on UI */
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            touch-action: none; /* Keep touch controls for 3D */
+        }
+        
+        .ui-layer {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .ui-panel {
+            pointer-events: auto;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 85vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; /* Smooth iOS scrolling */
+            touch-action: pan-y; /* Allow vertical scrolling */
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            transition: opacity 0.3s;
+            pointer-events: auto;
+            overflow: hidden;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        h1 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8em;
+        }
+        
+        h2 {
+            color: #4fbdba;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        h3 {
+            color: #ffd700;
+            margin: 15px 0 10px 0;
+            font-size: 1.1em;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #aaa;
+        }
+        
+        input[type="number"], input[type="range"], select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #222;
+            color: white;
+            font-size: 16px; /* Prevent iOS zoom */
+            touch-action: manipulation;
+        }
+        
+        input[type="range"] {
+            padding: 0;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #444;
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .color-inputs {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        @media (min-width: 480px) {
+            .color-inputs {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 6px;
+        }
+        
+        .color-preview {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid white;
+            flex-shrink: 0;
+        }
+        
+        .color-row input {
+            flex: 1;
+            min-width: 60px;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        button.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        button.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        button.neutral {
+            background: #444;
+        }
+        
+        .stats-bar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            flex-wrap: wrap;
+            gap: 8px;
+            z-index: 5;
+        }
+        
+        .stat-box {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9em;
+            backdrop-filter: blur(5px);
+        }
+        
+        .guess-form {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 15px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 95%;
+            max-width: 400px;
+            max-height: 40vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .guess-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .guess-row input {
+            flex: 1;
+            min-width: 80px;
+        }
+        
+        .timer {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+            background: rgba(0,0,0,0.7);
+            padding: 5px 20px;
+            border-radius: 25px;
+            z-index: 5;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+        
+        .result-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .big-number {
+            font-size: 1.8em;
+            color: #ffd700;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .accuracy {
+            color: #4fbdba;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        
+        .mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .mode-btn {
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            touch-action: manipulation;
+        }
+        
+        .mode-btn.active {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.3);
+        }
+        
+        .mode-btn div:first-child {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+        
+        .ai-thinking {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 100;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #333;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .info-box {
+            background: rgba(102, 126, 234, 0.2);
+            border: 1px solid rgba(102, 126, 234, 0.5);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        
+        .warning-text {
+            color: #ff6b6b;
+            font-size: 0.85em;
+            margin-top: 5px;
+            min-height: 20px;
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.5);
+        }
+    </style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<div class="ui-layer">
+    <!-- Main Menu -->
+    <div id="main-menu" class="screen">
+        <div class="ui-panel">
+            <h1>🎯 Marble Guess 3D</h1>
+            
+            <div class="mode-selector">
+                <div class="mode-btn active" onclick="game.setMode('solo')">
+                    <div>👤</div>
+                    <div>Solo</div>
+                </div>
+                <div class="mode-btn" onclick="game.setMode('ai')">
+                    <div>🤖</div>
+                    <div>vs AI</div>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Number of Rounds</label>
+                <input type="number" id="target-score" value="3" min="1" max="10">
+            </div>
+            
+            <div class="control-group">
+                <label>Timer (seconds, 0 = untimed)</label>
+                <input type="number" id="timer-setting" value="0" min="0" max="300">
+            </div>
+            
+            <button onclick="game.showSetup()">Start Game</button>
+            <button class="secondary" onclick="game.randomizeAll()">🎲 Randomize All</button>
+        </div>
+    </div>
+
+    <!-- Setup Screen -->
+    <div id="setup-screen" class="screen hidden">
+        <div class="ui-panel">
+            <h2>Jar Configuration</h2>
+            
+            <div class="info-box">
+                🤫 The number of marbles is randomly generated each round. Look carefully and guess!
+            </div>
+            
+            <div class="control-group">
+                <label>Marble Size</label>
+                <input type="range" id="marble-size" min="0.3" max="0.8" step="0.1" value="0.5" oninput="document.getElementById('size-val').textContent = this.value">
+                <div style="text-align: center; color: #ffd700; margin-top: 5px;" id="size-val">0.5</div>
+            </div>
+            
+            <div class="control-group">
+                <label>Marble Style</label>
+                <select id="marble-style">
+                    <option value="solid">Solid Color</option>
+                    <option value="clear">Clear Glass</option>
+                    <option value="matte">Matte Finish</option>
+                    <option value="metallic">Metallic</option>
+                    <option value="crystal">Crystal</option>
+                    <option value="faceted">Faceted Gem</option>
+                </select>
+            </div>
+            
+            <h3>Color Distribution (%)</h3>
+            <div class="color-inputs" id="color-inputs">
+                <!-- Generated dynamically -->
+            </div>
+            
+            <div class="warning-text" id="percentage-warning"></div>
+            
+            <button onclick="game.startRound()">Generate Mystery Jar</button>
+            <button class="secondary" onclick="game.randomizeJar()">🎲 Randomize Settings</button>
+            <button class="neutral" onclick="game.showMenu()">Back</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen hidden" style="background: transparent; pointer-events: none;">
+        <div class="stats-bar">
+            <div class="stat-box">Round: <span id="current-round">1</span>/<span id="total-rounds">3</span></div>
+            <div class="stat-box">Score: <span id="current-score">0</span></div>
+            <div class="stat-box" id="opponent-score-box" style="display: none;">AI: <span id="ai-score">0</span></div>
+        </div>
+        
+        <div id="timer-display" class="timer hidden">00:00</div>
+        
+        <div class="guess-form">
+            <h3 style="text-align: center; margin: 0 0 10px 0;">Your Guess</h3>
+            <div class="guess-row">
+                <label style="flex: 0 0 auto; margin: 0;">Total:</label>
+                <input type="number" id="guess-total" placeholder="?" min="0" inputmode="numeric">
+            </div>
+            <div id="color-guesses">
+                <!-- Color specific inputs generated dynamically -->
+            </div>
+            <button onclick="game.submitGuess()" style="margin-top: 10px;">Submit Guess</button>
+            <button class="secondary" onclick="game.endRoundEarly()" style="background: #e74c3c; margin-top: 8px;">Reveal Answer</button>
+        </div>
+    </div>
+
+    <!-- AI Thinking Overlay -->
+    <div id="ai-thinking" class="ai-thinking hidden">
+        <div class="spinner"></div>
+        <div>AI is analyzing the jar...</div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="screen hidden">
+        <div class="ui-panel" style="max-width: 600px;">
+            <h2>Round Results</h2>
+            
+            <div class="results-grid" id="results-grid"></div>
+            
+            <div id="round-summary" style="margin: 15px 0; padding: 15px; background: rgba(255,255,255,0.1); border-radius: 10px; text-align: center; font-size: 1.1em;">
+            </div>
+            
+            <div id="final-results" style="display: none; margin: 15px 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; text-align: center;">
+                <h1 style="margin: 0 0 10px 0;">Game Over!</h1>
+                <div id="winner-announcement" style="font-size: 1.3em;"></div>
+            </div>
+            
+            <button id="next-round-btn" onclick="game.nextRound()">Next Round</button>
+            <button class="neutral" onclick="game.showMenu()">Main Menu</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+class MarbleGame {
+    constructor() {
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.controls = null;
+        this.jar = null;
+        this.lid = null;
+        this.marbles = [];
+        this.marbleMeshes = [];
+        this.colors = [
+            { name: 'Red', hex: 0xff0000 },
+            { name: 'Blue', hex: 0x0066ff },
+            { name: 'Green', hex: 0x00cc66 },
+            { name: 'Yellow', hex: 0xffdd00 },
+            { name: 'Purple', hex: 0x9900cc },
+            { name: 'Orange', hex: 0xff6600 }
+        ];
+        
+        this.gameState = {
+            mode: 'solo',
+            targetRounds: 3,
+            currentRound: 1,
+            playerScore: 0,
+            aiScore: 0,
+            timer: 0,
+            timerInterval: null,
+            marbleSize: 0.5,
+            marbleStyle: 'solid',
+            colorDistribution: {},
+            actualCounts: {},
+            aiGuess: {},
+            actualTotal: 0
+        };
+        
+        this.physics = {
+            enabled: false,
+            marbles: []
+        };
+        
+        this.init();
+        this.generateColorInputs();
+    }
+    
+    init() {
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x1a1a2e);
+        this.scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
+        
+        this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.set(0, 8, 15);
+        
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.physicallyCorrectLights = true;
+        document.getElementById('canvas-container').appendChild(this.renderer.domElement);
+        
+        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.05;
+        this.controls.minDistance = 5;
+        this.controls.maxDistance = 30;
+        this.controls.maxPolarAngle = Math.PI / 2;
+        
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        this.scene.add(ambientLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, 5);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        this.scene.add(dirLight);
+        
+        const backLight = new THREE.DirectionalLight(0x4fbdba, 0.5);
+        backLight.position.set(-5, 5, -10);
+        this.scene.add(backLight);
+        
+        const planeGeometry = new THREE.PlaneGeometry(50, 50);
+        const planeMaterial = new THREE.ShadowMaterial({ opacity: 0.3 });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.y = -2;
+        plane.receiveShadow = true;
+        this.scene.add(plane);
+        
+        const grid = new THREE.GridHelper(50, 50, 0x444444, 0x222222);
+        grid.position.y = -2;
+        this.scene.add(grid);
+        
+        window.addEventListener('resize', () => this.onWindowResize(), false);
+        
+        // Prevent touch events on canvas from scrolling the page
+        document.getElementById('canvas-container').addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
+        
+        this.animate();
+    }
+    
+    generateColorInputs() {
+        const container = document.getElementById('color-inputs');
+        container.innerHTML = '';
+        
+        this.colors.forEach((color, index) => {
+            const row = document.createElement('div');
+            row.className = 'color-row';
+            const hexString = color.hex.toString(16).padStart(6, '0');
+            row.innerHTML = `
+                <div class="color-preview" style="background: #${hexString}"></div>
+                <div style="flex: 1;">
+                    <div style="font-size: 0.85em; margin-bottom: 2px; color: #ccc;">${color.name}</div>
+                    <input type="number" class="color-percent" data-color="${color.name}" 
+                           value="${index < 3 ? 33 : 0}" min="0" max="100" step="5"
+                           onchange="game.validatePercentages()" inputmode="numeric">
+                </div>
+                <span style="font-size: 0.9em; color: #888;">%</span>
+            `;
+            container.appendChild(row);
+        });
+        
+        this.validatePercentages();
+    }
+    
+    validatePercentages() {
+        const inputs = document.querySelectorAll('.color-percent');
+        let total = 0;
+        inputs.forEach(input => total += parseInt(input.value) || 0);
+        
+        const warning = document.getElementById('percentage-warning');
+        if (total !== 100) {
+            warning.textContent = `⚠️ Total must equal 100% (currently ${total}%)`;
+            return false;
+        } else {
+            warning.textContent = '';
+            return true;
+        }
+    }
+    
+    setMode(mode) {
+        this.gameState.mode = mode;
+        document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.closest('.mode-btn').classList.add('active');
+    }
+    
+    showSetup() {
+        this.gameState.targetRounds = parseInt(document.getElementById('target-score').value);
+        this.gameState.timer = parseInt(document.getElementById('timer-setting').value);
+        
+        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('setup-screen').classList.remove('hidden');
+        document.getElementById('total-rounds').textContent = this.gameState.targetRounds;
+    }
+    
+    showMenu() {
+        document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+        document.getElementById('main-menu').classList.remove('hidden');
+        this.clearScene();
+        
+        // Clear any running timer
+        if (this.gameState.timerInterval) {
+            clearInterval(this.gameState.timerInterval);
+            this.gameState.timerInterval = null;
+        }
+    }
+    
+    randomizeAll() {
+        this.setMode(Math.random() > 0.5 ? 'solo' : 'ai');
+        document.getElementById('target-score').value = Math.floor(Math.random() * 5) + 1;
+        document.getElementById('timer-setting').value = Math.random() > 0.7 ? Math.floor(Math.random() * 60) + 30 : 0;
+        this.showSetup();
+        this.randomizeJar();
+    }
+    
+    randomizeJar() {
+        // Random size between 0.3 and 0.8
+        const randomSize = (Math.random() * 0.5 + 0.3).toFixed(1);
+        document.getElementById('marble-size').value = randomSize;
+        document.getElementById('size-val').textContent = randomSize;
+        
+        // Random style
+        const styles = ['solid', 'clear', 'matte', 'metallic', 'crystal', 'faceted'];
+        document.getElementById('marble-style').value = styles[Math.floor(Math.random() * styles.length)];
+        
+        // Random percentages that sum to 100
+        const inputs = document.querySelectorAll('.color-percent');
+        const numColors = Math.floor(Math.random() * 3) + 2; // 2 to 4 colors
+        let remaining = 100;
+        
+        inputs.forEach((input, index) => {
+            if (index < numColors - 1) {
+                const maxVal = remaining - (numColors - index - 1) * 5;
+                const val = Math.floor(Math.random() * (maxVal / 5)) * 5 + 5;
+                input.value = val;
+                remaining -= val;
+            } else if (index === numColors - 1) {
+                input.value = remaining;
+                remaining = 0;
+            } else {
+                input.value = 0;
+            }
+        });
+        
+        this.validatePercentages();
+    }
+    
+    createJar() {
+        const jarGeometry = new THREE.CylinderGeometry(3, 3, 6, 32, 1, true);
+        const jarMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            metalness: 0,
+            roughness: 0.1,
+            transmission: 0.9,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+        });
+        this.jar = new THREE.Mesh(jarGeometry, jarMaterial);
+        this.jar.position.y = 1;
+        this.jar.castShadow = true;
+        this.scene.add(this.jar);
+        
+        const bottomGeometry = new THREE.CircleGeometry(3, 32);
+        const bottomMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            transmission: 0.9,
+            opacity: 0.3,
+            transparent: true
+        });
+        const bottom = new THREE.Mesh(bottomGeometry, bottomMaterial);
+        bottom.rotation.x = -Math.PI / 2;
+        bottom.position.y = -2;
+        this.jar.add(bottom);
+        
+        const lidGeometry = new THREE.CylinderGeometry(3.1, 3.1, 0.2, 32);
+        const lidMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8b4513,
+            roughness: 0.6
+        });
+        this.lid = new THREE.Mesh(lidGeometry, lidMaterial);
+        this.lid.position.y = 4.1;
+        this.jar.add(this.lid);
+    }
+    
+    getMaterial(style, color) {
+        switch(style) {
+            case 'clear':
+                return new THREE.MeshPhysicalMaterial({
+                    color: color,
+                    transmission: 0.95,
+                    opacity: 0.4,
+                    transparent: true,
+                    roughness: 0.1,
+                    metalness: 0
+                });
+            case 'matte':
+                return new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.9,
+                    metalness: 0
+                });
+            case 'metallic':
+                return new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.3,
+                    metalness: 0.8
+                });
+            case 'crystal':
+                return new THREE.MeshPhysicalMaterial({
+                    color: color,
+                    transmission: 0.8,
+                    roughness: 0.05,
+                    metalness: 0.1,
+                    clearcoat: 1
+                });
+            case 'faceted':
+                return new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.2,
+                    metalness: 0.1,
+                    flatShading: true
+                });
+            default:
+                return new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.4,
+                    metalness: 0.2
+                });
+        }
+    }
+    
+    generateMarbles() {
+        this.marbles = [];
+        const size = parseFloat(document.getElementById('marble-size').value);
+        const style = document.getElementById('marble-style').value;
+        
+        // RANDOMIZE THE COUNT - This is the secret the player must guess!
+        // Random between 25 and 120 marbles based on size (larger marbles = fewer fit)
+        const maxMarbles = Math.floor(150 / (size * size));
+        const minMarbles = Math.floor(30 / (size * size));
+        this.gameState.actualTotal = Math.floor(Math.random() * (maxMarbles - minMarbles) + minMarbles);
+        
+        // Get color distribution
+        const inputs = document.querySelectorAll('.color-percent');
+        let totalPercent = 0;
+        const distribution = {};
+        
+        inputs.forEach(input => {
+            const colorName = input.dataset.color;
+            const percent = parseInt(input.value) || 0;
+            if (percent > 0) {
+                distribution[colorName] = percent;
+                totalPercent += percent;
+            }
+        });
+        
+        // Generate marble data based on percentages
+        let remaining = this.gameState.actualTotal;
+        const colorEntries = Object.entries(distribution);
+        
+        this.gameState.actualCounts = {};
+        
+        colorEntries.forEach(([color, percent], index) => {
+            const count = index === colorEntries.length - 1 ? remaining : 
+                         Math.floor(this.gameState.actualTotal * (percent / 100));
+            remaining -= count;
+            this.gameState.actualCounts[color] = count;
+            
+            const colorHex = this.colors.find(c => c.name === color).hex;
+            
+            for (let i = 0; i < count; i++) {
+                this.marbles.push({
+                    color: color,
+                    hex: colorHex,
+                    size: size * (0.9 + Math.random() * 0.2),
+                    style: style,
+                    id: Math.random()
+                });
+            }
+        });
+        
+        // Shuffle
+        this.marbles.sort(() => Math.random() - 0.5);
+        
+        // Place in jar
+        this.placeMarblesInJar();
+    }
+    
+    placeMarblesInJar() {
+        this.marbleMeshes.forEach(mesh => this.scene.remove(mesh));
+        this.marbleMeshes = [];
+        
+        const jarRadius = 2.5;
+        let currentY = -1.8;
+        
+        const placed = [];
+        
+        this.marbles.forEach((marbleData) => {
+            const geometry = marbleData.style === 'faceted' ? 
+                new THREE.IcosahedronGeometry(marbleData.size, 0) :
+                new THREE.SphereGeometry(marbleData.size, 16, 16);
+            
+            const material = this.getMaterial(marbleData.style, marbleData.hex);
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            let attempts = 0;
+            let valid = false;
+            let x, y, z;
+            
+            while (!valid && attempts < 50) {
+                const angle = Math.random() * Math.PI * 2;
+                const r = Math.random() * (jarRadius - marbleData.size - 0.2);
+                x = Math.cos(angle) * r;
+                z = Math.sin(angle) * r;
+                y = currentY + marbleData.size;
+                
+                valid = true;
+                for (let placedMarble of placed) {
+                    const dx = x - placedMarble.x;
+                    const dy = y - placedMarble.y;
+                    const dz = z - placedMarble.z;
+                    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    if (dist < (marbleData.size + placedMarble.size) * 0.9) {
+                        valid = false;
+                        break;
+                    }
+                }
+                
+                attempts++;
+                if (!valid && attempts % 10 === 0) {
+                    currentY += marbleData.size * 0.5;
+                }
+            }
+            
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+            
+            this.scene.add(mesh);
+            this.marbleMeshes.push(mesh);
+            placed.push({x, y, z, size: marbleData.size});
+            
+            if (y > currentY) currentY = y;
+        });
+    }
+    
+    startRound() {
+        if (!this.validatePercentages()) {
+            alert('Please make sure color percentages add up to 100%');
+            return;
+        }
+        
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        document.getElementById('current-round').textContent = this.gameState.currentRound;
+        document.getElementById('current-score').textContent = this.gameState.playerScore;
+        
+        if (this.gameState.mode === 'ai') {
+            document.getElementById('opponent-score-box').style.display = 'block';
+            document.getElementById('ai-score').textContent = this.gameState.aiScore;
+        } else {
+            document.getElementById('opponent-score-box').style.display = 'none';
+        }
+        
+        this.clearScene();
+        this.createJar();
+        this.generateMarbles(); // This now generates a RANDOM count!
+        this.generateGuessInputs();
+        
+        this.camera.position.set(0, 8, 15);
+        this.controls.target.set(0, 1, 0);
+        this.controls.update();
+        
+        if (this.gameState.timer > 0) {
+            this.startTimer();
+        } else {
+            document.getElementById('timer-display').classList.add('hidden');
+        }
+        
+        if (this.gameState.mode === 'ai') {
+            setTimeout(() => this.aiMakeGuess(), 2000);
+        }
+    }
+    
+    generateGuessInputs() {
+        const container = document.getElementById('color-guesses');
+        container.innerHTML = '';
+        
+        const activeColors = Object.keys(this.gameState.actualCounts).filter(c => this.gameState.actualCounts[c] > 0);
+        
+        activeColors.forEach(color => {
+            const colorHex = this.colors.find(c => c.name === color).hex;
+            const hexString = colorHex.toString(16).padStart(6, '0');
+            const row = document.createElement('div');
+            row.className = 'guess-row';
+            row.innerHTML = `
+                <div class="color-preview" style="background: #${hexString}; width: 20px; height: 20px;"></div>
+                <label style="flex: 0 0 auto; margin: 0; font-size: 0.9em;">${color}:</label>
+                <input type="number" class="guess-color-input" data-color="${color}" placeholder="0" min="0" inputmode="numeric">
+            `;
+            container.appendChild(row);
+        });
+    }
+    
+    startTimer() {
+        let remaining = this.gameState.timer;
+        const display = document.getElementById('timer-display');
+        display.classList.remove('hidden');
+        display.style.color = remaining <= 10 ? '#ff0000' : '#ff6b6b';
+        
+        this.gameState.timerInterval = setInterval(() => {
+            remaining--;
+            const mins = Math.floor(remaining / 60);
+            const secs = remaining % 60;
+            display.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+            
+            if (remaining <= 10) display.style.color = '#ff0000';
+            
+            if (remaining <= 0) {
+                clearInterval(this.gameState.timerInterval);
+                this.gameState.timerInterval = null;
+                this.submitGuess();
+            }
+        }, 1000);
+    }
+    
+    aiMakeGuess() {
+        document.getElementById('ai-thinking').classList.remove('hidden');
+        
+        setTimeout(() => {
+            const totalMarbles = this.gameState.actualTotal;
+            
+            // AI Logic: Estimates based on jar volume and visible marbles with error
+            const visibleRatio = 0.35 + Math.random() * 0.15; // AI sees 35-50%
+            const estimationError = 0.8 + Math.random() * 0.4; // 80% to 120% accuracy
+            const estimatedTotal = Math.round((totalMarbles / visibleRatio) * estimationError * 0.8);
+            
+            this.gameState.aiGuess = { total: Math.max(10, estimatedTotal) };
+            
+            // Guess distribution with some error
+            Object.keys(this.gameState.actualCounts).forEach(color => {
+                const actual = this.gameState.actualCounts[color];
+                const error = 0.7 + Math.random() * 0.6; // 70% to 130%
+                this.gameState.aiGuess[color] = Math.max(0, Math.round(actual * error));
+            });
+            
+            document.getElementById('ai-thinking').classList.add('hidden');
+        }, 1500 + Math.random() * 1000);
+    }
+    
+    submitGuess() {
+        if (this.gameState.timerInterval) {
+            clearInterval(this.gameState.timerInterval);
+            this.gameState.timerInterval = null;
+        }
+        
+        const playerGuess = {
+            total: parseInt(document.getElementById('guess-total').value) || 0
+        };
+        
+        document.querySelectorAll('.guess-color-input').forEach(input => {
+            playerGuess[input.dataset.color] = parseInt(input.value) || 0;
+        });
+        
+        // Validation
+        if (playerGuess.total === 0) {
+            if (!confirm('You entered 0 for total marbles. Are you sure?')) return;
+        }
+        
+        this.revealResults(playerGuess);
+    }
+    
+    endRoundEarly() {
+        if (confirm('Are you sure you want to reveal the answer? You can keep examining the jar.')) {
+            this.submitGuess();
+        }
+    }
+    
+    revealResults(playerGuess) {
+        document.getElementById('game-screen').classList.add('hidden');
+        this.animateLidOff();
+        
+        setTimeout(() => {
+            this.pourMarbles();
+            setTimeout(() => {
+                this.showResults(playerGuess);
+            }, 2500);
+        }, 800);
+    }
+    
+    animateLidOff() {
+        let frame = 0;
+        const animate = () => {
+            frame++;
+            if (this.lid && frame < 60) {
+                this.lid.position.y += 0.15;
+                this.lid.rotation.x += 0.03;
+                this.lid.rotation.z += 0.02;
+                requestAnimationFrame(animate);
+            } else if (this.lid) {
+                this.lid.visible = false;
+            }
+        };
+        animate();
+    }
+    
+    pourMarbles() {
+        this.physics.enabled = true;
+        this.physics.marbles = this.marbleMeshes.map((mesh) => ({
+            mesh: mesh,
+            velocity: new THREE.Vector3(
+                (Math.random() - 0.5) * 0.3,
+                Math.random() * 0.2,
+                (Math.random() - 0.5) * 0.3
+            ),
+            settled: false
+        }));
+        
+        setTimeout(() => {
+            this.physics.enabled = false;
+            this.arrangeMarblesForCounting();
+        }, 2500);
+    }
+    
+    arrangeMarblesForCounting() {
+        const groups = {};
+        this.marbles.forEach((m, i) => {
+            if (!groups[m.color]) groups[m.color] = [];
+            groups[m.color].push(this.marbleMeshes[i]);
+        });
+        
+        let startX = -Math.min(8, Object.keys(groups).length * 2);
+        
+        Object.keys(groups).forEach(color => {
+            const meshes = groups[color];
+            const cols = Math.ceil(Math.sqrt(meshes.length));
+            const spacing = 1.1;
+            
+            meshes.forEach((mesh, index) => {
+                const row = Math.floor(index / cols);
+                const col = index % cols;
+                
+                const targetX = startX + col * spacing;
+                const targetZ = row * spacing - 3;
+                const targetY = 0;
+                
+                this.animateToPosition(mesh, targetX, targetY, targetZ);
+            });
+            
+            startX += (cols * spacing) + 1.5;
+        });
+        
+        // Adjust camera to see all groups
+        const totalWidth = Object.keys(groups).length * 4;
+        if (totalWidth > 10) {
+            this.animateCameraTo(totalWidth * 0.4, 6, totalWidth * 0.4);
+        }
+    }
+    
+    animateToPosition(mesh, tx, ty, tz) {
+        const start = mesh.position.clone();
+        const end = new THREE.Vector3(tx, ty, tz);
+        let t = 0;
+        
+        const animate = () => {
+            t += 0.03;
+            if (t <= 1) {
+                mesh.position.lerpVectors(start, end, t);
+                mesh.position.y = ty + Math.sin(t * Math.PI) * 3 * (1-t);
+                requestAnimationFrame(animate);
+            } else {
+                mesh.position.copy(end);
+            }
+        };
+        animate();
+    }
+    
+    animateCameraTo(x, y, z) {
+        const start = this.camera.position.clone();
+        const end = new THREE.Vector3(x, y, z);
+        let t = 0;
+        
+        const animate = () => {
+            t += 0.02;
+            if (t <= 1) {
+                this.camera.position.lerpVectors(start, end, t);
+                this.controls.target.lerp(new THREE.Vector3(0, 0, 0), 0.05);
+                requestAnimationFrame(animate);
+            }
+        };
+        animate();
+    }
+    
+    showResults(playerGuess) {
+        const screen = document.getElementById('results-screen');
+        screen.classList.remove('hidden');
+        
+        const actualTotal = this.gameState.actualTotal;
+        const grid = document.getElementById('results-grid');
+        grid.innerHTML = '';
+        
+        let playerRoundScore = 0;
+        
+        // Total accuracy calculation
+        const totalDiff = Math.abs(playerGuess.total - actualTotal);
+        const totalAccuracy = Math.max(0, 100 - (totalDiff / actualTotal * 100));
+        playerRoundScore += Math.round(totalAccuracy);
+        
+        grid.innerHTML += `
+            <div class="result-card">
+                <div style="color: #aaa; font-size: 0.85em; margin-bottom: 5px;">Total Marbles</div>
+                <div class="big-number">${actualTotal}</div>
+                <div style="margin-top: 5px; font-size: 0.9em;">You guessed: ${playerGuess.total}</div>
+                <div class="accuracy">${totalAccuracy.toFixed(0)}% accuracy</div>
+            </div>
+        `;
+        
+        // Color accuracies
+        Object.keys(this.gameState.actualCounts).forEach(color => {
+            if (this.gameState.actualCounts[color] === 0) return;
+            
+            const actual = this.gameState.actualCounts[color];
+            const guess = playerGuess[color] || 0;
+            const diff = Math.abs(guess - actual);
+            const accuracy = Math.max(0, 100 - (diff / actual * 100));
+            playerRoundScore += Math.round(accuracy * 0.5);
+            
+            const colorHex = this.colors.find(c => c.name === color).hex;
+            const hexString = colorHex.toString(16).padStart(6, '0');
+            
+            grid.innerHTML += `
+                <div class="result-card">
+                    <div class="color-preview" style="background: #${hexString}; margin: 0 auto 8px; width: 24px; height: 24px;"></div>
+                    <div style="font-size: 0.85em; color: #aaa; margin-bottom: 3px;">${color}</div>
+                    <div class="big-number" style="font-size: 1.4em;">${actual}</div>
+                    <div style="font-size: 0.85em; margin-top: 3px;">You: ${guess}</div>
+                    <div class="accuracy">${accuracy.toFixed(0)}% match</div>
+                </div>
+            `;
+        });
+        
+        this.gameState.playerScore += playerRoundScore;
+        
+        let summaryHTML = `<strong>Round Score: ${playerRoundScore} points</strong><br>`;
+        summaryHTML += `Your Total: ${this.gameState.playerScore}`;
+        
+        if (this.gameState.mode === 'ai') {
+            let aiRoundScore = 0;
+            const aiTotalDiff = Math.abs(this.gameState.aiGuess.total - actualTotal);
+            const aiTotalAccuracy = Math.max(0, 100 - (aiTotalDiff / actualTotal * 100));
+            aiRoundScore += Math.round(aiTotalAccuracy);
+            
+            Object.keys(this.gameState.actualCounts).forEach(color => {
+                if (this.gameState.actualCounts[color] === 0) return;
+                const actual = this.gameState.actualCounts[color];
+                const guess = this.gameState.aiGuess[color] || 0;
+                const accuracy = Math.max(0, 100 - (Math.abs(guess - actual) / actual * 100));
+                aiRoundScore += Math.round(accuracy * 0.5);
+            });
+            
+            this.gameState.aiScore += aiRoundScore;
+            summaryHTML += `<br><br>AI guessed ${this.gameState.aiGuess.total} total (scored ${aiRoundScore})<br>`;
+            summaryHTML += `AI Total: ${this.gameState.aiScore}`;
+            
+            // Update displays
+            document.getElementById('current-score').textContent = this.gameState.playerScore;
+            document.getElementById('ai-score').textContent = this.gameState.aiScore;
+        }
+        
+        document.getElementById('round-summary').innerHTML = summaryHTML;
+        
+        // Check if game over
+        if (this.gameState.currentRound >= this.gameState.targetRounds) {
+            document.getElementById('final-results').style.display = 'block';
+            document.getElementById('next-round-btn').style.display = 'none';
+            
+            let winnerText = '';
+            if (this.gameState.mode === 'solo') {
+                winnerText = `Game Complete!<br>Final Score: ${this.gameState.playerScore}`;
+            } else {
+                if (this.gameState.playerScore > this.gameState.aiScore) {
+                    winnerText = '🎉 You Win! 🎉';
+                } else if (this.gameState.playerScore < this.gameState.aiScore) {
+                    winnerText = '🤖 AI Wins!';
+                } else {
+                    winnerText = "It's a Tie!";
+                }
+                winnerText += `<br><small>You: ${this.gameState.playerScore} | AI: ${this.gameState.aiScore}</small>`;
+            }
+            document.getElementById('winner-announcement').innerHTML = winnerText;
+        } else {
+            document.getElementById('final-results').style.display = 'none';
+            document.getElementById('next-round-btn').style.display = 'block';
+        }
+    }
+    
+    nextRound() {
+        this.gameState.currentRound++;
+        document.getElementById('results-screen').classList.add('hidden');
+        document.getElementById('setup-screen').classList.remove('hidden');
+        this.generateColorInputs();
+        document.getElementById('total-rounds').textContent = this.gameState.targetRounds;
+    }
+    
+    clearScene() {
+        if (this.jar) {
+            this.scene.remove(this.jar);
+            this.jar = null;
+        }
+        this.marbleMeshes.forEach(mesh => this.scene.remove(mesh));
+        this.marbleMeshes = [];
+        this.physics.enabled = false;
+    }
+    
+    onWindowResize() {
+        this.camera.aspect = window.innerWidth / window.innerHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    animate() {
+        requestAnimationFrame(() => this.animate());
+        
+        this.controls.update();
+        
+        if (this.physics.enabled) {
+            this.physics.marbles.forEach(phys => {
+                if (!phys.settled) {
+                    phys.velocity.y -= 0.015;
+                    phys.mesh.position.add(phys.velocity);
+                    
+                    const radius = phys.mesh.geometry.parameters.radius;
+                    
+                    if (phys.mesh.position.y < -1.8 + radius) {
+                        phys.mesh.position.y = -1.8 + radius;
+                        phys.velocity.y *= -0.5;
+                        phys.velocity.x *= 0.92;
+                        phys.velocity.z *= 0.92;
+                        
+                        if (Math.abs(phys.velocity.y) < 0.02 && Math.abs(phys.velocity.x) < 0.02 && Math.abs(phys.velocity.z) < 0.02) {
+                            phys.settled = true;
+                        }
+                    }
+                    
+                    const dist = Math.sqrt(phys.mesh.position.x**2 + phys.mesh.position.z**2);
+                    if (dist > 8) {
+                        const angle = Math.atan2(phys.mesh.position.z, phys.mesh.position.x);
+                        phys.mesh.position.x = Math.cos(angle) * 8;
+                        phys.mesh.position.z = Math.sin(angle) * 8;
+                        phys.velocity.x *= -0.8;
+                        phys.velocity.z *= -0.8;
+                    }
+                }
+            });
+        }
+        
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
+const game = new MarbleGame();
+</script>
+
+</body>
+</html>
