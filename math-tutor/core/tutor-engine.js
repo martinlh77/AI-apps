@@ -6,7 +6,7 @@
 
 class TutorEngine {
     constructor() {
-        this.API_KEY = 'pk_8CQPK8dxqANijjhy';
+        this.API_KEY = 'pk_erX0bhOSkj95kMp4';
         this.API_BASE = 'https://gen.pollinations.ai';
 
         this.models = {
@@ -1227,4 +1227,5 @@ ${gradeData.mathTopics}`;
 }
 
 window.mathTutor = new TutorEngine();
+
 
