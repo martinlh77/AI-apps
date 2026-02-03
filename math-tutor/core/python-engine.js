@@ -1,6 +1,8 @@
 /**
  * PythonEngine - Pyodide Integration for Math Visualizations
  * Handles Python code execution, graph generation, and image export
+ * Supports light and dark theme coloring with robust error handling
+ * Version 3.1 - Full implementation with all visualization types
  */
 
 class PythonEngine {
@@ -40,18 +42,6 @@ import base64
 import json
 from math import comb
 
-plt.style.use('dark_background')
-plt.rcParams['figure.facecolor'] = '#1a1a2e'
-plt.rcParams['axes.facecolor'] = '#1a1a2e'
-plt.rcParams['axes.edgecolor'] = '#d4af37'
-plt.rcParams['axes.labelcolor'] = '#f0f0f0'
-plt.rcParams['text.color'] = '#f0f0f0'
-plt.rcParams['xtick.color'] = '#f0f0f0'
-plt.rcParams['ytick.color'] = '#f0f0f0'
-plt.rcParams['grid.color'] = '#444444'
-plt.rcParams['figure.figsize'] = [8, 6]
-plt.rcParams['figure.dpi'] = 100
-
 # Global variable to store the last generated image
 _last_image_base64 = None
 
@@ -59,7 +49,8 @@ def save_plot_as_base64():
     """Save current matplotlib figure as base64 PNG and store it globally"""
     global _last_image_base64
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', facecolor='#1a1a2e', edgecolor='none')
+    plt.savefig(buf, format='png', bbox_inches='tight', 
+                facecolor=plt.gcf().get_facecolor(), edgecolor='none')
     buf.seek(0)
     _last_image_base64 = base64.b64encode(buf.read()).decode('utf-8')
     plt.close('all')
@@ -75,14 +66,48 @@ def clear_last_image():
     global _last_image_base64
     _last_image_base64 = None
 
+def set_theme(dark=True):
+    """Set the color theme for plots - MUST be called before creating figures"""
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    if dark:
+        plt.style.use('dark_background')
+        plt.rcParams['figure.facecolor'] = '#1a1a2e'
+        plt.rcParams['axes.facecolor'] = '#1a1a2e'
+        plt.rcParams['text.color'] = '#f0f0f0'
+        plt.rcParams['axes.labelcolor'] = '#f0f0f0'
+        plt.rcParams['xtick.color'] = '#f0f0f0'
+        plt.rcParams['ytick.color'] = '#f0f0f0'
+        plt.rcParams['grid.color'] = '#444444'
+        plt.rcParams['axes.edgecolor'] = '#444444'
+    else:
+        plt.style.use('default')
+        plt.rcParams['figure.facecolor'] = '#ffffff'
+        plt.rcParams['axes.facecolor'] = '#ffffff'
+        plt.rcParams['text.color'] = '#1a1a2e'
+        plt.rcParams['axes.labelcolor'] = '#1a1a2e'
+        plt.rcParams['xtick.color'] = '#1a1a2e'
+        plt.rcParams['ytick.color'] = '#1a1a2e'
+        plt.rcParams['grid.color'] = '#cccccc'
+        plt.rcParams['axes.edgecolor'] = '#cccccc'
+    
+    # Universal settings
+    plt.rcParams['figure.figsize'] = [8, 6]
+    plt.rcParams['figure.dpi'] = 100
+    plt.rcParams['figure.autolayout'] = True
+    plt.rcParams['axes.unicode_minus'] = False
+
 def create_coordinate_grid(xmin=-10, xmax=10, ymin=-10, ymax=10):
-    """Create a standard coordinate grid"""
+    """Create a standard coordinate grid with proper theming"""
     fig, ax = plt.subplots()
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
-    ax.axhline(y=0, color='#d4af37', linewidth=1.5)
-    ax.axvline(x=0, color='#d4af37', linewidth=1.5)
-    ax.grid(True, alpha=0.3)
+    
+    # Draw axes in gold accent color
+    ax.axhline(y=0, color='#d4af37', linewidth=1.5, zorder=1)
+    ax.axvline(x=0, color='#d4af37', linewidth=1.5, zorder=1)
+    ax.grid(True, alpha=0.3, zorder=0)
     ax.set_aspect('equal')
     return fig, ax
 
@@ -135,78 +160,111 @@ print("Python math engine initialized successfully!")
         }
     }
 
-async runCode(code) {
-    if (!this.isReady) {
-        const initialized = await this.initialize();
-        if (!initialized) {
-            return { success: false, error: 'Python engine failed to initialize' };
-        }
-    }
-
-    try {
-        // Clear any previous image
-        await this.pyodide.runPythonAsync(`clear_last_image()`);
-
-        // IMPORTANT: Replace plt.show() with save_plot_as_base64()
-        // This handles cases where the AI generates plt.show() instead
+    /**
+     * Preprocess Python code to ensure it saves the plot correctly
+     * Removes plt.show() and ensures save_plot_as_base64() is called
+     */
+    preprocessCode(code) {
         let processedCode = code;
-        if (code.includes('plt.show()')) {
-            processedCode = code.replace(/plt\.show\(\)/g, 'save_plot_as_base64()');
-            console.log('Replaced plt.show() with save_plot_as_base64()');
+        
+        // Remove any plt.show() calls - they hang in Pyodide
+        processedCode = processedCode.replace(/plt\.show\s*\(\s*\)/g, '');
+        processedCode = processedCode.replace(/plt\.show\s*\([^)]*\)/g, '');
+        
+        // Check if save_plot_as_base64() is already in the code
+        const hasSaveCall = /save_plot_as_base64\s*\(\s*\)/.test(processedCode);
+        
+        // If no save call found, append it at the end
+        if (!hasSaveCall) {
+            processedCode = processedCode.trimEnd();
+            if (!processedCode.endsWith('\n')) processedCode += '\n';
+            processedCode += '\nsave_plot_as_base64()\n';
+            console.log('Auto-added save_plot_as_base64() to code');
         }
         
-        // Also ensure save_plot_as_base64() is called if matplotlib is used but neither is present
-        if ((code.includes('plt.') || code.includes('matplotlib')) && 
-            !code.includes('save_plot_as_base64()') && 
-            !code.includes('plt.show()')) {
-            processedCode = processedCode + '\nsave_plot_as_base64()';
-            console.log('Appended save_plot_as_base64() to code');
+        // Ensure imports are present if missing
+        if (!processedCode.includes('import matplotlib.pyplot as plt')) {
+            processedCode = 'import matplotlib.pyplot as plt\nimport numpy as np\n' + processedCode;
+        }
+        
+        return processedCode;
+    }
+
+    async runCode(code, isDark = true) {
+        if (!this.isReady) {
+            const initialized = await this.initialize();
+            if (!initialized) {
+                return { success: false, error: 'Python engine failed to initialize' };
+            }
         }
 
-        // Redirect stdout to capture print statements
-        await this.pyodide.runPythonAsync(`
+        try {
+            // Preprocess the code to fix common issues
+            const processedCode = this.preprocessCode(code);
+            
+            // Set theme FIRST before any figure creation
+            await this.pyodide.runPythonAsync(`set_theme(${isDark ? 'True' : 'False'})`);
+            
+            // Clear any previous image
+            await this.pyodide.runPythonAsync(`clear_last_image()`);
+
+            // Redirect stdout to capture print statements
+            await this.pyodide.runPythonAsync(`
 import sys
 from io import StringIO
 _stdout_capture = StringIO()
+_old_stdout = sys.stdout
 sys.stdout = _stdout_capture
-        `);
+            `);
 
-        // Run the user code
-        await this.pyodide.runPythonAsync(processedCode);
+            // Run the user code with timeout protection
+            let result;
+            try {
+                await this.pyodide.runPythonAsync(processedCode);
+                result = { success: true };
+            } catch (execError) {
+                result = { success: false, error: execError.message };
+            }
 
-        // Capture stdout
-        const stdout = await this.pyodide.runPythonAsync(`
+            // Restore stdout and capture
+            const stdout = await this.pyodide.runPythonAsync(`
 _captured = _stdout_capture.getvalue()
-sys.stdout = sys.__stdout__
+sys.stdout = _old_stdout
 _captured
-        `);
+            `);
 
-        // Check if an image was generated
-        const imageData = await this.pyodide.runPythonAsync(`get_last_image()`);
-        
-        console.log('Python execution complete. Image generated:', imageData ? 'yes (' + imageData.length + ' chars)' : 'no');
-        console.log('Stdout:', stdout || '(empty)');
+            if (!result.success) {
+                return {
+                    success: false,
+                    error: result.error,
+                    stdout: stdout
+                };
+            }
 
-        return {
-            success: true,
-            result: null,
-            stdout: stdout,
-            image: imageData
-        };
+            // Check if an image was generated
+            const imageData = await this.pyodide.runPythonAsync(`get_last_image()`);
+            
+            console.log('Python execution complete. Image generated:', imageData ? 'yes (' + imageData.length + ' chars)' : 'no');
 
-    } catch (error) {
-        console.error('Python execution error:', error);
-        // Reset stdout on error
-        try {
-            await this.pyodide.runPythonAsync(`sys.stdout = sys.__stdout__`);
-        } catch (e) {}
-        
-        return {
-            success: false,
-            error: error.message
-        };
+            return {
+                success: true,
+                result: null,
+                stdout: stdout,
+                image: imageData
+            };
+
+        } catch (error) {
+            console.error('Python execution error:', error);
+            try {
+                await this.pyodide.runPythonAsync(`sys.stdout = sys.__stdout__`);
+            } catch (e) {}
+            
+            return {
+                success: false,
+                error: error.message
+            };
+        }
     }
-}
 
     async generateGraph(config) {
         const { type, equation, points, options = {} } = config;
@@ -326,12 +384,13 @@ if show_points:
     py = [p[1] for p in show_points]
     ax.scatter(px, py, color='#ff6b6b', s=100, zorder=5)
     for x, y in show_points:
-        ax.annotate(f'({x}, {y})', (x, y), textcoords="offset points", xytext=(5,5), fontsize=9, color='#f0f0f0')
+        ax.annotate(f'({x}, {y})', (x, y), textcoords="offset points", xytext=(5,5), fontsize=9)
 
-plt.title("${title}")
-plt.xlabel("x")
-plt.ylabel("y")
-plt.legend()
+ax.set_title("${title}", color='#d4af37')
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+if show_points:
+    ax.legend()
 save_plot_as_base64()
         `;
     }
@@ -355,9 +414,9 @@ ${connectPoints ? "ax.plot(x_coords, y_coords, color='#00d4ff', linewidth=1.5, a
 
 ax.scatter(x_coords, y_coords, color='#ff6b6b', s=100, zorder=5)
 for i, (x, y) in enumerate(points):
-    ax.annotate(f'({x}, {y})', (x, y), textcoords="offset points", xytext=(5,5), fontsize=9, color='#f0f0f0')
+    ax.annotate(f'({x}, {y})', (x, y), textcoords="offset points", xytext=(5,5), fontsize=9)
 
-plt.title("${title}")
+ax.set_title("${title}", color='#d4af37')
 save_plot_as_base64()
         `;
     }
@@ -365,7 +424,7 @@ save_plot_as_base64()
     generateLinePlotCode(options) {
         const slope = options.slope ?? 1;
         const intercept = options.intercept ?? 0;
-        const title = options.title || `y = ${slope}x ${intercept >= 0 ? '+' : ''} ${intercept}`;
+        const title = options.title || `y = ${slope}x + ${intercept}`;
         const xmin = options.xmin ?? -10;
         const xmax = options.xmax ?? 10;
         const ymin = options.ymin ?? -10;
@@ -380,16 +439,16 @@ ax.plot(x, y, color='#00d4ff', linewidth=2, label='y = ${slope}x + ${intercept}'
 
 if ${showIntercepts}:
     ax.scatter([0], [${intercept}], color='#ff6b6b', s=100, zorder=5)
-    ax.annotate(f'y-int: (0, ${intercept})', (0, ${intercept}), textcoords="offset points", xytext=(10,5), fontsize=9, color='#f0f0f0')
+    ax.annotate(f'y-int: (0, ${intercept})', (0, ${intercept}), textcoords="offset points", xytext=(10,5), fontsize=9)
     
     if ${slope} != 0:
         x_int = -${intercept} / ${slope}
         if ${xmin} <= x_int <= ${xmax}:
             ax.scatter([x_int], [0], color='#27ae60', s=100, zorder=5)
-            ax.annotate(f'x-int: ({x_int:.2f}, 0)', (x_int, 0), textcoords="offset points", xytext=(5,10), fontsize=9, color='#f0f0f0')
+            ax.annotate(f'x-int: ({x_int:.2f}, 0)', (x_int, 0), textcoords="offset points", xytext=(5,10), fontsize=9)
 
-plt.title("${title}")
-plt.legend()
+ax.set_title("${title}", color='#d4af37')
+ax.legend()
 save_plot_as_base64()
         `;
     }
@@ -418,11 +477,11 @@ fig, ax = plt.subplots(figsize=(12, 2.5))
 min_val, max_val, value = ${min}, ${max}, ${value}
 ineq_type = "${type}"
 
-ax.hlines(0, min_val, max_val, colors='#f0f0f0', linewidth=2)
+ax.hlines(0, min_val, max_val, colors=plt.rcParams['text.color'], linewidth=2)
 
 for i in range(min_val, max_val + 1):
-    ax.vlines(i, -0.15, 0.15, colors='#f0f0f0', linewidth=1)
-    ax.text(i, -0.4, str(i), ha='center', va='top', fontsize=10, color='#f0f0f0')
+    ax.vlines(i, -0.15, 0.15, colors=plt.rcParams['text.color'], linewidth=1)
+    ax.text(i, -0.4, str(i), ha='center', va='top', fontsize=10, color=plt.rcParams['text.color'])
 
 if ineq_type in ['greater', 'greaterEqual']:
     ax.hlines(0, value, max_val, colors='#00d4ff', linewidth=6)
@@ -434,9 +493,9 @@ else:
                 arrowprops=dict(arrowstyle='->', color='#00d4ff', lw=3))
 
 if ineq_type in ['greaterEqual', 'lessEqual']:
-    circle = plt.Circle((value, 0), 0.2, color='#00d4ff', ec='#f0f0f0', linewidth=2, zorder=5)
+    circle = plt.Circle((value, 0), 0.2, color='#00d4ff', ec=plt.rcParams['text.color'], linewidth=2, zorder=5)
 else:
-    circle = plt.Circle((value, 0), 0.2, color='#1a1a2e', ec='#00d4ff', linewidth=3, zorder=5)
+    circle = plt.Circle((value, 0), 0.2, color=plt.rcParams['figure.facecolor'], ec='#00d4ff', linewidth=3, zorder=5)
 ax.add_patch(circle)
 
 ax.set_xlim(min_val - 1, max_val + 1)
@@ -459,7 +518,7 @@ save_plot_as_base64()
 
         const symbols = { 'greater': '>', 'less': '<', 'greaterEqual': '≥', 'lessEqual': '≤' };
         const symbol = symbols[type] || '>';
-        const title = options.title || `y ${symbol} ${slope}x ${intercept >= 0 ? '+' : ''} ${intercept}`;
+        const title = options.title || `y ${symbol} ${slope}x + ${intercept}`;
 
         return `
 fig, ax = plt.subplots(figsize=(8, 8))
@@ -483,8 +542,8 @@ if ineq_type in ['greater', 'greaterEqual']:
 else:
     ax.fill_between(x, ${ymin}, y, alpha=0.3, color='#00d4ff')
 
-ax.set_xlabel('x', fontsize=12)
-ax.set_ylabel('y', fontsize=12)
+ax.set_xlabel('x', fontsize=12, color=plt.rcParams['text.color'])
+ax.set_ylabel('y', fontsize=12, color=plt.rcParams['text.color'])
 ax.set_title("${title}", fontsize=14, color='#d4af37')
 
 save_plot_as_base64()
@@ -536,8 +595,8 @@ for i, ineq in enumerate(inequalities):
 
 ax.contourf(X, Y, mask.astype(int), levels=[0.5, 1.5], colors=['#d4af37'], alpha=0.4)
 
-ax.set_xlabel('x', fontsize=12)
-ax.set_ylabel('y', fontsize=12)
+ax.set_xlabel('x', fontsize=12, color=plt.rcParams['text.color'])
+ax.set_ylabel('y', fontsize=12, color=plt.rcParams['text.color'])
 ax.set_title("System of Inequalities", fontsize=14, color='#d4af37')
 ax.legend(loc='best', fontsize=9)
 
@@ -577,10 +636,10 @@ if is_ray:
 else:
     ax.plot([start[0], end[0]], [start[1], end[1]], color='#00d4ff', linewidth=2.5)
     ax.scatter([end[0]], [end[1]], color='#ff6b6b', s=100, zorder=5)
-    ax.annotate(f'({end[0]}, {end[1]})', (end[0], end[1]), textcoords="offset points", xytext=(5,5), fontsize=9, color='#f0f0f0')
+    ax.annotate(f'({end[0]}, {end[1]})', (end[0], end[1]), textcoords="offset points", xytext=(5,5), fontsize=9)
 
 ax.scatter([start[0]], [start[1]], color='#ff6b6b', s=100, zorder=5)
-ax.annotate(f'({start[0]}, {start[1]})', (start[0], start[1]), textcoords="offset points", xytext=(5,5), fontsize=9, color='#f0f0f0')
+ax.annotate(f'({start[0]}, {start[1]})', (start[0], start[1]), textcoords="offset points", xytext=(5,5), fontsize=9)
 
 ax.set_title("${title}", fontsize=14, color='#d4af37')
 
@@ -621,7 +680,7 @@ arc_x = vertex[0] + arc_radius * np.cos(theta)
 arc_y = vertex[1] + arc_radius * np.sin(theta)
 ax.plot(arc_x, arc_y, color='#d4af37', linewidth=2.5)
 
-if ${str(showMeasurement).lower()}:
+if ${showMeasurement}:
     angle_measure = abs(angle2_deg - angle1_deg)
     mid_angle = (angle1_rad + angle2_rad) / 2
     label_x = vertex[0] + arc_radius * 1.8 * np.cos(mid_angle)
@@ -690,10 +749,10 @@ else:
                               center[1] + size/2 * np.sin(a)] for a in angles])
 
 polygon = Polygon(vertices, fill=True, facecolor='${fillColor}', 
-                  edgecolor='#f0f0f0', linewidth=2.5, alpha=0.4)
+                  edgecolor=plt.rcParams['text.color'], linewidth=2.5, alpha=0.4)
 ax.add_patch(polygon)
 
-if ${str(showLabels).lower()}:
+if ${showLabels}:
     labels = 'ABCDEFGHIJKLMNOP'
     for i, (x, y) in enumerate(vertices):
         ax.scatter([x], [y], color='#ff6b6b', s=80, zorder=5)
@@ -701,15 +760,15 @@ if ${str(showLabels).lower()}:
         offset_y = 0.3 * np.sign(y - center[1]) if y != center[1] else 0.3
         ax.text(x + offset_x, y + offset_y, labels[i], fontsize=12, color='#d4af37', fontweight='bold')
 
-if ${str(showMeasurements).lower()}:
+if ${showMeasurements}:
     for i in range(len(vertices)):
         p1 = vertices[i]
         p2 = vertices[(i + 1) % len(vertices)]
         length = np.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
         mid = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2]
-        ax.text(mid[0], mid[1], f'{length:.1f}', fontsize=9, color='#f0f0f0',
+        ax.text(mid[0], mid[1], f'{length:.1f}', fontsize=9, color=plt.rcParams['text.color'],
                 ha='center', va='center', 
-                bbox=dict(boxstyle='round', facecolor='#1a1a2e', alpha=0.8, edgecolor='#d4af37'))
+                bbox=dict(boxstyle='round', facecolor=plt.rcParams['figure.facecolor'], alpha=0.8, edgecolor='#d4af37'))
 
 margin = size * 0.6
 all_x = vertices[:, 0]
@@ -749,36 +808,36 @@ radius = ${radius}
 circle = Circle(center, radius, fill=False, edgecolor='#00d4ff', linewidth=2.5)
 ax.add_patch(circle)
 
-if ${str(showCenter).lower()}:
+if ${showCenter}:
     ax.scatter([center[0]], [center[1]], color='#ff6b6b', s=80, zorder=5)
     ax.text(center[0] + 0.2, center[1] + 0.2, 'O', fontsize=12, color='#d4af37', fontweight='bold')
 
-if ${str(showRadius).lower()}:
+if ${showRadius}:
     end_point = [center[0] + radius, center[1]]
     ax.plot([center[0], end_point[0]], [center[1], end_point[1]], 
             color='#d4af37', linewidth=2.5)
     mid_x = (center[0] + end_point[0]) / 2
     ax.text(mid_x, center[1] - 0.3, f'r = {radius}', fontsize=11, color='#d4af37')
 
-if ${str(showDiameter).lower()}:
+if ${showDiameter}:
     ax.plot([center[0] - radius, center[0] + radius], [center[1], center[1]], 
             color='#27ae60', linewidth=2.5, linestyle='--')
     ax.text(center[0], center[1] + 0.3, f'd = {2*radius}', fontsize=11, color='#27ae60')
 
-if ${str(showArc).lower()}:
+if ${showArc}:
     arc_start, arc_end = ${JSON.stringify(arcAngles)}
     theta = np.linspace(np.radians(arc_start), np.radians(arc_end), 50)
     arc_x = center[0] + radius * np.cos(theta)
     arc_y = center[1] + radius * np.sin(theta)
     ax.plot(arc_x, arc_y, color='#ff6b6b', linewidth=5)
 
-if ${str(showSector).lower()}:
+if ${showSector}:
     arc_start, arc_end = ${JSON.stringify(arcAngles)}
     wedge = Wedge(center, radius, arc_start, arc_end, 
                   facecolor='#d4af37', alpha=0.3, edgecolor='#d4af37', linewidth=2)
     ax.add_patch(wedge)
 
-if ${str(showChord).lower()}:
+if ${showChord}:
     chord_start, chord_end = ${JSON.stringify(chordAngles)}
     p1 = [center[0] + radius * np.cos(np.radians(chord_start)), 
           center[1] + radius * np.sin(np.radians(chord_start))]
@@ -851,9 +910,9 @@ else:
     title = "Original"
 
 poly_orig = Polygon(original, fill=True, facecolor='#00d4ff', 
-                    edgecolor='#f0f0f0', linewidth=2, alpha=0.4, label='Original')
+                    edgecolor=plt.rcParams['text.color'], linewidth=2, alpha=0.4, label='Original')
 poly_trans = Polygon(transformed, fill=True, facecolor='#ff6b6b', 
-                     edgecolor='#f0f0f0', linewidth=2, alpha=0.4, label='Transformed')
+                     edgecolor=plt.rcParams['text.color'], linewidth=2, alpha=0.4, label='Transformed')
 
 ax.add_patch(poly_orig)
 ax.add_patch(poly_trans)
@@ -906,9 +965,9 @@ Z = eval("${equation.replace(/"/g, '\\"')}", {"__builtins__": {}}, safe_dict)
 
 ax.plot_surface(X, Y, Z, cmap='viridis', alpha=0.8, edgecolor='none')
 
-ax.set_xlabel('X', color='#f0f0f0')
-ax.set_ylabel('Y', color='#f0f0f0')
-ax.set_zlabel('Z', color='#f0f0f0')
+ax.set_xlabel('X', color=plt.rcParams['text.color'])
+ax.set_ylabel('Y', color=plt.rcParams['text.color'])
+ax.set_zlabel('Z', color=plt.rcParams['text.color'])
 ax.set_title("${title}", fontsize=14, color='#d4af37')
 
 ax.xaxis.pane.fill = False
@@ -957,7 +1016,7 @@ if shape_type in ['cube', 'rectangular_prism']:
     ]
     
     ax.add_collection3d(Poly3DCollection(faces, facecolors='#00d4ff', 
-                                          linewidths=1.5, edgecolors='#f0f0f0', alpha=0.5))
+                                          linewidths=1.5, edgecolors=plt.rcParams['text.color'], alpha=0.5))
     ax.set_xlim(0, l)
     ax.set_ylim(0, w)
     ax.set_zlim(0, h)
@@ -973,8 +1032,8 @@ elif shape_type == 'cylinder':
     Y = r * np.sin(Theta)
     
     ax.plot_surface(X, Y, Z, alpha=0.5, color='#00d4ff')
-    ax.plot(r * np.cos(theta), r * np.sin(theta), 0, color='#f0f0f0', linewidth=2)
-    ax.plot(r * np.cos(theta), r * np.sin(theta), h, color='#f0f0f0', linewidth=2)
+    ax.plot(r * np.cos(theta), r * np.sin(theta), 0, color=plt.rcParams['text.color'], linewidth=2)
+    ax.plot(r * np.cos(theta), r * np.sin(theta), h, color=plt.rcParams['text.color'], linewidth=2)
 
 elif shape_type == 'cone':
     r = dimensions.get('radius', 2)
@@ -988,7 +1047,7 @@ elif shape_type == 'cone':
     Y = R * np.sin(Theta)
     
     ax.plot_surface(X, Y, Z, alpha=0.5, color='#00d4ff')
-    ax.plot(r * np.cos(theta), r * np.sin(theta), 0, color='#f0f0f0', linewidth=2)
+    ax.plot(r * np.cos(theta), r * np.sin(theta), 0, color=plt.rcParams['text.color'], linewidth=2)
 
 elif shape_type == 'sphere':
     r = dimensions.get('radius', 2)
@@ -1021,7 +1080,7 @@ elif shape_type == 'pyramid':
     ]
     
     ax.add_collection3d(Poly3DCollection(faces, facecolors='#00d4ff',
-                                          linewidths=1.5, edgecolors='#f0f0f0', alpha=0.5))
+                                          linewidths=1.5, edgecolors=plt.rcParams['text.color'], alpha=0.5))
 
 elif shape_type == 'triangular_prism':
     base = dimensions.get('base', 2)
@@ -1038,9 +1097,9 @@ elif shape_type == 'triangular_prism':
     ]
     
     ax.add_collection3d(Poly3DCollection(faces, facecolors='#00d4ff',
-                                          linewidths=1.5, edgecolors='#f0f0f0', alpha=0.5))
+                                          linewidths=1.5, edgecolors=plt.rcParams['text.color'], alpha=0.5))
 
-if ${str(showCrossSection).lower()}:
+if ${showCrossSection}:
     max_dim = max(dimensions.values()) if dimensions else 3
     cs_height = max_dim * ${crossSectionHeight}
     xx, yy = np.meshgrid(np.linspace(-max_dim, max_dim, 10), 
@@ -1048,9 +1107,9 @@ if ${str(showCrossSection).lower()}:
     zz = np.ones_like(xx) * cs_height
     ax.plot_surface(xx, yy, zz, alpha=0.3, color='#d4af37')
 
-ax.set_xlabel('X', color='#f0f0f0')
-ax.set_ylabel('Y', color='#f0f0f0')
-ax.set_zlabel('Z', color='#f0f0f0')
+ax.set_xlabel('X', color=plt.rcParams['text.color'])
+ax.set_ylabel('Y', color=plt.rcParams['text.color'])
+ax.set_zlabel('Z', color=plt.rcParams['text.color'])
 ax.set_title(f"3D {shape_type.replace('_', ' ').title()}", fontsize=14, color='#d4af37')
 
 save_plot_as_base64()
@@ -1090,7 +1149,7 @@ if shape_type == 'cylinder':
         ax1.plot_surface(xx, yy, np.ones_like(xx) * cut_z, alpha=0.5, color='#d4af37')
         
         circle = Circle((0, 0), r, fill=True, facecolor='#00d4ff', 
-                        edgecolor='#f0f0f0', linewidth=2, alpha=0.5)
+                        edgecolor=plt.rcParams['text.color'], linewidth=2, alpha=0.5)
         ax2.add_patch(circle)
         ax2.set_xlim(-2.5, 2.5)
         ax2.set_ylim(-2.5, 2.5)
@@ -1101,7 +1160,7 @@ if shape_type == 'cylinder':
         ax1.plot_surface(np.zeros_like(yy), yy, zz, alpha=0.5, color='#d4af37')
         
         rect = Rectangle((-r, 0), 2*r, h, fill=True, facecolor='#00d4ff',
-                        edgecolor='#f0f0f0', linewidth=2, alpha=0.5)
+                        edgecolor=plt.rcParams['text.color'], linewidth=2, alpha=0.5)
         ax2.add_patch(rect)
         ax2.set_xlim(-2.5, 2.5)
         ax2.set_ylim(-0.5, h + 0.5)
@@ -1125,7 +1184,7 @@ elif shape_type == 'cone':
         ax1.plot_surface(xx, yy, np.ones_like(xx) * cut_z, alpha=0.5, color='#d4af37')
         
         circle = Circle((0, 0), cut_r, fill=True, facecolor='#00d4ff',
-                        edgecolor='#f0f0f0', linewidth=2, alpha=0.5)
+                        edgecolor=plt.rcParams['text.color'], linewidth=2, alpha=0.5)
         ax2.add_patch(circle)
         ax2.set_xlim(-2.5, 2.5)
         ax2.set_ylim(-2.5, 2.5)
@@ -1148,15 +1207,15 @@ elif shape_type == 'sphere':
     
     cut_r = np.sqrt(max(0, r**2 - cut_z**2))
     circle = Circle((0, 0), cut_r, fill=True, facecolor='#00d4ff',
-                    edgecolor='#f0f0f0', linewidth=2, alpha=0.5)
+                    edgecolor=plt.rcParams['text.color'], linewidth=2, alpha=0.5)
     ax2.add_patch(circle)
     ax2.set_xlim(-2.5, 2.5)
     ax2.set_ylim(-2.5, 2.5)
     ax2.set_title(f'Cross Section: Circle (r={cut_r:.1f})', color='#d4af37', fontsize=12)
 
-ax1.set_xlabel('X', color='#f0f0f0')
-ax1.set_ylabel('Y', color='#f0f0f0')
-ax1.set_zlabel('Z', color='#f0f0f0')
+ax1.set_xlabel('X', color=plt.rcParams['text.color'])
+ax1.set_ylabel('Y', color=plt.rcParams['text.color'])
+ax1.set_zlabel('Z', color=plt.rcParams['text.color'])
 ax1.set_title(f'3D {shape_type.title()} with Cut Plane', color='#d4af37', fontsize=12)
 
 ax2.set_aspect('equal')
@@ -1186,18 +1245,18 @@ colors = ['#00d4ff', '#ff6b6b', '#d4af37', '#27ae60', '#9b59b6', '#e74c3c', '#34
 
 if ${horizontal}:
     bars = ax.barh(list(data.keys()), list(data.values()), color=colors[:len(data)])
-    ax.set_xlabel("${ylabel}")
-    ax.set_ylabel("${xlabel}")
+    ax.set_xlabel("${ylabel}", color=plt.rcParams['text.color'])
+    ax.set_ylabel("${xlabel}", color=plt.rcParams['text.color'])
     for bar, val in zip(bars, data.values()):
         ax.text(val + 0.5, bar.get_y() + bar.get_height()/2, str(val),
-                va='center', color='#f0f0f0')
+                va='center', color=plt.rcParams['text.color'])
 else:
-    bars = ax.bar(list(data.keys()), list(data.values()), color=colors[:len(data)], edgecolor='#1a1a2e')
-    ax.set_xlabel("${xlabel}")
-    ax.set_ylabel("${ylabel}")
+    bars = ax.bar(list(data.keys()), list(data.values()), color=colors[:len(data)], edgecolor=plt.rcParams['figure.facecolor'])
+    ax.set_xlabel("${xlabel}", color=plt.rcParams['text.color'])
+    ax.set_ylabel("${ylabel}", color=plt.rcParams['text.color'])
     for bar, val in zip(bars, data.values()):
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, str(val),
-                ha='center', va='bottom', color='#f0f0f0')
+                ha='center', va='bottom', color=plt.rcParams['text.color'])
 
 ax.set_title("${title}", fontsize=14, color='#d4af37')
 ax.grid(True, alpha=0.3, axis='y' if not ${horizontal} else 'x')
@@ -1222,14 +1281,14 @@ fig, ax = plt.subplots(figsize=(10, 6))
 x = np.arange(len(data1))
 width = 0.35
 
-bars1 = ax.bar(x - width/2, list(data1.values()), width, label='${label1}', color='#00d4ff', edgecolor='#1a1a2e')
-bars2 = ax.bar(x + width/2, list(data2.values()), width, label='${label2}', color='#ff6b6b', edgecolor='#1a1a2e')
+bars1 = ax.bar(x - width/2, list(data1.values()), width, label='${label1}', color='#00d4ff', edgecolor=plt.rcParams['figure.facecolor'])
+bars2 = ax.bar(x + width/2, list(data2.values()), width, label='${label2}', color='#ff6b6b', edgecolor=plt.rcParams['figure.facecolor'])
 
-ax.set_xlabel('Category')
-ax.set_ylabel('Value')
+ax.set_xlabel('Category', color=plt.rcParams['text.color'])
+ax.set_ylabel('Value', color=plt.rcParams['text.color'])
 ax.set_title("${title}", fontsize=14, color='#d4af37')
 ax.set_xticks(x)
-ax.set_xticklabels(list(data1.keys()))
+ax.set_xticklabels(list(data1.keys()), color=plt.rcParams['text.color'])
 ax.legend()
 ax.grid(True, alpha=0.3, axis='y')
 
@@ -1259,12 +1318,12 @@ wedges, texts, autotexts = ax.pie(
     autopct='%1.1f%%' if ${showPercent} else '',
     colors=colors[:len(data)],
     explode=explode_vals,
-    textprops={'color': '#f0f0f0'},
-    wedgeprops={'edgecolor': '#1a1a2e', 'linewidth': 2}
+    textprops={'color': plt.rcParams['text.color']},
+    wedgeprops={'edgecolor': plt.rcParams['figure.facecolor'], 'linewidth': 2}
 )
 
 for autotext in autotexts:
-    autotext.set_color('#1a1a2e')
+    autotext.set_color(plt.rcParams['figure.facecolor'])
     autotext.set_fontweight('bold')
 
 ax.set_title("${title}", fontsize=14, color='#d4af37')
@@ -1286,7 +1345,7 @@ fig, ax = plt.subplots(figsize=(10, 8))
 x = np.array([p[0] for p in points])
 y = np.array([p[1] for p in points])
 
-ax.scatter(x, y, color='#00d4ff', s=100, alpha=0.7, edgecolors='#f0f0f0', linewidth=1)
+ax.scatter(x, y, color='#00d4ff', s=100, alpha=0.7, edgecolors=plt.rcParams['text.color'], linewidth=1)
 
 if ${showTrendline} and len(x) > 1:
     z = np.polyfit(x, y, 1)
@@ -1296,8 +1355,8 @@ if ${showTrendline} and len(x) > 1:
             label=f'y = {z[0]:.2f}x + {z[1]:.2f}')
     ax.legend()
 
-ax.set_xlabel("${xlabel}", fontsize=12)
-ax.set_ylabel("${ylabel}", fontsize=12)
+ax.set_xlabel("${xlabel}", fontsize=12, color=plt.rcParams['text.color'])
+ax.set_ylabel("${ylabel}", fontsize=12, color=plt.rcParams['text.color'])
 ax.set_title("${title}", fontsize=14, color='#d4af37')
 ax.grid(True, alpha=0.3)
 
@@ -1318,12 +1377,12 @@ data = np.array(${JSON.stringify(data)})
 fig, ax = plt.subplots(figsize=(10, 6))
 
 n, bins_edges, patches = ax.hist(data, bins=${typeof bins === 'string' ? `'${bins}'` : bins}, 
-                                  color='#00d4ff', edgecolor='#1a1a2e', alpha=0.7)
+                                  color='#00d4ff', edgecolor=plt.rcParams['figure.facecolor'], alpha=0.7)
 
 for i, patch in enumerate(patches):
     if n[i] > 0:
         ax.text(patch.get_x() + patch.get_width()/2, patch.get_height() + 0.2,
-                str(int(n[i])), ha='center', va='bottom', color='#f0f0f0', fontsize=9)
+                str(int(n[i])), ha='center', va='bottom', fontsize=9, color=plt.rcParams['text.color'])
 
 if ${showStats}:
     mean_val = np.mean(data)
@@ -1332,8 +1391,8 @@ if ${showStats}:
     ax.axvline(median_val, color='#d4af37', linewidth=2, linestyle=':', label=f'Median: {median_val:.2f}')
     ax.legend()
 
-ax.set_xlabel("${xlabel}", fontsize=12)
-ax.set_ylabel("${ylabel}", fontsize=12)
+ax.set_xlabel("${xlabel}", fontsize=12, color=plt.rcParams['text.color'])
+ax.set_ylabel("${ylabel}", fontsize=12, color=plt.rcParams['text.color'])
 ax.set_title("${title}", fontsize=14, color='#d4af37')
 ax.grid(True, alpha=0.3, axis='y')
 
@@ -1362,7 +1421,7 @@ for i, (patch, color) in enumerate(zip(bp['boxes'], colors[:len(datasets)])):
 
 for element in ['whiskers', 'caps', 'medians']:
     for item in bp[element]:
-        item.set_color('#f0f0f0')
+        item.set_color(plt.rcParams['text.color'])
         item.set_linewidth(2)
 
 if ${showMean}:
@@ -1370,7 +1429,7 @@ if ${showMean}:
         mean.set_markerfacecolor('#ff6b6b')
         mean.set_markeredgecolor('#ff6b6b')
 
-ax.set_ylabel('Value', fontsize=12)
+ax.set_ylabel('Value', fontsize=12, color=plt.rcParams['text.color'])
 ax.set_title("${title}", fontsize=14, color='#d4af37')
 ax.grid(True, alpha=0.3, axis='y')
 
@@ -1402,12 +1461,12 @@ if ${showPoints}:
     ax.scatter(range(len(x)), y, color='#ff6b6b', s=80, zorder=5)
     for i, (xi, yi) in enumerate(zip(range(len(x)), y)):
         ax.annotate(str(yi), (xi, yi), textcoords="offset points", xytext=(0,8),
-                   ha='center', fontsize=9, color='#f0f0f0')
+                   ha='center', fontsize=9, color=plt.rcParams['text.color'])
 
 ax.set_xticks(range(len(x)))
-ax.set_xticklabels(x)
-ax.set_xlabel("${xlabel}", fontsize=12)
-ax.set_ylabel("${ylabel}", fontsize=12)
+ax.set_xticklabels(x, color=plt.rcParams['text.color'])
+ax.set_xlabel("${xlabel}", fontsize=12, color=plt.rcParams['text.color'])
+ax.set_ylabel("${ylabel}", fontsize=12, color=plt.rcParams['text.color'])
 ax.set_title("${title}", fontsize=14, color='#d4af37')
 ax.grid(True, alpha=0.3)
 
@@ -1430,12 +1489,12 @@ max_count = max(counts.values())
 
 for value, count in counts.items():
     for i in range(count):
-        ax.scatter(value, i + 1, s=200, color='#00d4ff', edgecolors='#f0f0f0', linewidth=1.5)
+        ax.scatter(value, i + 1, s=200, color='#00d4ff', edgecolors=plt.rcParams['text.color'], linewidth=1.5)
 
 ax.set_xlim(min(data) - 1, max(data) + 1)
 ax.set_ylim(0, max_count + 1)
-ax.set_xlabel('Value', fontsize=12)
-ax.set_ylabel('Count', fontsize=12)
+ax.set_xlabel('Value', fontsize=12, color=plt.rcParams['text.color'])
+ax.set_ylabel('Count', fontsize=12, color=plt.rcParams['text.color'])
 ax.set_title("${title}", fontsize=14, color='#d4af37')
 ax.set_xticks(range(min(data), max(data) + 1))
 ax.grid(True, alpha=0.3, axis='x')
@@ -1466,13 +1525,13 @@ ax.set_xlim(0, 10)
 ax.set_ylim(0, len(stems) + 2)
 
 ax.text(2, len(stems) + 1, 'Stem', ha='center', fontsize=12, fontweight='bold', color='#d4af37')
-ax.text(3, len(stems) + 1, '|', ha='center', fontsize=12, color='#f0f0f0')
+ax.text(3, len(stems) + 1, '|', ha='center', fontsize=12, color=plt.rcParams['text.color'])
 ax.text(6, len(stems) + 1, 'Leaf', ha='center', fontsize=12, fontweight='bold', color='#d4af37')
 
 for i, (stem, leaves) in enumerate(sorted(stems.items(), reverse=True)):
     y = i + 1
     ax.text(2, y, str(stem), ha='center', fontsize=11, color='#00d4ff')
-    ax.text(3, y, '|', ha='center', fontsize=11, color='#f0f0f0')
+    ax.text(3, y, '|', ha='center', fontsize=11, color=plt.rcParams['text.color'])
     ax.text(4, y, ' '.join(map(str, sorted(leaves))), ha='left', fontsize=11, color='#ff6b6b')
 
 ax.set_title("${title}", fontsize=14, color='#d4af37', pad=20)
@@ -1493,16 +1552,16 @@ fig, ax = plt.subplots(figsize=(10, 6))
 outcomes = [1, 2, 3, 4, 5, 6]
 probabilities = [1/6] * 6
 
-bars = ax.bar(outcomes, probabilities, color='#00d4ff', edgecolor='#1a1a2e', width=0.6)
-ax.set_xlabel('Outcome', fontsize=12)
-ax.set_ylabel('Probability', fontsize=12)
+bars = ax.bar(outcomes, probabilities, color='#00d4ff', edgecolor=plt.rcParams['figure.facecolor'], width=0.6)
+ax.set_xlabel('Outcome', fontsize=12, color=plt.rcParams['text.color'])
+ax.set_ylabel('Probability', fontsize=12, color=plt.rcParams['text.color'])
 ax.set_title('${title} - Fair Die', fontsize=14, color='#d4af37')
 ax.set_ylim(0, 0.25)
 ax.set_xticks(outcomes)
 
 for bar, p in zip(bars, probabilities):
     ax.text(bar.get_x() + bar.get_width()/2, p + 0.01, f'{p:.3f}',
-            ha='center', color='#f0f0f0', fontsize=10)
+            ha='center', color=plt.rcParams['text.color'], fontsize=10)
 
 ax.axhline(y=1/6, color='#d4af37', linestyle='--', linewidth=1.5, alpha=0.7)
 ax.grid(True, alpha=0.3, axis='y')
@@ -1515,14 +1574,14 @@ fig, ax = plt.subplots(figsize=(8, 6))
 outcomes = ['Heads', 'Tails']
 probabilities = [0.5, 0.5]
 
-bars = ax.bar(outcomes, probabilities, color=['#d4af37', '#c0c0c0'], edgecolor='#1a1a2e', width=0.5)
-ax.set_ylabel('Probability', fontsize=12)
+bars = ax.bar(outcomes, probabilities, color=['#d4af37', '#c0c0c0'], edgecolor=plt.rcParams['figure.facecolor'], width=0.5)
+ax.set_ylabel('Probability', fontsize=12, color=plt.rcParams['text.color'])
 ax.set_title('${title} - Fair Coin', fontsize=14, color='#d4af37')
 ax.set_ylim(0, 0.7)
 
 for bar, p in zip(bars, probabilities):
     ax.text(bar.get_x() + bar.get_width()/2, p + 0.02, f'{p:.0%}',
-            ha='center', color='#f0f0f0', fontsize=12, fontweight='bold')
+            ha='center', color=plt.rcParams['text.color'], fontsize=12, fontweight='bold')
 
 ax.grid(True, alpha=0.3, axis='y')
 
@@ -1538,11 +1597,11 @@ labels = [str(i+1) for i in range(n_sections)]
 colors = ['#00d4ff', '#ff6b6b', '#d4af37', '#27ae60', '#9b59b6', '#e74c3c', '#3498db', '#f39c12'][:n_sections]
 
 wedges, texts, autotexts = ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%',
-                                   textprops={'color': '#f0f0f0', 'fontsize': 12},
-                                   wedgeprops={'edgecolor': '#1a1a2e', 'linewidth': 2})
+                                   textprops={'color': plt.rcParams['text.color'], 'fontsize': 12},
+                                   wedgeprops={'edgecolor': plt.rcParams['figure.facecolor'], 'linewidth': 2})
 
 for autotext in autotexts:
-    autotext.set_color('#1a1a2e')
+    autotext.set_color(plt.rcParams['figure.facecolor'])
     autotext.set_fontweight('bold')
 
 ax.set_title('${title} - ${sections}-Section Spinner', fontsize=14, color='#d4af37')
@@ -1557,24 +1616,24 @@ suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades']
 probs = [13/52] * 4
 colors = ['#e74c3c', '#e74c3c', '#34495e', '#34495e']
 
-axes[0].bar(suits, probs, color=colors, edgecolor='#1a1a2e')
-axes[0].set_ylabel('Probability', fontsize=12)
+axes[0].bar(suits, probs, color=colors, edgecolor=plt.rcParams['figure.facecolor'])
+axes[0].set_ylabel('Probability', fontsize=12, color=plt.rcParams['text.color'])
 axes[0].set_title('Probability by Suit', fontsize=12, color='#d4af37')
 axes[0].set_ylim(0, 0.35)
 for i, p in enumerate(probs):
-    axes[0].text(i, p + 0.01, f'{p:.2%}', ha='center', color='#f0f0f0')
+    axes[0].text(i, p + 0.01, f'{p:.2%}', ha='center', color=plt.rcParams['text.color'])
 axes[0].grid(True, alpha=0.3, axis='y')
 
 types = ['Number\\n(2-10)', 'Face\\n(J,Q,K)', 'Ace']
 type_probs = [36/52, 12/52, 4/52]
 type_colors = ['#00d4ff', '#d4af37', '#ff6b6b']
 
-axes[1].bar(types, type_probs, color=type_colors, edgecolor='#1a1a2e')
-axes[1].set_ylabel('Probability', fontsize=12)
+axes[1].bar(types, type_probs, color=type_colors, edgecolor=plt.rcParams['figure.facecolor'])
+axes[1].set_ylabel('Probability', fontsize=12, color=plt.rcParams['text.color'])
 axes[1].set_title('Probability by Card Type', fontsize=12, color='#d4af37')
 axes[1].set_ylim(0, 0.8)
 for i, p in enumerate(type_probs):
-    axes[1].text(i, p + 0.02, f'{p:.2%}', ha='center', color='#f0f0f0')
+    axes[1].text(i, p + 0.02, f'{p:.2%}', ha='center', color=plt.rcParams['text.color'])
 axes[1].grid(True, alpha=0.3, axis='y')
 
 plt.suptitle("${title} - Standard 52-Card Deck", fontsize=14, color='#d4af37', y=1.02)
@@ -1602,19 +1661,19 @@ if model_type == 'dice':
     outcomes = [1, 2, 3, 4, 5, 6]
     probs = [1/6] * 6
     
-    ax1.bar(outcomes, probs, color='#00d4ff', edgecolor='#1a1a2e', alpha=0.7)
-    ax1.set_xlabel('Outcome')
-    ax1.set_ylabel('Probability')
+    ax1.bar(outcomes, probs, color='#00d4ff', edgecolor=plt.rcParams['figure.facecolor'], alpha=0.7)
+    ax1.set_xlabel('Outcome', color=plt.rcParams['text.color'])
+    ax1.set_ylabel('Probability', color=plt.rcParams['text.color'])
     ax1.set_title('Theoretical Distribution', color='#d4af37')
     ax1.set_ylim(0, 0.3)
     ax1.set_xticks(outcomes)
     
     rolls = np.random.randint(1, 7, num_trials)
     rel_freq = [np.sum(rolls == i) / num_trials for i in outcomes]
-    ax2.bar(outcomes, rel_freq, color='#ff6b6b', edgecolor='#1a1a2e', alpha=0.7)
+    ax2.bar(outcomes, rel_freq, color='#ff6b6b', edgecolor=plt.rcParams['figure.facecolor'], alpha=0.7)
     ax2.axhline(y=1/6, color='#00d4ff', linestyle='--', linewidth=2, label='Expected (1/6)')
-    ax2.set_xlabel('Outcome')
-    ax2.set_ylabel('Relative Frequency')
+    ax2.set_xlabel('Outcome', color=plt.rcParams['text.color'])
+    ax2.set_ylabel('Relative Frequency', color=plt.rcParams['text.color'])
     ax2.set_title(f'Experimental ({num_trials} rolls)', color='#d4af37')
     ax2.set_ylim(0, 0.3)
     ax2.set_xticks(outcomes)
@@ -1625,16 +1684,16 @@ elif model_type == 'coins':
     outcomes = list(range(n_flips + 1))
     probs = [comb(n_flips, k) * (0.5 ** n_flips) for k in outcomes]
     
-    ax1.bar(outcomes, probs, color='#d4af37', edgecolor='#1a1a2e', alpha=0.7)
-    ax1.set_xlabel('Number of Heads')
-    ax1.set_ylabel('Probability')
+    ax1.bar(outcomes, probs, color='#d4af37', edgecolor=plt.rcParams['figure.facecolor'], alpha=0.7)
+    ax1.set_xlabel('Number of Heads', color=plt.rcParams['text.color'])
+    ax1.set_ylabel('Probability', color=plt.rcParams['text.color'])
     ax1.set_title(f'Theoretical: {n_flips} Coins', color='#d4af37')
     
     simulations = np.random.binomial(n_flips, 0.5, num_trials)
     rel_freq = [np.sum(simulations == k) / num_trials for k in outcomes]
-    ax2.bar(outcomes, rel_freq, color='#ff6b6b', edgecolor='#1a1a2e', alpha=0.7)
-    ax2.set_xlabel('Number of Heads')
-    ax2.set_ylabel('Relative Frequency')
+    ax2.bar(outcomes, rel_freq, color='#ff6b6b', edgecolor=plt.rcParams['figure.facecolor'], alpha=0.7)
+    ax2.set_xlabel('Number of Heads', color=plt.rcParams['text.color'])
+    ax2.set_ylabel('Relative Frequency', color=plt.rcParams['text.color'])
     ax2.set_title(f'Experimental ({num_trials} trials)', color='#d4af37')
 
 ax1.grid(True, alpha=0.3, axis='y')
@@ -1666,19 +1725,19 @@ y_positions = [n * 2 - i * 2 for i in range(n)]
 for i, (step, y) in enumerate(zip(steps, y_positions)):
     if i == 0 or i == n - 1:
         box = FancyBboxPatch((3, y - 0.4), 4, 0.8, boxstyle="round,pad=0.05,rounding_size=0.4",
-                             facecolor='#d4af37', edgecolor='#f0f0f0', linewidth=2)
-        text_color = '#1a1a2e'
+                             facecolor='#d4af37', edgecolor=plt.rcParams['text.color'], linewidth=2)
+        text_color = plt.rcParams['figure.facecolor']
     else:
         box = FancyBboxPatch((2.5, y - 0.5), 5, 1, boxstyle="round,pad=0.05,rounding_size=0.1",
-                             facecolor='#00d4ff', edgecolor='#f0f0f0', linewidth=2)
-        text_color = '#1a1a2e'
+                             facecolor='#00d4ff', edgecolor=plt.rcParams['text.color'], linewidth=2)
+        text_color = plt.rcParams['figure.facecolor']
     
     ax.add_patch(box)
     ax.text(5, y, step, ha='center', va='center', fontsize=11, color=text_color, fontweight='bold')
     
     if i < n - 1:
         ax.annotate('', xy=(5, y_positions[i+1] + 0.6), xytext=(5, y - 0.6),
-                   arrowprops=dict(arrowstyle='->', color='#f0f0f0', lw=2))
+                   arrowprops=dict(arrowstyle='->', color=plt.rcParams['text.color'], lw=2))
 
 ax.set_title("${title}", fontsize=14, color='#d4af37', pad=20)
 
@@ -1705,15 +1764,15 @@ descriptions = ${JSON.stringify(descriptions)}
 for i, (step, desc) in enumerate(zip(steps, descriptions)):
     y = ${steps.length * 2} - i * 2
     
-    circle = Circle((1, y), 0.35, facecolor='#d4af37', edgecolor='#f0f0f0', linewidth=2)
+    circle = Circle((1, y), 0.35, facecolor='#d4af37', edgecolor=plt.rcParams['text.color'], linewidth=2)
     ax.add_patch(circle)
-    ax.text(1, y, str(i + 1), ha='center', va='center', fontsize=14, color='#1a1a2e', fontweight='bold')
+    ax.text(1, y, str(i + 1), ha='center', va='center', fontsize=14, color=plt.rcParams['figure.facecolor'], fontweight='bold')
     
     ax.text(2, y + 0.15, step, fontsize=12, color='#d4af37', fontweight='bold')
-    ax.text(2, y - 0.3, desc, fontsize=10, color='#f0f0f0')
+    ax.text(2, y - 0.3, desc, fontsize=10, color=plt.rcParams['text.color'])
     
     if i < len(steps) - 1:
-        ax.plot([1, 1], [y - 0.45, y - 1.55], color='#444', linewidth=2)
+        ax.plot([1, 1], [y - 0.45, y - 1.55], color='#444444', linewidth=2)
 
 ax.set_title("${title}", fontsize=14, color='#d4af37', pad=20)
 
