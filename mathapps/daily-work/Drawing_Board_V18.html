@@ -106,6 +106,29 @@
       opacity: 0.7;
       cursor: wait;
     }
+    #textEditor {
+      position: fixed;
+      background: rgba(21, 25, 34, 0.95);
+      border: 2px solid #facc15;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-family: sans-serif;
+      min-width: 100px;
+      min-height: 30px;
+      outline: none;
+      resize: both;
+      overflow: hidden;
+      color: #ffffff;
+      font-size: 20px;
+      line-height: 1.2;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .light-mode #textEditor {
+      background: rgba(255, 255, 255, 0.95);
+      color: #222;
+      border-color: #3b82f6;
+    }
   </style>
 </head>
 <body class="flex flex-col items-center px-2 py-4 min-h-screen bg-[#151922] text-gray-100" id="root">
@@ -193,6 +216,12 @@
       </svg>
       Line
     </button>
+    <button id="textBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/>
+      </svg>
+      Text
+    </button>
     <button id="undoBtn" class="px-3 py-2 rounded-lg bg-gray-700 text-white font-semibold shadow active:scale-95" title="Undo">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l-4-4 4-4m-4 4h14"/></svg>
     </button>
@@ -243,14 +272,16 @@
   <div class="w-full flex justify-center">
     <canvas id="canvas"></canvas>
   </div>
+  <textarea id="textEditor" class="hidden" rows="1"></textarea>
   <div class="text-gray-400 text-xs mt-3 text-center max-w-2xl">
     <b>Pointer Tool:</b> Select objects (any shape), drag to move, drag handles to resize/rotate.<br>
+    <b>Text Tool:</b> Click to place text. Double-click (or double-tap) text to edit.<br>
     <b>Eraser:</b> Draws with background color using current pen size.<br>
     <b>Triangles:</b> Use the triangle picker to choose Isosceles, Right, or <b>Freeform</b> (edit all points!).<br>
     <b>Quadrilaterals:</b> Use the quad tool, then click four times to create a freeform quadrilateral. Drag any vertex to edit.<br>
     <b>Delete:</b> Select and press the trash button or [Del]/[Backspace].<br>
     Undo/Redo for all actions, including background color and image. Save canvas as PNG. Import an image for tracing or annotation!<br>
-    <b>Shapes:</b> Rectangle, Circle, Triangle (multiple types!), Quadrilateral (freeform!), Line, Freehand.
+    <b>Shapes:</b> Rectangle, Circle, Triangle (multiple types!), Quadrilateral (freeform!), Line, Freehand, Text.
   </div>
 <script>
 const canvas = document.getElementById('canvas');
@@ -262,6 +293,7 @@ const rectBtn = document.getElementById('rectBtn');
 const circleBtn = document.getElementById('circleBtn');
 const triangleBtn = document.getElementById('triangleBtn');
 const lineBtn = document.getElementById('lineBtn');
+const textBtn = document.getElementById('textBtn');
 const quadBtn = document.getElementById('quadBtn');
 const triangleTypeSelect = document.getElementById('triangleTypeSelect');
 const quadTypeSelect = document.getElementById('quadTypeSelect');
@@ -286,6 +318,7 @@ const root = document.getElementById('root');
 const modeToggle = document.getElementById('modeToggle');
 const modeIcon = document.getElementById('modeIcon');
 const modeLabel = document.getElementById('modeLabel');
+const textEditor = document.getElementById('textEditor');
 
 let tool = 'pointer';
 let objects = [];
@@ -315,6 +348,9 @@ let draggingVertexIndex = null;
 let draggingQuadVertexIndex = null;
 let dragRotationStart = null;
 let dragAngleStart = 0;
+let editingTextIndex = -1;
+let lastClickTime = 0;
+let lastClickPos = {x:0, y:0};
 
 // Multi-Question Assignment System
 let assignmentMode = false;
@@ -394,7 +430,7 @@ function updateUndoRedo() {
 // --- Tool selection ---
 function setTool(t) {
   tool = t;
-  [pointerBtn, penBtn, eraserBtn, rectBtn, circleBtn, triangleBtn, quadBtn, lineBtn].forEach(btn => {
+  [pointerBtn, penBtn, eraserBtn, rectBtn, circleBtn, triangleBtn, quadBtn, lineBtn, textBtn].forEach(btn => {
     if (!btn) return;
     btn.className = btn.className.replace("bg-blue-500", "bg-gray-700");
   });
@@ -406,6 +442,7 @@ function setTool(t) {
   if (t === "triangle") triangleBtn.className = triangleBtn.className.replace("bg-gray-700", "bg-blue-500");
   if (t === "quad") quadBtn.className = quadBtn.className.replace("bg-gray-700", "bg-blue-500");
   if (t === "line") lineBtn.className = lineBtn.className.replace("bg-gray-700", "bg-blue-500");
+  if (t === "text") textBtn.className = textBtn.className.replace("bg-gray-700", "bg-blue-500");
   selectedIdx = -1;
   dragging = false;
   dragType = null;
@@ -413,6 +450,7 @@ function setTool(t) {
   freeformQuadDrawingState = null;
   draggingVertexIndex = null;
   draggingQuadVertexIndex = null;
+  if (editingTextIndex >= 0) endTextEdit();
   draw();
   updateUndoRedo();
 }
@@ -425,6 +463,7 @@ circleBtn.onclick = () => setTool("circle");
 triangleBtn.onclick = () => setTool("triangle");
 quadBtn.onclick = () => setTool("quad");
 lineBtn.onclick = () => setTool("line");
+textBtn.onclick = () => setTool("text");
 triangleTypeSelect.onchange = e => currentTriangleType = e.target.value;
 quadTypeSelect.onchange = e => currentQuadType = e.target.value;
 
@@ -491,12 +530,60 @@ copyBtn.onclick = () => {
 
 deleteBtn.onclick = function() {
   if(selectedIdx>=0) {
+    if (editingTextIndex === selectedIdx) endTextEdit();
     objects.splice(selectedIdx,1);
     selectedIdx = -1;
     saveHistory();
     draw();
   }
 };
+
+// --- Text Editing Functions ---
+function startTextEdit(index) {
+  if (editingTextIndex >= 0) endTextEdit();
+  editingTextIndex = index;
+  const obj = objects[index];
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = rect.width / canvas.width;
+  const scaleY = rect.height / canvas.height;
+  
+  textEditor.style.left = (rect.left + window.scrollX + obj.x * scaleX) + 'px';
+  textEditor.style.top = (rect.top + window.scrollY + obj.y * scaleY) + 'px';
+  textEditor.style.width = Math.max(100, (obj.width || 200) * scaleX) + 'px';
+  
+  const lines = obj.text.split('\n');
+  const lineHeight = (obj.fontSize || 20) * 1.2;
+  textEditor.style.height = Math.max(30, lines.length * lineHeight * scaleY) + 'px';
+  textEditor.style.fontSize = ((obj.fontSize || 20) * Math.min(scaleX, scaleY)) + 'px';
+  textEditor.style.color = obj.color || '#ffffff';
+  textEditor.value = obj.text;
+  textEditor.classList.remove('hidden');
+  textEditor.focus();
+  textEditor.select();
+}
+
+function endTextEdit() {
+  if (editingTextIndex >= 0 && !textEditor.classList.contains('hidden')) {
+    const obj = objects[editingTextIndex];
+    obj.text = textEditor.value;
+    ctx.font = `${obj.fontSize || 20}px sans-serif`;
+    const lines = obj.text.split('\n');
+    obj.width = Math.max(100, ...lines.map(line => ctx.measureText(line).width));
+    obj.height = lines.length * (obj.fontSize || 20) * 1.2;
+    editingTextIndex = -1;
+    textEditor.classList.add('hidden');
+    saveHistory();
+    draw();
+  }
+}
+
+textEditor.addEventListener('blur', endTextEdit);
+textEditor.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    endTextEdit();
+  }
+});
 
 // --- Responsive canvas, image fit ---
 function fitCanvasToImage() {
@@ -563,6 +650,31 @@ function drawShape(obj, selected, ghost) {
   }
   else if (obj.type === 'line') drawLine(obj, selected, ghost);
   else if (obj.type === 'pen' || obj.type === 'eraser') drawPen(obj, selected);
+  else if (obj.type === 'text') drawText(obj, selected, ghost);
+}
+
+function drawText(obj, selected, ghost) {
+  ctx.save();
+  ctx.globalAlpha = ghost ? 0.45 : 0.9;
+  ctx.fillStyle = obj.color || "#ffffff";
+  ctx.font = `${obj.fontSize || 20}px sans-serif`;
+  ctx.textBaseline = "top";
+  const lines = obj.text.split('\n');
+  const lineHeight = (obj.fontSize || 20) * 1.2;
+  lines.forEach((line, i) => {
+    ctx.fillText(line, obj.x, obj.y + i * lineHeight);
+  });
+  if(selected && editingTextIndex !== objects.indexOf(obj)) {
+    ctx.strokeStyle = "#facc15";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4,4]);
+    const metrics = lines.map(line => ctx.measureText(line).width);
+    const width = Math.max(...metrics, 50);
+    const height = lines.length * lineHeight;
+    ctx.strokeRect(obj.x - 2, obj.y - 2, width + 4, height + 4);
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
 }
 
 function drawRect(obj, selected, ghost) {
@@ -926,6 +1038,19 @@ function drawHandles(obj) {
       ctx.strokeStyle="#facc15";
       ctx.stroke();
     });
+  } else if(obj.type==="text") {
+    ctx.setLineDash([4,4]);
+    ctx.strokeStyle="#facc15";
+    ctx.lineWidth=2;
+    const lines = obj.text.split('\n');
+    const lineHeight = (obj.fontSize || 20) * 1.2;
+    const width = Math.max(50, ...lines.map(line => {
+      ctx.font = `${obj.fontSize || 20}px sans-serif`;
+      return ctx.measureText(line).width;
+    }));
+    const height = lines.length * lineHeight;
+    ctx.strokeRect(obj.x - 2, obj.y - 2, width + 4, height + 4);
+    ctx.setLineDash([]);
   }
   ctx.restore();
 }
@@ -1031,10 +1156,43 @@ function isPointNearStroke(px, py, obj) {
   return false;
 }
 
+function pointInText(px, py, obj) {
+  ctx.font = `${obj.fontSize || 20}px sans-serif`;
+  const lines = obj.text.split('\n');
+  const lineHeight = (obj.fontSize || 20) * 1.2;
+  const width = Math.max(50, ...lines.map(line => ctx.measureText(line).width));
+  const height = lines.length * lineHeight;
+  return px >= obj.x && px <= obj.x + width && py >= obj.y && py <= obj.y + height;
+}
+
 // --- Event handlers ---
 function canvasDown(e) {
   e.preventDefault();
+  if (editingTextIndex >= 0) {
+    endTextEdit();
+  }
   const {x:mx, y:my} = getMousePos(e);
+  
+  // Double-click detection for text editing
+  const now = Date.now();
+  const timeDiff = now - lastClickTime;
+  const distDiff = Math.hypot(mx - lastClickPos.x, my - lastClickPos.y);
+  
+  if (timeDiff < 300 && distDiff < 20 && tool === "pointer") {
+    // Check if double-clicking on any text object
+    for (let i = objects.length-1; i >= 0; i--) {
+      if (objects[i].type === 'text' && pointInText(mx, my, objects[i])) {
+        selectedIdx = i;
+        draw();
+        startTextEdit(i);
+        lastClickTime = 0;
+        return;
+      }
+    }
+  }
+  lastClickTime = now;
+  lastClickPos = {x: mx, y: my};
+  
   startMouse = {x: mx, y: my};
   if (tool === "pointer") {
     selectedIdx = -1;
@@ -1095,6 +1253,7 @@ function canvasDown(e) {
       else if(obj.type==="quad" && pointInQuad(mx, my, obj)) found=true;
       else if(obj.type==="line" && pointNearLine(mx, my, obj)) found=true;
       else if((obj.type==="pen"||obj.type==="eraser") && isPointNearStroke(mx, my, obj)) found=true;
+      else if(obj.type==="text" && pointInText(mx, my, obj)) found=true;
       if(found) {
         hit = i;
         break;
@@ -1179,6 +1338,22 @@ function canvasDown(e) {
       drawingShape.size = currentPenSize;
     }
     dragging = true;
+  } else if (tool === "text") {
+    const newText = {
+      type: 'text',
+      x: mx,
+      y: my,
+      text: 'Double-click to edit',
+      fontSize: 24,
+      color: currentPenColor,
+      width: 200,
+      height: 30
+    };
+    objects.push(newText);
+    selectedIdx = objects.length - 1;
+    saveHistory();
+    draw();
+    startTextEdit(selectedIdx);
   }
 }
 
@@ -1381,6 +1556,10 @@ function canvasMove(e) {
         obj.points[i].y = startBox.points[i].y + deltaY;
       }
       draw();
+    } else if(obj.type==="text" && dragType==="move") {
+      obj.x = startBox.x + deltaX;
+      obj.y = startBox.y + deltaY;
+      draw();
     }
   } else if ((tool === "pen" || tool === "eraser") && dragging && currentStroke) {
     currentStroke.points.push({x: mx, y: my});
@@ -1463,6 +1642,10 @@ window.addEventListener('keydown', e => {
   if ((e.key === "Delete" || e.key === "Backspace") && selectedIdx >= 0) {
     e.preventDefault();
     deleteBtn.click();
+  }
+  if (e.key === "Enter" && editingTextIndex >= 0) {
+    e.preventDefault();
+    endTextEdit();
   }
 });
 
@@ -1884,6 +2067,18 @@ function renderObjectToContext(ctx, obj, bgColor, scaleX = 1, scaleY = 1) {
       else ctx.lineTo(px, py);
     });
     ctx.stroke();
+  }
+  else if (obj.type === 'text') {
+    ctx.save();
+    ctx.fillStyle = obj.color || '#ffffff';
+    ctx.font = `${(obj.fontSize || 20) * Math.min(scaleX, scaleY)}px sans-serif`;
+    ctx.textBaseline = 'top';
+    const lines = obj.text.split('\n');
+    const lineHeight = (obj.fontSize || 20) * 1.2 * Math.min(scaleX, scaleY);
+    lines.forEach((line, i) => {
+      ctx.fillText(line, obj.x * scaleX, obj.y * scaleY + i * lineHeight);
+    });
+    ctx.restore();
   }
   
   ctx.restore();
