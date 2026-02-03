@@ -12,7 +12,7 @@ class TutorEngine {
         this.models = {
             tutor: 'grok',
             vision: 'gemini-fast',
-            coder: 'qwen-coder',  // Used for visualizations now
+            coder: 'kimi',  // Used for visualizations now
             search: 'gemini-search',
             audio: 'openai-audio'
         };
@@ -1227,3 +1227,4 @@ ${gradeData.mathTopics}`;
 }
 
 window.mathTutor = new TutorEngine();
+
