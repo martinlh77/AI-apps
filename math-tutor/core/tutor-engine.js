@@ -1,6 +1,7 @@
 /**
  * TutorEngine - Main Conversation & Coordination Controller
  * Manages chat, multi-model API routing, Python execution, TTS, uploads, and drawing
+ * Version 3.1 - Fixed routing, theming, and reliability
  */
 
 class TutorEngine {
@@ -11,7 +12,7 @@ class TutorEngine {
         this.models = {
             tutor: 'grok',
             vision: 'gemini-fast',
-            coder: 'qwen-coder',
+            coder: 'qwen-coder',  // Used for visualizations now
             search: 'gemini-search',
             audio: 'openai-audio'
         };
@@ -53,12 +54,14 @@ class TutorEngine {
             currentGrade: 'middle',
             currentLang: 'en',
             currentVoice: 'alloy',
-            pendingImage: null, // For image uploads
+            pendingImage: null,
             currentConversationId: null,
-            messageImages: {} // Store images by message index
+            messageImages: {},
+            retryCount: 0,
+            maxRetries: 2
         };
 
-        this.languageManager = new LanguageManager();
+        this.languageManager = window.languageManager || new LanguageManager();
         this.messageParser = new MessageParser();
         this.appLoader = new AppLoader();
         this.pythonEngine = window.pythonEngine;
@@ -108,6 +111,11 @@ class TutorEngine {
         const currentTheme = document.body.getAttribute('data-theme') || 'dark';
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         this.applyTheme(newTheme);
+        
+        // Notify user they may need to regenerate visuals
+        if (this.state.chatHistory.length > 0) {
+            this.addSystemMessage(`Theme changed to ${newTheme} mode. New visualizations will use this theme.`);
+        }
     }
 
     setupEventListeners() {
@@ -251,7 +259,6 @@ class TutorEngine {
         reader.onload = (e) => {
             this.state.pendingImage = e.target.result;
             
-            // Show preview
             const preview = document.getElementById('upload-preview');
             const previewImg = document.getElementById('preview-image');
             previewImg.src = e.target.result;
@@ -265,7 +272,6 @@ class TutorEngine {
         const preview = document.getElementById('upload-preview');
         preview.style.display = 'none';
         
-        // Clear file inputs
         document.getElementById('file-upload').value = '';
         document.getElementById('camera-upload').value = '';
     }
@@ -283,20 +289,17 @@ class TutorEngine {
         }
     }
 
-handleDrawingSubmission(imageDataUrl) {
-    // Set the drawing as pending image (DO NOT auto-send)
-    this.state.pendingImage = imageDataUrl;
-    
-    // Show preview
-    const preview = document.getElementById('upload-preview');
-    const previewImg = document.getElementById('preview-image');
-    previewImg.src = imageDataUrl;
-    preview.style.display = 'block';
-    
-    // Focus input for user to add their comment/question
-    const input = document.getElementById('chat-input');
-    input.focus();
-}
+    handleDrawingSubmission(imageDataUrl) {
+        this.state.pendingImage = imageDataUrl;
+        
+        const preview = document.getElementById('upload-preview');
+        const previewImg = document.getElementById('preview-image');
+        previewImg.src = imageDataUrl;
+        preview.style.display = 'block';
+        
+        const input = document.getElementById('chat-input');
+        input.focus();
+    }
 
     // ==================== CONVERSATIONS ====================
 
@@ -326,7 +329,6 @@ handleDrawingSubmission(imageDataUrl) {
                     </div>
                 `).join('');
                 
-                // Add event listeners
                 list.querySelectorAll('.conversation-item').forEach(item => {
                     item.addEventListener('click', (e) => {
                         if (!e.target.closest('.conversation-actions')) {
@@ -381,7 +383,6 @@ handleDrawingSubmission(imageDataUrl) {
             this.state.currentConversationId = id;
             this.addSystemMessage('💾 Conversation saved!');
             
-            // Refresh modal if open
             if (document.getElementById('conversations-modal').style.display === 'flex') {
                 this.showConversationsModal();
             }
@@ -396,7 +397,6 @@ handleDrawingSubmission(imageDataUrl) {
             const conv = await this.conversationManager.loadConversation(id);
             if (!conv) return;
             
-            // Clear current chat
             document.getElementById('messages-container').innerHTML = '';
             document.getElementById('welcome-screen').style.display = 'none';
             
@@ -404,20 +404,17 @@ handleDrawingSubmission(imageDataUrl) {
             this.state.messageImages = conv.images || {};
             this.state.currentConversationId = id;
             
-            // Update grade/lang if different
             if (conv.grade) {
                 this.state.currentGrade = conv.grade;
                 document.getElementById('grade-select').value = conv.grade;
             }
             
-            // Rebuild messages
             conv.messages.forEach((msg, index) => {
                 this.addMessage(msg.content, msg.role, {
                     image: this.state.messageImages[index]
                 });
             });
             
-            // Close modal
             document.getElementById('conversations-modal').style.display = 'none';
             
             this.scrollToBottom();
@@ -449,19 +446,25 @@ handleDrawingSubmission(imageDataUrl) {
 
     // ==================== MESSAGING ====================
 
-    detectQueryType(message) {
+    detectQueryType(message, wantsVisual) {
         const lowerMsg = message.toLowerCase();
+
+        // Route visualizations to coder model for better Python/matplotlib code
+        if (wantsVisual) {
+            return 'coder';
+        }
 
         if (lowerMsg.includes('code') || lowerMsg.includes('program') ||
             lowerMsg.includes('javascript') || lowerMsg.includes('algorithm') || 
-            lowerMsg.includes('write a function')) {
+            lowerMsg.includes('write a function') || lowerMsg.includes('debug')) {
             return 'coder';
         }
 
         if (lowerMsg.includes('latest') || lowerMsg.includes('recent') ||
             lowerMsg.includes('news') || lowerMsg.includes('current') ||
             lowerMsg.includes('today') || lowerMsg.includes('2024') ||
-            lowerMsg.includes('2025')) {
+            lowerMsg.includes('2025') || lowerMsg.includes('population') ||
+            lowerMsg.includes('statistics') || lowerMsg.includes('real world')) {
             return 'search';
         }
 
@@ -473,7 +476,9 @@ handleDrawingSubmission(imageDataUrl) {
         const visualKeywords = [
             'graph', 'plot', 'draw', 'show me', 'visualize', 'chart', 'diagram', 
             'picture', 'display', 'illustrate', 'number line', 'coordinate',
-            'sketch', 'create a', 'make a', 'generate'
+            'sketch', 'create a', 'make a', 'generate', 'grid', 'axis', 'function',
+            'inequality', 'geometry', 'shape', 'circle', 'triangle', 'histogram',
+            'bar chart', 'pie chart', 'scatter', '3d', 'surface'
         ];
         return visualKeywords.some(kw => lowerMsg.includes(kw));
     }
@@ -485,14 +490,12 @@ handleDrawingSubmission(imageDataUrl) {
         if (!message && !this.state.pendingImage) return;
         if (this.state.isProcessing) return;
 
-        // Check content filter
         const filterResult = await this.contentFilter.checkContent(message);
         if (filterResult.isBlocked) {
             this.addSystemMessage(`⚠️ ${filterResult.reason}`);
             return;
         }
 
-        // Check for PII
         if (this.containsPII(message)) {
             this.addSystemMessage(
                 "⚠️ Please do not share personal information like your email, phone number, or address. I am here to help with math!"
@@ -502,11 +505,9 @@ handleDrawingSubmission(imageDataUrl) {
 
         document.getElementById('welcome-screen').style.display = 'none';
 
-        // Create message content for display
         const hasImage = !!this.state.pendingImage;
         const messageIndex = this.state.chatHistory.length;
         
-        // Store image for this message
         if (hasImage) {
             this.state.messageImages[messageIndex] = this.state.pendingImage;
         }
@@ -522,34 +523,31 @@ handleDrawingSubmission(imageDataUrl) {
         const typingId = this.addTypingIndicator();
 
         try {
-            const queryType = this.detectQueryType(message);
             const wantsVisual = this.needsVisualization(message);
             const hasImageAttachment = hasImage;
 
-            console.log('Query type:', queryType, 'Wants visual:', wantsVisual, 'Has image:', hasImageAttachment);
-            console.log('Calling API...'); 
+            console.log('Wants visual:', wantsVisual, 'Has image:', hasImageAttachment);
+            
             let response;
             
             if (hasImageAttachment) {
-                // Use vision model for image analysis
                 response = await this.callVisionAPI(message, this.state.pendingImage);
                 this.clearPendingImage();
+            } else if (wantsVisual) {
+                // Use coder model for visualizations
+                response = await this.callCoderAPI(message, wantsVisual);
             } else {
+                const queryType = this.detectQueryType(message, wantsVisual);
                 response = await this.callAPI(message, this.models[queryType], wantsVisual);
             }
 
             this.removeTypingIndicator(typingId);
 
-            console.log('API Response:', response);
-
-            // Extract Python code blocks
             const pythonBlocks = this.messageParser.extractPythonCode(response);
             console.log('Python blocks found:', pythonBlocks.length);
 
-            // Add assistant message
             const messageElement = this.addMessage(response, 'assistant');
 
-            // Update history
             this.state.chatHistory.push({ 
                 role: 'user', 
                 content: message || 'Image uploaded',
@@ -557,16 +555,18 @@ handleDrawingSubmission(imageDataUrl) {
             });
             this.state.chatHistory.push({ role: 'assistant', content: response });
 
-            // Auto-execute Python visualization code
+            // Execute Python with retry logic
             if (pythonBlocks.length > 0) {
-                console.log('Executing Python blocks...');
                 for (let i = 0; i < pythonBlocks.length; i++) {
-                    const block = pythonBlocks[i];
-                    await this.executeAndDisplayPython(block.code, messageElement, i);
+                    await this.executeAndDisplayPythonWithRetry(
+                        pythonBlocks[i].code, 
+                        messageElement, 
+                        i,
+                        pythonBlocks.length > 1 ? ` (${i+1}/${pythonBlocks.length})` : ''
+                    );
                 }
             }
 
-            // Check if tutor wants student to use drawing tool
             this.checkForDrawingTask(response);
 
         } catch (error) {
@@ -587,12 +587,13 @@ handleDrawingSubmission(imageDataUrl) {
         
         if (drawingKeywords.some(kw => lowerResponse.includes(kw)) && 
             (lowerResponse.includes('your turn') || lowerResponse.includes('try it') || lowerResponse.includes('now you'))) {
-            // Suggest opening drawing tool
             setTimeout(() => {
                 this.addSystemMessage('💡 Tip: Click the ✏️ button to open the drawing tool and show your work!');
             }, 1000);
         }
     }
+
+    // ==================== API CALLS ====================
 
     async callVisionAPI(message, imageData) {
         const gradeData = this.grades[this.state.currentGrade];
@@ -649,130 +650,89 @@ When reviewing student work:
         }
     }
 
-    async executeAndDisplayPython(code, messageElement, blockIndex) {
-        console.log('Executing Python block', blockIndex);
-        
-        // Inject theme colors into Python code
+    async callCoderAPI(message, wantsVisual) {
+        const gradeData = this.grades[this.state.currentGrade];
+        const langName = this.languageManager.getLanguageName();
         const isDark = document.body.getAttribute('data-theme') !== 'light';
-        const themedCode = this.injectThemeColors(code, isDark);
-        
-        const placeholder = messageElement.querySelector(`.python-pending[data-code-index="${blockIndex}"]`);
-        
-        if (placeholder) {
-            placeholder.innerHTML = '<em>📊 Generating visualization...</em>';
-        }
 
-        const result = await this.pythonEngine.runCode(themedCode);
-        console.log('Python result:', result.success, result.error || 'no error');
+        const systemPrompt = `You are an expert Python matplotlib programmer specializing in mathematical educational visualizations.
 
-        if (result.success && result.image) {
-            console.log('Got image, displaying...');
-            if (placeholder) {
-                const imgSrc = this.pythonEngine.getImageDataUrl(result.image);
-                const downloadBtn = this.languageManager.getString('downloadBtn');
-                
-                placeholder.outerHTML = `
-                    <div class="visual-container">
-                        <img src="${imgSrc}" alt="Math Visualization" />
-                        <div class="visual-actions">
-                            <button class="action-btn download-btn" data-image="${result.image}">${downloadBtn}</button>
-                            <button class="action-btn" onclick="window.mathTutor.openDrawingWithBackground('${imgSrc}')">✏️ Draw on this</button>
-                        </div>
-                    </div>
-                `;
-            } else {
-                this.addVisualizationToMessage(messageElement, result.image);
-            }
-        } else if (result.success && result.stdout && result.stdout.trim()) {
-            if (placeholder) {
-                placeholder.outerHTML = `
-                    <div class="code-output">
-                        <pre>${this.escapeHtml(result.stdout)}</pre>
-                    </div>
-                `;
-            }
-        } else if (!result.success) {
-            console.error('Python error:', result.error);
-            if (placeholder) {
-                placeholder.outerHTML = `
-                    <div class="python-error">
-                        <em>⚠️ Visualization could not be generated</em>
-                    </div>
-                `;
-            }
-        } else {
-            if (placeholder) {
-                placeholder.remove();
-            }
-        }
-    }
+CRITICAL RULES:
+1. Generate ONLY valid Python code in \`\`\`python blocks
+2. Theme: ${isDark ? 'DARK' : 'LIGHT'} background required
+3. Use EXACTLY these colors:
+   - Background: ${isDark ? '#1a1a2e' : '#ffffff'}
+   - Text/Labels: ${isDark ? '#f0f0f0' : '#1a1a2e'}
+   - Grid: ${isDark ? '#444444' : '#cccccc'}
+   - Primary lines: #00d4ff
+   - Secondary/Points: #ff6b6b
+   - Titles/Accent: #d4af37
+   - Success/Valid: #27ae60
 
-    injectThemeColors(code, isDark) {
-        // Replace color values based on theme
-        if (!isDark) {
-            // Light theme replacements
-            code = code.replace(/#1a1a2e/g, '#ffffff');
-            code = code.replace(/'#1a1a2e'/g, "'#ffffff'");
-            code = code.replace(/#16213e/g, '#f5f7fa');
-            code = code.replace(/#f0f0f0/g, '#1a1a2e');
-            code = code.replace(/'#f0f0f0'/g, "'#1a1a2e'");
-            code = code.replace(/#444444/g, '#cccccc');
-            code = code.replace(/'#444'/g, "'#ccc'");
-            
-            // Also update matplotlib style
-            code = code.replace("plt.style.use('dark_background')", "plt.style.use('default')");
-        }
-        return code;
-    }
+4. ALWAYS use: plt.rcParams['figure.facecolor'] = '${isDark ? '#1a1a2e' : '#ffffff'}'
+5. ALWAYS use: plt.rcParams['axes.facecolor'] = '${isDark ? '#1a1a2e' : '#ffffff'}'
+6. ALWAYS end with save_plot_as_base64() on its own line
+7. NEVER use plt.show() - it will break the visualization
+8. Include clear titles, labels, and legends
+9. For coordinate grids, use create_coordinate_grid() helper if available
+10. Make sure text is readable against the background color
 
-    openDrawingWithBackground(imageDataUrl) {
-        if (window.drawingTool) {
-            window.drawingTool.open({
-                backgroundImage: imageDataUrl,
-                clear: true,
-                onSubmit: (imageData) => {
-                    this.handleDrawingSubmission(imageData);
-                }
+Grade level context: ${gradeData.level}
+Response style: Create the visualization code requested. The code will be executed automatically.`;
+
+        try {
+            const response = await fetch(`${this.API_BASE}/v1/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: this.models.coder,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: message }
+                    ],
+                    temperature: 0.3, // Lower temperature for more consistent code
+                    max_tokens: 2000
+                })
             });
+
+            if (!response.ok) {
+                throw new Error(`API responded with status ${response.status}`);
+            }
+
+            const data = await response.json();
+            let content = data.choices[0].message.content.trim();
+            
+            // Ensure save_plot_as_base64 is present if not already
+            if (!content.includes('save_plot_as_base64()')) {
+                content = content.replace(/```python\s*/, '```python\nsave_plot_as_base64()\n');
+            }
+            
+            return content;
+
+        } catch (error) {
+            console.error('Coder API call failed:', error);
+            // Fallback to tutor model if coder fails
+            return this.callAPI(message, 'tutor', wantsVisual);
         }
-    }
-
-    addVisualizationToMessage(messageElement, base64Image) {
-        const msgBody = messageElement.querySelector('.msg-body');
-        if (!msgBody) return;
-
-        const imgSrc = this.pythonEngine.getImageDataUrl(base64Image);
-        const downloadBtn = this.languageManager.getString('downloadBtn');
-
-        const visualDiv = document.createElement('div');
-        visualDiv.className = 'visual-container';
-        visualDiv.innerHTML = `
-            <img src="${imgSrc}" alt="Math Visualization" />
-            <div class="visual-actions">
-                <button class="action-btn download-btn" data-image="${base64Image}">${downloadBtn}</button>
-                <button class="action-btn" onclick="window.mathTutor.openDrawingWithBackground('${imgSrc}')">✏️ Draw on this</button>
-            </div>
-        `;
-
-        msgBody.appendChild(visualDiv);
     }
 
     async callAPI(userMessage, model = 'grok', wantsVisualization = false) {
         const gradeData = this.grades[this.state.currentGrade];
-        const lang = this.state.currentLang;
         const langName = this.languageManager.getLanguageName();
         const isDark = document.body.getAttribute('data-theme') !== 'light';
 
-        let langInstruction = lang === 'en' ?
+        let langInstruction = this.state.currentLang === 'en' ?
             "Reply in English." :
             `Reply in ${langName}.`;
 
-        // Theme-aware color definitions
         const bgColor = isDark ? '#1a1a2e' : '#ffffff';
         const textColor = isDark ? '#f0f0f0' : '#1a1a2e';
         const gridColor = isDark ? '#444444' : '#cccccc';
 
-const systemPrompt = `You are a safe, educational AI Math Tutor for ${gradeData.level} students.
+        const systemPrompt = `You are a safe, educational AI Math Tutor for ${gradeData.level} students.
 
 CRITICAL RULES:
 1. Safety: No violence, hate speech, or personal information requests.
@@ -786,45 +746,26 @@ RESPONSE LENGTH GUIDELINES:
 - Let students ask follow-up questions for more detail
 - Don't overwhelm with information upfront
 
-═══════════════════════════════════════════════════════════════════
-VISUALIZATION - CRITICAL RULES
-═══════════════════════════════════════════════════════════════════
-
+VISUALIZATION RULES:
 When a student asks to SEE, GRAPH, PLOT, DRAW, SHOW, or VISUALIZE something:
 
 1. **NEVER mention Python, matplotlib, coding, or any programming terms**
 2. **NEVER tell students to copy code or use a Python viewer**
 3. **The system automatically generates visuals from your code** - just include the code block
 4. **Refer to visuals directly**: Say "Here's the graph" or "I've created a visualization for you"
-5. **The code is invisible to students** - they only see the resulting image
 
-CORRECT RESPONSE EXAMPLES:
-✓ "Here's a graph showing y = 2x + 3 from x = -10 to x = 10."
-✓ "Let me show you a visualization of this function."
-✓ "I've created a coordinate grid with your points plotted."
-
-WRONG RESPONSE EXAMPLES (NEVER DO THIS):
-✗ "Here's Python code to visualize it"
-✗ "You can copy this code to a Python viewer"
-✗ "Run this matplotlib code to see the graph"
-✗ "I'm using Python to generate this"
-
-THEME COLORS (current theme: ${isDark ? 'dark' : 'light'}):
+CURRENT THEME: ${isDark ? 'dark' : 'light'} mode
 - Background: ${bgColor}
 - Text/labels: ${textColor}
 - Grid: ${gridColor}
-- Primary (lines): #00d4ff
-- Secondary (points): #ff6b6b
-- Accent (titles): #d4af37
 
-FORMAT - Use exactly this structure:
+FORMAT - Use exactly this structure when including visualizations:
 
 \`\`\`python
 import matplotlib.pyplot as plt
 import numpy as np
 
-# Set theme
-plt.style.use('${isDark ? 'dark_background' : 'default'}')
+# Set theme colors
 plt.rcParams['figure.facecolor'] = '${bgColor}'
 plt.rcParams['axes.facecolor'] = '${bgColor}'
 plt.rcParams['text.color'] = '${textColor}'
@@ -840,20 +781,9 @@ ax.set_title("Title", color='#d4af37')
 save_plot_as_base64()
 \`\`\`
 
-INTERACTIVE EXERCISES:
-When appropriate, you can ask students to:
-- "Try plotting this point on the grid" (they can use the drawing tool)
-- "Draw a line through these points" (they can use the drawing tool)
-- "Upload a photo of your work" (they can use camera/upload)
-
 ${gradeData.mathTopics}`;
 
-        const recentHistory = this.state.chatHistory.slice(-8);
-
-        let enhancedMessage = userMessage;
-        if (wantsVisualization) {
-            enhancedMessage = userMessage + "\n\n[Include a Python matplotlib visualization in your response]";
-        }
+        const recentHistory = this.state.chatHistory.slice(-6);
 
         try {
             const response = await fetch(`${this.API_BASE}/v1/chat/completions`, {
@@ -867,7 +797,7 @@ ${gradeData.mathTopics}`;
                     messages: [
                         { role: 'system', content: systemPrompt },
                         ...recentHistory.map(m => ({ role: m.role, content: m.content })),
-                        { role: 'user', content: enhancedMessage }
+                        { role: 'user', content: userMessage }
                     ],
                     temperature: 0.7
                 })
@@ -885,6 +815,132 @@ ${gradeData.mathTopics}`;
             throw error;
         }
     }
+
+    // ==================== PYTHON EXECUTION WITH RETRY ====================
+
+    async executeAndDisplayPythonWithRetry(code, messageElement, blockIndex, blockLabel = '') {
+        const maxRetries = 2;
+        let lastError = null;
+        
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                const result = await this.executeAndDisplayPython(code, messageElement, blockIndex, blockLabel, attempt);
+                if (result && result.success) {
+                    return result; // Success!
+                }
+                lastError = result ? result.error : 'Unknown error';
+            } catch (error) {
+                console.error(`Attempt ${attempt + 1} failed:`, error);
+                lastError = error.message;
+                
+                if (attempt < maxRetries) {
+                    // Wait before retry
+                    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                    
+                    // Modify code for retry - ensure save_plot_as_base64 is there
+                    if (!code.includes('save_plot_as_base64()')) {
+                        code += '\nsave_plot_as_base64()';
+                    }
+                    
+                    // Update placeholder text
+                    const placeholder = messageElement.querySelector(`.python-pending[data-code-index="${blockIndex}"]`);
+                    if (placeholder) {
+                        placeholder.innerHTML = `<em>📊 Retrying visualization${blockLabel} (attempt ${attempt + 2})...</em>`;
+                    }
+                }
+            }
+        }
+        
+        // All retries failed
+        const placeholder = messageElement.querySelector(`.python-pending[data-code-index="${blockIndex}"]`);
+        if (placeholder) {
+            placeholder.outerHTML = `
+                <div class="python-error">
+                    <em>⚠️ Unable to generate visualization${blockLabel}. ${this.escapeHtml(lastError || 'Please try again.')}</em>
+                </div>
+            `;
+        }
+        
+        return null;
+    }
+
+    async executeAndDisplayPython(code, messageElement, blockIndex, blockLabel = '', attempt = 0) {
+        console.log(`Executing Python block${blockLabel}, attempt ${attempt + 1}`);
+        
+        const isDark = document.body.getAttribute('data-theme') !== 'light';
+        
+        const placeholder = messageElement.querySelector(`.python-pending[data-code-index="${blockIndex}"]`);
+        if (placeholder) {
+            placeholder.innerHTML = `<em>📊 Generating visualization${blockLabel}...</em>`;
+        }
+
+        try {
+            const result = await this.pythonEngine.runCode(code, isDark);
+            
+            if (result.success && result.image) {
+                console.log('Visualization generated successfully');
+                if (placeholder) {
+                    const imgSrc = this.pythonEngine.getImageDataUrl(result.image);
+                    const downloadBtn = this.languageManager.getString('downloadBtn');
+                    
+                    placeholder.outerHTML = `
+                        <div class="visual-container">
+                            <img src="${imgSrc}" alt="Math Visualization" />
+                            <div class="visual-actions">
+                                <button class="action-btn download-btn" data-image="${result.image}">${downloadBtn}</button>
+                                <button class="action-btn" onclick="window.mathTutor.openDrawingWithBackground('${imgSrc}')">✏️ Draw on this</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                return { success: true, image: result.image };
+            } else if (result.success && result.stdout && result.stdout.trim()) {
+                if (placeholder) {
+                    placeholder.outerHTML = `
+                        <div class="code-output">
+                            <pre>${this.escapeHtml(result.stdout)}</pre>
+                        </div>
+                    `;
+                }
+                return { success: true, stdout: result.stdout };
+            } else if (!result.success) {
+                throw new Error(result.error || 'Visualization failed');
+            } else {
+                // No image generated - likely missing save_plot_as_base64
+                throw new Error('No visualization generated. Missing save call?');
+            }
+        } catch (error) {
+            console.error('Python execution error:', error);
+            if (attempt === 0) {
+                // Let retry handler deal with it
+                throw error;
+            } else {
+                // Final attempt failed
+                if (placeholder) {
+                    placeholder.outerHTML = `
+                        <div class="python-error">
+                            <em>⚠️ Visualization could not be generated: ${this.escapeHtml(error.message)}</em>
+                        </div>
+                    `;
+                }
+                return { success: false, error: error.message };
+            }
+        }
+    }
+
+    openDrawingWithBackground(imageDataUrl) {
+        if (window.drawingTool) {
+            window.drawingTool.open({
+                backgroundImage: imageDataUrl,
+                clear: true,
+                onSubmit: (imageData) => {
+                    this.handleDrawingSubmission(imageData);
+                }
+            });
+        }
+    }
+
+    // ==================== ACTIONS ====================
 
     async handleSpeak(button) {
         const text = button.getAttribute('data-text');
@@ -963,7 +1019,8 @@ ${gradeData.mathTopics}`;
         button.disabled = true;
         button.textContent = '⏳...';
 
-        const result = await this.pythonEngine.runCode(code);
+        const isDark = document.body.getAttribute('data-theme') !== 'light';
+        const result = await this.pythonEngine.runCode(code, isDark);
 
         if (result.success) {
             if (result.image) {
@@ -1004,6 +1061,8 @@ ${gradeData.mathTopics}`;
         return patterns.some(pattern => pattern.test(text));
     }
 
+    // ==================== UI HELPERS ====================
+
     addMessage(content, role, options = {}) {
         const container = document.getElementById('messages-container');
         const div = document.createElement('div');
@@ -1019,14 +1078,11 @@ ${gradeData.mathTopics}`;
         const copyBtn = this.languageManager.getString('copyBtn');
         const speakBtn = this.languageManager.getString('speakBtn');
 
-        // For copy/speak - get ALL text content, not just partial
-        // Strip Python code blocks and get clean text
         const cleanContent = content
             .replace(/```python[\s\S]*?```/g, '[Visualization]')
             .replace(/```[\s\S]*?```/g, '')
             .trim();
 
-        // Build image HTML if present
         let imageHtml = '';
         if (options.image) {
             imageHtml = `<img src="${options.image}" class="message-image" alt="Uploaded image" onclick="window.open(this.src)" />`;
@@ -1169,3 +1225,5 @@ ${gradeData.mathTopics}`;
         return div.innerHTML;
     }
 }
+
+window.mathTutor = new TutorEngine();
