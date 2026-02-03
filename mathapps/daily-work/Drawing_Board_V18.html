@@ -87,6 +87,20 @@
       cursor: not-allowed;
       opacity: 0.5;
     }
+    .reset-btn {
+      background: #dc2626;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .reset-btn:hover {
+      background: #b91c1c;
+      transform: scale(1.05);
+    }
     .copy-all-btn {
       background: linear-gradient(135deg, #059669 0%, #10b981 100%);
       border: none;
@@ -149,7 +163,10 @@
       </div>
       <button id="nextBtn" class="nav-btn" onclick="nextQuestion()">Next →</button>
     </div>
-    <button class="copy-all-btn" onclick="copyAllWork()">📋 Copy All Answers</button>
+    <div class="flex items-center gap-2">
+      <button class="copy-all-btn" onclick="copyAllWork()">📋 Copy All Answers</button>
+      <button class="reset-btn" onclick="resetAssignment()" title="Clear all saved work for this assignment">🗑️ Reset</button>
+    </div>
   </div>
 
   <div class="flex flex-col md:flex-row gap-2 items-center mb-2">
@@ -357,6 +374,7 @@ let assignmentMode = false;
 let assignmentData = null;
 let currentQuestionIndex = 0;
 let allQuestionsWork = [];
+const STORAGE_KEY_PREFIX = 'assignment_work_';
 
 const SWATCH_COLORS = [
   "#ffffff", "#111111", "#ff0000", "#0000ff", "#008000", "#ffff00", "#800080"
@@ -1860,10 +1878,68 @@ function saveCurrentQuestionState() {
     canvasWidth: canvas.width,
     canvasHeight: canvas.height
   };
+  
+  // NEW: Save to localStorage immediately
+  saveAllWorkToStorage();
+}
+
+function saveAllWorkToStorage() {
+  if (!assignmentMode || !assignmentData) return;
+  const storageKey = STORAGE_KEY_PREFIX + assignmentData.id;
+  try {
+    localStorage.setItem(storageKey, JSON.stringify({
+      assignmentId: assignmentData.id,
+      currentQuestionIndex: currentQuestionIndex,
+      allQuestionsWork: allQuestionsWork,
+      timestamp: Date.now()
+    }));
+    console.log('💾 Saved work to localStorage:', storageKey);
+  } catch (e) {
+    console.error('Failed to save work to localStorage:', e);
+    alert('⚠️ Warning: Could not save your work. Storage may be full.');
+  }
+}
+
+function loadAllWorkFromStorage(assignmentId) {
+  const storageKey = STORAGE_KEY_PREFIX + assignmentId;
+  try {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data.assignmentId === assignmentId) {
+        console.log('✅ Restored work from localStorage:', storageKey);
+        return data;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load work from localStorage:', e);
+  }
+  return null;
+}
+
+function clearSavedWork() {
+  if (!assignmentMode || !assignmentData) return;
+  const storageKey = STORAGE_KEY_PREFIX + assignmentData.id;
+  localStorage.removeItem(storageKey);
+  console.log('🗑️ Cleared saved work:', storageKey);
+}
+
+function resetAssignment() {
+  if (!assignmentMode || !assignmentData) return;
+  if (confirm('⚠️ This will delete ALL your work on this assignment and cannot be undone. Are you sure?')) {
+    clearSavedWork();
+    allQuestionsWork = new Array(assignmentData.questions.length).fill(null);
+    currentQuestionIndex = 0;
+    loadQuestionState(0);
+    updateAssignmentUI();
+    alert('🗑️ Assignment reset. Starting fresh.');
+  }
 }
 
 function loadQuestionState(index) {
   const state = allQuestionsWork[index];
+  const q = assignmentData ? assignmentData.questions[index] : null;
+  
   if (state && state.objects) {
     objects = JSON.parse(JSON.stringify(state.objects));
     history = JSON.parse(JSON.stringify(state.history));
@@ -1871,7 +1947,15 @@ function loadQuestionState(index) {
     currentBgColor = state.bgColor || "#151922";
     bgColorPicker.value = currentBgColor;
     renderColorSwatches();
-    if (state.backgroundImageSrc) {
+    
+    // FIX: Check if saved image matches question image to prevent repeating image bug
+    if (state.backgroundImageSrc && q && state.backgroundImageSrc === q.image) {
+      loadImage(state.backgroundImageSrc, true, state.backgroundImageNaturalSize);
+    } else if (q && q.image) {
+      // Question has different image than saved - load fresh
+      loadImage(q.image, true);
+    } else if (state.backgroundImageSrc && !q) {
+      // No question data but has saved image (edge case)
       loadImage(state.backgroundImageSrc, true, state.backgroundImageNaturalSize);
     } else {
       backgroundImageObj = null;
@@ -1880,6 +1964,7 @@ function loadQuestionState(index) {
       fitCanvasToImage();
     }
   } else {
+    // Fresh question load
     objects = [];
     history = [];
     historyIndex = -1;
@@ -1887,7 +1972,7 @@ function loadQuestionState(index) {
     currentBgColor = "#151922";
     bgColorPicker.value = currentBgColor;
     renderColorSwatches();
-    const q = assignmentData.questions[index];
+    
     if (q && q.image) {
       loadImage(q.image, true);
     } else {
@@ -2300,7 +2385,7 @@ async function loadAssignmentFromURL() {
   questionTitle.textContent = '';
 
   try {
-    const jsonURL = 'https://martinlh77.github.io/AI-apps/mathapps/daily-work/assignments.json';
+    const jsonURL = 'https://martinlh77.github.io/AI-apps/mathapps/daily-work/assignments.json?t=' + Date.now();
     const response = await fetch(jsonURL);
     
     if (!response.ok) {
@@ -2320,10 +2405,23 @@ async function loadAssignmentFromURL() {
 
     assignmentMode = true;
     assignmentData = assignment;
-    currentQuestionIndex = 0;
-    allQuestionsWork = new Array(assignment.questions.length).fill(null);
+    
+    // NEW: Try to restore saved work from localStorage
+    const savedWork = loadAllWorkFromStorage(assignmentID);
+    
+    if (savedWork && savedWork.allQuestionsWork) {
+      // Restore previous work!
+      allQuestionsWork = savedWork.allQuestionsWork;
+      currentQuestionIndex = savedWork.currentQuestionIndex || 0;
+      console.log('✅ Restored saved work from localStorage');
+    } else {
+      // Fresh start
+      allQuestionsWork = new Array(assignment.questions.length).fill(null);
+      currentQuestionIndex = 0;
+      console.log('🆕 Starting fresh assignment');
+    }
 
-    loadQuestionState(0);
+    loadQuestionState(currentQuestionIndex);
     updateAssignmentUI();
 
   } catch (err) {
@@ -2333,12 +2431,40 @@ async function loadAssignmentFromURL() {
   }
 }
 
+// NEW: Cleanup old assignments (older than 30 days) on load
+function cleanupOldAssignments(daysOld = 30) {
+  const cutoff = Date.now() - (daysOld * 24 * 60 * 60 * 1000);
+  let cleaned = 0;
+  
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(STORAGE_KEY_PREFIX)) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        if (data.timestamp < cutoff) {
+          localStorage.removeItem(key);
+          cleaned++;
+        }
+      } catch (e) {}
+    }
+  }
+  
+  if (cleaned > 0) {
+    console.log(`🧹 Cleaned up ${cleaned} old assignments`);
+  }
+  return cleaned;
+}
+
 // Initialization
 setTool("pointer");
 renderColorSwatches();
 sizeBtns[1].classList.add('selected');
 fitCanvasToImage();
 saveHistory();
+
+// Clean up old assignments on load (older than 30 days)
+cleanupOldAssignments(30);
+
 loadAssignmentFromURL();
 </script>
 </body>
