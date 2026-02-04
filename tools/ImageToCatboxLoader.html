@@ -99,6 +99,7 @@
 
         input[type="text"],
         input[type="password"],
+        input[type="url"],
         textarea {
             width: 100%;
             padding: 12px;
@@ -111,6 +112,7 @@
 
         input[type="text"]:focus,
         input[type="password"]:focus,
+        input[type="url"]:focus,
         textarea:focus {
             outline: none;
             border-color: #667eea;
@@ -463,6 +465,18 @@
             color: #c05621;
         }
 
+        .error-box {
+            background: #fed7d7;
+            border-left: 4px solid #e53e3e;
+            padding: 16px;
+            margin-bottom: 20px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .error-box strong {
+            color: #c53030;
+        }
+
         .info-box {
             background: #e6fffa;
             border-left: 4px solid #38b2ac;
@@ -537,6 +551,11 @@
                 For 240 files, expect 4-20 minutes processing time.
             </div>
 
+            <div class="error-box" id="corsWarning" style="display: none;">
+                <strong>🚫 CORS Error Detected:</strong> Direct uploads from GitHub Pages to Catbox are blocked by browser security. 
+                Either: (1) Enter a CORS Proxy URL below, (2) Switch to "Local Download" mode to save as ZIP, or (3) Run this app locally (localhost).
+            </div>
+
             <div class="section">
                 <label for="apiKey">🔑 Pollinations.ai API Key (Optional)</label>
                 <input type="password" id="apiKey" placeholder="Enter your API key here..." autocomplete="off">
@@ -553,13 +572,22 @@
                 </div>
             </div>
 
+            <div class="section">
+                <label for="corsProxyUrl">🌐 CORS Proxy URL (Optional)</label>
+                <input type="url" id="corsProxyUrl" placeholder="https://thingproxy.freeboard.io/fetch/">
+                <small style="color: #718096; display: block; margin-top: 5px;">
+                    Required for Catbox uploads from GitHub Pages due to CORS restrictions. 
+                    Try: <code>https://thingproxy.freeboard.io/fetch/</code> or <code>https://api.allorigins.win/raw?url=</code>
+                </small>
+            </div>
+
             <div class="toggle-container">
                 <div class="toggle-switch active" id="catboxToggle" onclick="toggleCatbox()">
                     <div class="toggle-slider"></div>
                 </div>
                 <div>
                     <div class="toggle-label">☁️ Upload to Catbox.moe (Permanent Links)</div>
-                    <div class="toggle-description" id="catboxDesc">Images will be uploaded to Catbox for permanent hosting. Disable this if Catbox uploads fail to download images locally instead.</div>
+                    <div class="toggle-description" id="catboxDesc">Images will be uploaded to Catbox for permanent hosting. Disable this to download images locally instead (bypasses CORS issues).</div>
                 </div>
             </div>
 
@@ -671,13 +699,21 @@
                 </div>
             </div>
 
+            <div class="section">
+                <label for="singleCorsProxy">🌐 CORS Proxy URL (Optional)</label>
+                <input type="url" id="singleCorsProxy" placeholder="https://thingproxy.freeboard.io/fetch/">
+                <small style="color: #718096; display: block; margin-top: 5px;">
+                    Required for Catbox uploads from GitHub Pages. Example: <code>https://thingproxy.freeboard.io/fetch/</code>
+                </small>
+            </div>
+
             <div class="toggle-container" style="margin-bottom: 20px;">
                 <div class="toggle-switch active" id="singleCatboxToggle" onclick="toggleSingleCatbox()">
                     <div class="toggle-slider"></div>
                 </div>
                 <div>
                     <div class="toggle-label">☁️ Enable Catbox.moe Upload</div>
-                    <div class="toggle-description" id="singleCatboxDesc">Upload to Catbox for a permanent link. Disable to download locally.</div>
+                    <div class="toggle-description" id="singleCatboxDesc">Upload to Catbox for a permanent link. Disable to download locally (no CORS issues).</div>
                 </div>
             </div>
 
@@ -732,17 +768,24 @@
         let shouldStop = false;
         let currentIndex = 0;
         let useCatbox = true;
-        let appendApiKey = true;  // Default to appending key
+        let appendApiKey = true;
         let singleUseCatbox = true;
-        let singleAppendApiKey = true;  // Default for single mode
+        let singleAppendApiKey = true;
+        let corsErrorDetected = false;
         let originalFileName = '';
 
         // Initialize
         window.onload = function() {
             const savedKey = localStorage.getItem('pollinations_api_key');
+            const savedProxy = localStorage.getItem('cors_proxy_url');
+            
             if (savedKey) {
                 document.getElementById('apiKey').value = savedKey;
                 document.getElementById('singleApiKey').value = savedKey;
+            }
+            if (savedProxy) {
+                document.getElementById('corsProxyUrl').value = savedProxy;
+                document.getElementById('singleCorsProxy').value = savedProxy;
             }
             
             setupDragAndDrop();
@@ -796,7 +839,7 @@
             }
         }
 
-        // Save API key on input
+        // Save settings on input
         document.getElementById('apiKey').addEventListener('input', function(e) {
             localStorage.setItem('pollinations_api_key', e.target.value);
             document.getElementById('singleApiKey').value = e.target.value;
@@ -805,6 +848,16 @@
         document.getElementById('singleApiKey').addEventListener('input', function(e) {
             localStorage.setItem('pollinations_api_key', e.target.value);
             document.getElementById('apiKey').value = e.target.value;
+        });
+
+        document.getElementById('corsProxyUrl').addEventListener('input', function(e) {
+            localStorage.setItem('cors_proxy_url', e.target.value);
+            document.getElementById('singleCorsProxy').value = e.target.value;
+        });
+
+        document.getElementById('singleCorsProxy').addEventListener('input', function(e) {
+            localStorage.setItem('cors_proxy_url', e.target.value);
+            document.getElementById('corsProxyUrl').value = e.target.value;
         });
 
         function toggleKeyAppend() {
@@ -826,15 +879,18 @@
             const toggle = document.getElementById('catboxToggle');
             const desc = document.getElementById('catboxDesc');
             const info = document.getElementById('localModeInfo');
+            const corsWarning = document.getElementById('corsWarning');
             
             if (useCatbox) {
                 toggle.classList.add('active');
-                desc.textContent = 'Images will be uploaded to Catbox for permanent hosting. Disable this if Catbox uploads fail to download images locally instead.';
+                desc.textContent = 'Images will be uploaded to Catbox for permanent hosting. Requires CORS proxy when running on GitHub Pages.';
                 info.style.display = 'none';
+                if (corsErrorDetected) corsWarning.style.display = 'block';
             } else {
                 toggle.classList.remove('active');
-                desc.textContent = 'Images will be saved locally to your computer. You can download them individually or as a ZIP file when complete.';
+                desc.textContent = 'Images will be saved locally to your computer. No CORS issues, but you get a ZIP file instead of URLs.';
                 info.style.display = 'block';
+                corsWarning.style.display = 'none';
             }
         }
 
@@ -859,10 +915,10 @@
             
             if (singleUseCatbox) {
                 toggle.classList.add('active');
-                desc.textContent = 'Upload to Catbox for a permanent link. Disable to download locally.';
+                desc.textContent = 'Upload to Catbox for a permanent link. Requires CORS proxy on GitHub Pages.';
             } else {
                 toggle.classList.remove('active');
-                desc.textContent = 'Download image directly to your computer instead.';
+                desc.textContent = 'Download image directly to your computer (no CORS issues).';
             }
         }
 
@@ -886,7 +942,6 @@
                 const content = e.target.result;
                 urls = extractUrls(content, file.name);
                 
-                // Remove duplicates
                 urls = [...new Set(urls)];
                 
                 document.getElementById('fileName').textContent = file.name;
@@ -908,7 +963,6 @@
             const pollinationsRegex = /https?:\/\/[^"'\s<>]+pollinations\.ai[^"'\s<>]*/gi;
             let urls = [];
             
-            // If JSON file, try recursive parsing first
             if (filename && (filename.endsWith('.json') || filename.endsWith('.JSON'))) {
                 try {
                     const json = JSON.parse(content);
@@ -936,7 +990,6 @@
                 }
             }
             
-            // Regex fallback for all file types
             const matches = content.match(pollinationsRegex) || [];
             urls = matches.map(url => stripApiKey(url));
             
@@ -947,13 +1000,11 @@
             try {
                 const urlObj = new URL(url);
                 urlObj.searchParams.delete('key');
-                // Remove empty search params if key was the only one
                 if (urlObj.search === '') {
                     return urlObj.toString().replace('?', '');
                 }
                 return urlObj.toString();
             } catch (e) {
-                // Fallback for malformed URLs
                 return url.replace(/([?&])key=[^&]+(&|$)/g, '$1').replace(/&$/, '').replace(/\?$/, '');
             }
         }
@@ -961,7 +1012,6 @@
         async function startBulkProcessing() {
             const apiKey = document.getElementById('apiKey').value.trim();
             
-            // Check if we need an API key
             if (appendApiKey && !apiKey) {
                 alert('Please enter your API key first, or disable "Append API Key to URLs" toggle if not needed!');
                 return;
@@ -971,6 +1021,10 @@
                 alert('No URLs to process!');
                 return;
             }
+
+            // Reset CORS error flag
+            corsErrorDetected = false;
+            document.getElementById('corsWarning').style.display = 'none';
 
             isProcessing = true;
             shouldStop = false;
@@ -1036,6 +1090,11 @@
                     document.getElementById('downloadZipBtn').style.display = 'inline-flex';
                 }
             }
+
+            // Show CORS warning if we detected errors
+            if (corsErrorDetected && useCatbox) {
+                document.getElementById('corsWarning').style.display = 'block';
+            }
         }
 
         function truncateUrl(url, maxLength) {
@@ -1053,11 +1112,12 @@
             const previewCell = document.getElementById(`preview-${index}`);
             const catboxCell = document.getElementById(`catbox-url-${index}`);
             const retryBtn = document.getElementById(`retry-${index}`);
+            const corsProxyUrl = document.getElementById('corsProxyUrl').value.trim();
 
             try {
                 statusCell.innerHTML = '<span class="status-badge status-processing">Fetching...</span>';
 
-                // Conditionally append API key based on toggle
+                // Conditionally append API key
                 let fetchUrl = originalUrl;
                 if (appendApiKey && apiKey) {
                     const separator = originalUrl.includes('?') ? '&' : '?';
@@ -1080,7 +1140,7 @@
                 const imgUrl = URL.createObjectURL(blob);
                 previewCell.innerHTML = `<img src="${imgUrl}" class="preview-img" onclick="window.open('${imgUrl}', '_blank')">`;
 
-                // Staggered delay: 1-5 seconds with jitter
+                // Staggered delay
                 const delay = 1000 + Math.random() * 4000;
                 console.log(`[${index + 1}] Waiting ${(delay/1000).toFixed(1)}s before upload...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
@@ -1088,9 +1148,18 @@
                 if (useCatbox) {
                     statusCell.innerHTML = '<span class="status-badge status-processing">Uploading...</span>';
                     console.log(`[${index + 1}] Uploading to Catbox...`);
-                    const catboxUrl = await uploadToCatbox(blob, `image_${index + 1}.png`);
+                    
+                    // Check if we have a CORS proxy configured
+                    if (!corsProxyUrl) {
+                        console.warn(`[${index + 1}] No CORS proxy configured. This may fail on GitHub Pages.`);
+                    }
+                    
+                    const catboxUrl = await uploadToCatbox(blob, `image_${index + 1}.png`, corsProxyUrl);
                     
                     if (catboxUrl.startsWith('Error')) {
+                        if (catboxUrl.includes('CORS')) {
+                            corsErrorDetected = true;
+                        }
                         throw new Error(catboxUrl);
                     }
 
@@ -1157,16 +1226,13 @@
             await processUrl(index, urls[index], apiKey);
             updateStats();
             
-            // Update export list immediately after successful retry
             generateOutput();
             
-            // Show export section if hidden but we have results
             if (results.some(r => r && r.success)) {
                 document.getElementById('outputSection').classList.add('active');
                 document.getElementById('refreshExportBtn').style.display = 'inline-flex';
             }
             
-            // Check if all done for ZIP button
             const allDone = results.every(r => r && r.success);
             if (allDone && !useCatbox) {
                 document.getElementById('downloadZipBtn').style.display = 'inline-flex';
@@ -1179,13 +1245,32 @@
             alert('Export list refreshed with current results!');
         }
 
-        async function uploadToCatbox(blob, filename) {
+        async function uploadToCatbox(blob, filename, corsProxyUrl) {
             const formData = new FormData();
             formData.append('reqtype', 'fileupload');
             formData.append('fileToUpload', blob, filename);
 
+            const catboxApiUrl = 'https://catbox.moe/user/api.php';
+            
+            // Construct URL based on whether we have a CORS proxy
+            let targetUrl;
+            if (corsProxyUrl) {
+                // Format: proxyUrl + encodeURIComponent(targetUrl) or proxyUrl + targetUrl
+                // thingproxy style: https://thingproxy.freeboard.io/fetch/https://catbox.moe/user/api.php
+                // corsproxy.io style: https://corsproxy.io/?url=https://catbox.moe/user/api.php
+                if (corsProxyUrl.includes('?')) {
+                    // Query parameter style (corsproxy.io)
+                    targetUrl = `${corsProxyUrl}${encodeURIComponent(catboxApiUrl)}`;
+                } else {
+                    // Path style (thingproxy)
+                    targetUrl = `${corsProxyUrl}${catboxApiUrl}`;
+                }
+            } else {
+                targetUrl = catboxApiUrl;
+            }
+
             try {
-                const response = await fetch('https://catbox.moe/user/api.php', {
+                const response = await fetch(targetUrl, {
                     method: 'POST',
                     body: formData
                 });
@@ -1204,8 +1289,10 @@
             } catch (error) {
                 console.error('Catbox upload error:', error);
                 
-                if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
-                    return 'Error: CORS or Network Error. Try disabling Catbox upload to download locally instead.';
+                if (error.message.includes('Failed to fetch') || 
+                    error.message.includes('CORS') || 
+                    error.message.includes('NetworkError')) {
+                    return 'Error: CORS or Network Error. Direct uploads to Catbox from GitHub Pages are blocked by browsers. Solutions: 1) Enter a CORS Proxy URL above, 2) Disable Catbox toggle to download locally instead, or 3) Run this app on localhost.';
                 }
                 return `Error: ${error.message}`;
             }
@@ -1263,7 +1350,6 @@
             let output;
             
             if (useCatbox) {
-                // Array of objects showing both original and new URL
                 output = results.map((r, i) => {
                     if (r && r.success) {
                         return {
@@ -1369,13 +1455,13 @@
         async function processSingle() {
             const apiKey = document.getElementById('singleApiKey').value.trim();
             const url = document.getElementById('singleUrl').value.trim();
+            const corsProxyUrl = document.getElementById('singleCorsProxy').value.trim();
             
             if (!url) {
                 alert('Please enter a URL!');
                 return;
             }
 
-            // Check if we need API key
             if (singleAppendApiKey && !apiKey) {
                 alert('Please enter your API key, or disable "Append API Key to URL" if not needed!');
                 return;
@@ -1386,10 +1472,8 @@
             btn.textContent = 'Processing...';
 
             try {
-                // Clean the URL for display
                 const cleanUrl = stripApiKey(url);
                 
-                // Conditionally append API key
                 let fetchUrl = url;
                 if (singleAppendApiKey && apiKey) {
                     const separator = url.includes('?') ? '&' : '?';
@@ -1404,7 +1488,6 @@
                 const blob = await response.blob();
                 console.log('Image fetched');
                 
-                // Staggered delay even for single
                 const delay = 1000 + Math.random() * 4000;
                 await new Promise(resolve => setTimeout(resolve, delay));
                 
@@ -1414,7 +1497,10 @@
                 document.getElementById('singleResult').style.display = 'block';
                 
                 if (singleUseCatbox) {
-                    const catboxUrl = await uploadToCatbox(blob, 'image.png');
+                    if (!corsProxyUrl) {
+                        console.warn('No CORS proxy configured for single upload');
+                    }
+                    const catboxUrl = await uploadToCatbox(blob, 'image.png', corsProxyUrl);
                     if (catboxUrl.startsWith('Error')) throw new Error(catboxUrl);
                     
                     document.getElementById('singleOutput').value = catboxUrl;
@@ -1432,7 +1518,12 @@
                 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error: ' + error.message);
+                
+                if (error.message.includes('CORS')) {
+                    alert('CORS Error: ' + error.message + '\n\nTry entering a CORS Proxy URL or disable Catbox upload to download locally.');
+                } else {
+                    alert('Error: ' + error.message);
+                }
             } finally {
                 btn.disabled = false;
                 btn.textContent = '🚀 Process Image';
