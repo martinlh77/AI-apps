@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' blob: data: https:; media-src 'self' blob: https:; connect-src https:;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pollinations AI Chat (Media Enabled)</title>
@@ -9,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
 
     <style>
         :root {
@@ -95,6 +95,36 @@
         /* Code Blocks */
         .code-container { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #444; background: #1e1e1e; }
         .code-header { background: var(--code-header-bg); color: #ccc; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-family: monospace; }
+        .python-output-container { 
+            display: none; 
+            padding: 12px; 
+            background: var(--ai-msg-bg); 
+            border-top: 1px solid var(--border-color);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .python-output-text { 
+            font-family: 'Consolas', 'Monaco', monospace; 
+            white-space: pre-wrap; 
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            line-height: 1.4;
+        }
+        .python-output-image img {
+            max-width: 100%;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            display: block;
+            margin-top: 8px;
+        }
+        .preview-code-btn.python-btn {
+            background: #3776ab;
+            margin-left: 5px;
+        }
+        .preview-code-btn.python-btn:hover {
+            background: #2d5f8b;
+        }
         .code-header-buttons { display: flex; gap: 5px; }
         .copy-code-btn, .preview-code-btn { background: #444; color: #fff; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
         .copy-code-btn:hover, .preview-code-btn:hover { background: #555; }
@@ -896,30 +926,29 @@
             <select id="model-select">
 
                 <option value="nova-fast">Nova-Micro</option>
-                <option value="mistral">Mistral</option>
-                <option value="gemini">Gemini🎙️👁️👂🔍💻</option>
+                <option value="qwen-coder">Qwen 2.5 Coder💻</option>
                 <option value="gemini-fast">Gemini Fast👁️🔍</option>
+                <option value="mistral">Mistral</option>
                 <option value="openai">Openai👁️</option>
                 <option value="openai-fast">Openai-Fast👁️</option>
-                <option value="grok">Grok</option>
-                <option value="perplexity-fast">Perplexity-Fast🔍</option>
-                <option value="chickytutor">Chicky Tutor</option>
-                <option value="claude-fast">Claude-Fast👁️</option>
-                <option value="kimi" selected>Moonshot Kimi K2.5👁️🧠</option>
-                <option value="minimax">MiniMax M2.1💻</option>
-                <option value="glm">Z.ai GLM-4.7👁️💻</option>
-                <option value="claude">Claude👁️</option>
-                <option value="openai-reasoning">Openai-Reasoning👁️🧠</option>
                 <option value="deepseek">Deepseek🧠</option>
-                <option value="qwen-coder">Qwen 2.5 Coder💻</option>
-                <option value="nomnom">NomNom by Itachi🔍</option>
-                <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
+                <option value="perplexity-fast">Perplexity-Fast🔍</option>
                 <option value="gemini-search">Gemini-Search👁️🔍</option>
+                <option value="minimax">MiniMax M2.1💻</option>
+                <option value="openai-audio">OpenAI Audio 🎙️👁️👂🗣️(Voice)</option>
+                <option value="gemini">Gemini🎙️👁️👂🔍💻</option>
+                <option value="chickytutor">Chicky Tutor</option>
+                <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
+                <option value="kimi" selected>Moonshot Kimi K2.5👁️🧠</option>
+                <option value="glm">Z.ai GLM-4.7👁️💻</option>
+                <option value="openai-large">Openai-Large👁️💻</option>
+                <option value="claude-fast">Claude-Fast👁️</option>
+                <option value="nomnom">NomNom by Itachi🔍</option>
+                <option value="claude" class="paid-model-option" style="display: none;">Claude👁️ 🔒</option>
+                <option value="grok" class="paid-model-option" style="display: none;">Grok 🔒</option>
                 <option value="gemini-legacy" class="paid-model-option" style="display: none;">Gemini-Legacy 2.5 Pro🎙️👁️🔍🧠💻 🔒</option>
                 <option value="gemini-large" class="paid-model-option" style="display: none;">Gemini-Large🎙️👁️👂🧠💻🔍 🔒</option>
                 <option value="claude-large" class="paid-model-option" style="display: none;">Claude-Large👁️💻 🔒</option>
-                <option value="openai-large">Openai-Large👁️💻</option>
-                <option value="openai-audio">OpenAI Audio 🎙️👁️👂🗣️(Voice)</option>
             </select>
         </div>
 
@@ -998,8 +1027,8 @@
                 <option value="zimage" selected>ZImage</option>
                 <option value="flux">Flux</option>
                 <option value="turbo">Turbo</option>
-                <option value="kontext">Kontext</option>
-                <option value="seedream">SeeDream</option>
+                <option value="kontext" class="paid-model-option" style="display: none;">Kontext 🔒</option>
+                <option value="seedream" class="paid-model-option" style="display: none;">SeeDream 🔒</option>
                 <option value="seedream-pro" class="paid-model-option" style="display: none;">SeeDream Pro 🔒</option>
                 <option value="nanobanana">NanoBanana</option>
                 <option value="nanobanana-pro" class="paid-model-option" style="display: none;">NanoBanana Pro 🔒</option>
@@ -1011,7 +1040,7 @@
             <label>Default Video Model</label>
             <select id="default-video-model">
                 <option value="seedance" selected>Seedance</option>
-                <option value="seedance-pro">Seedance Pro</option>
+<option value="seedance-pro" class="paid-model-option" style="display: none;">Seedance Pro 🔒</option>
                 <option value="veo" class="paid-model-option" style="display: none;">Veo 🔒</option>
             </select>
         </div>
@@ -1078,15 +1107,15 @@
                                 <option value="gptimage-large" class="paid-model-option" style="display: none;">GPTImage Large 🔒</option>
                             </optgroup>
                             <optgroup label="Editor Models">
-                                <option value="kontext">Kontext</option>
-                                <option value="seedream">SeeDream</option>
+                                <option value="kontext" class="paid-model-option" style="display: none;">Kontext 🔒</option>
+                            <option value="seedream" class="paid-model-option" style="display: none;">SeeDream 🔒</option>
                                 <option value="seedream-pro" class="paid-model-option" style="display: none;">SeeDream Pro 🔒</option>
                                 <option value="nanobanana">NanoBanana</option>
                                 <option value="nanobanana-pro" class="paid-model-option" style="display: none;">NanoBanana Pro 🔒</option>
                             </optgroup>
                             <optgroup label="Video Models">
                                 <option value="seedance">Seedance</option>
-                                <option value="seedance-pro">Seedance Pro</option>
+                                <option value="seedance-pro" class="paid-model-option" style="display: none;">Seedance Pro 🔒</option>
                                 <option value="veo" class="paid-model-option" style="display: none;">Veo 🔒</option>
                             </optgroup>
                         </select>
@@ -1241,15 +1270,20 @@
     const IMAGE_API_URL = "https://gen.pollinations.ai/image";
     
     // --- BYOP Policy: Paid-only models ---
-    const PAID_ONLY_MODELS = [
-        "seedream-pro",
-        "gptimage-large",
-        "nanobanana-pro",
-        "veo",
-        "gemini-large",
-        "gemini-legacy",
-        "claude-large"
-    ];
+const PAID_ONLY_MODELS = [
+    "claude",
+    "grok",
+    "kontext",
+    "seedream",
+    "seedream-pro",
+    "seedance-pro",
+    "gptimage-large",
+    "nanobanana-pro",
+    "veo",
+    "gemini-large",
+    "gemini-legacy",
+    "claude-large"
+];
     
     // --- State ---
     let conversationHistory = [];
@@ -1261,6 +1295,8 @@
     let currentPreviewCode = { html: '', css: '', js: '' };
     let abortController = null;
     let dragCounter = 0;
+    let pyodide = null;
+    let pyodideReady = false;
 
     // Media Studio State
     let mediaState = {
@@ -1408,20 +1444,33 @@
         const codeId = 'code-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
         
         const isPreviewable = ['html', 'css', 'javascript', 'js'].includes(validLang.toLowerCase());
+        const isPython = validLang.toLowerCase() === 'python';
         
-        const previewBtn = isPreviewable ? 
-            `<button class="preview-code-btn" onclick="previewCode('${codeId}', '${validLang}')"><i class="fas fa-eye"></i> Preview</button>` : '';
+        let actionButtons = '';
+        
+        if (isPreviewable) {
+            actionButtons += `<button class="preview-code-btn" onclick="previewCode('${codeId}', '${validLang}')"><i class="fas fa-eye"></i> Preview</button>`;
+        }
+        
+        if (isPython) {
+            actionButtons += `<button class="preview-code-btn python-btn" onclick="executePython('${codeId}')"><i class="fas fa-play"></i> Run Python</button>`;
+        }
 
         return `
             <div class="code-container">
                 <div class="code-header">
                     <span>${validLang}</span>
                     <div class="code-header-buttons">
-                        ${previewBtn}
+                        ${actionButtons}
                         <button class="copy-code-btn" onclick="copyToClipboard(this, \`${encodeURIComponent(text || '')}\`)">Copy</button>
                     </div>
                 </div>
                 <pre><code id="${codeId}" class="hljs ${validLang}" data-lang="${validLang}">${highlighted}</code></pre>
+                <div id="output-${codeId}" class="python-output-container">
+                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 0.8rem; opacity: 0.8;">Python Output:</div>
+                    <div class="python-output-text"></div>
+                    <div class="python-output-image"></div>
+                </div>
             </div>`;
     };
 
@@ -1503,6 +1552,220 @@ marked.use({
     closePreview.addEventListener('click', function() {
         previewPanel.classList.remove('open');
     });
+    // --- Python Execution Functions ---
+    async function initPyodide() {
+        if (pyodideReady || pyodide) return;
+        showNotification("Loading Python runtime (this may take a moment)...");
+        try {
+            pyodide = await loadPyodide();
+            await pyodide.loadPackage("micropip");
+            await pyodide.runPythonAsync(`
+                import micropip
+                await micropip.install("matplotlib")
+                await micropip.install("numpy")
+                await micropip.install("pillow")
+            `);
+            
+            // Setup matplotlib to capture output
+            await pyodide.runPythonAsync(`
+                import matplotlib
+                matplotlib.use('Agg')
+                import matplotlib.pyplot as plt
+                import io
+                import base64
+                
+                def show_plot():
+                    buf = io.BytesIO()
+                    plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+                    buf.seek(0)
+                    img_str = base64.b64encode(buf.read()).decode('utf-8')
+                    plt.clf()
+                    return img_str
+            `);
+            
+            pyodideReady = true;
+            showNotification("Python ready! You can now run code blocks.");
+        } catch (e) {
+            console.error("Pyodide init error:", e);
+            showNotification("Failed to load Python: " + e.message);
+        }
+    }
+
+    window.executePython = async function(codeId) {
+        if (!pyodideReady) {
+            await initPyodide();
+            if (!pyodideReady) return;
+        }
+        
+        const codeElement = document.getElementById(codeId);
+        const outputContainer = document.getElementById(`output-${codeId}`);
+        const textOutput = outputContainer.querySelector('.python-output-text');
+        const imageOutput = outputContainer.querySelector('.python-output-image');
+        
+        // Find the current AI message wrapper this code block is inside
+        const currentAiBubble = codeElement.closest('.message-wrapper.ai');
+        
+        const code = codeElement.textContent;
+        
+        outputContainer.style.display = 'block';
+        textOutput.textContent = 'Running...';
+        textOutput.style.color = 'var(--text-color)';
+        imageOutput.innerHTML = '';
+        
+        let outputBuffer = '';
+        const generatedImages = [];
+        
+        // Track files before execution
+        let existingFiles = [];
+        try {
+            existingFiles = pyodide.FS.readdir('.').filter(f => !f.startsWith('.'));
+        } catch (e) {}
+        
+        try {
+            // Capture stdout
+            pyodide.setStdout({ batched: (text) => {
+                outputBuffer += text;
+                textOutput.textContent = outputBuffer || 'Running...';
+            }});
+            
+            // Run the code
+            await pyodide.runPythonAsync(code);
+            
+            // Check for matplotlib plots
+            try {
+                const imgData = await pyodide.runPythonAsync('show_plot()');
+                if (imgData) {
+                    const base64Url = `data:image/png;base64,${imgData}`;
+                    generatedImages.push(base64Url);
+                    // Show in code output area (small preview)
+                    imageOutput.innerHTML += `<div style="font-size:0.8rem;opacity:0.7;margin-bottom:5px;">Preview (also posted to chat above):</div>
+                    <img src="${base64Url}" alt="Matplotlib plot" style="max-width: 300px; border-radius: 6px; display: block;">`;
+                }
+            } catch (plotErr) {
+                // No matplotlib plot
+            }
+            
+            // Check for newly created image files (PIL/Pillow, etc.)
+            try {
+                const currentFiles = pyodide.FS.readdir('.').filter(f => !f.startsWith('.'));
+                const newFiles = currentFiles.filter(f => !existingFiles.includes(f));
+                
+                for (const filename of newFiles) {
+                    if (filename.endsWith('.png') || filename.endsWith('.jpg') || 
+                        filename.endsWith('.jpeg') || filename.endsWith('.gif')) {
+                        
+                        try {
+                            const data = pyodide.FS.readFile(filename);
+                            const ext = filename.split('.').pop().toLowerCase();
+                            const mimeType = ext === 'png' ? 'image/png' : 
+                                           ext === 'gif' ? 'image/gif' : 'image/jpeg';
+                            
+                            const base64String = arrayBufferToBase64(data);
+                            const base64Url = `data:${mimeType};base64,${base64String}`;
+                            generatedImages.push(base64Url);
+                            
+                            // Show in code output area (small preview)
+                            if (imageOutput.innerHTML === '') {
+                                imageOutput.innerHTML += `<div style="font-size:0.8rem;opacity:0.7;margin-bottom:5px;">Preview (also posted to chat above):</div>`;
+                            }
+                            imageOutput.innerHTML += `<img src="${base64Url}" alt="${filename}" style="max-width: 300px; border-radius: 6px; margin-top: 8px; display: block;">`;
+                            
+                            // Clean up virtual filesystem
+                            pyodide.FS.unlink(filename);
+                        } catch (fileErr) {
+                            console.error('Error reading file:', fileErr);
+                        }
+                    }
+                }
+            } catch (fsErr) {
+                console.error('FS error:', fsErr);
+            }
+            
+            // CRITICAL: Insert as separate user message in chat flow
+            if (generatedImages.length > 0) {
+                // Build message content for API (text + images)
+                const messageContent = [{type: 'text', text: '[Generated image from Python code]'}];
+                const filesForUI = [];
+                
+                generatedImages.forEach((url, idx) => {
+                    messageContent.push({
+                        type: 'image_url', 
+                        image_url: {url: url}
+                    });
+                    filesForUI.push({
+                        type: 'image',
+                        content: url,
+                        name: `python_output_${idx}.png`
+                    });
+                });
+                
+                // Add to conversation history FIRST (so API sees it)
+                conversationHistory.push({
+                    role: 'user',
+                    content: messageContent
+                });
+                
+                // Create message element directly and insert AFTER current AI message
+                const msgId = 'msg-' + Date.now();
+                const userWrapper = document.createElement('div');
+                userWrapper.className = 'message-wrapper user';
+                userWrapper.id = 'python-output-' + msgId;
+                
+                let imagesHtml = '';
+                filesForUI.forEach(f => {
+                    imagesHtml += `<img src="${f.content}" class="chat-image" alt="Python output" onclick="openImageInStudio('${f.content}')" style="max-width: 400px;">`;
+                });
+                
+                userWrapper.innerHTML = `
+                    <div class="message-sender">
+                        You (Python Output)
+                        <span class="copy-msg-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
+                    </div>
+                    <div class="message-bubble">
+                        <div id="${msgId}" style="margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8;">Generated image from code execution:</div>
+                        ${imagesHtml}
+                    </div>
+                `;
+                
+                // Insert immediately after the current AI message
+                if (currentAiBubble && currentAiBubble.nextSibling) {
+                    chatContainer.insertBefore(userWrapper, currentAiBubble.nextSibling);
+                } else {
+                    chatContainer.appendChild(userWrapper);
+                }
+                
+                // Scroll to show the new message
+                userWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                // Save session
+                saveConversationToStorage();
+                
+                showNotification('Image posted to chat for vision models');
+            }
+            
+            // Update text output in code block area
+            if (outputBuffer === '' && generatedImages.length === 0) {
+                textOutput.textContent = '✓ Executed successfully (no output)';
+            } else if (outputBuffer !== '') {
+                textOutput.textContent = outputBuffer;
+            }
+            
+        } catch (err) {
+            const errorMsg = err.toString();
+            
+            if (isGUIError(errorMsg)) {
+                textOutput.innerHTML = `<span style="color:orange">⚠️ GUI Library Not Supported</span><br><br>
+                This code uses turtle/tkinter/pygame which don't work in browsers.<br>
+                <b>Use matplotlib or PIL instead.</b><br>
+                Ask the AI to rewrite using these libraries.`;
+                textOutput.style.color = 'var(--text-color)';
+            } else {
+                textOutput.textContent = 'Error: ' + errorMsg;
+                textOutput.style.color = '#dc3545';
+            }
+            console.error("Python execution error:", err);
+        }
+    };
 
     refreshPreview.addEventListener('click', function() {
         updatePreview();
@@ -1543,7 +1806,22 @@ marked.use({
         div.textContent = text;
         return div.innerHTML;
     }
-
+    function arrayBufferToBase64(buffer) {
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary);
+    }
+    function isGUIError(errorMsg) {
+        const guiModules = ['turtle', 'tkinter', 'pygame', 'cv2', 'opencv', 'PyQt5', 'PyQt6', 'pyside2', 'pyside6', 'wx', 'gi'];
+        const lowerError = errorMsg.toLowerCase();
+        return guiModules.some(mod => lowerError.includes(mod)) || 
+               lowerError.includes('no display') ||
+               lowerError.includes('removed from the python standard library');
+    }
     // --- Dynamic Voice Loading ---
     async function loadAvailableVoices() {
         try {
@@ -1987,7 +2265,13 @@ marked.use({
         }
 
         const emotion = document.getElementById('voice-style').value;
-        const customSystemMessage = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
+        const rawSystemMsg = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
+        const customSystemMessage = rawSystemMsg + ` 
+When generating Python code for visualization:
+- DO NOT use turtle, tkinter, pygame, or OpenCV (they don't work in browsers)
+- DO use matplotlib (plt.show() not needed, plots auto-display), PIL/Pillow, or plotly
+- For matplotlib: just create the plot, it will be captured automatically
+- For drawing: use PIL ImageDraw (saves to buffer/display automatically)`;
         const systemMsg = {
             role: 'system',
             content: `${customSystemMessage} ${emotion ? 'Voice and Response Style/Emotion: ' + emotion : ''}`,
@@ -2880,123 +3164,83 @@ marked.use({
         }
     });
 
-async function generateMedia() {
-    console.log("🎬 Starting media generation...");
-    
-    const token = tokenInput.value || USER_API_TOKEN;
-    console.log("🔑 Token present:", token ? "Yes (length: " + token.length + ")" : "No - using default");
-    
-    const model = mediaModelSelect.value;
-    const prompt = mediaPrompt.value.trim();
-    const seed = mediaRandomSeed.checked ? Math.floor(Math.random() * 1000000) : parseInt(mediaSeed.value);
-    
-    console.log("⚙️ Settings:", { model, seed, promptLength: prompt.length });
-    
-    if (mediaRandomSeed.checked) {
-        mediaSeed.value = seed;
-    }
-    
-    const isVideoModel = ['seedance', 'seedance-pro', 'veo'].includes(model);
-    
-    const params = new URLSearchParams({
-        model: model,
-        seed: seed,
-        enhance: mediaEnhance.checked ? 'true' : 'false',
-        nologo: mediaNologo.checked ? 'true' : 'false',
-        private: mediaPrivate.checked ? 'true' : 'false',
-        safe: mediaSafe.checked ? 'true' : 'false',
-        guidance_scale: mediaGuidance.value
-    });
-    
-    if (isVideoModel) {
-        params.append('aspectRatio', mediaAspectRatio.value);
-        params.append('duration', mediaDuration.value);
-    } else {
-        params.append('width', mediaWidth.value);
-        params.append('height', mediaHeight.value);
-        params.append('transparent', mediaTransparent.checked ? 'true' : 'false');
-    }
-    
-    // Handle reference images
-    if (mediaState.referenceImages.length > 0) {
-        console.log("📎 Processing", mediaState.referenceImages.length, "reference images...");
-        const imageUrls = [];
+    async function generateMedia() {
+        const token = tokenInput.value || USER_API_TOKEN;
+        const model = mediaModelSelect.value;
+        const prompt = mediaPrompt.value.trim();
+        const seed = mediaRandomSeed.checked ? Math.floor(Math.random() * 1000000) : parseInt(mediaSeed.value);
         
-        for (const refImg of mediaState.referenceImages) {
-            if (refImg.type === 'url') {
-                imageUrls.push(refImg.source);
-                console.log("✅ Added URL reference");
-            } else if (refImg.type === 'file') {
-                console.log("☁️ Uploading file to catbox...");
-                try {
-                    const uploadedUrl = await uploadImageToCatbox(refImg.source);
-                    imageUrls.push(uploadedUrl);
-                    console.log("✅ File uploaded:", uploadedUrl.substring(0, 50) + "...");
-                } catch (e) {
-                    console.error('❌ Failed to upload reference image:', e);
+        if (mediaRandomSeed.checked) {
+            mediaSeed.value = seed;
+        }
+        
+        const isVideoModel = ['seedance', 'seedance-pro', 'veo'].includes(model);
+        
+        const params = new URLSearchParams({
+            model: model,
+            seed: seed,
+            enhance: mediaEnhance.checked ? 'true' : 'false',
+            nologo: mediaNologo.checked ? 'true' : 'false',
+            private: mediaPrivate.checked ? 'true' : 'false',
+            safe: mediaSafe.checked ? 'true' : 'false',
+            guidance_scale: mediaGuidance.value
+        });
+        
+        if (isVideoModel) {
+            params.append('aspectRatio', mediaAspectRatio.value);
+            params.append('duration', mediaDuration.value);
+        } else {
+            params.append('width', mediaWidth.value);
+            params.append('height', mediaHeight.value);
+            params.append('transparent', mediaTransparent.checked ? 'true' : 'false');
+        }
+        
+        // Handle reference images
+        if (mediaState.referenceImages.length > 0) {
+            const imageUrls = [];
+            
+            for (const refImg of mediaState.referenceImages) {
+                if (refImg.type === 'url') {
+                    imageUrls.push(refImg.source);
+                } else if (refImg.type === 'file') {
+                    // Upload file to catbox
+                    try {
+                        const uploadedUrl = await uploadImageToCatbox(refImg.source);
+                        imageUrls.push(uploadedUrl);
+                    } catch (e) {
+                        console.error('Failed to upload reference image:', e);
+                    }
                 }
+            }
+            
+            if (imageUrls.length > 0) {
+                params.append('image', imageUrls.join(','));
             }
         }
         
-        if (imageUrls.length > 0) {
-            params.append('image', imageUrls.join(','));
-            console.log("🖼️ Total reference images:", imageUrls.length);
+        // Negative prompt for seedream
+        if (['seedream', 'seedream-pro'].includes(model) && mediaNegativePrompt.value.trim()) {
+            params.append('negative_prompt', mediaNegativePrompt.value.trim());
         }
-    }
-    
-    // Negative prompt for seedream
-    if (['seedream', 'seedream-pro'].includes(model) && mediaNegativePrompt.value.trim()) {
-        params.append('negative_prompt', mediaNegativePrompt.value.trim());
-    }
-    
-    const fullUrl = `${IMAGE_API_URL}/${encodeURIComponent(prompt)}?${params.toString()}`;
-    mediaState.currentApiUrl = fullUrl;
-    
-    // Truncate URL for logging (hide the key if present in URL)
-    const urlForLogging = fullUrl.substring(0, 80) + "...";
-    console.log("📡 Fetching from:", urlForLogging);
-    
-    try {
+        
+        const fullUrl = `${IMAGE_API_URL}/${encodeURIComponent(prompt)}?${params.toString()}`;
+        mediaState.currentApiUrl = fullUrl;
+        
         const response = await fetch(`${fullUrl}&key=${token}`);
-        console.log("📥 Response received:", {
-            status: response.status,
-            statusText: response.statusText,
-            ok: response.ok,
-            contentType: response.headers.get('content-type'),
-            contentLength: response.headers.get('content-length')
-        });
         
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error("❌ API Error Response:", errorText);
-            throw new Error(errorText || `HTTP ${response.status}`);
+            throw new Error(await response.text());
         }
         
         const blob = await response.blob();
-        console.log("💾 Blob created:", {
-            size: blob.size,
-            type: blob.type,
-            isEmpty: blob.size === 0
-        });
-        
-        if (blob.size === 0) {
-            throw new Error("Received empty image file (0 bytes)");
-        }
-        
         const blobUrl = URL.createObjectURL(blob);
-        console.log("🔗 Blob URL created:", blobUrl.substring(0, 50) + "...");
         
         return {
             type: isVideoModel ? 'video' : 'image',
             url: blobUrl,
             apiUrl: fullUrl
         };
-        
-    } catch (error) {
-        console.error("💥 Fatal error in generateMedia:", error);
-        throw error;
     }
-}
 
     async function uploadImageToCatbox(file) {
         const formData = new FormData();
@@ -3029,7 +3273,7 @@ async function generateMedia() {
         if (result.type === 'video') {
             mediaPreview.innerHTML = `<video controls autoplay loop muted playsinline src="${result.url}"></video>`;
         } else {
-            mediaPreview.innerHTML = `<img src="${result.url}" alt="Generated Image" crossorigin="anonymous">`;
+            mediaPreview.innerHTML = `<img src="${result.url}" alt="Generated Image">`;
         }
         
         mediaActions.style.display = 'flex';
@@ -3150,7 +3394,7 @@ async function generateMedia() {
         if (result.type === 'video') {
             mediaHtml = `<video class="chat-video" controls loop muted playsinline src="${result.url}"></video>`;
         } else {
-            mediaHtml = `<img class="chat-image" src="${result.url}" alt="Generated Image" crossorigin="anonymous" onclick="...">`;
+            mediaHtml = `<img class="chat-image" src="${result.url}" alt="Generated Image" onclick="openImageInStudio('${result.url}')">`;
         }
         
         const urlObj = new URL(result.apiUrl);
@@ -3205,6 +3449,11 @@ async function generateMedia() {
     loadAvailableVoices();
 
     // --- Initialize App ---
+    // Pre-load Pyodide in background so it's ready when needed
+    setTimeout(() => {
+        if (!pyodideReady) initPyodide();
+    }, 2000);
+    
     loadAllDataFromStorage();
 
     console.log("Chat application with BYOP policy and drag-drop support initialized successfully!");
