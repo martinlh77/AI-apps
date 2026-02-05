@@ -10,7 +10,7 @@ class TutorEngine {
         this.API_BASE = 'https://gen.pollinations.ai';
 
         this.models = {
-            tutor: 'grok',
+            tutor: 'kimi',
             vision: 'gemini-fast',
             coder: 'kimi',  // Used for visualizations now
             search: 'gemini-search',
@@ -1227,5 +1227,6 @@ ${gradeData.mathTopics}`;
 }
 
 window.mathTutor = new TutorEngine();
+
 
 
