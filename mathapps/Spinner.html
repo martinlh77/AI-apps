@@ -1,0 +1,2376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+   <title>Universal Probability Spinner - Educational & Casual</title>
+   <style>
+       /* ============================================
+          CSS VARIABLES & THEME SYSTEM
+          ============================================ */
+       :root {
+           --primary-hue: 220;
+           --bg-color: #f0f4f8;
+           --surface-color: #ffffff;
+           --text-color: #1a202c;
+           --text-secondary: #4a5568;
+           --border-color: #e2e8f0;
+           --accent-color: #3182ce;
+           --accent-hover: #2c5282;
+           --success-color: #48bb78;
+           --warning-color: #ed8936;
+           --danger-color: #f56565;
+           --wheel-bg: #ffffff;
+           --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+           --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+           --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+           --radius-sm: 6px;
+           --radius-md: 12px;
+           --radius-lg: 16px;
+           --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+           --transition-base: all 0.2s ease;
+           --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+       }
+
+       [data-theme="dark"] {
+           --bg-color: #1a202c;
+           --surface-color: #2d3748;
+           --text-color: #f7fafc;
+           --text-secondary: #a0aec0;
+           --border-color: #4a5568;
+           --accent-color: #63b3ed;
+           --accent-hover: #4299e1;
+           --wheel-bg: #2d3748;
+       }
+
+       [data-theme="high-contrast"] {
+           --bg-color: #000000;
+           --surface-color: #000000;
+           --text-color: #ffffff;
+           --text-secondary: #ffff00;
+           --border-color: #ffffff;
+           --accent-color: #00ffff;
+           --accent-hover: #00cccc;
+           --wheel-bg: #000000;
+       }
+
+       /* ============================================
+          RESET & BASE STYLES
+          ============================================ */
+       * {
+           box-sizing: border-box;
+           -webkit-tap-highlight-color: transparent;
+       }
+
+       html, body {
+           margin: 0;
+           padding: 0;
+           height: 100%;
+           font-family: var(--font-sans);
+           background-color: var(--bg-color);
+           color: var(--text-color);
+           transition: background-color 0.3s ease, color 0.3s ease;
+           overflow-x: hidden;
+       }
+
+       body {
+           display: flex;
+           flex-direction: column;
+           position: relative;
+       }
+
+       /* ============================================
+          LAYOUT ARCHITECTURE
+          ============================================ */
+       .app-container {
+           display: flex;
+           flex-direction: column;
+           height: 100%;
+           max-width: 1400px;
+           margin: 0 auto;
+           width: 100%;
+       }
+
+       .app-header {
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           padding: 12px 16px;
+           background: var(--surface-color);
+           border-bottom: 1px solid var(--border-color);
+           position: sticky;
+           top: 0;
+           z-index: 100;
+           box-shadow: var(--shadow-sm);
+       }
+
+       .header-title {
+           font-size: 18px;
+           font-weight: 700;
+           display: flex;
+           align-items: center;
+           gap: 8px;
+       }
+
+       .header-actions {
+           display: flex;
+           gap: 8px;
+           align-items: center;
+       }
+
+       .main-content {
+           flex: 1;
+           overflow-y: auto;
+           padding: 16px;
+           position: relative;
+       }
+
+       .spinner-grid {
+           display: grid;
+           gap: 24px;
+           grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+       }
+
+       @media (max-width: 768px) {
+           .spinner-grid {
+               grid-template-columns: 1fr;
+               gap: 16px;
+           }
+       }
+
+       /* ============================================
+          SPINNER CARD COMPONENT
+          ============================================ */
+       .spinner-card {
+           background: var(--surface-color);
+           border-radius: var(--radius-lg);
+           padding: 16px;
+           box-shadow: var(--shadow-md);
+           display: flex;
+           flex-direction: column;
+           gap: 16px;
+           position: relative;
+           transition: var(--transition-base);
+       }
+
+       .spinner-header {
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           border-bottom: 1px solid var(--border-color);
+           padding-bottom: 12px;
+       }
+
+       .spinner-title {
+           font-weight: 600;
+           font-size: 16px;
+           display: flex;
+           align-items: center;
+           gap: 8px;
+       }
+
+       .spinner-id {
+           background: var(--accent-color);
+           color: white;
+           width: 24px;
+           height: 24px;
+           border-radius: 50%;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           font-size: 12px;
+           font-weight: 700;
+       }
+
+       .wheel-container {
+           position: relative;
+           width: 100%;
+           aspect-ratio: 1;
+           max-width: 400px;
+           margin: 0 auto;
+           touch-action: none;
+       }
+
+       .wheel-canvas {
+           width: 100%;
+           height: 100%;
+           border-radius: 50%;
+           box-shadow: var(--shadow-lg);
+           cursor: pointer;
+           transition: transform 0.1s;
+       }
+
+       .wheel-canvas:active {
+           transform: scale(0.98);
+       }
+
+       .wheel-indicator {
+           position: absolute;
+           top: -10px;
+           left: 50%;
+           transform: translateX(-50%);
+           width: 0;
+           height: 0;
+           border-left: 12px solid transparent;
+           border-right: 12px solid transparent;
+           border-top: 20px solid var(--danger-color);
+           filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+           z-index: 10;
+       }
+
+       .wheel-center {
+           position: absolute;
+           top: 50%;
+           left: 50%;
+           transform: translate(-50%, -50%);
+           width: 40px;
+           height: 40px;
+           background: var(--surface-color);
+           border: 3px solid var(--accent-color);
+           border-radius: 50%;
+           box-shadow: var(--shadow-md);
+           z-index: 5;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           font-size: 12px;
+           font-weight: 700;
+       }
+
+       /* ============================================
+          CONTROLS & INPUTS
+          ============================================ */
+       .controls-section {
+           display: flex;
+           flex-direction: column;
+           gap: 12px;
+       }
+
+       .control-row {
+           display: flex;
+           gap: 8px;
+           align-items: center;
+           flex-wrap: wrap;
+       }
+
+       .btn {
+           padding: 8px 16px;
+           border: none;
+           border-radius: var(--radius-md);
+           background: var(--accent-color);
+           color: white;
+           font-weight: 600;
+           cursor: pointer;
+           transition: var(--transition-base);
+           font-size: 14px;
+           display: inline-flex;
+           align-items: center;
+           justify-content: center;
+           gap: 6px;
+           min-height: 36px;
+       }
+
+       .btn:hover:not(:disabled) {
+           background: var(--accent-hover);
+           transform: translateY(-1px);
+       }
+
+       .btn:active:not(:disabled) {
+           transform: translateY(0);
+       }
+
+       .btn:disabled {
+           opacity: 0.5;
+           cursor: not-allowed;
+       }
+
+       .btn-secondary {
+           background: var(--surface-color);
+           color: var(--text-color);
+           border: 1px solid var(--border-color);
+       }
+
+       .btn-secondary:hover:not(:disabled) {
+           background: var(--bg-color);
+       }
+
+       .btn-danger {
+           background: var(--danger-color);
+       }
+
+       .btn-icon {
+           width: 36px;
+           padding: 0;
+           border-radius: 50%;
+       }
+
+       .input-group {
+           display: flex;
+           flex-direction: column;
+           gap: 4px;
+           flex: 1;
+           min-width: 120px;
+       }
+
+       .input-label {
+           font-size: 12px;
+           color: var(--text-secondary);
+           font-weight: 600;
+           text-transform: uppercase;
+           letter-spacing: 0.5px;
+       }
+
+       input, select, textarea {
+           padding: 8px 12px;
+           border: 1px solid var(--border-color);
+           border-radius: var(--radius-sm);
+           background: var(--surface-color);
+           color: var(--text-color);
+           font-family: inherit;
+           font-size: 14px;
+           transition: var(--transition-base);
+       }
+
+       input:focus, select:focus, textarea:focus {
+           outline: none;
+           border-color: var(--accent-color);
+           box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+       }
+
+       .slider-container {
+           display: flex;
+           align-items: center;
+           gap: 12px;
+           flex: 1;
+       }
+
+       input[type="range"] {
+           flex: 1;
+           -webkit-appearance: none;
+           height: 6px;
+           background: var(--border-color);
+           border-radius: 3px;
+           padding: 0;
+       }
+
+       input[type="range"]::-webkit-slider-thumb {
+           -webkit-appearance: none;
+           width: 18px;
+           height: 18px;
+           background: var(--accent-color);
+           border-radius: 50%;
+           cursor: pointer;
+           transition: transform 0.1s;
+       }
+
+       input[type="range"]::-webkit-slider-thumb:hover {
+           transform: scale(1.1);
+       }
+
+       /* ============================================
+          DATA DISPLAY & PROBABILITY PANELS
+          ============================================ */
+       .data-panel {
+           background: var(--bg-color);
+           border-radius: var(--radius-md);
+           padding: 12px;
+           font-size: 13px;
+       }
+
+       .data-table {
+           width: 100%;
+           border-collapse: collapse;
+       }
+
+       .data-table th {
+           text-align: left;
+           padding: 6px;
+           color: var(--text-secondary);
+           font-weight: 600;
+           border-bottom: 1px solid var(--border-color);
+       }
+
+       .data-table td {
+           padding: 6px;
+           border-bottom: 1px solid var(--border-color);
+       }
+
+       .probability-display {
+           display: flex;
+           gap: 12px;
+           flex-wrap: wrap;
+           margin-top: 8px;
+       }
+
+       .prob-badge {
+           background: var(--surface-color);
+           border: 1px solid var(--border-color);
+           padding: 4px 8px;
+           border-radius: var(--radius-sm);
+           font-size: 12px;
+           font-family: monospace;
+       }
+
+       .prob-label {
+           color: var(--text-secondary);
+           font-size: 10px;
+           text-transform: uppercase;
+       }
+
+       /* ============================================
+          MODAL & BOTTOM SHEET SYSTEM
+          ============================================ */
+       .modal-overlay {
+           position: fixed;
+           top: 0;
+           left: 0;
+           right: 0;
+           bottom: 0;
+           background: rgba(0,0,0,0.5);
+           backdrop-filter: blur(4px);
+           z-index: 200;
+           display: none;
+           align-items: center;
+           justify-content: center;
+           padding: 16px;
+       }
+
+       .modal-overlay.active {
+           display: flex;
+       }
+
+       .modal {
+           background: var(--surface-color);
+           border-radius: var(--radius-lg);
+           width: 100%;
+           max-width: 600px;
+           max-height: 90vh;
+           overflow: hidden;
+           display: flex;
+           flex-direction: column;
+           box-shadow: var(--shadow-lg);
+           animation: modalEnter 0.3s ease;
+       }
+
+       @keyframes modalEnter {
+           from { opacity: 0; transform: translateY(20px) scale(0.95); }
+           to { opacity: 1; transform: translateY(0) scale(1); }
+       }
+
+       .modal-header {
+           padding: 16px;
+           border-bottom: 1px solid var(--border-color);
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+       }
+
+       .modal-title {
+           font-size: 18px;
+           font-weight: 700;
+       }
+
+       .modal-close {
+           background: none;
+           border: none;
+           font-size: 24px;
+           cursor: pointer;
+           color: var(--text-secondary);
+           width: 32px;
+           height: 32px;
+           display: flex;
+           align-items: center;
+           justify-content: center;
+           border-radius: 50%;
+           transition: var(--transition-base);
+       }
+
+       .modal-close:hover {
+           background: var(--bg-color);
+           color: var(--text-color);
+       }
+
+       .modal-content {
+           flex: 1;
+           overflow-y: auto;
+           padding: 16px;
+       }
+
+       .modal-footer {
+           padding: 16px;
+           border-top: 1px solid var(--border-color);
+           display: flex;
+           justify-content: flex-end;
+           gap: 8px;
+       }
+
+       /* Bottom Sheet (Mobile Optimized) */
+       @media (max-width: 768px) {
+           .modal-overlay {
+               align-items: flex-end;
+               padding: 0;
+           }
+
+           .modal {
+               max-width: 100%;
+               max-height: 85vh;
+               border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+               animation: sheetEnter 0.3s ease;
+           }
+
+           @keyframes sheetEnter {
+               from { transform: translateY(100%); }
+               to { transform: translateY(0); }
+           }
+       }
+
+       /* ============================================
+          SECTOR EDITOR
+          ============================================ */
+       .sector-editor {
+           display: flex;
+           flex-direction: column;
+           gap: 16px;
+       }
+
+       .bulk-input {
+           width: 100%;
+           min-height: 120px;
+           font-family: monospace;
+           font-size: 13px;
+       }
+
+       .sector-list {
+           display: flex;
+           flex-direction: column;
+           gap: 8px;
+           max-height: 300px;
+           overflow-y: auto;
+       }
+
+       .sector-item {
+           display: flex;
+           align-items: center;
+           gap: 8px;
+           padding: 8px;
+           background: var(--bg-color);
+           border-radius: var(--radius-sm);
+           border: 1px solid var(--border-color);
+           transition: var(--transition-base);
+       }
+
+       .sector-item.dragging {
+           opacity: 0.5;
+           border-color: var(--accent-color);
+       }
+
+       .sector-color {
+           width: 20px;
+           height: 20px;
+           border-radius: 50%;
+           border: 2px solid var(--border-color);
+           cursor: pointer;
+           flex-shrink: 0;
+       }
+
+       .sector-name {
+           flex: 1;
+           font-size: 14px;
+       }
+
+       .sector-weight {
+           width: 80px;
+           font-size: 13px;
+       }
+
+       .sector-delete {
+           color: var(--danger-color);
+           cursor: pointer;
+           padding: 4px;
+           border-radius: 4px;
+           transition: var(--transition-base);
+       }
+
+       .sector-delete:hover {
+           background: rgba(245, 101, 101, 0.1);
+       }
+
+       .template-buttons {
+           display: flex;
+           gap: 8px;
+           flex-wrap: wrap;
+       }
+
+       /* ============================================
+          CONFETTI & ANIMATIONS
+          ============================================ */
+       .confetti-container {
+           position: fixed;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+           pointer-events: none;
+           overflow: hidden;
+           z-index: 150;
+       }
+
+       .confetti {
+           position: absolute;
+           width: 10px;
+           height: 10px;
+           animation: confetti-fall 3s ease-out forwards;
+       }
+
+       @keyframes confetti-fall {
+           0% {
+               transform: translateY(-100px) rotate(0deg);
+               opacity: 1;
+           }
+           100% {
+               transform: translateY(100vh) rotate(720deg);
+               opacity: 0;
+           }
+       }
+
+       .pulse-animation {
+           animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+       }
+
+       @keyframes pulse {
+           0%, 100% { opacity: 1; }
+           50% { opacity: 0.5; }
+       }
+
+       /* ============================================
+          UTILITY CLASSES
+          ============================================ */
+       .hidden { display: none !important; }
+       .text-center { text-align: center; }
+       .flex { display: flex; }
+       .flex-col { flex-direction: column; }
+       .items-center { align-items: center; }
+       .justify-between { justify-content: space-between; }
+       .gap-2 { gap: 8px; }
+       .gap-4 { gap: 16px; }
+       .mt-2 { margin-top: 8px; }
+       .mt-4 { margin-top: 16px; }
+       .mb-2 { margin-bottom: 8px; }
+       .w-full { width: 100%; }
+       
+       .badge {
+           display: inline-flex;
+           align-items: center;
+           padding: 2px 8px;
+           border-radius: 12px;
+           font-size: 12px;
+           font-weight: 600;
+           background: var(--accent-color);
+           color: white;
+       }
+
+       .empty-state {
+           text-align: center;
+           padding: 32px;
+           color: var(--text-secondary);
+       }
+
+       /* ============================================
+          STORAGE & HISTORY UI
+          ============================================ */
+       .storage-bar {
+           height: 4px;
+           background: var(--border-color);
+           border-radius: 2px;
+           overflow: hidden;
+           margin-top: 4px;
+       }
+
+       .storage-used {
+           height: 100%;
+           background: var(--accent-color);
+           transition: width 0.3s ease;
+       }
+
+       .history-item {
+           display: flex;
+           gap: 12px;
+           padding: 12px;
+           border-bottom: 1px solid var(--border-color);
+           align-items: center;
+           cursor: pointer;
+           transition: var(--transition-base);
+       }
+
+       .history-item:hover {
+           background: var(--bg-color);
+       }
+
+       .history-thumb {
+           width: 48px;
+           height: 48px;
+           border-radius: var(--radius-sm);
+           background: var(--bg-color);
+           border: 1px solid var(--border-color);
+           flex-shrink: 0;
+           overflow: hidden;
+       }
+
+       .history-thumb img {
+           width: 100%;
+           height: 100%;
+           object-fit: cover;
+       }
+
+       .history-info {
+           flex: 1;
+           min-width: 0;
+       }
+
+       .history-name {
+           font-weight: 600;
+           white-space: nowrap;
+           overflow: hidden;
+           text-overflow: ellipsis;
+       }
+
+       .history-meta {
+           font-size: 12px;
+           color: var(--text-secondary);
+       }
+
+       .history-actions {
+           display: flex;
+           gap: 4px;
+       }
+
+       /* ============================================
+          MOBILE OPTIMIZATIONS
+          ============================================ */
+       @media (max-width: 480px) {
+           .app-header {
+               padding: 8px 12px;
+           }
+
+           .header-title {
+               font-size: 16px;
+           }
+
+           .main-content {
+               padding: 12px;
+           }
+
+           .spinner-card {
+               padding: 12px;
+           }
+
+           .btn {
+               padding: 6px 12px;
+               font-size: 13px;
+           }
+
+           .control-row {
+               flex-direction: column;
+               align-items: stretch;
+           }
+
+           .input-group {
+               min-width: auto;
+           }
+       }
+
+       /* Touch feedback */
+       @media (hover: none) {
+           .btn:hover {
+               transform: none;
+           }
+           
+           .btn:active {
+               transform: scale(0.98);
+               opacity: 0.8;
+           }
+       }
+
+       /* Reduced motion */
+       @media (prefers-reduced-motion: reduce) {
+           * {
+               animation-duration: 0.01ms !important;
+               animation-iteration-count: 1 !important;
+               transition-duration: 0.01ms !important;
+           }
+       }
+   </style>
+</head>
+<body data-theme="light">
+   <div class="app-container">
+       <!-- Header -->
+       <header class="app-header">
+           <div class="header-title">
+               <span>🎯</span>
+               <span>Probability Lab</span>
+           </div>
+           <div class="header-actions">
+               <button class="btn btn-secondary btn-icon" id="themeToggle" title="Toggle Theme">🌓</button>
+               <button class="btn btn-secondary btn-icon" id="muteToggle" title="Toggle Sound">🔊</button>
+               <button class="btn btn-secondary btn-icon" id="historyBtn" title="History">📚</button>
+               <button class="btn btn-secondary btn-icon" id="settingsBtn" title="Settings">⚙️</button>
+               <button class="btn btn-icon" id="addSpinnerBtn" title="Add Spinner">+</button>
+           </div>
+       </header>
+
+       <!-- Main Content -->
+       <main class="main-content" id="mainContent">
+           <div class="spinner-grid" id="spinnerGrid">
+               <!-- Spinners injected here -->
+           </div>
+           
+           <!-- Empty State -->
+           <div class="empty-state" id="emptyState" style="display: none;">
+               <div style="font-size: 48px; margin-bottom: 16px;">🎡</div>
+               <h2>No Spinners Active</h2>
+               <p>Click the + button to add your first probability wheel</p>
+           </div>
+       </main>
+
+       <!-- Global Quick Actions -->
+       <div style="position: fixed; bottom: 24px; right: 24px; display: flex; gap: 12px; z-index: 50;">
+           <button class="btn btn-secondary" id="exportBtn" style="box-shadow: var(--shadow-lg);">
+               Export
+           </button>
+           <button class="btn" id="spinAllBtn" style="box-shadow: var(--shadow-lg); background: var(--success-color);">
+               Spin All
+           </button>
+       </div>
+   </div>
+
+   <!-- Sector Editor Modal -->
+   <div class="modal-overlay" id="editorModal">
+       <div class="modal">
+           <div class="modal-header">
+               <div class="modal-title">Edit Sectors</div>
+               <button class="modal-close" onclick="closeModal('editorModal')">×</button>
+           </div>
+           <div class="modal-content">
+               <div class="sector-editor">
+                   <div class="template-buttons">
+                       <button class="btn btn-secondary" onclick="applyTemplate('numbers')">Numbers 1-10</button>
+                       <button class="btn btn-secondary" onclick="applyTemplate('alphabet')">Alphabet</button>
+                       <button class="btn btn-secondary" onclick="applyTemplate('yesno')">Yes/No</button>
+                       <button class="btn btn-secondary" onclick="applyTemplate('dice')">Dice</button>
+                   </div>
+                   
+                   <div class="input-group">
+                       <label class="input-label">Bulk Import (comma or newline separated)</label>
+                       <textarea class="bulk-input" id="bulkInput" placeholder="Enter items..."></textarea>
+                   </div>
+                   
+                   <button class="btn btn-secondary" onclick="processBulkInput()">Process Bulk Input</button>
+                   
+                   <div class="input-group mt-4">
+                       <label class="input-label">Sectors (Swipe to delete, drag to reorder)</label>
+                       <div class="sector-list" id="sectorList">
+                           <!-- Sector items injected here -->
+                       </div>
+                   </div>
+                   
+                   <button class="btn btn-secondary w-full mt-2" onclick="addSector()">+ Add Sector</button>
+               </div>
+           </div>
+           <div class="modal-footer">
+               <button class="btn btn-secondary" onclick="closeModal('editorModal')">Cancel</button>
+               <button class="btn" onclick="saveSectors()">Save Changes</button>
+           </div>
+       </div>
+   </div>
+
+   <!-- Settings Modal -->
+   <div class="modal-overlay" id="settingsModal">
+       <div class="modal">
+           <div class="modal-header">
+               <div class="modal-title">Settings</div>
+               <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
+           </div>
+           <div class="modal-content">
+               <div style="display: flex; flex-direction: column; gap: 20px;">
+                   <!-- Physics Settings -->
+                   <div>
+                       <h3 style="margin: 0 0 12px 0; font-size: 16px;">Physics & Animation</h3>
+                       <div class="control-row">
+                           <div class="input-group">
+                               <label class="input-label">Default Speed</label>
+                               <select id="defaultSpeed">
+                                   <option value="slow">Slow (5s)</option>
+                                   <option value="medium" selected>Medium (3s)</option>
+                                   <option value="fast">Fast (1.5s)</option>
+                                   <option value="instant">Instant</option>
+                               </select>
+                           </div>
+                           <div class="input-group">
+                               <label class="input-label">Confetti Theme</label>
+                               <select id="confettiTheme">
+                                   <option value="celebration">Celebration</option>
+                                   <option value="classroom">Classroom</option>
+                                   <option value="minimal">Minimal</option>
+                                   <option value="none">None</option>
+                               </select>
+                           </div>
+                       </div>
+                   </div>
+
+                   <!-- Number Formats -->
+                   <div>
+                       <h3 style="margin: 0 0 12px 0; font-size: 16px;">Number Formats</h3>
+                       <div class="control-row" style="flex-wrap: wrap;">
+                           <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                               <input type="checkbox" id="showFraction" checked> Fraction
+                           </label>
+                           <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                               <input type="checkbox" id="showDecimal" checked> Decimal
+                           </label>
+                           <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                               <input type="checkbox" id="showPercent" checked> Percentage
+                           </label>
+                       </div>
+                       <div class="control-row mt-2">
+                           <div class="input-group">
+                               <label class="input-label">Decimal Places</label>
+                               <select id="decimalPlaces">
+                                   <option value="2">2 places</option>
+                                   <option value="4">4 places</option>
+                               </select>
+                           </div>
+                           <div class="input-group">
+                               <label class="input-label">Percent Precision</label>
+                               <select id="percentPrecision">
+                                   <option value="0">Whole number</option>
+                                   <option value="1">1 decimal</option>
+                                   <option value="2" selected>2 decimals</option>
+                               </select>
+                           </div>
+                       </div>
+                   </div>
+
+                   <!-- Audio Settings -->
+                   <div>
+                       <h3 style="margin: 0 0 12px 0; font-size: 16px;">Audio</h3>
+                       <div class="control-row">
+                           <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                               <input type="checkbox" id="enableTicking" checked> Ticking Sound
+                           </label>
+                           <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                               <input type="checkbox" id="enableSelection" checked> Selection Sound
+                           </label>
+                       </div>
+                       <div class="slider-container mt-2">
+                           <span style="font-size: 12px;">Volume</span>
+                           <input type="range" id="volumeSlider" min="0" max="100" value="70">
+                           <span style="font-size: 12px; min-width: 30px;" id="volumeValue">70%</span>
+                       </div>
+                   </div>
+
+                   <!-- Theme -->
+                   <div>
+                       <h3 style="margin: 0 0 12px 0; font-size: 16px;">Appearance</h3>
+                       <div class="control-row">
+                           <div class="input-group">
+                               <label class="input-label">Color Theme</label>
+                               <select id="colorTheme">
+                                   <option value="vibrant">Vibrant</option>
+                                   <option value="pastel">Pastel</option>
+                                   <option value="highcontrast">High Contrast</option>
+                                   <option value="monochrome">Monochrome</option>
+                               </select>
+                           </div>
+                           <div class="input-group">
+                               <label class="input-label">Display Mode</label>
+                               <select id="displayMode">
+                                   <option value="compact">Compact</option>
+                                   <option value="expanded">Expanded</option>
+                                   <option value="teacher">Teacher Mode</option>
+                               </select>
+                           </div>
+                       </div>
+                   </div>
+
+                   <!-- Data Management -->
+                   <div>
+                       <h3 style="margin: 0 0 12px 0; font-size: 16px;">Storage</h3>
+                       <div style="background: var(--bg-color); padding: 12px; border-radius: var(--radius-md);">
+                           <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                               <span>Used: <span id="storageUsed">0</span> MB</span>
+                               <span>Limit: ~10 MB</span>
+                           </div>
+                           <div class="storage-bar">
+                               <div class="storage-used" id="storageBar" style="width: 0%"></div>
+                           </div>
+                       </div>
+                       <div class="control-row mt-2">
+                           <button class="btn btn-secondary" onclick="app.autoSave()">Save Current State</button>
+                           <button class="btn btn-danger" onclick="app.resetApp()">Reset App</button>
+                       </div>
+                   </div>
+               </div>
+           </div>
+           <div class="modal-footer">
+               <button class="btn btn-secondary" onclick="closeModal('settingsModal')">Close</button>
+           </div>
+       </div>
+   </div>
+
+   <!-- History Modal -->
+   <div class="modal-overlay" id="historyModal">
+       <div class="modal">
+           <div class="modal-header">
+               <div class="modal-title">Saved States</div>
+               <button class="modal-close" onclick="closeModal('historyModal')">×</button>
+           </div>
+           <div class="modal-content" id="historyList">
+               <!-- History items injected here -->
+           </div>
+           <div class="modal-footer">
+               <button class="btn btn-secondary" onclick="app.exportAllHistory()">Export All</button>
+               <button class="btn" onclick="app.saveCurrentState()">Save Current</button>
+           </div>
+       </div>
+   </div>
+
+   <!-- Export Modal -->
+   <div class="modal-overlay" id="exportModal">
+       <div class="modal">
+           <div class="modal-header">
+               <div class="modal-title">Export Data</div>
+               <button class="modal-close" onclick="closeModal('exportModal')">×</button>
+           </div>
+           <div class="modal-content">
+               <div style="display: flex; flex-direction: column; gap: 16px;">
+                   <div>
+                       <label style="font-weight: 600; display: block; margin-bottom: 8px;">Export Format</label>
+                       <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                           <button class="btn btn-secondary" onclick="app.exportJSON()">JSON (Backup)</button>
+                           <button class="btn btn-secondary" onclick="app.exportCSV()">CSV (Spreadsheet)</button>
+                           <button class="btn btn-secondary" onclick="app.exportImage()">PNG Image</button>
+                       </div>
+                   </div>
+                   
+                   <div id="exportOptions">
+                       <label style="font-weight: 600; display: block; margin-bottom: 8px;">Image Options</label>
+                       <div class="control-row">
+                           <div class="input-group">
+                               <label class="input-label">Resolution</label>
+                               <select id="exportResolution">
+                                   <option value="1">1x (Screen)</option>
+                                   <option value="2" selected>2x (Retina)</option>
+                                   <option value="4">4x (Print)</option>
+                               </select>
+                           </div>
+                           <div class="input-group">
+                               <label class="input-label">Background</label>
+                               <select id="exportBackground">
+                                   <option value="transparent">Transparent</option>
+                                   <option value="white">White</option>
+                                   <option value="current">Current Theme</option>
+                               </select>
+                           </div>
+                       </div>
+                   </div>
+
+                   <div id="exportProgress" style="display: none;">
+                       <div style="background: var(--bg-color); height: 8px; border-radius: 4px; overflow: hidden;">
+                           <div style="background: var(--accent-color); height: 100%; width: 0%; transition: width 0.3s;" id="progressBar"></div>
+                       </div>
+                       <p style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">Generating export...</p>
+                   </div>
+               </div>
+           </div>
+           <div class="modal-footer">
+               <button class="btn btn-secondary" onclick="closeModal('exportModal')">Cancel</button>
+           </div>
+       </div>
+   </div>
+
+   <!-- Confetti Container -->
+   <div class="confetti-container" id="confettiContainer"></div>
+
+   <script>
+       /* ============================================
+          UNIVERSAL PROBABILITY SPINNER APPLICATION
+          Single-file implementation with:
+          - Canvas-based rendering for performance
+          - Web Audio API for synthesized sounds
+          - IndexedDB for state persistence
+          - Physics engine with variable speed
+          ============================================ */
+
+       // ==========================================
+       // UTILITY FUNCTIONS
+       // ==========================================
+       
+       const $ = id => document.getElementById(id);
+       const $$ = selector => document.querySelectorAll(selector);
+       
+       // Greatest Common Divisor for fraction simplification
+       const gcd = (a, b) => b ? gcd(b, a % b) : a;
+       
+       // Decimal-safe probability calculations (use integers to avoid floating point errors)
+       const calculateProbability = (weight, total) => {
+           const num = Math.round(weight * 1000); // Store as thousandths
+           const den = Math.round(total * 1000);
+           return { fraction: [num, den], decimal: weight / total };
+       };
+
+       // Generate HSL color based on index and theme
+       const generateColor = (index, total, theme) => {
+           const hue = (index * 360 / total) % 360;
+           switch(theme) {
+               case 'pastel':
+                   return `hsl(${hue}, 70%, 85%)`;
+               case 'highcontrast':
+                   return index % 2 === 0 ? '#ffffff' : '#ffff00';
+               case 'monochrome':
+                   const gray = 20 + (index / total) * 60;
+                   return `hsl(0, 0%, ${gray}%)`;
+               case 'vibrant':
+               default:
+                   return `hsl(${hue}, 80%, 60%)`;
+           }
+       };
+
+       // ==========================================
+       // AUDIO ENGINE (Web Audio API)
+       // ==========================================
+       
+       class AudioEngine {
+           constructor() {
+               this.ctx = null;
+               this.masterGain = null;
+               this.enabled = true;
+               this.volume = 0.7;
+               this.ticking = true;
+               this.selection = true;
+               this.oscillator = null;
+               this.gainNode = null;
+           }
+
+           init() {
+               if (!this.ctx) {
+                   this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                   this.masterGain = this.ctx.createGain();
+                   this.masterGain.gain.value = this.volume;
+                   this.masterGain.connect(this.ctx.destination);
+               }
+           }
+
+           setVolume(val) {
+               this.volume = val;
+               if (this.masterGain) {
+                   this.masterGain.gain.value = val;
+               }
+           }
+
+           // Procedural ticking sound with frequency modulation
+           playTick(intensity = 1) {
+               if (!this.enabled || !this.ticking || !this.ctx) return;
+               
+               const osc = this.ctx.createOscillator();
+               const gain = this.ctx.createGain();
+               
+               osc.frequency.value = 800 + (intensity * 400);
+               osc.type = 'square';
+               
+               gain.gain.setValueAtTime(0.1 * this.volume, this.ctx.currentTime);
+               gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+               
+               osc.connect(gain);
+               gain.connect(this.masterGain);
+               
+               osc.start();
+               osc.stop(this.ctx.currentTime + 0.05);
+           }
+
+           // Selection celebration sound (chime)
+           playSelection(type = 'classic') {
+               if (!this.enabled || !this.selection || !this.ctx) return;
+               
+               const now = this.ctx.currentTime;
+               const osc = this.ctx.createOscillator();
+               const gain = this.ctx.createGain();
+               
+               switch(type) {
+                   case 'arcade':
+                       osc.frequency.setValueAtTime(880, now);
+                       osc.frequency.exponentialRampToValueAtTime(1760, now + 0.1);
+                       break;
+                   case 'soft':
+                       osc.frequency.setValueAtTime(523.25, now);
+                       osc.frequency.exponentialRampToValueAtTime(1046.5, now + 0.3);
+                       break;
+                   case 'classic':
+                   default:
+                       osc.frequency.setValueAtTime(440, now);
+                       osc.frequency.setValueAtTime(554.37, now + 0.1);
+                       osc.frequency.setValueAtTime(659.25, now + 0.2);
+               }
+               
+               gain.gain.setValueAtTime(0.3 * this.volume, now);
+               gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+               
+               osc.connect(gain);
+               gain.connect(this.masterGain);
+               
+               osc.start();
+               osc.stop(now + 0.5);
+           }
+       }
+
+       // ==========================================
+       // PHYSICS ENGINE
+       // ==========================================
+       
+       class PhysicsEngine {
+           constructor() {
+               this.speedSettings = {
+                   slow: { velocity: 15, deceleration: 0.02, duration: 5000 },
+                   medium: { velocity: 25, deceleration: 0.04, duration: 3000 },
+                   fast: { velocity: 40, deceleration: 0.08, duration: 1500 },
+                   instant: { velocity: 0, deceleration: 0, duration: 0 }
+               };
+           }
+
+           getDuration(speed) {
+               return this.speedSettings[speed].duration;
+           }
+
+           // Calculate rotation with exponential decay for realistic physics
+           calculateRotation(speed, elapsed) {
+               const settings = this.speedSettings[speed];
+               if (speed === 'instant') return Math.random() * 360;
+               
+               const t = elapsed / 1000;
+               const v0 = settings.velocity;
+               const k = settings.deceleration;
+               
+               // Exponential decay: θ(t) = (v0/k) * (1 - e^(-kt))
+               const angle = (v0 / k) * (1 - Math.exp(-k * t));
+               return angle * 360; // Convert to degrees
+           }
+
+           // Calculate current velocity for tick rate modulation
+           getCurrentVelocity(speed, elapsed) {
+               const settings = this.speedSettings[speed];
+               if (speed === 'instant') return 0;
+               
+               const t = elapsed / 1000;
+               return settings.velocity * Math.exp(-settings.deceleration * t);
+           }
+       }
+
+       // ==========================================
+       // WHEEL RENDERER (Canvas)
+       // ==========================================
+       
+       class WheelRenderer {
+           constructor(canvas) {
+               this.canvas = canvas;
+               this.ctx = canvas.getContext('2d');
+               this.dpr = window.devicePixelRatio || 1;
+           }
+
+           resize() {
+               const rect = this.canvas.getBoundingClientRect();
+               this.canvas.width = rect.width * this.dpr;
+               this.canvas.height = rect.height * this.dpr;
+               this.ctx.scale(this.dpr, this.dpr);
+               this.width = rect.width;
+               this.height = rect.height;
+               this.centerX = this.width / 2;
+               this.centerY = this.height / 2;
+               this.radius = Math.min(this.centerX, this.centerY) - 10;
+           }
+
+           render(sectors, rotation = 0, highlightIndex = -1) {
+               this.ctx.clearRect(0, 0, this.width, this.height);
+               
+               const total = sectors.reduce((sum, s) => sum + s.weight, 0);
+               let currentAngle = -90 + rotation; // Start at top (subtract 90 degrees)
+               
+               sectors.forEach((sector, i) => {
+                   const angleSize = (sector.weight / total) * 360;
+                   const endAngle = currentAngle + angleSize;
+                   
+                   // Draw sector
+                   this.ctx.beginPath();
+                   this.ctx.moveTo(this.centerX, this.centerY);
+                   this.ctx.arc(this.centerX, this.centerY, this.radius, 
+                       (currentAngle * Math.PI) / 180, 
+                       (endAngle * Math.PI) / 180);
+                   this.ctx.closePath();
+                   
+                   this.ctx.fillStyle = sector.color;
+                   this.ctx.fill();
+                   this.ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                   this.ctx.lineWidth = 1;
+                   this.ctx.stroke();
+                   
+                   // Highlight winning sector
+                   if (i === highlightIndex) {
+                       this.ctx.save();
+                       this.ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+                       this.ctx.shadowBlur = 20;
+                       this.ctx.strokeStyle = '#FFD700';
+                       this.ctx.lineWidth = 3;
+                       this.ctx.stroke();
+                       this.ctx.restore();
+                   }
+                   
+                   // Draw text
+                   this.drawSectorText(sector, currentAngle, endAngle, angleSize);
+                   
+                   currentAngle = endAngle;
+               });
+               
+               // Draw center circle
+               this.ctx.beginPath();
+               this.ctx.arc(this.centerX, this.centerY, 25, 0, 2 * Math.PI);
+               this.ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--surface-color').trim() || '#ffffff';
+               this.ctx.fill();
+               this.ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent-color').trim() || '#3182ce';
+               this.ctx.lineWidth = 3;
+               this.ctx.stroke();
+           }
+
+           drawSectorText(sector, startAngle, endAngle, angleSize) {
+               const midAngle = (startAngle + endAngle) / 2;
+               const textRadius = this.radius * 0.7;
+               const x = this.centerX + textRadius * Math.cos((midAngle * Math.PI) / 180);
+               const y = this.centerY + textRadius * Math.sin((midAngle * Math.PI) / 180);
+               
+               this.ctx.save();
+               this.ctx.translate(x, y);
+               this.ctx.rotate(((midAngle + 90) * Math.PI) / 180);
+               
+               // Dynamic font sizing based on sector count
+               const fontSize = Math.max(6, Math.min(14, 200 / sector.name.length));
+               this.ctx.font = `600 ${fontSize}px sans-serif`;
+               this.ctx.fillStyle = '#1a202c';
+               this.ctx.textAlign = 'center';
+               this.ctx.textBaseline = 'middle';
+               
+               // Truncate if too long
+               let text = sector.name;
+               if (text.length > 15) text = text.substring(0, 12) + '...';
+               
+               this.ctx.fillText(text, 0, 0);
+               this.ctx.restore();
+           }
+
+           // Export wheel as image
+           toDataURL(type = 'image/png', background = 'transparent') {
+               if (background !== 'transparent') {
+                   const tempCanvas = document.createElement('canvas');
+                   tempCanvas.width = this.canvas.width;
+                   tempCanvas.height = this.canvas.height;
+                   const tCtx = tempCanvas.getContext('2d');
+                   
+                   if (background === 'white') {
+                       tCtx.fillStyle = '#ffffff';
+                       tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                   }
+                   
+                   tCtx.drawImage(this.canvas, 0, 0);
+                   return tempCanvas.toDataURL(type);
+               }
+               return this.canvas.toDataURL(type);
+           }
+       }
+
+       // ==========================================
+       // SPINNER CLASS (Individual Wheel)
+       // ==========================================
+       
+       class Spinner {
+           constructor(id, container) {
+               this.id = id;
+               this.container = container;
+               this.sectors = [
+                   { name: 'Sector 01', weight: 1, color: generateColor(0, 2, 'vibrant') },
+                   { name: 'Sector 02', weight: 1, color: generateColor(1, 2, 'vibrant') }
+               ];
+               this.rotation = 0;
+               this.isSpinning = false;
+               this.speed = 'medium';
+               this.spins = 1;
+               this.trialSets = [];
+               this.currentSet = 0;
+               this.results = [];
+               this.totalWeight = 2;
+               this.winner = null;
+               
+               this.physics = new PhysicsEngine();
+               this.audio = window.appAudio;
+               
+               this.initDOM();
+               this.render();
+           }
+
+           initDOM() {
+               this.element = document.createElement('div');
+               this.element.className = 'spinner-card';
+               this.element.innerHTML = `
+                   <div class="spinner-header">
+                       <div class="spinner-title">
+                           <div class="spinner-id">${this.id}</div>
+                           <span contenteditable="true" class="spinner-name" onblur="app.spinners[${this.id-1}].name = this.innerText">Spinner ${this.id}</span>
+                       </div>
+                       <div style="display: flex; gap: 4px;">
+                           <button class="btn btn-secondary btn-icon" onclick="app.editSpinner(${this.id})" title="Edit Sectors">✏️</button>
+                           <button class="btn btn-secondary btn-icon" onclick="app.deleteSpinner(${this.id})" title="Delete">🗑️</button>
+                       </div>
+                   </div>
+                   
+                   <div class="wheel-container">
+                       <div class="wheel-indicator"></div>
+                       <canvas class="wheel-canvas" id="canvas-${this.id}"></canvas>
+                       <div class="wheel-center">${this.id}</div>
+                   </div>
+                   
+                   <div class="controls-section">
+                       <div class="control-row">
+                           <div class="input-group" style="flex: 0.6;">
+                               <label class="input-label">Speed</label>
+                               <select id="speed-${this.id}" onchange="app.spinners[${this.id-1}].speed = this.value">
+                                   <option value="slow">Slow</option>
+                                   <option value="medium" selected>Medium</option>
+                                   <option value="fast">Fast</option>
+                                   <option value="instant">Instant</option>
+                               </select>
+                           </div>
+                           <div class="input-group" style="flex: 0.4;">
+                               <label class="input-label">Spins</label>
+                               <input type="number" id="spins-${this.id}" min="1" max="1000" value="1" 
+                                   onchange="app.spinners[${this.id-1}].spins = parseInt(this.value) || 1">
+                           </div>
+                           <button class="btn" style="flex: 1; min-height: 42px; margin-top: 18px;" 
+                               onclick="app.spin(${this.id})" id="spin-btn-${this.id}">
+                               SPIN
+                           </button>
+                       </div>
+                       
+                       <div class="data-panel" id="results-${this.id}">
+                           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                               <span class="badge">Set ${this.currentSet + 1}</span>
+                               <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" 
+                                   onclick="app.newTrialSet(${this.id})">New Set</button>
+                           </div>
+                           <div class="probability-display" id="prob-${this.id}">
+                               <div class="prob-badge">
+                                   <div class="prob-label">Theoretical</div>
+                                   <div>--</div>
+                               </div>
+                           </div>
+                           <div style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);" id="stats-${this.id}">
+                               Total spins: 0
+                           </div>
+                       </div>
+                   </div>
+               `;
+               
+               this.container.appendChild(this.element);
+               this.renderer = new WheelRenderer($(`canvas-${this.id}`));
+               
+               // Resize observer for responsive canvas
+               new ResizeObserver(() => {
+                   this.renderer.resize();
+                   this.render();
+               }).observe(this.element.querySelector('.wheel-container'));
+               
+               // Touch support for manual spin
+               let touchStartY = 0;
+               this.element.querySelector('.wheel-canvas').addEventListener('touchstart', (e) => {
+                   touchStartY = e.touches[0].clientY;
+               }, {passive: true});
+               
+               this.element.querySelector('.wheel-canvas').addEventListener('touchend', (e) => {
+                   const touchEndY = e.changedTouches[0].clientY;
+                   if (touchStartY - touchEndY > 50) { // Swipe up
+                       this.spin();
+                   }
+               }, {passive: true});
+           }
+
+           render() {
+               this.renderer.render(this.sectors, this.rotation, this.winner);
+               this.updateStats();
+           }
+
+           async spin() {
+               if (this.isSpinning) return;
+               
+               this.audio.init();
+               this.isSpinning = true;
+               $(`spin-btn-${this.id}`).disabled = true;
+               
+               const duration = this.physics.getDuration(this.speed);
+               const startTime = performance.now();
+               
+               if (this.speed === 'instant') {
+                   this.rotation = Math.random() * 360;
+                   this.finalizeSpin();
+               } else {
+                   const animate = (currentTime) => {
+                       const elapsed = currentTime - startTime;
+                       
+                       if (elapsed < duration) {
+                           this.rotation = this.physics.calculateRotation(this.speed, elapsed);
+                           
+                           // Ticking sound based on velocity
+                           const velocity = this.physics.getCurrentVelocity(this.speed, elapsed);
+                           const tickRate = 50 + (velocity * 10); // Hz
+                           if (Math.random() < (tickRate / 60)) {
+                               this.audio.playTick(velocity / 40);
+                           }
+                           
+                           this.render();
+                           requestAnimationFrame(animate);
+                       } else {
+                           this.finalizeSpin();
+                       }
+                   };
+                   requestAnimationFrame(animate);
+               }
+           }
+
+           finalizeSpin() {
+               // Calculate winner based on rotation
+               const normalizedRotation = (360 - (this.rotation % 360)) % 360;
+               const total = this.sectors.reduce((sum, s) => sum + s.weight, 0);
+               let accumulated = 0;
+               let winnerIndex = 0;
+               
+               for (let i = 0; i < this.sectors.length; i++) {
+                   const sectorAngle = (this.sectors[i].weight / total) * 360;
+                   if (normalizedRotation >= accumulated && normalizedRotation < accumulated + sectorAngle) {
+                       winnerIndex = i;
+                       break;
+                   }
+                   accumulated += sectorAngle;
+               }
+               
+               this.winner = winnerIndex;
+               this.results.push({
+                   set: this.currentSet,
+                   sector: winnerIndex,
+                   name: this.sectors[winnerIndex].name,
+                   timestamp: Date.now()
+               });
+               
+               // Confetti
+               if ($('confettiTheme').value !== 'none') {
+                   createConfetti(this.sectors[winnerIndex].color);
+               }
+               
+               // Audio
+               this.audio.playSelection($('selectionSound')?.value || 'classic');
+               
+               // Highlight animation
+               this.render();
+               setTimeout(() => {
+                   this.winner = null;
+                   this.render();
+               }, 2000);
+               
+               this.isSpinning = false;
+               $(`spin-btn-${this.id}`).disabled = false;
+               this.updateStats();
+           }
+
+           updateStats() {
+               const total = this.results.length;
+               const setTotal = this.results.filter(r => r.set === this.currentSet).length;
+               
+               // Calculate experimental probabilities
+               const counts = {};
+               this.results.forEach(r => {
+                   counts[r.sector] = (counts[r.sector] || 0) + 1;
+               });
+               
+               // Generate display
+               const displayMode = $('displayMode')?.value || 'compact';
+               const showFrac = $('showFraction')?.checked ?? true;
+               const showDec = $('showDecimal')?.checked ?? true;
+               const showPct = $('showPercent')?.checked ?? true;
+               const decPlaces = parseInt($('decimalPlaces')?.value || 2);
+               const pctPlaces = parseInt($('percentPrecision')?.value || 2);
+               
+               let html = '';
+               
+               if (displayMode === 'teacher' && this.results.length > 0) {
+                   html += '<table class="data-table" style="font-size: 11px;"><tr><th>Sector</th><th>Theoretical</th><th>Experimental</th></tr>';
+                   this.sectors.forEach((s, i) => {
+                       const theoretical = s.weight / this.totalWeight;
+                       const experimental = (counts[i] || 0) / total;
+                       html += `<tr>
+                           <td>${s.name}</td>
+                           <td>${(theoretical * 100).toFixed(pctPlaces)}%</td>
+                           <td>${total ? (experimental * 100).toFixed(pctPlaces) : 0}%</td>
+                       </tr>`;
+                   });
+                   html += '</table>';
+               } else {
+                   html += `<div style="font-size: 12px; margin-bottom: 4px;">Last: ${this.results.length ? this.sectors[this.results[this.results.length-1].sector].name : '--'}</div>`;
+               }
+               
+               $(`prob-${this.id}`).innerHTML = html;
+               $(`stats-${this.id}`).innerHTML = `Total spins: ${total} (Set ${this.currentSet + 1}: ${setTotal})`;
+           }
+
+           getData() {
+               return {
+                   id: this.id,
+                   sectors: this.sectors,
+                   results: this.results,
+                   currentSet: this.currentSet,
+                   speed: this.speed,
+                   name: this.element.querySelector('.spinner-name').innerText
+               };
+           }
+
+           loadData(data) {
+               this.sectors = data.sectors;
+               this.results = data.results || [];
+               this.currentSet = data.currentSet || 0;
+               this.speed = data.speed || 'medium';
+               this.element.querySelector('.spinner-name').innerText = data.name || `Spinner ${this.id}`;
+               $(`speed-${this.id}`).value = this.speed;
+               this.totalWeight = this.sectors.reduce((sum, s) => sum + s.weight, 0);
+               this.render();
+           }
+
+           newSet() {
+               this.currentSet++;
+               this.updateStats();
+           }
+
+           refreshData() {
+               this.results = [];
+               this.currentSet = 0;
+               this.updateStats();
+           }
+       }
+
+       // ==========================================
+       // CONFETTI SYSTEM (CSS-based for performance)
+       // ==========================================
+       
+       function createConfetti(color) {
+           const container = $('confettiContainer');
+           const theme = $('confettiTheme')?.value || 'celebration';
+           const density = 30; // Configurable: low=20, med=30, high=50
+           
+           if (theme === 'none') return;
+           
+           const colors = theme === 'celebration' ? 
+               ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'] :
+               theme === 'classroom' ? ['#FFD700', '#FFA500'] :
+               ['#808080'];
+           
+           for (let i = 0; i < density; i++) {
+               const conf = document.createElement('div');
+               conf.className = 'confetti';
+               conf.style.left = Math.random() * 100 + '%';
+               conf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+               conf.style.animationDuration = (2 + Math.random() * 2) + 's';
+               conf.style.animationDelay = Math.random() * 0.5 + 's';
+               conf.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+               conf.style.width = (5 + Math.random() * 8) + 'px';
+               conf.style.height = (5 + Math.random() * 8) + 'px';
+               container.appendChild(conf);
+               
+               setTimeout(() => conf.remove(), 4000);
+           }
+       }
+
+       // ==========================================
+       // STORAGE MANAGER (IndexedDB + localStorage)
+       // ==========================================
+       
+       class StorageManager {
+           constructor() {
+               this.dbName = 'ProbabilitySpinnerDB';
+               this.dbVersion = 1;
+               this.db = null;
+           }
+
+           async init() {
+               return new Promise((resolve, reject) => {
+                   const request = indexedDB.open(this.dbName, this.dbVersion);
+                   
+                   request.onerror = () => reject(request.error);
+                   request.onsuccess = () => {
+                       this.db = request.result;
+                       resolve();
+                   };
+                   
+                   request.onupgradeneeded = (e) => {
+                       const db = e.target.result;
+                       if (!db.objectStoreNames.contains('saves')) {
+                           const store = db.createObjectStore('saves', { keyPath: 'id', autoIncrement: true });
+                           store.createIndex('timestamp', 'timestamp', { unique: false });
+                       }
+                   };
+               });
+           }
+
+           async saveState(name, data, thumbnail) {
+               const tx = this.db.transaction('saves', 'readwrite');
+               const store = tx.objectStore('saves');
+               
+               const record = {
+                   name: name,
+                   data: data,
+                   thumbnail: thumbnail,
+                   timestamp: Date.now(),
+                   size: JSON.stringify(data).length
+               };
+               
+               return store.add(record);
+           }
+
+           async loadAll() {
+               const tx = this.db.transaction('saves', 'readonly');
+               const store = tx.objectStore('saves');
+               return store.getAll();
+           }
+
+           async delete(id) {
+               const tx = this.db.transaction('saves', 'readwrite');
+               const store = tx.objectStore('saves');
+               return store.delete(id);
+           }
+
+           async exportAll() {
+               const saves = await this.loadAll();
+               return JSON.stringify(saves, null, 2);
+           }
+
+           calculateStorage() {
+               return new Promise((resolve) => {
+                   if (!this.db) return resolve(0);
+                   const tx = this.db.transaction('saves', 'readonly');
+                   const store = tx.objectStore('saves');
+                   const request = store.getAll();
+                   
+                   request.onsuccess = () => {
+                       const total = request.result.reduce((sum, item) => sum + (item.size || 0), 0);
+                       resolve(total / (1024 * 1024)); // MB
+                   };
+               });
+           }
+       }
+
+       // ==========================================
+       // MAIN APPLICATION CONTROLLER
+       // ==========================================
+       
+       class App {
+           constructor() {
+               this.spinners = [];
+               this.currentEditId = null;
+               this.storage = new StorageManager();
+               this.audio = new AudioEngine();
+               window.appAudio = this.audio;
+               
+               this.init();
+           }
+
+           async init() {
+               await this.storage.init();
+               this.setupEventListeners();
+               this.loadSettings();
+               this.addSpinner(); // Start with one
+               
+               // Check for recovery
+               const recovery = localStorage.getItem('recovery');
+               if (recovery) {
+                   if (confirm('Restore previous session?')) {
+                       this.loadFromJSON(recovery);
+                   }
+                   localStorage.removeItem('recovery');
+               }
+               
+               // Auto-save interval
+               setInterval(() => this.autoSave(), 300000); // 5 minutes
+               
+               this.updateStorageIndicator();
+           }
+
+           setupEventListeners() {
+               // Theme toggle
+               $('themeToggle').addEventListener('click', () => {
+                   const themes = ['light', 'dark', 'high-contrast'];
+                   const current = document.body.getAttribute('data-theme') || 'light';
+                   const next = themes[(themes.indexOf(current) + 1) % themes.length];
+                   document.body.setAttribute('data-theme', next);
+                   localStorage.setItem('theme', next);
+                   this.spinners.forEach(s => s.render());
+               });
+
+               // Mute toggle
+               $('muteToggle').addEventListener('click', () => {
+                   this.audio.enabled = !this.audio.enabled;
+                   $('muteToggle').textContent = this.audio.enabled ? '🔊' : '🔇';
+               });
+
+               // Volume slider
+               $('volumeSlider').addEventListener('input', (e) => {
+                   const val = e.target.value / 100;
+                   $('volumeValue').textContent = e.target.value + '%';
+                   this.audio.setVolume(val);
+               });
+
+               // Modals
+               $('settingsBtn').addEventListener('click', () => {
+                   this.updateStorageIndicator();
+                   openModal('settingsModal');
+               });
+               
+               $('historyBtn').addEventListener('click', () => this.showHistory());
+               $('addSpinnerBtn').addEventListener('click', () => this.addSpinner());
+               $('spinAllBtn').addEventListener('click', () => this.spinAll());
+               $('exportBtn').addEventListener('click', () => openModal('exportModal'));
+
+               // Settings changes
+               $('defaultSpeed').addEventListener('change', () => this.saveSettings());
+               $('confettiTheme').addEventListener('change', () => this.saveSettings());
+               $('showFraction').addEventListener('change', () => this.updateAllStats());
+               $('showDecimal').addEventListener('change', () => this.updateAllStats());
+               $('showPercent').addEventListener('change', () => this.updateAllStats());
+               $('decimalPlaces').addEventListener('change', () => this.updateAllStats());
+               $('percentPrecision').addEventListener('change', () => this.updateAllStats());
+               $('colorTheme').addEventListener('change', () => {
+                   this.spinners.forEach(s => {
+                       s.sectors.forEach((sec, i) => {
+                           sec.color = generateColor(i, s.sectors.length, $('colorTheme').value);
+                       });
+                       s.render();
+                   });
+                   this.saveSettings();
+               });
+
+               // Before unload
+               window.addEventListener('beforeunload', () => {
+                   localStorage.setItem('recovery', JSON.stringify(this.exportData()));
+               });
+           }
+
+           addSpinner() {
+               if (this.spinners.length >= 10) {
+                   alert('Maximum 10 spinners reached');
+                   return;
+               }
+               const id = this.spinners.length + 1;
+               const spinner = new Spinner(id, $('spinnerGrid'));
+               this.spinners.push(spinner);
+               $('emptyState').style.display = 'none';
+           }
+
+           deleteSpinner(id) {
+               if (!confirm('Delete this spinner?')) return;
+               const idx = this.spinners.findIndex(s => s.id === id);
+               if (idx > -1) {
+                   this.spinners[idx].element.remove();
+                   this.spinners.splice(idx, 1);
+                   // Reassign IDs
+                   this.spinners.forEach((s, i) => {
+                       s.id = i + 1;
+                       // Update DOM references
+                       s.element.querySelector('.spinner-id').textContent = s.id;
+                       s.element.querySelector('.wheel-center').textContent = s.id;
+                   });
+               }
+               if (this.spinners.length === 0) {
+                   $('emptyState').style.display = 'block';
+               }
+           }
+
+           spin(id) {
+               const spinner = this.spinners.find(s => s.id === id);
+               if (spinner) spinner.spin();
+           }
+
+           spinAll() {
+               this.spinners.forEach((s, i) => {
+                   setTimeout(() => s.spin(), i * 200); // Stagger spins
+               });
+           }
+
+           editSpinner(id) {
+               this.currentEditId = id;
+               const spinner = this.spinners.find(s => s.id === id);
+               renderSectorList(spinner.sectors);
+               $('bulkInput').value = '';
+               openModal('editorModal');
+           }
+
+           newTrialSet(id) {
+               const spinner = this.spinners.find(s => s.id === id);
+               if (spinner) spinner.newSet();
+           }
+
+           updateAllStats() {
+               this.spinners.forEach(s => s.updateStats());
+               this.saveSettings();
+           }
+
+           // Data persistence
+           exportData() {
+               return {
+                   version: 1,
+                   timestamp: Date.now(),
+                   settings: this.getSettings(),
+                   spinners: this.spinners.map(s => s.getData())
+               };
+           }
+
+           loadFromJSON(json) {
+               const data = typeof json === 'string' ? JSON.parse(json) : json;
+               
+               // Clear existing
+               this.spinners.forEach(s => s.element.remove());
+               this.spinners = [];
+               
+               // Restore settings
+               if (data.settings) {
+                   this.applySettings(data.settings);
+               }
+               
+               // Restore spinners
+               data.spinners.forEach((sData, i) => {
+                   this.addSpinner();
+                   this.spinners[i].loadData(sData);
+               });
+           }
+
+           async saveCurrentState() {
+               const name = prompt('Save name:', `Save ${new Date().toLocaleString()}`);
+               if (!name) return;
+               
+               const data = this.exportData();
+               
+               // Generate thumbnail (wheel 1 or default)
+               let thumb = null;
+               if (this.spinners.length > 0) {
+                   thumb = this.spinners[0].renderer.toDataURL('image/jpeg', 'white');
+               }
+               
+               await this.storage.saveState(name, data, thumb);
+               this.updateStorageIndicator();
+               alert('Saved successfully!');
+           }
+
+           async showHistory() {
+               const saves = await this.storage.loadAll();
+               const container = $('historyList');
+               
+               if (saves.length === 0) {
+                   container.innerHTML = '<div class="empty-state">No saved states yet</div>';
+               } else {
+                   container.innerHTML = saves.map(save => `
+                       <div class="history-item" onclick="app.loadSave(${save.id})">
+                           <div class="history-thumb">
+                               ${save.thumbnail ? `<img src="${save.thumbnail}">` : '<div style="width:100%;height:100%;background:var(--border-color)"></div>'}
+                           </div>
+                           <div class="history-info">
+                               <div class="history-name">${escapeHtml(save.name)}</div>
+                               <div class="history-meta">${new Date(save.timestamp).toLocaleString()} • ${(save.size / 1024).toFixed(1)} KB</div>
+                           </div>
+                           <div class="history-actions">
+                               <button class="btn btn-icon btn-secondary" onclick="event.stopPropagation(); app.deleteSave(${save.id})">🗑️</button>
+                           </div>
+                       </div>
+                   `).join('');
+               }
+               
+               openModal('historyModal');
+           }
+
+           async loadSave(id) {
+               const saves = await this.storage.loadAll();
+               const save = saves.find(s => s.id === id);
+               if (save) {
+                   this.loadFromJSON(save.data);
+                   closeModal('historyModal');
+               }
+           }
+
+           async deleteSave(id) {
+               if (!confirm('Delete this save?')) return;
+               await this.storage.delete(id);
+               this.showHistory();
+               this.updateStorageIndicator();
+           }
+
+           async exportAllHistory() {
+               const data = await this.storage.exportAll();
+               const blob = new Blob([data], {type: 'application/json'});
+               const url = URL.createObjectURL(blob);
+               const a = document.createElement('a');
+               a.href = url;
+               a.download = `spinner-history-${Date.now()}.json`;
+               a.click();
+           }
+
+           // Export functions
+           exportJSON() {
+               const data = this.exportData();
+               const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+               const url = URL.createObjectURL(blob);
+               const a = document.createElement('a');
+               a.href = url;
+               a.download = `spinner-config-${Date.now()}.json`;
+               a.click();
+               closeModal('exportModal');
+           }
+
+           exportCSV() {
+               let csv = 'SpinnerID,Set,Trial,SectorName,TheoreticalProb,ExperimentalProb,Timestamp\n';
+               
+               this.spinners.forEach(spinner => {
+                   const total = spinner.results.length;
+                   const counts = {};
+                   
+                   spinner.results.forEach((r, i) => {
+                       counts[r.sector] = (counts[r.sector] || 0) + 1;
+                       const theoretical = spinner.sectors[r.sector].weight / spinner.totalWeight;
+                       const experimental = counts[r.sector] / (i + 1);
+                       
+                       csv += `${spinner.id},${r.set+1},${i+1},"${r.name}",${theoretical.toFixed(4)},${experimental.toFixed(4)},${new Date(r.timestamp).toISOString()}\n`;
+                   });
+               });
+               
+               const blob = new Blob([csv], {type: 'text/csv'});
+               const url = URL.createObjectURL(blob);
+               const a = document.createElement('a');
+               a.href = url;
+               a.download = `spinner-data-${Date.now()}.csv`;
+               a.click();
+               closeModal('exportModal');
+           }
+
+           exportImage() {
+               if (this.spinners.length === 0) return;
+               
+               const res = parseInt($('exportResolution').value);
+               const bg = $('exportBackground').value;
+               
+               // For simplicity, export first spinner's wheel at requested resolution
+               const spinner = this.spinners[0];
+               const canvas = document.createElement('canvas');
+               const size = 500 * res;
+               canvas.width = size;
+               canvas.height = size;
+               const ctx = canvas.getContext('2d');
+               
+               // Background
+               if (bg === 'white') {
+                   ctx.fillStyle = '#ffffff';
+                   ctx.fillRect(0, 0, size, size);
+               } else if (bg === 'current') {
+                   ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg-color');
+                   ctx.fillRect(0, 0, size, size);
+               }
+               
+               // Scale and draw wheel
+               ctx.save();
+               ctx.translate(size/2, size/2);
+               ctx.scale(size / spinner.renderer.width, size / spinner.renderer.height);
+               ctx.translate(-spinner.renderer.width/2, -spinner.renderer.height/2);
+               
+               // Manual render at high res
+               spinner.renderer.ctx = ctx;
+               spinner.renderer.width = size;
+               spinner.renderer.height = size;
+               spinner.renderer.centerX = size/2;
+               spinner.renderer.centerY = size/2;
+               spinner.renderer.radius = size/2 - 20;
+               spinner.render();
+               
+               // Restore
+               spinner.renderer.ctx = $(`canvas-${spinner.id}`).getContext('2d');
+               spinner.renderer.resize();
+               spinner.render();
+               
+               ctx.restore();
+               
+               const url = canvas.toDataURL('image/png');
+               const a = document.createElement('a');
+               a.href = url;
+               a.download = `spinner-wheel-${Date.now()}.png`;
+               a.click();
+               closeModal('exportModal');
+           }
+
+           // Settings management
+           getSettings() {
+               return {
+                   theme: document.body.getAttribute('data-theme') || 'light',
+                   defaultSpeed: $('defaultSpeed').value,
+                   confettiTheme: $('confettiTheme').value,
+                   showFraction: $('showFraction').checked,
+                   showDecimal: $('showDecimal').checked,
+                   showPercent: $('showPercent').checked,
+                   decimalPlaces: $('decimalPlaces').value,
+                   percentPrecision: $('percentPrecision').value,
+                   colorTheme: $('colorTheme').value,
+                   displayMode: $('displayMode').value,
+                   volume: $('volumeSlider').value,
+                   enableTicking: $('enableTicking').checked,
+                   enableSelection: $('enableSelection').checked
+               };
+           }
+
+           saveSettings() {
+               localStorage.setItem('spinnerSettings', JSON.stringify(this.getSettings()));
+           }
+
+           loadSettings() {
+               const saved = localStorage.getItem('spinnerSettings');
+               if (saved) {
+                   this.applySettings(JSON.parse(saved));
+               }
+           }
+
+           applySettings(s) {
+               if (s.theme) document.body.setAttribute('data-theme', s.theme);
+               if (s.defaultSpeed) $('defaultSpeed').value = s.defaultSpeed;
+               if (s.confettiTheme) $('confettiTheme').value = s.confettiTheme;
+               if (s.showFraction !== undefined) $('showFraction').checked = s.showFraction;
+               if (s.showDecimal !== undefined) $('showDecimal').checked = s.showDecimal;
+               if (s.showPercent !== undefined) $('showPercent').checked = s.showPercent;
+               if (s.decimalPlaces) $('decimalPlaces').value = s.decimalPlaces;
+               if (s.percentPrecision) $('percentPrecision').value = s.percentPrecision;
+               if (s.colorTheme) $('colorTheme').value = s.colorTheme;
+               if (s.displayMode) $('displayMode').value = s.displayMode;
+               if (s.volume) {
+                   $('volumeSlider').value = s.volume;
+                   $('volumeValue').textContent = s.volume + '%';
+                   this.audio.setVolume(s.volume / 100);
+               }
+               if (s.enableTicking !== undefined) $('enableTicking').checked = s.enableTicking;
+               if (s.enableSelection !== undefined) $('enableSelection').checked = s.enableSelection;
+           }
+
+           autoSave() {
+               localStorage.setItem('autoSave', JSON.stringify(this.exportData()));
+           }
+
+           async updateStorageIndicator() {
+               const used = await this.storage.calculateStorage();
+               $('storageUsed').textContent = used.toFixed(2);
+               const percent = Math.min((used / 10) * 100, 100);
+               $('storageBar').style.width = percent + '%';
+               
+               if (percent > 80) {
+                   $('storageBar').style.background = 'var(--warning-color)';
+               }
+           }
+
+           resetApp() {
+               if (!confirm('Type RESET to confirm complete data reset:')) return;
+               const input = prompt('Type RESET to confirm:');
+               if (input === 'RESET') {
+                   this.spinners.forEach(s => s.element.remove());
+                   this.spinners = [];
+                   localStorage.clear();
+                   indexedDB.deleteDatabase('ProbabilitySpinnerDB');
+                   location.reload();
+               }
+           }
+       }
+
+       // ==========================================
+       // SECTOR EDITOR FUNCTIONS
+       // ==========================================
+       
+       function renderSectorList(sectors) {
+           const container = $('sectorList');
+           container.innerHTML = sectors.map((s, i) => `
+               <div class="sector-item" draggable="true" data-index="${i}">
+                   <div class="sector-color" style="background: ${s.color}" onclick="changeColor(${i})"></div>
+                   <input type="text" class="sector-name" value="${escapeHtml(s.name)}" 
+                       onchange="updateSectorName(${i}, this.value)">
+                   <input type="number" class="sector-weight" value="${s.weight}" min="0.1" step="0.1"
+                       onchange="updateSectorWeight(${i}, this.value)" title="Probability weight">
+                   <div class="sector-delete" onclick="deleteSector(${i})">✕</div>
+               </div>
+           `).join('');
+           
+           // Setup drag and drop
+           let draggedItem = null;
+           container.querySelectorAll('.sector-item').forEach(item => {
+               item.addEventListener('dragstart', (e) => {
+                   draggedItem = item;
+                   item.classList.add('dragging');
+               });
+               item.addEventListener('dragend', () => {
+                   item.classList.remove('dragging');
+               });
+               item.addEventListener('dragover', (e) => {
+                   e.preventDefault();
+                   const afterElement = getDragAfterElement(container, e.clientY);
+                   if (afterElement == null) {
+                       container.appendChild(draggedItem);
+                   } else {
+                       container.insertBefore(draggedItem, afterElement);
+                   }
+               });
+           });
+       }
+
+       function getDragAfterElement(container, y) {
+           const draggableElements = [...container.querySelectorAll('.sector-item:not(.dragging)')];
+           return draggableElements.reduce((closest, child) => {
+               const box = child.getBoundingClientRect();
+               const offset = y - box.top - box.height / 2;
+               if (offset < 0 && offset > closest.offset) {
+                   return { offset: offset, element: child };
+               } else {
+                   return closest;
+               }
+           }, { offset: Number.NEGATIVE_INFINITY }).element;
+       }
+
+       let editingSectors = [];
+
+       function openModal(id) {
+           $(id).classList.add('active');
+           if (id === 'editorModal' && app.currentEditId) {
+               const spinner = app.spinners.find(s => s.id === app.currentEditId);
+               editingSectors = JSON.parse(JSON.stringify(spinner.sectors));
+               renderSectorList(editingSectors);
+           }
+       }
+
+       function closeModal(id) {
+           $(id).classList.remove('active');
+       }
+
+       function applyTemplate(type) {
+           let sectors = [];
+           const theme = $('colorTheme')?.value || 'vibrant';
+           
+           switch(type) {
+               case 'numbers':
+                   sectors = Array.from({length: 10}, (_, i) => ({
+                       name: `${i + 1}`,
+                       weight: 1,
+                       color: generateColor(i, 10, theme)
+                   }));
+                   break;
+               case 'alphabet':
+                   sectors = Array.from({length: 26}, (_, i) => ({
+                       name: String.fromCharCode(65 + i),
+                       weight: 1,
+                       color: generateColor(i, 26, theme)
+                   }));
+                   break;
+               case 'yesno':
+                   sectors = [
+                       { name: 'Yes', weight: 1, color: generateColor(0, 2, theme) },
+                       { name: 'No', weight: 1, color: generateColor(1, 2, theme) }
+                   ];
+                   break;
+               case 'dice':
+                   sectors = Array.from({length: 6}, (_, i) => ({
+                       name: `⚀⚁⚂⚃⚄⚅`[i],
+                       weight: 1,
+                       color: generateColor(i, 6, theme)
+                   }));
+                   break;
+           }
+           
+           editingSectors = sectors;
+           renderSectorList(editingSectors);
+       }
+
+       function processBulkInput() {
+           const text = $('bulkInput').value;
+           if (!text.trim()) return;
+           
+           const items = text.split(/[\n,;]/).map(s => s.trim()).filter(s => s);
+           const theme = $('colorTheme')?.value || 'vibrant';
+           
+           editingSectors = items.map((name, i) => ({
+               name: name,
+               weight: 1,
+               color: generateColor(i, items.length, theme)
+           }));
+           
+           renderSectorList(editingSectors);
+       }
+
+       function addSector() {
+           const theme = $('colorTheme')?.value || 'vibrant';
+           editingSectors.push({
+               name: `Sector ${(editingSectors.length + 1).toString().padStart(2, '0')}`,
+               weight: 1,
+               color: generateColor(editingSectors.length, editingSectors.length + 1, theme)
+           });
+           renderSectorList(editingSectors);
+       }
+
+       function deleteSector(index) {
+           editingSectors.splice(index, 1);
+           renderSectorList(editingSectors);
+       }
+
+       function updateSectorName(index, value) {
+           editingSectors[index].name = value;
+       }
+
+       function updateSectorWeight(index, value) {
+           editingSectors[index].weight = parseFloat(value) || 1;
+       }
+
+       function changeColor(index) {
+           const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#FFD93D', '#6BCF7F'];
+           const current = editingSectors[index].color;
+           const currentIdx = colors.indexOf(current);
+           editingSectors[index].color = colors[(currentIdx + 1) % colors.length];
+           renderSectorList(editingSectors);
+       }
+
+       function saveSectors() {
+           if (!app.currentEditId) return;
+           const spinner = app.spinners.find(s => s.id === app.currentEditId);
+           if (spinner) {
+               spinner.sectors = editingSectors;
+               spinner.totalWeight = editingSectors.reduce((sum, s) => sum + s.weight, 0);
+               spinner.refreshData();
+               spinner.render();
+           }
+           closeModal('editorModal');
+       }
+
+       function escapeHtml(text) {
+           const div = document.createElement('div');
+           div.textContent = text;
+           return div.innerHTML;
+       }
+
+       // Initialize
+       let app;
+       document.addEventListener('DOMContentLoaded', () => {
+           app = new App();
+       });
+
+       // Close modals on backdrop click
+       document.querySelectorAll('.modal-overlay').forEach(overlay => {
+           overlay.addEventListener('click', (e) => {
+               if (e.target === overlay) {
+                   overlay.classList.remove('active');
+               }
+           });
+       });
+   </script>
+</body>
+</html>
