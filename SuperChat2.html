@@ -926,30 +926,29 @@
             <select id="model-select">
 
                 <option value="nova-fast">Nova-Micro</option>
-                <option value="mistral">Mistral</option>
-                <option value="gemini">Gemini🎙️👁️👂🔍💻</option>
+                <option value="qwen-coder">Qwen 2.5 Coder💻</option>
                 <option value="gemini-fast">Gemini Fast👁️🔍</option>
+                <option value="mistral">Mistral</option>
                 <option value="openai">Openai👁️</option>
                 <option value="openai-fast">Openai-Fast👁️</option>
-                <option value="grok">Grok</option>
-                <option value="perplexity-fast">Perplexity-Fast🔍</option>
-                <option value="chickytutor">Chicky Tutor</option>
-                <option value="claude-fast">Claude-Fast👁️</option>
-                <option value="kimi" selected>Moonshot Kimi K2.5👁️🧠</option>
-                <option value="minimax">MiniMax M2.1💻</option>
-                <option value="glm">Z.ai GLM-4.7👁️💻</option>
-                <option value="claude">Claude👁️</option>
-                <option value="openai-reasoning">Openai-Reasoning👁️🧠</option>
                 <option value="deepseek">Deepseek🧠</option>
-                <option value="qwen-coder">Qwen 2.5 Coder💻</option>
-                <option value="nomnom">NomNom by Itachi🔍</option>
-                <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
+                <option value="perplexity-fast">Perplexity-Fast🔍</option>
                 <option value="gemini-search">Gemini-Search👁️🔍</option>
+                <option value="minimax">MiniMax M2.1💻</option>
+                <option value="openai-audio">OpenAI Audio 🎙️👁️👂🗣️(Voice)</option>
+                <option value="gemini">Gemini🎙️👁️👂🔍💻</option>
+                <option value="chickytutor">Chicky Tutor</option>
+                <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
+                <option value="kimi" selected>Moonshot Kimi K2.5👁️🧠</option>
+                <option value="glm">Z.ai GLM-4.7👁️💻</option>
+                <option value="openai-large">Openai-Large👁️💻</option>
+                <option value="claude-fast">Claude-Fast👁️</option>
+                <option value="nomnom">NomNom by Itachi🔍</option>
+                <option value="claude" class="paid-model-option" style="display: none;">Claude👁️ 🔒</option>
+                <option value="grok" class="paid-model-option" style="display: none;">Grok 🔒</option>
                 <option value="gemini-legacy" class="paid-model-option" style="display: none;">Gemini-Legacy 2.5 Pro🎙️👁️🔍🧠💻 🔒</option>
                 <option value="gemini-large" class="paid-model-option" style="display: none;">Gemini-Large🎙️👁️👂🧠💻🔍 🔒</option>
                 <option value="claude-large" class="paid-model-option" style="display: none;">Claude-Large👁️💻 🔒</option>
-                <option value="openai-large">Openai-Large👁️💻</option>
-                <option value="openai-audio">OpenAI Audio 🎙️👁️👂🗣️(Voice)</option>
             </select>
         </div>
 
@@ -1028,8 +1027,8 @@
                 <option value="zimage" selected>ZImage</option>
                 <option value="flux">Flux</option>
                 <option value="turbo">Turbo</option>
-                <option value="kontext">Kontext</option>
-                <option value="seedream">SeeDream</option>
+                <option value="kontext" class="paid-model-option" style="display: none;">Kontext 🔒</option>
+                <option value="seedream" class="paid-model-option" style="display: none;">SeeDream 🔒</option>
                 <option value="seedream-pro" class="paid-model-option" style="display: none;">SeeDream Pro 🔒</option>
                 <option value="nanobanana">NanoBanana</option>
                 <option value="nanobanana-pro" class="paid-model-option" style="display: none;">NanoBanana Pro 🔒</option>
@@ -1041,7 +1040,7 @@
             <label>Default Video Model</label>
             <select id="default-video-model">
                 <option value="seedance" selected>Seedance</option>
-                <option value="seedance-pro">Seedance Pro</option>
+<option value="seedance-pro" class="paid-model-option" style="display: none;">Seedance Pro 🔒</option>
                 <option value="veo" class="paid-model-option" style="display: none;">Veo 🔒</option>
             </select>
         </div>
@@ -1108,15 +1107,15 @@
                                 <option value="gptimage-large" class="paid-model-option" style="display: none;">GPTImage Large 🔒</option>
                             </optgroup>
                             <optgroup label="Editor Models">
-                                <option value="kontext">Kontext</option>
-                                <option value="seedream">SeeDream</option>
+                                <option value="kontext" class="paid-model-option" style="display: none;">Kontext 🔒</option>
+                            <option value="seedream" class="paid-model-option" style="display: none;">SeeDream 🔒</option>
                                 <option value="seedream-pro" class="paid-model-option" style="display: none;">SeeDream Pro 🔒</option>
                                 <option value="nanobanana">NanoBanana</option>
                                 <option value="nanobanana-pro" class="paid-model-option" style="display: none;">NanoBanana Pro 🔒</option>
                             </optgroup>
                             <optgroup label="Video Models">
                                 <option value="seedance">Seedance</option>
-                                <option value="seedance-pro">Seedance Pro</option>
+                                <option value="seedance-pro" class="paid-model-option" style="display: none;">Seedance Pro 🔒</option>
                                 <option value="veo" class="paid-model-option" style="display: none;">Veo 🔒</option>
                             </optgroup>
                         </select>
@@ -1271,15 +1270,20 @@
     const IMAGE_API_URL = "https://gen.pollinations.ai/image";
     
     // --- BYOP Policy: Paid-only models ---
-    const PAID_ONLY_MODELS = [
-        "seedream-pro",
-        "gptimage-large",
-        "nanobanana-pro",
-        "veo",
-        "gemini-large",
-        "gemini-legacy",
-        "claude-large"
-    ];
+const PAID_ONLY_MODELS = [
+    "claude",
+    "grok",
+    "kontext",
+    "seedream",
+    "seedream-pro",
+    "seedance-pro",
+    "gptimage-large",
+    "nanobanana-pro",
+    "veo",
+    "gemini-large",
+    "gemini-legacy",
+    "claude-large"
+];
     
     // --- State ---
     let conversationHistory = [];
