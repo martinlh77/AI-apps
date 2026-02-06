@@ -292,6 +292,7 @@
                        <optgroup label="Generators & Editors">
                            <option value="flux">Flux (Generator)</option>
                            <option value="zimage" selected>Zimage (Generator)</option>
+                           <option value="imagen">Imagen 3 (Generator)</option>
                            <option value="klein">Flux.2 Klein 4B(Generator)</option>
                            <option value="klein-large">Flux.2 Klein 9B(Generator)</option>
                            <option value="gptimage">GPT-Image👁️ (Editor/Generator)</option>
@@ -303,6 +304,7 @@
                            <option value="gptimage-large">💎 GPT-Image Large👁️ (Editor/Generator)</option>
                        </optgroup>
                        <optgroup label="Video Models">
+                           <option value="grok-video">Grok Imagine Video (Video - T2V & I2V)</option>
                            <option value="seedance">Seedance (Video - T2V & I2V)</option>
                            <option value="wan">Wan (Video - T2V & I2V)</option>
                            <option value="seedance-pro">💎 Seedance-Pro (Video - T2V & I2V)</option>
@@ -597,9 +599,9 @@
        
        // Model Classifications
        const EDITOR_MODELS = ['klein', 'klein-large', 'nanobanana', 'nanobanana-pro','seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', 'seedance', 'seedance-pro', 'wan', 'veo']; 
-       const VIDEO_MODELS = ['seedance', 'seedance-pro', 'wan', 'veo'];
+       const VIDEO_MODELS = ['seedance', 'seedance-pro', 'wan', 'grok-video', 'veo'];
        const SEEDREAM_MODEL = ['seedream', 'seedream-pro'];
-       const PAID_MODELS = ['kontext', 'seedream', 'seedream-pro', 'gptimage-large', 'nanobanana-pro', 'veo'];
+       const PAID_MODELS = ['kontext', 'seedream', 'seedream-pro', 'gptimage-large', 'nanobanana-pro', 'seedance-pro', 'veo'];
        
        const apiKey = "plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL";
        const promptEnhancementModel = 'nova-fast';
@@ -1553,3 +1555,4 @@
    </script>
 </body>
 </html>
+
