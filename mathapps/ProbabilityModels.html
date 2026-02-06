@@ -19,7 +19,7 @@
        }
        
        .container {
-           max-width: 1200px;
+           max-width: 1400px;
            margin: 0 auto;
            background: white;
            border-radius: 20px;
@@ -211,19 +211,62 @@
        }
        
        .speed-control {
-           margin: 10px 0;
-           display: flex;
-           align-items: center;
-           gap: 10px;
-           font-size: 0.9em;
+           margin: 15px 0;
+           padding: 10px;
+           background: white;
+           border-radius: 8px;
+           border: 1px solid #e2e8f0;
        }
        
        .speed-control label {
            color: #4a5568;
+           font-weight: bold;
+           font-size: 0.9em;
+           display: block;
+           margin-bottom: 5px;
        }
        
-       .speed-control input[type="range"] {
+       .speed-slider-container {
+           display: flex;
+           align-items: center;
+           gap: 10px;
+       }
+       
+       .speed-slider {
            flex: 1;
+           height: 6px;
+           -webkit-appearance: none;
+           appearance: none;
+           background: #e2e8f0;
+           border-radius: 3px;
+           outline: none;
+       }
+       
+       .speed-slider::-webkit-slider-thumb {
+           -webkit-appearance: none;
+           appearance: none;
+           width: 20px;
+           height: 20px;
+           background: #5a67d8;
+           border-radius: 50%;
+           cursor: pointer;
+       }
+       
+       .speed-slider::-moz-range-thumb {
+           width: 20px;
+           height: 20px;
+           background: #5a67d8;
+           border-radius: 50%;
+           cursor: pointer;
+           border: none;
+       }
+       
+       .speed-label {
+           font-weight: bold;
+           color: #5a67d8;
+           min-width: 80px;
+           text-align: center;
+           font-size: 0.9em;
        }
        
        .btn-run {
@@ -386,7 +429,7 @@
        
        .results-grid {
            display: grid;
-           grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+           grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
            gap: 20px;
        }
        
@@ -395,11 +438,18 @@
            border-radius: 10px;
            padding: 15px;
            border-left: 4px solid #5a67d8;
+           max-height: 600px;
+           overflow-y: auto;
        }
        
        .result-card h4 {
            margin: 0 0 15px 0;
            color: #2d3748;
+           position: sticky;
+           top: 0;
+           background: #f7fafc;
+           padding: 5px 0;
+           z-index: 1;
        }
        
        .result-table {
@@ -418,6 +468,8 @@
            background: #edf2f7;
            font-weight: bold;
            color: #4a5568;
+           position: sticky;
+           top: 40px;
        }
        
        .bar-container {
@@ -513,6 +565,44 @@
            background: #38b2ac;
            transition: width 0.1s linear;
        }
+       
+       .card-grid {
+           display: grid;
+           grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+           gap: 10px;
+           max-height: 400px;
+           overflow-y: auto;
+           padding-right: 5px;
+       }
+       
+       .card-result-item {
+           background: white;
+           border: 1px solid #e2e8f0;
+           border-radius: 8px;
+           padding: 8px;
+           font-size: 0.85em;
+       }
+       
+       .card-header {
+           display: flex;
+           justify-content: space-between;
+           margin-bottom: 4px;
+           font-weight: bold;
+       }
+       
+       .card-bar-mini {
+           height: 6px;
+           background: #e2e8f0;
+           border-radius: 3px;
+           overflow: hidden;
+           margin-top: 4px;
+       }
+       
+       .card-bar-fill {
+           height: 100%;
+           background: #5a67d8;
+           border-radius: 3px;
+       }
    </style>
 </head>
 <body>
@@ -541,19 +631,26 @@
                
                <div class="trials-section">
                    <div class="section-title">2. Configure Experiment</div>
-                   <label style="font-size: 0.9em; color: #4a5568;">Number of Trials:</label>
-                   <input type="number" id="trialsInput" class="trials-input" value="100" min="1" max="1000" placeholder="Enter number of trials">
+                   <label style="font-size: 0.9em; color: #4a5568;">Number of Trials (1-1000):</label>
+                   <input type="number" id="trialsInput" class="trials-input" value="50" min="1" max="1000" placeholder="Enter number of trials">
                    
                    <div class="speed-control">
-                       <label>Speed:</label>
-                       <input type="range" id="speedRange" min="1" max="10" value="5">
-                       <span id="speedLabel">Normal</span>
+                       <label>⚡ Animation Speed:</label>
+                       <div class="speed-slider-container">
+                           <span style="font-size:0.8em;">Slow</span>
+                           <input type="range" id="speedRange" class="speed-slider" min="1" max="10" value="3">
+                           <span style="font-size:0.8em;">Fast</span>
+                       </div>
+                       <div class="speed-label" id="speedLabel">Normal</div>
+                       <div style="font-size:0.8em; color:#666; margin-top:5px;">
+                           Slower speeds let you see each trial clearly
+                       </div>
                    </div>
                    
                    <button class="btn-run" id="runBtn" onclick="runExperiment()" disabled>▶ Run Experiment!</button>
                    
                    <div class="reset-buttons">
-                       <button class="btn-reset" onclick="resetExperiment()">🔄 Reset Models</button>
+                       <button class="btn-reset" onclick="resetExperiment()">🔄 Reset All</button>
                        <button class="btn-clear" onclick="clearResults()">🗑️ Clear Results</button>
                    </div>
                </div>
@@ -586,7 +683,7 @@
        let componentIdCounter = 0;
        const MAX_COMPONENTS = 5;
        let isRunning = false;
-       let animationSpeed = 5;
+       let animationSpeed = 3;
        
        const COLORS = {
            red: '#ff6b6b',
@@ -604,6 +701,20 @@
        const CARD_SUITS = ['♠', '♥', '♦', '♣'];
        const CARD_RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
        
+       // Speed labels
+       const speedLabels = {
+           1: 'Very Slow', 
+           2: 'Slow', 
+           3: 'Normal', 
+           4: 'Medium', 
+           5: 'Fast', 
+           6: 'Very Fast',
+           7: 'Rapid',
+           8: 'Super Fast',
+           9: 'Ultra',
+           10: 'Instant'
+       };
+       
        // Animation helper
        function sleep(ms) {
            return new Promise(resolve => setTimeout(resolve, ms));
@@ -617,7 +728,6 @@
                this.name = 'Six-Sided Die';
                this.outcomes = [1, 2, 3, 4, 5, 6];
                this.currentValue = 1;
-               this.animating = false;
            }
            
            getConfigHTML() {
@@ -636,13 +746,30 @@
                return Math.floor(Math.random() * 6) + 1;
            }
            
-           async animate(ctx, duration = 500) {
-               const frames = 10;
+           async animate(ctx, duration = 800) {
+               const frames = Math.max(15, Math.floor(duration / 50));
                const frameTime = duration / frames;
+               const size = Math.min(ctx.canvas.width, ctx.canvas.height) - 20;
+               
+               // Rolling animation with movement
+               const startX = (ctx.canvas.width - size) / 2;
+               const positions = [];
+               
+               // Generate a path for the die to "roll"
+               for(let i = 0; i < frames; i++) {
+                   const progress = i / frames;
+                   const bounce = Math.sin(progress * Math.PI * 4) * 10 * (1 - progress);
+                   const x = startX + (Math.random() - 0.5) * 30 * (1 - progress);
+                   positions.push({x: x, y: (ctx.canvas.height - size) / 2 + bounce, rotation: Math.random()});
+               }
                
                for(let i = 0; i < frames; i++) {
+                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                   
                    const tempValue = Math.floor(Math.random() * 6) + 1;
-                   this.draw(ctx, tempValue);
+                   const pos = positions[i] || {x: startX, y: (ctx.canvas.height - size) / 2};
+                   
+                   this.drawAt(ctx, tempValue, pos.x, pos.y, size);
                    await sleep(frameTime);
                }
                
@@ -651,25 +778,49 @@
                return finalValue;
            }
            
+           drawAt(ctx, value, x, y, size) {
+               // Draw die background with slight rotation simulation
+               ctx.fillStyle = '#fff';
+               ctx.strokeStyle = '#333';
+               ctx.lineWidth = 3;
+               ctx.fillRect(x, y, size, size);
+               ctx.strokeRect(x, y, size, size);
+               
+               // Draw dots based on result
+               ctx.fillStyle = '#333';
+               const r = size / 12;
+               const positions = {
+                   1: [[0.5, 0.5]],
+                   2: [[0.25, 0.25], [0.75, 0.75]],
+                   3: [[0.25, 0.25], [0.5, 0.5], [0.75, 0.75]],
+                   4: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]],
+                   5: [[0.25, 0.25], [0.75, 0.25], [0.5, 0.5], [0.25, 0.75], [0.75, 0.75]],
+                   6: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.5], [0.75, 0.5], [0.25, 0.75], [0.75, 0.75]]
+               };
+               
+               positions[value].forEach(pos => {
+                   ctx.beginPath();
+                   ctx.arc(x + pos[0]*size, y + pos[1]*size, r, 0, Math.PI*2);
+                   ctx.fill();
+               });
+           }
+           
            draw(ctx, result) {
                this.currentValue = result;
                const size = Math.min(ctx.canvas.width, ctx.canvas.height) - 20;
                const x = (ctx.canvas.width - size) / 2;
                const y = (ctx.canvas.height - size) / 2;
                
-               // Clear canvas
                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                
-               // Draw die background
+               // Shadow
+               ctx.fillStyle = 'rgba(0,0,0,0.1)';
+               ctx.fillRect(x + 4, y + 4, size, size);
+               
+               // Die background
                ctx.fillStyle = '#fff';
                ctx.strokeStyle = '#333';
                ctx.lineWidth = 3;
-               
-               // Slight 3D effect
-               ctx.fillStyle = '#ddd';
-               ctx.fillRect(x + 3, y + 3, size, size);
-               
-               ctx.fillStyle = '#fff';
                ctx.fillRect(x, y, size, size);
                ctx.strokeRect(x, y, size, size);
                
@@ -714,45 +865,65 @@
                return Math.random() < 0.5 ? 'Heads' : 'Tails';
            }
            
-           async animate(ctx, duration = 500) {
-               const frames = 12;
-               const frameTime = duration / frames;
+           async animate(ctx, duration = 800) {
+               const frames = Math.max(20, Math.floor(duration / 40));
                const centerX = ctx.canvas.width / 2;
                const centerY = ctx.canvas.height / 2;
                const radius = Math.min(centerX, centerY) - 15;
                
-               // Spin animation
+               // Flip animation with vertical movement (tossing up)
                for(let i = 0; i < frames; i++) {
                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                    
-                   // Simulate spinning by compressing width
-                   const scale = Math.abs(Math.sin((i / frames) * Math.PI * 4));
-                   const currentRadius = radius * (0.3 + 0.7 * scale);
+                   const progress = i / frames;
                    
-                   ctx.save();
-                   ctx.translate(centerX, centerY);
+                   // Up and down motion
+                   const height = Math.sin(progress * Math.PI) * 40;
+                   const y = centerY - height;
                    
-                   // Draw spinning coin
+                   // Spinning effect using scale
+                   const spins = 3; // Number of full rotations
+                   const angle = progress * Math.PI * 2 * spins;
+                   const scaleX = Math.abs(Math.cos(angle));
+                   
+                   // Draw shadow (gets smaller as coin goes up)
+                   const shadowScale = 1 - (height / 80);
                    ctx.beginPath();
-                   ctx.ellipse(0, 0, currentRadius, radius, 0, 0, Math.PI*2);
+                   ctx.ellipse(centerX, centerY + radius + 10, radius * shadowScale * 0.8, radius * shadowScale * 0.2, 0, 0, Math.PI*2);
+                   ctx.fillStyle = `rgba(0,0,0,${0.3 * shadowScale})`;
+                   ctx.fill();
+                   
+                   // Draw coin
+                   ctx.save();
+                   ctx.translate(centerX, y);
+                   ctx.scale(scaleX, 1);
+                   
+                   ctx.beginPath();
+                   ctx.arc(0, 0, radius, 0, Math.PI*2);
                    ctx.fillStyle = '#ffd700';
                    ctx.fill();
                    ctx.strokeStyle = '#daa520';
-                   ctx.lineWidth = 2;
+                   ctx.lineWidth = 3;
                    ctx.stroke();
                    
-                   // Side rim effect when spinning
-                   if(scale < 0.5) {
-                       ctx.fillStyle = '#b8860b';
+                   // Show H or T based on which side is facing
+                   const showHeads = Math.cos(angle) > 0;
+                   ctx.fillStyle = '#b8860b';
+                   ctx.font = `bold ${radius}px Arial`;
+                   ctx.textAlign = 'center';
+                   ctx.textBaseline = 'middle';
+                   ctx.fillText(showHeads ? 'H' : 'T', 0, 0);
+                   
+                   // Shine effect
+                   if(scaleX > 0.5) {
+                       ctx.beginPath();
+                       ctx.arc(-radius*0.3, -radius*0.3, radius*0.2, 0, Math.PI*2);
+                       ctx.fillStyle = 'rgba(255,255,255,0.4)';
                        ctx.fill();
-                   } else {
-                       ctx.fillStyle = '#ffd700';
-                       ctx.fill();
-                       ctx.stroke();
                    }
                    
                    ctx.restore();
-                   await sleep(frameTime);
+                   await sleep(duration / frames);
                }
                
                const finalValue = this.run();
@@ -767,6 +938,12 @@
                const radius = Math.min(centerX, centerY) - 15;
                
                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+               
+               // Shadow
+               ctx.beginPath();
+               ctx.ellipse(centerX, centerY + radius + 5, radius * 0.8, radius * 0.2, 0, 0, Math.PI*2);
+               ctx.fillStyle = 'rgba(0,0,0,0.15)';
+               ctx.fill();
                
                // Draw coin
                ctx.beginPath();
@@ -836,17 +1013,17 @@
                return Math.floor(Math.random() * this.sectors) + 1;
            }
            
-           async animate(ctx, duration = 800) {
+           async animate(ctx, duration = 1000) {
                const centerX = ctx.canvas.width / 2;
                const centerY = ctx.canvas.height / 2;
                const radius = Math.min(centerX, centerY) - 20;
                
-               // Spin physics
-               let velocity = Math.random() * 0.3 + 0.2; // Random initial velocity
+               // Spin physics with decay
+               let velocity = Math.random() * 0.5 + 0.3; // Random initial velocity
                let angle = this.currentAngle;
-               const frames = duration / 16; // ~60fps
+               const friction = 0.98;
                
-               for(let i = 0; i < frames; i++) {
+               while(velocity > 0.01) {
                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                    
                    // Draw spinner with current angle
@@ -854,10 +1031,9 @@
                    
                    // Update physics
                    angle += velocity;
-                   velocity *= 0.98; // Friction
+                   velocity *= friction;
                    
-                   if(velocity < 0.001) break;
-                   await sleep(16);
+                   await sleep(16); // ~60fps
                }
                
                this.currentAngle = angle % (Math.PI*2);
@@ -1031,22 +1207,22 @@
                return Object.keys(this.marbles).pop();
            }
            
-           async animate(ctx, duration = 600) {
+           async animate(ctx, duration = 800) {
                const total = this.getTotal();
                if(total === 0) return null;
                
                // Hand shaking animation
-               for(let i = 0; i < 10; i++) {
+               for(let i = 0; i < 12; i++) {
                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-                   const offsetX = Math.sin(i) * 5;
+                   const offsetX = Math.sin(i * 0.8) * 8;
                    ctx.save();
                    ctx.translate(offsetX, 0);
                    this.drawJar(ctx, null, true);
                    ctx.restore();
-                   await sleep(50);
+                   await sleep(duration / 20);
                }
                
-               // Selection animation (marble bouncing)
+               // Selection animation (marble bouncing at top)
                const candidates = [];
                for(let color in this.marbles) {
                    for(let i=0; i<this.marbles[color]; i++) candidates.push(color);
@@ -1056,7 +1232,7 @@
                    const tempColor = candidates[Math.floor(Math.random() * candidates.length)];
                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                    this.drawJar(ctx, tempColor, false, true);
-                   await sleep(40);
+                   await sleep(duration / 25);
                }
                
                const finalColor = this.run();
@@ -1088,7 +1264,7 @@
                    return;
                }
                
-               // Draw marbles with physics-like positions
+               // Draw marbles
                const marbleR = Math.min(width, height) / 12;
                const cols = 5;
                const startX = width*0.25;
@@ -1114,7 +1290,7 @@
                    let y = startY - row*spacingX*0.8;
                    
                    if(shaking) {
-                       y += Math.random() * 4 - 2;
+                       y += Math.random() * 6 - 3;
                    }
                    
                    const isHighlight = color === highlightColor && bouncing && drawn === 0;
@@ -1211,14 +1387,14 @@
                return {suit, rank, color: (suit === '♥' || suit === '♦') ? 'red' : 'black'};
            }
            
-           async animate(ctx, duration = 600) {
+           async animate(ctx, duration = 900) {
                const centerX = ctx.canvas.width / 2;
                const centerY = ctx.canvas.height / 2;
                const cardW = 70;
                const cardH = 100;
                
-               // Shuffle animation (card back moving)
-               for(let i = 0; i < 10; i++) {
+               // Shuffle animation
+               for(let i = 0; i < 15; i++) {
                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
                    
                    // Draw deck on left
@@ -1226,16 +1402,15 @@
                        ctx.fillStyle = '#fff';
                        ctx.fillRect(20 + j*2, 25 + j*2, cardW, cardH);
                        ctx.strokeRect(20 + j*2, 25 + j*2, cardW, cardH);
-                       // Back pattern
                        ctx.fillStyle = '#e53e3e';
                        ctx.fillRect(25 + j*2, 30 + j*2, cardW-10, cardH-10);
                    }
                    
-                   // Moving card
-                   const progress = i / 10;
+                   // Moving card with arc
+                   const progress = i / 15;
                    const x = 20 + (centerX - 20 - cardW/2) * progress;
-                   const y = 25 + (centerY - cardH/2 - 25) * progress;
-                   const rotation = progress * Math.PI * 2;
+                   const y = 25 + (centerY - cardH/2 - 25) * progress - Math.sin(progress * Math.PI) * 30;
+                   const rotation = progress * Math.PI * 4;
                    
                    ctx.save();
                    ctx.translate(x + cardW/2, y + cardH/2);
@@ -1247,7 +1422,7 @@
                    ctx.fillRect(-cardW/2+5, -cardH/2+5, cardW-10, cardH-10);
                    ctx.restore();
                    
-                   await sleep(50);
+                   await sleep(duration / 15);
                }
                
                const finalCard = this.run();
@@ -1386,22 +1561,32 @@
                return;
            }
            document.getElementById('resultsArea').innerHTML = '';
-           // Reset visualization to initial state
            updateVisualization();
        }
        
        // Speed control
-       document.getElementById('speedRange')?.addEventListener('input', (e) => {
+       document.getElementById('speedRange').addEventListener('input', (e) => {
            const val = parseInt(e.target.value);
-           const labels = {1: 'Very Slow', 3: 'Slow', 5: 'Normal', 7: 'Fast', 10: 'Instant'};
-           document.getElementById('speedLabel').textContent = labels[val] || 'Normal';
+           document.getElementById('speedLabel').textContent = speedLabels[val];
            animationSpeed = val;
        });
        
        function getAnimationDuration() {
            // Map 1-10 to duration in ms (higher speed = lower duration)
-           const map = {1: 1000, 2: 800, 3: 600, 4: 400, 5: 300, 6: 200, 7: 100, 8: 50, 9: 20, 10: 0};
-           return map[animationSpeed] || 300;
+           // Much slower ranges for better visibility
+           const map = {
+               1: 1500,  // Very Slow - 1.5 seconds per trial
+               2: 1000,  // Slow
+               3: 700,   // Normal
+               4: 500,   // Medium
+               5: 300,   // Fast
+               6: 150,   // Very Fast
+               7: 80,    // Rapid
+               8: 40,    // Super Fast
+               9: 20,    // Ultra
+               10: 0     // Instant
+           };
+           return map[animationSpeed] || 700;
        }
        
        function renderComponents() {
@@ -1446,13 +1631,22 @@
            
            container.innerHTML = components.map((comp, idx) => {
                const theoretical = comp.getTheoretical();
-               const probHTML = Object.entries(theoretical).slice(0, 6).map(([outcome, prob]) => {
-                   const pct = (prob * 100).toFixed(1);
-                   return `<div class="prob-item" title="${pct}%">${outcome}: ${pct}%</div>`;
-               }).join('');
+               const outcomes = Object.keys(theoretical);
                
-               const more = Object.keys(theoretical).length > 6 ? 
-                   `<div style="font-size:0.7em; color:#999;">...and ${Object.keys(theoretical).length - 6} more</div>` : '';
+               // Show all outcomes for cards in mini form
+               let probHTML = '';
+               if(comp.type === 'deck') {
+                   probHTML = `<div style="font-size:0.75em; color:#666;">52 cards - each has 1.9% probability</div>`;
+               } else {
+                   probHTML = Object.entries(theoretical).slice(0, 6).map(([outcome, prob]) => {
+                       const pct = (prob * 100).toFixed(1);
+                       return `<div class="prob-item" title="${pct}%">${outcome}: ${pct}%</div>`;
+                   }).join('');
+                   
+                   if(outcomes.length > 6) {
+                       probHTML += `<div style="font-size:0.7em; color:#999; grid-column:1/-1;">...and ${outcomes.length - 6} more</div>`;
+                   }
+               }
                
                return `
                    <div class="experiment-box" id="box-${comp.id}">
@@ -1464,7 +1658,6 @@
                        <div class="theoretical-prob">
                            <strong>Theoretical Probability:</strong>
                            <div class="prob-grid">${probHTML}</div>
-                           ${more}
                        </div>
                    </div>
                `;
@@ -1513,7 +1706,6 @@
            document.getElementById('resultsArea').innerHTML = '';
            
            const duration = getAnimationDuration();
-           const batchSize = duration === 0 ? 50 : 1; // If instant, batch process
            
            // Add animating class to boxes
            components.forEach(comp => {
@@ -1559,9 +1751,9 @@
                    }
                }
                
-               // Small delay between trials if animating
+               // Delay between trials if animating
                if(duration > 0 && trial < trials) {
-                   await sleep(Math.max(50, duration / 3));
+                   await sleep(Math.max(100, duration / 2));
                }
            }
            
@@ -1598,56 +1790,92 @@
                        <h4>${comp.name} #${comp.id + 1}</h4>
                `;
                
-               // Create bar charts comparing theoretical vs experimental
-               const allOutcomes = new Set([...Object.keys(theoretical), ...Object.keys(res.counts)]);
-               
-               // Sort: numeric if possible, otherwise alphabetical
-               const sortedOutcomes = Array.from(allOutcomes).sort((a,b) => {
-                   const numA = parseInt(a);
-                   const numB = parseInt(b);
-                   if(!isNaN(numA) && !isNaN(numB)) return numA - numB;
-                   return String(a).localeCompare(String(b));
-               });
-               
-               // Limit display if too many outcomes (like cards)
-               const displayOutcomes = sortedOutcomes.length > 10 ? sortedOutcomes.slice(0, 10) : sortedOutcomes;
-               const hasMore = sortedOutcomes.length > 10;
-               
-               html += `<div style="margin-bottom:15px;">`;
-               displayOutcomes.forEach(outcome => {
-                   const theoPct = (theoretical[outcome] || 0) * 100;
-                   const expCount = res.counts[outcome] || 0;
-                   const expPct = (expCount / trials) * 100;
+               // For card decks, use a compact grid layout
+               if(comp.type === 'deck') {
+                   html += `<div class="card-grid">`;
                    
+                   // Sort by count descending, then by card name
+                   const sortedCards = Object.entries(res.counts).sort((a, b) => {
+                       if(b[1] !== a[1]) return b[1] - a[1];
+                       return a[0].localeCompare(b[0]);
+                   });
+                   
+                   // Show ALL cards that appeared, and cards with 0 counts too if space permits
+                   // Actually, for 52 cards, show all in a grid
+                   const allCards = comp.outcomes;
+                   
+                   allCards.forEach(card => {
+                       const count = res.counts[card] || 0;
+                       const expPct = (count / trials) * 100;
+                       const theoPct = (theoretical[card] || 0) * 100;
+                       const {color} = comp.parseCard(card);
+                       
+                       html += `
+                           <div class="card-result-item">
+                               <div class="card-header">
+                                   <span style="color:${color}; font-size:1.1em;">${card}</span>
+                                   <span>${count}x</span>
+                               </div>
+                               <div style="font-size:0.75em; color:#666;">
+                                   Exp: ${expPct.toFixed(1)}% | Theo: ${theoPct.toFixed(1)}%
+                               </div>
+                               <div class="card-bar-mini">
+                                   <div class="card-bar-fill" style="width:${expPct}%;"></div>
+                               </div>
+                           </div>
+                       `;
+                   });
+                   
+                   html += `</div>`;
+                   
+                   // Add summary stats for cards
+                   const seenCards = Object.keys(res.counts).length;
                    html += `
-                       <div style="margin:8px 0;">
-                           <div style="display:flex; justify-content:space-between; font-size:0.9em; margin-bottom:3px;">
-                               <span><strong>${outcome}</strong>: ${expCount}</span>
-                               <span>Exp: ${expPct.toFixed(1)}% | Theo: ${theoPct.toFixed(1)}%</span>
-                           </div>
-                           <div class="bar-wrapper" style="height:24px;">
-                               <div class="bar-theoretical" style="width:${theoPct}%;"></div>
-                               <div class="bar-experimental" style="width:${expPct}%; opacity:0.7;"></div>
-                           </div>
+                       <div style="margin-top:10px; padding:8px; background:#edf2f7; border-radius:6px; font-size:0.85em;">
+                           <strong>Summary:</strong> Saw ${seenCards}/52 different cards in ${trials} trials
                        </div>
                    `;
-               });
-               
-               if(hasMore) {
-                   html += `<div style="text-align:center; color:#999; font-size:0.8em; margin-top:5px;">
-                       ... and ${sortedOutcomes.length - 10} more outcomes
-                   </div>`;
+               } else {
+                   // Standard display for other components
+                   const allOutcomes = new Set([...Object.keys(theoretical), ...Object.keys(res.counts)]);
+                   
+                   // Sort appropriately
+                   const sortedOutcomes = Array.from(allOutcomes).sort((a,b) => {
+                       const numA = parseInt(a);
+                       const numB = parseInt(b);
+                       if(!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                       return String(a).localeCompare(String(b));
+                   });
+                   
+                   html += `<div style="margin-bottom:15px;">`;
+                   sortedOutcomes.forEach(outcome => {
+                       const theoPct = (theoretical[outcome] || 0) * 100;
+                       const expCount = res.counts[outcome] || 0;
+                       const expPct = (expCount / trials) * 100;
+                       
+                       // Color indicator for marbles
+                       let colorIndicator = '';
+                       if(comp.type === 'marbles') {
+                           colorIndicator = `<span style="display:inline-block;width:12px;height:12px;background:${COLORS[outcome]};border-radius:50%;margin-right:5px;vertical-align:middle;"></span>`;
+                       }
+                       
+                       html += `
+                           <div style="margin:8px 0;">
+                               <div style="display:flex; justify-content:space-between; font-size:0.9em; margin-bottom:3px;">
+                                   <span>${colorIndicator}<strong>${outcome}</strong>: ${expCount}</span>
+                                   <span>Exp: ${expPct.toFixed(1)}% | Theo: ${theoPct.toFixed(1)}%</span>
+                               </div>
+                               <div class="bar-wrapper" style="height:24px;">
+                                   <div class="bar-theoretical" style="width:${theoPct}%;"></div>
+                                   <div class="bar-experimental" style="width:${expPct}%; opacity:0.7;"></div>
+                               </div>
+                           </div>
+                       `;
+                   });
+                   html += `</div>`;
                }
                
-               html += `</div>`;
-               
-               // Summary stats
-               const totalObserved = Object.values(res.counts).reduce((a,b)=>a+b,0);
-               html += `
-                   <div style="background:#edf2f7; padding:10px; border-radius:8px; font-size:0.9em;">
-                       <strong>Total trials recorded:</strong> ${totalObserved}
-                   </div>
-               </div>`;
+               html += `</div>`; // Close result-card
            });
            
            html += `</div>`; // Close results-grid
@@ -1657,7 +1885,7 @@
                <div class="stats-summary">
                    <strong>📊 Analysis Tip:</strong> Compare the solid bars (experimental) with the dashed outlines (theoretical). 
                    The more trials you run, the closer they should match! This is called the <em>Law of Large Numbers</em>.
-                   ${animationSpeed < 5 ? '<br><br>💡 <em>Try running more trials or increasing speed to see the pattern emerge faster!</em>' : ''}
+                   ${animationSpeed < 3 ? '<br><br>💡 <em>Great job watching carefully at slow speed! Try running 100+ trials to see the pattern emerge.</em>' : ''}
                </div>
            `;
            
