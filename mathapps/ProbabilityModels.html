@@ -1,0 +1,1673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Probability Explorer</title>
+   <style>
+       * {
+           box-sizing: border-box;
+           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+       }
+       
+       body {
+           margin: 0;
+           padding: 20px;
+           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+           min-height: 100vh;
+           color: #333;
+       }
+       
+       .container {
+           max-width: 1200px;
+           margin: 0 auto;
+           background: white;
+           border-radius: 20px;
+           padding: 30px;
+           box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+       }
+       
+       h1 {
+           text-align: center;
+           color: #5a67d8;
+           margin-bottom: 10px;
+           font-size: 2.5em;
+       }
+       
+       .subtitle {
+           text-align: center;
+           color: #666;
+           margin-bottom: 30px;
+           font-size: 1.1em;
+       }
+       
+       .main-layout {
+           display: grid;
+           grid-template-columns: 350px 1fr;
+           gap: 30px;
+       }
+       
+       @media (max-width: 900px) {
+           .main-layout {
+               grid-template-columns: 1fr;
+           }
+       }
+       
+       /* Control Panel Styles */
+       .control-panel {
+           background: #f7fafc;
+           padding: 20px;
+           border-radius: 15px;
+           border: 2px solid #e2e8f0;
+       }
+       
+       .section-title {
+           font-size: 1.3em;
+           color: #4a5568;
+           margin-bottom: 15px;
+           font-weight: bold;
+           border-bottom: 2px solid #cbd5e0;
+           padding-bottom: 5px;
+       }
+       
+       .add-buttons {
+           display: grid;
+           grid-template-columns: 1fr 1fr;
+           gap: 10px;
+           margin-bottom: 20px;
+       }
+       
+       .btn-add {
+           padding: 12px;
+           border: none;
+           border-radius: 10px;
+           cursor: pointer;
+           font-weight: bold;
+           transition: all 0.2s;
+           font-size: 0.9em;
+       }
+       
+       .btn-add:hover:not(:disabled) {
+           transform: translateY(-2px);
+           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+       }
+       
+       .btn-add:disabled {
+           opacity: 0.5;
+           cursor: not-allowed;
+       }
+       
+       .btn-die { background: #fc8181; color: white; }
+       .btn-coin { background: #f6e05e; color: #744210; }
+       .btn-spinner { background: #68d391; color: white; }
+       .btn-marbles { background: #63b3ed; color: white; }
+       .btn-deck { background: #9f7aea; color: white; }
+       
+       .active-components {
+           margin-bottom: 20px;
+           max-height: 400px;
+           overflow-y: auto;
+       }
+       
+       .component-card {
+           background: white;
+           border: 2px solid #e2e8f0;
+           border-radius: 10px;
+           padding: 15px;
+           margin-bottom: 10px;
+           position: relative;
+           animation: slideIn 0.3s ease-out;
+       }
+       
+       @keyframes slideIn {
+           from { opacity: 0; transform: translateX(-20px); }
+           to { opacity: 1; transform: translateX(0); }
+       }
+       
+       .component-header {
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           margin-bottom: 10px;
+           font-weight: bold;
+           color: #2d3748;
+       }
+       
+       .btn-remove {
+           background: #fc8181;
+           color: white;
+           border: none;
+           width: 24px;
+           height: 24px;
+           border-radius: 50%;
+           cursor: pointer;
+           font-weight: bold;
+           line-height: 1;
+       }
+       
+       .config-row {
+           margin: 8px 0;
+           display: flex;
+           align-items: center;
+           gap: 10px;
+       }
+       
+       .config-row label {
+           font-size: 0.9em;
+           color: #4a5568;
+           flex: 1;
+       }
+       
+       .config-row input[type="number"], .config-row select {
+           width: 80px;
+           padding: 5px;
+           border: 1px solid #cbd5e0;
+           border-radius: 5px;
+       }
+       
+       .marble-colors {
+           display: grid;
+           grid-template-columns: 1fr 1fr;
+           gap: 5px;
+           margin-top: 10px;
+       }
+       
+       .color-input {
+           display: flex;
+           align-items: center;
+           gap: 5px;
+           font-size: 0.85em;
+       }
+       
+       .color-dot {
+           width: 12px;
+           height: 12px;
+           border-radius: 50%;
+           display: inline-block;
+       }
+       
+       .limit-warning {
+           color: #e53e3e;
+           font-size: 0.9em;
+           text-align: center;
+           margin-top: 10px;
+           font-weight: bold;
+       }
+       
+       .trials-section {
+           background: #edf2f7;
+           padding: 15px;
+           border-radius: 10px;
+           margin-top: 20px;
+       }
+       
+       .trials-input {
+           width: 100%;
+           padding: 10px;
+           border: 2px solid #cbd5e0;
+           border-radius: 8px;
+           font-size: 1em;
+           margin-bottom: 10px;
+       }
+       
+       .speed-control {
+           margin: 10px 0;
+           display: flex;
+           align-items: center;
+           gap: 10px;
+           font-size: 0.9em;
+       }
+       
+       .speed-control label {
+           color: #4a5568;
+       }
+       
+       .speed-control input[type="range"] {
+           flex: 1;
+       }
+       
+       .btn-run {
+           width: 100%;
+           padding: 15px;
+           background: #5a67d8;
+           color: white;
+           border: none;
+           border-radius: 10px;
+           font-size: 1.2em;
+           font-weight: bold;
+           cursor: pointer;
+           transition: all 0.2s;
+           margin-top: 10px;
+       }
+       
+       .btn-run:hover {
+           background: #4c51bf;
+           transform: translateY(-2px);
+           box-shadow: 0 4px 12px rgba(90,103,216,0.4);
+       }
+       
+       .btn-run:disabled {
+           background: #a0aec0;
+           cursor: not-allowed;
+           transform: none;
+       }
+       
+       .reset-buttons {
+           display: grid;
+           grid-template-columns: 1fr 1fr;
+           gap: 10px;
+           margin-top: 10px;
+       }
+       
+       .btn-reset {
+           padding: 10px;
+           background: #e2e8f0;
+           color: #4a5568;
+           border: none;
+           border-radius: 8px;
+           font-weight: bold;
+           cursor: pointer;
+           transition: all 0.2s;
+       }
+       
+       .btn-reset:hover {
+           background: #cbd5e0;
+       }
+       
+       .btn-clear {
+           padding: 10px;
+           background: #fed7d7;
+           color: #c53030;
+           border: none;
+           border-radius: 8px;
+           font-weight: bold;
+           cursor: pointer;
+           transition: all 0.2s;
+       }
+       
+       .btn-clear:hover {
+           background: #feb2b2;
+       }
+       
+       /* Experiment Area Styles */
+       .experiment-area {
+           background: #f7fafc;
+           border-radius: 15px;
+           padding: 20px;
+           border: 2px solid #e2e8f0;
+       }
+       
+       .visualization-grid {
+           display: grid;
+           grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+           gap: 20px;
+           margin-bottom: 30px;
+       }
+       
+       .experiment-box {
+           background: white;
+           border-radius: 15px;
+           padding: 15px;
+           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+           text-align: center;
+           transition: transform 0.2s;
+       }
+       
+       .experiment-box.animating {
+           transform: scale(1.02);
+           box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+       }
+       
+       .experiment-box h3 {
+           margin: 0 0 15px 0;
+           color: #4a5568;
+           font-size: 1.1em;
+       }
+       
+       .canvas-container {
+           position: relative;
+           height: 150px;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+       }
+       
+       canvas {
+           max-width: 100%;
+           max-height: 100%;
+       }
+       
+       .trial-counter {
+           position: absolute;
+           top: 5px;
+           right: 5px;
+           background: #5a67d8;
+           color: white;
+           padding: 4px 8px;
+           border-radius: 12px;
+           font-size: 0.8em;
+           font-weight: bold;
+           opacity: 0;
+           transition: opacity 0.3s;
+       }
+       
+       .trial-counter.show {
+           opacity: 1;
+       }
+       
+       .theoretical-prob {
+           margin-top: 10px;
+           font-size: 0.85em;
+           color: #666;
+           background: #f0f0f0;
+           padding: 8px;
+           border-radius: 8px;
+       }
+       
+       .prob-grid {
+           display: grid;
+           grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+           gap: 5px;
+           font-size: 0.8em;
+       }
+       
+       .prob-item {
+           text-align: center;
+       }
+       
+       /* Results Styles */
+       .results-container {
+           background: white;
+           border-radius: 15px;
+           padding: 20px;
+           margin-top: 20px;
+           border: 2px solid #e2e8f0;
+       }
+       
+       .results-grid {
+           display: grid;
+           grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+           gap: 20px;
+       }
+       
+       .result-card {
+           background: #f7fafc;
+           border-radius: 10px;
+           padding: 15px;
+           border-left: 4px solid #5a67d8;
+       }
+       
+       .result-card h4 {
+           margin: 0 0 15px 0;
+           color: #2d3748;
+       }
+       
+       .result-table {
+           width: 100%;
+           border-collapse: collapse;
+           font-size: 0.9em;
+       }
+       
+       .result-table th, .result-table td {
+           padding: 8px;
+           text-align: left;
+           border-bottom: 1px solid #e2e8f0;
+       }
+       
+       .result-table th {
+           background: #edf2f7;
+           font-weight: bold;
+           color: #4a5568;
+       }
+       
+       .bar-container {
+           display: flex;
+           align-items: center;
+           margin: 5px 0;
+           gap: 10px;
+       }
+       
+       .bar-label {
+           width: 60px;
+           font-size: 0.9em;
+       }
+       
+       .bar-wrapper {
+           flex: 1;
+           height: 20px;
+           background: #e2e8f0;
+           border-radius: 10px;
+           overflow: hidden;
+           position: relative;
+       }
+       
+       .bar-theoretical {
+           height: 100%;
+           background: rgba(90, 103, 216, 0.3);
+           border: 2px dashed #5a67d8;
+           border-radius: 10px;
+           position: absolute;
+           top: 0;
+           left: 0;
+       }
+       
+       .bar-experimental {
+           height: 100%;
+           background: #5a67d8;
+           border-radius: 10px;
+           transition: width 0.5s ease-out;
+       }
+       
+       .stats-summary {
+           margin-top: 20px;
+           padding: 15px;
+           background: #c6f6d5;
+           border-radius: 10px;
+           border-left: 4px solid #48bb78;
+       }
+       
+       .running-indicator {
+           text-align: center;
+           padding: 20px;
+           font-size: 1.2em;
+           color: #5a67d8;
+           font-weight: bold;
+       }
+       
+       .spinner {
+           display: inline-block;
+           width: 20px;
+           height: 20px;
+           border: 3px solid #f3f3f3;
+           border-top: 3px solid #5a67d8;
+           border-radius: 50%;
+           animation: spin 1s linear infinite;
+           margin-right: 10px;
+       }
+       
+       @keyframes spin {
+           0% { transform: rotate(0deg); }
+           100% { transform: rotate(360deg); }
+       }
+       
+       .animation-controls {
+           background: #e6fffa;
+           border: 2px solid #81e6d9;
+           border-radius: 10px;
+           padding: 15px;
+           margin-bottom: 20px;
+           text-align: center;
+       }
+       
+       .progress-bar {
+           width: 100%;
+           height: 8px;
+           background: #e2e8f0;
+           border-radius: 4px;
+           overflow: hidden;
+           margin: 10px 0;
+       }
+       
+       .progress-fill {
+           height: 100%;
+           background: #38b2ac;
+           transition: width 0.1s linear;
+       }
+   </style>
+</head>
+<body>
+   <div class="container">
+       <h1>🎲 Probability Explorer 🎲</h1>
+       <div class="subtitle">Design your experiment, watch the animations, and discover how theoretical and experimental probability compare!</div>
+       
+       <div class="main-layout">
+           <div class="control-panel">
+               <div class="section-title">1. Choose Your Models (Max 5)</div>
+               <div class="add-buttons">
+                   <button class="btn-add btn-die" onclick="addComponent('die')">🎲 Add Die</button>
+                   <button class="btn-add btn-coin" onclick="addComponent('coin')">🪙 Add Coin</button>
+                   <button class="btn-add btn-spinner" onclick="addComponent('spinner')">🎯 Add Spinner</button>
+                   <button class="btn-add btn-marbles" onclick="addComponent('marbles')">🏺 Add Marbles</button>
+                   <button class="btn-add btn-deck" onclick="addComponent('deck')">🎴 Add Card Deck</button>
+               </div>
+               
+               <div id="limitWarning" class="limit-warning" style="display:none;">
+                   Maximum 5 models reached!
+               </div>
+               
+               <div class="active-components" id="activeComponents">
+                   <!-- Components will be added here -->
+               </div>
+               
+               <div class="trials-section">
+                   <div class="section-title">2. Configure Experiment</div>
+                   <label style="font-size: 0.9em; color: #4a5568;">Number of Trials:</label>
+                   <input type="number" id="trialsInput" class="trials-input" value="100" min="1" max="1000" placeholder="Enter number of trials">
+                   
+                   <div class="speed-control">
+                       <label>Speed:</label>
+                       <input type="range" id="speedRange" min="1" max="10" value="5">
+                       <span id="speedLabel">Normal</span>
+                   </div>
+                   
+                   <button class="btn-run" id="runBtn" onclick="runExperiment()" disabled>▶ Run Experiment!</button>
+                   
+                   <div class="reset-buttons">
+                       <button class="btn-reset" onclick="resetExperiment()">🔄 Reset Models</button>
+                       <button class="btn-clear" onclick="clearResults()">🗑️ Clear Results</button>
+                   </div>
+               </div>
+           </div>
+           
+           <div class="experiment-area">
+               <div class="section-title">Experiment Visualization</div>
+               <div id="animationStatus" class="animation-controls" style="display:none;">
+                   <div id="statusText">Running experiment...</div>
+                   <div class="progress-bar">
+                       <div id="progressFill" class="progress-fill" style="width:0%"></div>
+                   </div>
+                   <div id="trialDisplay" style="font-size:1.2em; font-weight:bold; color:#5a67d8;">Trial 0</div>
+               </div>
+               
+               <div id="visualizationArea" class="visualization-grid">
+                   <div style="grid-column: 1/-1; text-align: center; color: #a0aec0; padding: 40px;">
+                       Add models to begin your probability experiment!
+                   </div>
+               </div>
+               
+               <div id="resultsArea"></div>
+           </div>
+       </div>
+   </div>
+
+   <script>
+       // State management
+       let components = [];
+       let componentIdCounter = 0;
+       const MAX_COMPONENTS = 5;
+       let isRunning = false;
+       let animationSpeed = 5;
+       
+       const COLORS = {
+           red: '#ff6b6b',
+           blue: '#4dabf7',
+           green: '#51cf66',
+           yellow: '#ffd93d',
+           purple: '#da77f2',
+           orange: '#ff922b',
+           teal: '#20c997',
+           pink: '#f06595',
+           cyan: '#22d3ee',
+           lime: '#a3e635'
+       };
+       
+       const CARD_SUITS = ['♠', '♥', '♦', '♣'];
+       const CARD_RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+       
+       // Animation helper
+       function sleep(ms) {
+           return new Promise(resolve => setTimeout(resolve, ms));
+       }
+       
+       // Component Classes
+       class DieComponent {
+           constructor(id) {
+               this.id = id;
+               this.type = 'die';
+               this.name = 'Six-Sided Die';
+               this.outcomes = [1, 2, 3, 4, 5, 6];
+               this.currentValue = 1;
+               this.animating = false;
+           }
+           
+           getConfigHTML() {
+               return `<div style="color:#666; font-size:0.9em;">Standard 6-sided die</div>`;
+           }
+           
+           getTheoretical() {
+               const prob = 1/6;
+               return {
+                   1: prob, 2: prob, 3: prob, 
+                   4: prob, 5: prob, 6: prob
+               };
+           }
+           
+           run() {
+               return Math.floor(Math.random() * 6) + 1;
+           }
+           
+           async animate(ctx, duration = 500) {
+               const frames = 10;
+               const frameTime = duration / frames;
+               
+               for(let i = 0; i < frames; i++) {
+                   const tempValue = Math.floor(Math.random() * 6) + 1;
+                   this.draw(ctx, tempValue);
+                   await sleep(frameTime);
+               }
+               
+               const finalValue = this.run();
+               this.draw(ctx, finalValue);
+               return finalValue;
+           }
+           
+           draw(ctx, result) {
+               this.currentValue = result;
+               const size = Math.min(ctx.canvas.width, ctx.canvas.height) - 20;
+               const x = (ctx.canvas.width - size) / 2;
+               const y = (ctx.canvas.height - size) / 2;
+               
+               // Clear canvas
+               ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+               
+               // Draw die background
+               ctx.fillStyle = '#fff';
+               ctx.strokeStyle = '#333';
+               ctx.lineWidth = 3;
+               
+               // Slight 3D effect
+               ctx.fillStyle = '#ddd';
+               ctx.fillRect(x + 3, y + 3, size, size);
+               
+               ctx.fillStyle = '#fff';
+               ctx.fillRect(x, y, size, size);
+               ctx.strokeRect(x, y, size, size);
+               
+               // Draw dots based on result
+               ctx.fillStyle = '#333';
+               const r = size / 12;
+               const positions = {
+                   1: [[0.5, 0.5]],
+                   2: [[0.25, 0.25], [0.75, 0.75]],
+                   3: [[0.25, 0.25], [0.5, 0.5], [0.75, 0.75]],
+                   4: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]],
+                   5: [[0.25, 0.25], [0.75, 0.25], [0.5, 0.5], [0.25, 0.75], [0.75, 0.75]],
+                   6: [[0.25, 0.25], [0.75, 0.25], [0.25, 0.5], [0.75, 0.5], [0.25, 0.75], [0.75, 0.75]]
+               };
+               
+               positions[result].forEach(pos => {
+                   ctx.beginPath();
+                   ctx.arc(x + pos[0]*size, y + pos[1]*size, r, 0, Math.PI*2);
+                   ctx.fill();
+               });
+           }
+       }
+       
+       class CoinComponent {
+           constructor(id) {
+               this.id = id;
+               this.type = 'coin';
+               this.name = 'Coin Flip';
+               this.outcomes = ['Heads', 'Tails'];
+               this.currentValue = 'Heads';
+           }
+           
+           getConfigHTML() {
+               return `<div style="color:#666; font-size:0.9em;">Fair coin (Heads/Tails)</div>`;
+           }
+           
+           getTheoretical() {
+               return {'Heads': 0.5, 'Tails': 0.5};
+           }
+           
+           run() {
+               return Math.random() < 0.5 ? 'Heads' : 'Tails';
+           }
+           
+           async animate(ctx, duration = 500) {
+               const frames = 12;
+               const frameTime = duration / frames;
+               const centerX = ctx.canvas.width / 2;
+               const centerY = ctx.canvas.height / 2;
+               const radius = Math.min(centerX, centerY) - 15;
+               
+               // Spin animation
+               for(let i = 0; i < frames; i++) {
+                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                   
+                   // Simulate spinning by compressing width
+                   const scale = Math.abs(Math.sin((i / frames) * Math.PI * 4));
+                   const currentRadius = radius * (0.3 + 0.7 * scale);
+                   
+                   ctx.save();
+                   ctx.translate(centerX, centerY);
+                   
+                   // Draw spinning coin
+                   ctx.beginPath();
+                   ctx.ellipse(0, 0, currentRadius, radius, 0, 0, Math.PI*2);
+                   ctx.fillStyle = '#ffd700';
+                   ctx.fill();
+                   ctx.strokeStyle = '#daa520';
+                   ctx.lineWidth = 2;
+                   ctx.stroke();
+                   
+                   // Side rim effect when spinning
+                   if(scale < 0.5) {
+                       ctx.fillStyle = '#b8860b';
+                       ctx.fill();
+                   } else {
+                       ctx.fillStyle = '#ffd700';
+                       ctx.fill();
+                       ctx.stroke();
+                   }
+                   
+                   ctx.restore();
+                   await sleep(frameTime);
+               }
+               
+               const finalValue = this.run();
+               this.draw(ctx, finalValue);
+               return finalValue;
+           }
+           
+           draw(ctx, result) {
+               this.currentValue = result;
+               const centerX = ctx.canvas.width / 2;
+               const centerY = ctx.canvas.height / 2;
+               const radius = Math.min(centerX, centerY) - 15;
+               
+               ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+               
+               // Draw coin
+               ctx.beginPath();
+               ctx.arc(centerX, centerY, radius, 0, Math.PI*2);
+               ctx.fillStyle = '#ffd700';
+               ctx.fill();
+               ctx.strokeStyle = '#daa520';
+               ctx.lineWidth = 3;
+               ctx.stroke();
+               
+               // Draw text
+               ctx.fillStyle = '#b8860b';
+               ctx.font = `bold ${radius}px Arial`;
+               ctx.textAlign = 'center';
+               ctx.textBaseline = 'middle';
+               ctx.fillText(result === 'Heads' ? 'H' : 'T', centerX, centerY);
+               
+               // Add shine effect
+               ctx.beginPath();
+               ctx.arc(centerX - radius*0.3, centerY - radius*0.3, radius*0.2, 0, Math.PI*2);
+               ctx.fillStyle = 'rgba(255,255,255,0.4)';
+               ctx.fill();
+           }
+       }
+       
+       class SpinnerComponent {
+           constructor(id) {
+               this.id = id;
+               this.type = 'spinner';
+               this.name = 'Spinner';
+               this.sectors = 4;
+               this.sectorColors = [];
+               this.currentAngle = 0;
+               this.updateColors();
+           }
+           
+           updateColors() {
+               this.sectorColors = [];
+               for(let i=0; i<this.sectors; i++) {
+                   const hue = (360 / this.sectors) * i;
+                   this.sectorColors.push(`hsl(${hue}, 70%, 60%)`);
+               }
+               this.outcomes = Array.from({length: this.sectors}, (_, i) => i+1);
+           }
+           
+           getConfigHTML() {
+               return `
+                   <div class="config-row">
+                       <label>Sectors (2-10):</label>
+                       <input type="number" min="2" max="10" value="${this.sectors}" 
+                           onchange="updateSpinner(${this.id}, this.value)">
+                   </div>
+                   <div style="font-size:0.8em; color:#666; margin-top:5px;">
+                       Colors: ${this.sectorColors.map(c => `<span style="display:inline-block;width:10px;height:10px;background:${c};border-radius:50%;margin:0 2px;"></span>`).join('')}
+                   </div>
+               `;
+           }
+           
+           getTheoretical() {
+               const prob = 1/this.sectors;
+               const result = {};
+               for(let i=1; i<=this.sectors; i++) result[i] = prob;
+               return result;
+           }
+           
+           run() {
+               return Math.floor(Math.random() * this.sectors) + 1;
+           }
+           
+           async animate(ctx, duration = 800) {
+               const centerX = ctx.canvas.width / 2;
+               const centerY = ctx.canvas.height / 2;
+               const radius = Math.min(centerX, centerY) - 20;
+               
+               // Spin physics
+               let velocity = Math.random() * 0.3 + 0.2; // Random initial velocity
+               let angle = this.currentAngle;
+               const frames = duration / 16; // ~60fps
+               
+               for(let i = 0; i < frames; i++) {
+                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                   
+                   // Draw spinner with current angle
+                   this.drawWithAngle(ctx, angle);
+                   
+                   // Update physics
+                   angle += velocity;
+                   velocity *= 0.98; // Friction
+                   
+                   if(velocity < 0.001) break;
+                   await sleep(16);
+               }
+               
+               this.currentAngle = angle % (Math.PI*2);
+               const result = this.run();
+               this.draw(ctx, result);
+               return result;
+           }
+           
+           drawWithAngle(ctx, rotation) {
+               const centerX = ctx.canvas.width / 2;
+               const centerY = ctx.canvas.height / 2;
+               const radius = Math.min(centerX, centerY) - 20;
+               
+               const anglePerSector = (Math.PI*2) / this.sectors;
+               
+               for(let i=0; i<this.sectors; i++) {
+                   ctx.beginPath();
+                   ctx.moveTo(centerX, centerY);
+                   ctx.arc(centerX, centerY, radius, i*anglePerSector + rotation, (i+1)*anglePerSector + rotation);
+                   ctx.fillStyle = this.sectorColors[i];
+                   ctx.fill();
+                   ctx.stroke();
+               }
+               
+               // Draw center
+               ctx.beginPath();
+               ctx.arc(centerX, centerY, 8, 0, Math.PI*2);
+               ctx.fillStyle = '#333';
+               ctx.fill();
+               
+               // Draw pointer (at top)
+               ctx.beginPath();
+               ctx.moveTo(centerX, centerY - radius - 5);
+               ctx.lineTo(centerX - 10, centerY - radius - 20);
+               ctx.lineTo(centerX + 10, centerY - radius - 20);
+               ctx.closePath();
+               ctx.fillStyle = '#e53e3e';
+               ctx.fill();
+               ctx.stroke();
+           }
+           
+           draw(ctx, result) {
+               const centerX = ctx.canvas.width / 2;
+               const centerY = ctx.canvas.height / 2;
+               const radius = Math.min(centerX, centerY) - 20;
+               
+               ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+               
+               // Draw sectors
+               const anglePerSector = (Math.PI*2) / this.sectors;
+               
+               for(let i=0; i<this.sectors; i++) {
+                   ctx.beginPath();
+                   ctx.moveTo(centerX, centerY);
+                   ctx.arc(centerX, centerY, radius, i*anglePerSector, (i+1)*anglePerSector);
+                   ctx.fillStyle = this.sectorColors[i];
+                   ctx.fill();
+                   ctx.stroke();
+                   
+                   // Draw number
+                   ctx.save();
+                   ctx.translate(centerX, centerY);
+                   ctx.rotate(i*anglePerSector + anglePerSector/2);
+                   ctx.fillStyle = '#000';
+                   ctx.font = 'bold 16px Arial';
+                   ctx.textAlign = 'center';
+                   ctx.fillText(i+1, radius*0.7, 5);
+                   ctx.restore();
+               }
+               
+               // Draw center
+               ctx.beginPath();
+               ctx.arc(centerX, centerY, 8, 0, Math.PI*2);
+               ctx.fillStyle = '#333';
+               ctx.fill();
+               
+               // Draw pointer (at top)
+               ctx.beginPath();
+               ctx.moveTo(centerX, centerY - radius - 5);
+               ctx.lineTo(centerX - 10, centerY - radius - 20);
+               ctx.lineTo(centerX + 10, centerY - radius - 20);
+               ctx.closePath();
+               ctx.fillStyle = '#e53e3e';
+               ctx.fill();
+               ctx.stroke();
+               
+               // Highlight result
+               if(result) {
+                   const idx = result - 1;
+                   ctx.save();
+                   ctx.translate(centerX, centerY);
+                   ctx.rotate(idx*anglePerSector + anglePerSector/2);
+                   ctx.beginPath();
+                   ctx.arc(radius*0.7, 0, 15, 0, Math.PI*2);
+                   ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                   ctx.fill();
+                   ctx.restore();
+               }
+           }
+       }
+       
+       class MarbleComponent {
+           constructor(id) {
+               this.id = id;
+               this.type = 'marbles';
+               this.name = 'Marble Jar';
+               this.marbles = {red: 5, blue: 5, green: 5, yellow: 0, purple: 0};
+               this.updateOutcomes();
+               this.selectedMarble = null;
+           }
+           
+           updateOutcomes() {
+               this.outcomes = [];
+               for(let color in this.marbles) {
+                   if(this.marbles[color] > 0) {
+                       this.outcomes.push(color);
+                   }
+               }
+           }
+           
+           getTotal() {
+               return Object.values(this.marbles).reduce((a,b) => a+b, 0);
+           }
+           
+           getConfigHTML() {
+               const total = this.getTotal();
+               
+               let html = `<div style="font-size:0.85em; margin-bottom:5px;">Total: ${total}/50 marbles</div>`;
+               html += `<div class="marble-colors">`;
+               
+               const colorNames = {red: 'Red', blue: 'Blue', green: 'Green', yellow: 'Yellow', purple: 'Purple'};
+               
+               for(let color in this.marbles) {
+                   html += `
+                       <div class="color-input">
+                           <span class="color-dot" style="background:${COLORS[color]}"></span>
+                           <label>${colorNames[color]}:</label>
+                           <input type="number" min="0" max="50" value="${this.marbles[color]}" 
+                               style="width:50px;" 
+                               onchange="updateMarbles(${this.id}, '${color}', this.value)">
+                       </div>
+                   `;
+               }
+               html += `</div>`;
+               if(total > 50) {
+                   html += `<div style="color:#e53e3e; font-size:0.8em; margin-top:5px;">Too many marbles! Max 50.</div>`;
+               }
+               return html;
+           }
+           
+           getTheoretical() {
+               const total = this.getTotal();
+               if(total === 0) return {};
+               const result = {};
+               for(let color in this.marbles) {
+                   if(this.marbles[color] > 0) {
+                       result[color] = this.marbles[color] / total;
+                   }
+               }
+               return result;
+           }
+           
+           run() {
+               const total = this.getTotal();
+               if(total === 0) return null;
+               let rand = Math.random() * total;
+               for(let color in this.marbles) {
+                   rand -= this.marbles[color];
+                   if(rand <= 0) return color;
+               }
+               return Object.keys(this.marbles).pop();
+           }
+           
+           async animate(ctx, duration = 600) {
+               const total = this.getTotal();
+               if(total === 0) return null;
+               
+               // Hand shaking animation
+               for(let i = 0; i < 10; i++) {
+                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                   const offsetX = Math.sin(i) * 5;
+                   ctx.save();
+                   ctx.translate(offsetX, 0);
+                   this.drawJar(ctx, null, true);
+                   ctx.restore();
+                   await sleep(50);
+               }
+               
+               // Selection animation (marble bouncing)
+               const candidates = [];
+               for(let color in this.marbles) {
+                   for(let i=0; i<this.marbles[color]; i++) candidates.push(color);
+               }
+               
+               for(let i = 0; i < 15; i++) {
+                   const tempColor = candidates[Math.floor(Math.random() * candidates.length)];
+                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                   this.drawJar(ctx, tempColor, false, true);
+                   await sleep(40);
+               }
+               
+               const finalColor = this.run();
+               this.selectedMarble = finalColor;
+               this.draw(ctx, finalColor);
+               return finalColor;
+           }
+           
+           drawJar(ctx, highlightColor, shaking = false, bouncing = false) {
+               const width = ctx.canvas.width;
+               const height = ctx.canvas.height;
+               
+               // Draw jar outline
+               ctx.strokeStyle = '#666';
+               ctx.lineWidth = 3;
+               ctx.beginPath();
+               ctx.moveTo(width*0.2, height*0.2);
+               ctx.lineTo(width*0.2, height*0.8);
+               ctx.quadraticCurveTo(width*0.5, height*0.9, width*0.8, height*0.8);
+               ctx.lineTo(width*0.8, height*0.2);
+               ctx.stroke();
+               
+               const total = this.getTotal();
+               if(total === 0) {
+                   ctx.fillStyle = '#999';
+                   ctx.font = '12px Arial';
+                   ctx.textAlign = 'center';
+                   ctx.fillText('Empty Jar', width/2, height/2);
+                   return;
+               }
+               
+               // Draw marbles with physics-like positions
+               const marbleR = Math.min(width, height) / 12;
+               const cols = 5;
+               const startX = width*0.25;
+               const startY = height*0.75;
+               const spacingX = (width*0.5) / cols;
+               
+               let drawn = 0;
+               let jarArray = [];
+               for(let color in this.marbles) {
+                   for(let i=0; i<this.marbles[color]; i++) {
+                       jarArray.push(color);
+                   }
+               }
+               
+               // Shuffle for display
+               jarArray.sort(() => Math.random() - 0.5);
+               
+               for(let i=0; i<jarArray.length && drawn < 20; i++) {
+                   const color = jarArray[i];
+                   const row = Math.floor(drawn / cols);
+                   const col = drawn % cols;
+                   const x = startX + col*spacingX + (row%2)*spacingX/2;
+                   let y = startY - row*spacingX*0.8;
+                   
+                   if(shaking) {
+                       y += Math.random() * 4 - 2;
+                   }
+                   
+                   const isHighlight = color === highlightColor && bouncing && drawn === 0;
+                   
+                   ctx.beginPath();
+                   ctx.arc(x, y, marbleR, 0, Math.PI*2);
+                   ctx.fillStyle = COLORS[color];
+                   ctx.fill();
+                   ctx.stroke();
+                   
+                   if(isHighlight) {
+                       ctx.beginPath();
+                       ctx.arc(x, y, marbleR+4, 0, Math.PI*2);
+                       ctx.strokeStyle = '#333';
+                       ctx.lineWidth = 3;
+                       ctx.stroke();
+                   }
+                   
+                   drawn++;
+               }
+               
+               if(total > 20) {
+                   ctx.fillStyle = '#666';
+                   ctx.font = '10px Arial';
+                   ctx.textAlign = 'center';
+                   ctx.fillText(`+${total-20} more`, width/2, height*0.15);
+               }
+           }
+           
+           draw(ctx, result) {
+               this.selectedMarble = result;
+               ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+               this.drawJar(ctx, result, false, false);
+               
+               // Draw selected marble large at top
+               if(result) {
+                   const centerX = ctx.canvas.width / 2;
+                   const y = 35;
+                   const r = 20;
+                   
+                   ctx.beginPath();
+                   ctx.arc(centerX, y, r, 0, Math.PI*2);
+                   ctx.fillStyle = COLORS[result];
+                   ctx.fill();
+                   ctx.strokeStyle = '#333';
+                   ctx.lineWidth = 2;
+                   ctx.stroke();
+                   
+                   ctx.fillStyle = '#333';
+                   ctx.font = 'bold 12px Arial';
+                   ctx.textAlign = 'center';
+                   ctx.fillText('Picked!', centerX, y - r - 5);
+               }
+           }
+       }
+       
+       class CardComponent {
+           constructor(id) {
+               this.id = id;
+               this.type = 'deck';
+               this.name = 'Card Deck';
+               this.outcomes = this.generateOutcomes();
+           }
+           
+           generateOutcomes() {
+               const outcomes = [];
+               for(let suit of CARD_SUITS) {
+                   for(let rank of CARD_RANKS) {
+                       outcomes.push(`${rank}${suit}`);
+                   }
+               }
+               return outcomes;
+           }
+           
+           getConfigHTML() {
+               return `<div style="color:#666; font-size:0.9em;">Standard 52-card deck</div>`;
+           }
+           
+           getTheoretical() {
+               const result = {};
+               for(let card of this.outcomes) {
+                   result[card] = 1/52;
+               }
+               return result;
+           }
+           
+           run() {
+               return this.outcomes[Math.floor(Math.random() * 52)];
+           }
+           
+           parseCard(cardStr) {
+               const suit = cardStr.slice(-1);
+               const rank = cardStr.slice(0, -1);
+               return {suit, rank, color: (suit === '♥' || suit === '♦') ? 'red' : 'black'};
+           }
+           
+           async animate(ctx, duration = 600) {
+               const centerX = ctx.canvas.width / 2;
+               const centerY = ctx.canvas.height / 2;
+               const cardW = 70;
+               const cardH = 100;
+               
+               // Shuffle animation (card back moving)
+               for(let i = 0; i < 10; i++) {
+                   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                   
+                   // Draw deck on left
+                   for(let j=0; j<3; j++) {
+                       ctx.fillStyle = '#fff';
+                       ctx.fillRect(20 + j*2, 25 + j*2, cardW, cardH);
+                       ctx.strokeRect(20 + j*2, 25 + j*2, cardW, cardH);
+                       // Back pattern
+                       ctx.fillStyle = '#e53e3e';
+                       ctx.fillRect(25 + j*2, 30 + j*2, cardW-10, cardH-10);
+                   }
+                   
+                   // Moving card
+                   const progress = i / 10;
+                   const x = 20 + (centerX - 20 - cardW/2) * progress;
+                   const y = 25 + (centerY - cardH/2 - 25) * progress;
+                   const rotation = progress * Math.PI * 2;
+                   
+                   ctx.save();
+                   ctx.translate(x + cardW/2, y + cardH/2);
+                   ctx.rotate(rotation);
+                   ctx.fillStyle = '#fff';
+                   ctx.fillRect(-cardW/2, -cardH/2, cardW, cardH);
+                   ctx.strokeRect(-cardW/2, -cardH/2, cardW, cardH);
+                   ctx.fillStyle = '#e53e3e';
+                   ctx.fillRect(-cardW/2+5, -cardH/2+5, cardW-10, cardH-10);
+                   ctx.restore();
+                   
+                   await sleep(50);
+               }
+               
+               const finalCard = this.run();
+               this.draw(ctx, finalCard);
+               return finalCard;
+           }
+           
+           draw(ctx, card) {
+               ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+               
+               const centerX = ctx.canvas.width / 2;
+               const centerY = ctx.canvas.height / 2;
+               const cardW = 70;
+               const cardH = 100;
+               const x = centerX - cardW/2;
+               const y = centerY - cardH/2;
+               
+               if(!card) {
+                   // Draw deck only
+                   for(let j=0; j<3; j++) {
+                       ctx.fillStyle = '#fff';
+                       ctx.fillRect(20 + j*2, 25 + j*2, cardW, cardH);
+                       ctx.strokeRect(20 + j*2, 25 + j*2, cardW, cardH);
+                       ctx.fillStyle = '#e53e3e';
+                       ctx.fillRect(25 + j*2, 30 + j*2, cardW-10, cardH-10);
+                   }
+                   return;
+               }
+               
+               // Draw deck on left
+               for(let j=0; j<3; j++) {
+                   ctx.fillStyle = '#fff';
+                   ctx.fillRect(20 + j*2, 25 + j*2, cardW, cardH);
+                   ctx.strokeRect(20 + j*2, 25 + j*2, cardW, cardH);
+                   ctx.fillStyle = '#e53e3e';
+                   ctx.fillRect(25 + j*2, 30 + j*2, cardW-10, cardH-10);
+               }
+               
+               // Draw selected card
+               const {suit, rank, color} = this.parseCard(card);
+               
+               // Card shadow
+               ctx.fillStyle = 'rgba(0,0,0,0.2)';
+               ctx.fillRect(x+3, y+3, cardW, cardH);
+               
+               // Card background
+               ctx.fillStyle = '#fff';
+               ctx.fillRect(x, y, cardW, cardH);
+               ctx.strokeStyle = '#333';
+               ctx.lineWidth = 2;
+               ctx.strokeRect(x, y, cardW, cardH);
+               
+               // Card content
+               ctx.fillStyle = color;
+               ctx.font = 'bold 20px Arial';
+               ctx.textAlign = 'center';
+               ctx.fillText(rank, x + 15, y + 25);
+               ctx.font = '24px Arial';
+               ctx.fillText(suit, x + 15, y + 50);
+               
+               // Center
+               ctx.font = 'bold 32px Arial';
+               ctx.fillText(suit, centerX, centerY);
+               
+               // Bottom (upside down)
+               ctx.save();
+               ctx.translate(x + cardW - 15, y + cardH - 20);
+               ctx.rotate(Math.PI);
+               ctx.font = 'bold 20px Arial';
+               ctx.fillText(rank, 0, 0);
+               ctx.font = '24px Arial';
+               ctx.fillText(suit, 0, 25);
+               ctx.restore();
+           }
+       }
+       
+       // UI Functions
+       function addComponent(type) {
+           if(components.length >= MAX_COMPONENTS) return;
+           
+           let component;
+           switch(type) {
+               case 'die': component = new DieComponent(componentIdCounter++); break;
+               case 'coin': component = new CoinComponent(componentIdCounter++); break;
+               case 'spinner': component = new SpinnerComponent(componentIdCounter++); break;
+               case 'marbles': component = new MarbleComponent(componentIdCounter++); break;
+               case 'deck': component = new CardComponent(componentIdCounter++); break;
+           }
+           
+           components.push(component);
+           renderComponents();
+           updateVisualization();
+       }
+       
+       function removeComponent(id) {
+           components = components.filter(c => c.id !== id);
+           renderComponents();
+           updateVisualization();
+       }
+       
+       function updateSpinner(id, sectors) {
+           const comp = components.find(c => c.id === id);
+           if(comp) {
+               comp.sectors = parseInt(sectors);
+               comp.updateColors();
+               renderComponents();
+               updateVisualization();
+           }
+       }
+       
+       function updateMarbles(id, color, value) {
+           const comp = components.find(c => c.id === id);
+           if(comp) {
+               comp.marbles[color] = parseInt(value) || 0;
+               comp.updateOutcomes();
+               renderComponents();
+               updateVisualization();
+           }
+       }
+       
+       function resetExperiment() {
+           if(isRunning) {
+               alert("Please wait for the current experiment to finish!");
+               return;
+           }
+           components = [];
+           componentIdCounter = 0;
+           document.getElementById('resultsArea').innerHTML = '';
+           renderComponents();
+           updateVisualization();
+       }
+       
+       function clearResults() {
+           if(isRunning) {
+               alert("Please wait for the current experiment to finish!");
+               return;
+           }
+           document.getElementById('resultsArea').innerHTML = '';
+           // Reset visualization to initial state
+           updateVisualization();
+       }
+       
+       // Speed control
+       document.getElementById('speedRange')?.addEventListener('input', (e) => {
+           const val = parseInt(e.target.value);
+           const labels = {1: 'Very Slow', 3: 'Slow', 5: 'Normal', 7: 'Fast', 10: 'Instant'};
+           document.getElementById('speedLabel').textContent = labels[val] || 'Normal';
+           animationSpeed = val;
+       });
+       
+       function getAnimationDuration() {
+           // Map 1-10 to duration in ms (higher speed = lower duration)
+           const map = {1: 1000, 2: 800, 3: 600, 4: 400, 5: 300, 6: 200, 7: 100, 8: 50, 9: 20, 10: 0};
+           return map[animationSpeed] || 300;
+       }
+       
+       function renderComponents() {
+           const container = document.getElementById('activeComponents');
+           const warning = document.getElementById('limitWarning');
+           const addButtons = document.querySelectorAll('.btn-add');
+           const runBtn = document.getElementById('runBtn');
+           
+           // Update button states
+           if(components.length >= MAX_COMPONENTS) {
+               warning.style.display = 'block';
+               addButtons.forEach(btn => btn.disabled = true);
+           } else {
+               warning.style.display = 'none';
+               addButtons.forEach(btn => btn.disabled = false);
+           }
+           
+           runBtn.disabled = components.length === 0 || isRunning;
+           
+           // Render component cards
+           container.innerHTML = components.map(comp => `
+               <div class="component-card">
+                   <div class="component-header">
+                       <span>${comp.name} #${comp.id + 1}</span>
+                       <button class="btn-remove" onclick="removeComponent(${comp.id})" ${isRunning ? 'disabled' : ''}>×</button>
+                   </div>
+                   ${comp.getConfigHTML()}
+               </div>
+           `).join('');
+       }
+       
+       function updateVisualization() {
+           const container = document.getElementById('visualizationArea');
+           
+           if(components.length === 0) {
+               container.innerHTML = `
+                   <div style="grid-column: 1/-1; text-align: center; color: #a0aec0; padding: 40px;">
+                       Add models to begin your probability experiment!
+                   </div>`;
+               return;
+           }
+           
+           container.innerHTML = components.map((comp, idx) => {
+               const theoretical = comp.getTheoretical();
+               const probHTML = Object.entries(theoretical).slice(0, 6).map(([outcome, prob]) => {
+                   const pct = (prob * 100).toFixed(1);
+                   return `<div class="prob-item" title="${pct}%">${outcome}: ${pct}%</div>`;
+               }).join('');
+               
+               const more = Object.keys(theoretical).length > 6 ? 
+                   `<div style="font-size:0.7em; color:#999;">...and ${Object.keys(theoretical).length - 6} more</div>` : '';
+               
+               return `
+                   <div class="experiment-box" id="box-${comp.id}">
+                       <h3>${comp.name} #${comp.id + 1}</h3>
+                       <div class="canvas-container">
+                           <canvas id="canvas-${comp.id}" width="200" height="150"></canvas>
+                           <div id="counter-${comp.id}" class="trial-counter">0</div>
+                       </div>
+                       <div class="theoretical-prob">
+                           <strong>Theoretical Probability:</strong>
+                           <div class="prob-grid">${probHTML}</div>
+                           ${more}
+                       </div>
+                   </div>
+               `;
+           }).join('');
+           
+           // Initial draw
+           setTimeout(() => {
+               components.forEach(comp => {
+                   const canvas = document.getElementById(`canvas-${comp.id}`);
+                   if(canvas) {
+                       const ctx = canvas.getContext('2d');
+                       if(comp.type === 'die') comp.draw(ctx, 1);
+                       else if(comp.type === 'coin') comp.draw(ctx, 'Heads');
+                       else if(comp.type === 'spinner') comp.draw(ctx, null);
+                       else if(comp.type === 'marbles') comp.draw(ctx, null);
+                       else if(comp.type === 'deck') comp.draw(ctx, null);
+                   }
+               });
+           }, 0);
+       }
+       
+       async function runExperiment() {
+           const trials = parseInt(document.getElementById('trialsInput').value);
+           if(!trials || trials < 1 || trials > 1000) {
+               alert('Please enter a valid number of trials (1-1000)');
+               return;
+           }
+           
+           if(components.length === 0) return;
+           
+           isRunning = true;
+           renderComponents(); // Update UI to disable buttons
+           
+           const results = components.map(comp => ({
+               component: comp,
+               counts: {},
+               total: 0
+           }));
+           
+           const animationStatus = document.getElementById('animationStatus');
+           const statusText = document.getElementById('statusText');
+           const progressFill = document.getElementById('progressFill');
+           const trialDisplay = document.getElementById('trialDisplay');
+           
+           animationStatus.style.display = 'block';
+           document.getElementById('resultsArea').innerHTML = '';
+           
+           const duration = getAnimationDuration();
+           const batchSize = duration === 0 ? 50 : 1; // If instant, batch process
+           
+           // Add animating class to boxes
+           components.forEach(comp => {
+               const box = document.getElementById(`box-${comp.id}`);
+               if(box) box.classList.add('animating');
+           });
+           
+           for(let trial = 1; trial <= trials; trial++) {
+               statusText.textContent = `Running trial ${trial} of ${trials}...`;
+               progressFill.style.width = `${(trial/trials)*100}%`;
+               trialDisplay.textContent = `Trial ${trial}`;
+               
+               // Update counters
+               components.forEach((comp, idx) => {
+                   const counter = document.getElementById(`counter-${comp.id}`);
+                   if(counter) {
+                       counter.textContent = results[idx].total;
+                       counter.classList.add('show');
+                   }
+               });
+               
+               // Run animations for each component
+               for(let i = 0; i < components.length; i++) {
+                   const comp = components[i];
+                   const canvas = document.getElementById(`canvas-${comp.id}`);
+                   if(!canvas) continue;
+                   
+                   const ctx = canvas.getContext('2d');
+                   let outcome;
+                   
+                   if(duration === 0) {
+                       // Instant mode
+                       outcome = comp.run();
+                       comp.draw(ctx, outcome);
+                   } else {
+                       // Animated mode
+                       outcome = await comp.animate(ctx, duration);
+                   }
+                   
+                   if(outcome !== null) {
+                       results[i].counts[outcome] = (results[i].counts[outcome] || 0) + 1;
+                       results[i].total++;
+                   }
+               }
+               
+               // Small delay between trials if animating
+               if(duration > 0 && trial < trials) {
+                   await sleep(Math.max(50, duration / 3));
+               }
+           }
+           
+           // Remove animating class
+           components.forEach(comp => {
+               const box = document.getElementById(`box-${comp.id}`);
+               if(box) box.classList.remove('animating');
+               const counter = document.getElementById(`counter-${comp.id}`);
+               if(counter) counter.classList.remove('show');
+           });
+           
+           animationStatus.style.display = 'none';
+           displayResults(results, trials);
+           
+           isRunning = false;
+           renderComponents(); // Re-enable buttons
+       }
+       
+       function displayResults(results, trials) {
+           const container = document.getElementById('resultsArea');
+           
+           let html = `
+               <div class="results-container">
+                   <div class="section-title">Experimental Results (${trials} trials)</div>
+                   <div class="results-grid">
+           `;
+           
+           results.forEach((res, idx) => {
+               const comp = res.component;
+               const theoretical = comp.getTheoretical();
+               
+               html += `
+                   <div class="result-card">
+                       <h4>${comp.name} #${comp.id + 1}</h4>
+               `;
+               
+               // Create bar charts comparing theoretical vs experimental
+               const allOutcomes = new Set([...Object.keys(theoretical), ...Object.keys(res.counts)]);
+               
+               // Sort: numeric if possible, otherwise alphabetical
+               const sortedOutcomes = Array.from(allOutcomes).sort((a,b) => {
+                   const numA = parseInt(a);
+                   const numB = parseInt(b);
+                   if(!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                   return String(a).localeCompare(String(b));
+               });
+               
+               // Limit display if too many outcomes (like cards)
+               const displayOutcomes = sortedOutcomes.length > 10 ? sortedOutcomes.slice(0, 10) : sortedOutcomes;
+               const hasMore = sortedOutcomes.length > 10;
+               
+               html += `<div style="margin-bottom:15px;">`;
+               displayOutcomes.forEach(outcome => {
+                   const theoPct = (theoretical[outcome] || 0) * 100;
+                   const expCount = res.counts[outcome] || 0;
+                   const expPct = (expCount / trials) * 100;
+                   
+                   html += `
+                       <div style="margin:8px 0;">
+                           <div style="display:flex; justify-content:space-between; font-size:0.9em; margin-bottom:3px;">
+                               <span><strong>${outcome}</strong>: ${expCount}</span>
+                               <span>Exp: ${expPct.toFixed(1)}% | Theo: ${theoPct.toFixed(1)}%</span>
+                           </div>
+                           <div class="bar-wrapper" style="height:24px;">
+                               <div class="bar-theoretical" style="width:${theoPct}%;"></div>
+                               <div class="bar-experimental" style="width:${expPct}%; opacity:0.7;"></div>
+                           </div>
+                       </div>
+                   `;
+               });
+               
+               if(hasMore) {
+                   html += `<div style="text-align:center; color:#999; font-size:0.8em; margin-top:5px;">
+                       ... and ${sortedOutcomes.length - 10} more outcomes
+                   </div>`;
+               }
+               
+               html += `</div>`;
+               
+               // Summary stats
+               const totalObserved = Object.values(res.counts).reduce((a,b)=>a+b,0);
+               html += `
+                   <div style="background:#edf2f7; padding:10px; border-radius:8px; font-size:0.9em;">
+                       <strong>Total trials recorded:</strong> ${totalObserved}
+                   </div>
+               </div>`;
+           });
+           
+           html += `</div>`; // Close results-grid
+           
+           // Overall summary
+           html += `
+               <div class="stats-summary">
+                   <strong>📊 Analysis Tip:</strong> Compare the solid bars (experimental) with the dashed outlines (theoretical). 
+                   The more trials you run, the closer they should match! This is called the <em>Law of Large Numbers</em>.
+                   ${animationSpeed < 5 ? '<br><br>💡 <em>Try running more trials or increasing speed to see the pattern emerge faster!</em>' : ''}
+               </div>
+           `;
+           
+           html += `</div>`; // Close results-container
+           
+           container.innerHTML = html;
+       }
+       
+       // Initialize
+       renderComponents();
+   </script>
+</body>
+</html>
