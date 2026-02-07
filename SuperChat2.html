@@ -2460,19 +2460,30 @@ When generating Python (which is rare):
             }
 
         } catch (error) {
-            if (error.name === 'AbortError') {
-                aiContentDiv.innerHTML += `<br><span style="color:orange">[Stopped by user]</span>`;
-            } else {
-                if(aiContentDiv.innerHTML.includes('fa-spinner')) {
-                     aiContentDiv.innerHTML = '';                }
-                aiContentDiv.innerHTML += `<div style="color:red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin-top: 5px;"><strong>Error:</strong> ${error.message}</div>`;
+            if (aiContentDiv) {
+                if (error.name === 'AbortError') {
+                    aiContentDiv.innerHTML += `<br><span style="color:orange">[Stopped by user]</span>`;
+                } else {
+                    if(aiContentDiv.innerHTML.includes('fa-spinner')) {
+                         aiContentDiv.innerHTML = '';                
+                    }
+                    aiContentDiv.innerHTML += `<div style="color:red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin-top: 5px;"><strong>Error:</strong> ${error.message}</div>`;
+                }
             }
         } finally {
-            saveConversationToStorage();
+            // CRITICAL: Reset UI state FIRST before any potentially failing operations
             isGenerating = false;
             sendBtn.style.display = 'inline-block';
             stopBtn.style.display = 'none';
             abortController = null;
+            
+            // Then attempt to save (non-critical)
+            try {
+                saveConversationToStorage();
+            } catch (e) {
+                console.error("Failed to save conversation:", e);
+                showNotification("Warning: Could not save to storage");
+            }
         }
     }
 
