@@ -327,20 +327,67 @@
             border-radius: 8px;
             margin-bottom: 15px;
             font-size: 0.85rem;
+            transition: all 0.3s ease;
         }
+
+        .byop-info.collapsed {
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+
+        .byop-info.collapsed .byop-content {
+            display: none;
+        }
+
+        .byop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
         .byop-info h4 {
-            margin: 0 0 8px 0;
+            margin: 0;
             font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
-        .byop-info p {
-            margin: 0 0 8px 0;
-            line-height: 1.4;
+
+        .byop-toggle {
+            background: none;
+            border: none;
+            color: var(--byop-text);
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            border-radius: 4px;
+            margin-left: 10px;
         }
+
+        .byop-toggle:hover {
+            opacity: 1;
+            background: rgba(0,0,0,0.1);
+        }
+
+        .byop-content {
+            margin-top: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .byop-info a {
             color: var(--byop-text);
             text-decoration: underline;
             font-weight: bold;
-        }
+        }}
 
         /* Audio Controls */
         .audio-controls { 
@@ -898,10 +945,17 @@
             <button id="theme-toggle" type="button" style="width:100%; padding:8px; cursor:pointer;">Switch to Dark Mode</button>
         </div>
 
-        <div class="byop-info">
-            <h4><i class="fas fa-flower"></i> Bring Your Own Pollen (BYOP)</h4>
-            <p>This app uses a shared API key by default. To access premium models (marked with 🔒), enter your own API key from <a href="https://enter.pollinations.ai" target="_blank">enter.pollinations.ai</a>.</p>
-            <p style="font-size: 0.8em; margin-top: 8px;">With your own key, you pay for your own usage and unlock premium models.</p>
+        <div class="byop-info" id="byop-section">
+            <div class="byop-header">
+                <h4><i class="fas fa-flower"></i> Bring Your Own Pollen (BYOP)</h4>
+                <button class="byop-toggle" id="byop-toggle" title="Toggle BYOP Info">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+            </div>
+            <div class="byop-content" id="byop-content">
+                <p>This app uses a shared API key by default. To access premium models (marked with 🔒), enter your own API key from <a href="https://enter.pollinations.ai" target="_blank">enter.pollinations.ai</a>.</p>
+                <p style="font-size: 0.8em; margin-top: 8px;">With your own key, you pay for your own usage and unlock premium models.</p>
+            </div>
         </div>
 
         <div class="settings-group">
@@ -3519,6 +3573,39 @@ When generating Python (which is rare):
         
         showNotification('Image loaded into studio');
     };
+
+    // --- BYOP Collapse Functionality ---
+    const byopSection = document.getElementById('byop-section');
+    const byopToggle = document.getElementById('byop-toggle');
+    
+    // Load saved state
+    const byopCollapsed = localStorage.getItem('byopCollapsed') === 'true';
+    if (byopCollapsed) {
+        byopSection.classList.add('collapsed');
+        if (byopToggle) byopToggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
+    }
+    
+    if (byopToggle) {
+        byopToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isCollapsed = byopSection.classList.toggle('collapsed');
+            localStorage.setItem('byopCollapsed', isCollapsed);
+            this.innerHTML = isCollapsed ? '<i class="fas fa-chevron-down"></i>' : '<i class="fas fa-chevron-up"></i>';
+        });
+    }
+    
+    // Also allow clicking the header to toggle
+    if (byopSection) {
+        byopSection.querySelector('.byop-header').addEventListener('click', function(e) {
+            if (e.target === this || e.target.tagName === 'H4') {
+                byopToggle.click();
+            }
+        });
+    }
+
+    // ==========================================
+    // === MEDIA STUDIO FUNCTIONS START HERE ===
+    // ==========================================
 
     // ==========================================
     // === MEDIA STUDIO FUNCTIONS END HERE ===
