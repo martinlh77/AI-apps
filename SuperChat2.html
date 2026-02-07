@@ -2267,11 +2267,22 @@ marked.use({
         const emotion = document.getElementById('voice-style').value;
         const rawSystemMsg = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
         const customSystemMessage = rawSystemMsg + ` 
-When generating Python code for visualization:
-- DO NOT use turtle, tkinter, pygame, or OpenCV (they don't work in browsers)
-- DO use matplotlib (plt.show() not needed, plots auto-display), PIL/Pillow, or plotly
-- For matplotlib: just create the plot, it will be captured automatically
-- For drawing: use PIL ImageDraw (saves to buffer/display automatically)`;
+
+**Response Format Policy**
+DEFAULT TO TEXT. Only generate Python code when:
+1. The user explicitly requests Python code, OR  
+2. Complex data analysis/calculation is required that cannot be shown in a markdown table
+
+**Python Rules (Browser Environment - Rare)**
+When generating Python (which is rare):
+- ALLOWED: matplotlib (never call plt.show(), plots auto-display), PIL/Pillow (save to buffer/images display automatically), plotly, numpy, pandas
+- FORBIDDEN: turtle, tkinter, pygame, OpenCV (no browser support, will fail)
+- Do not offer to write Python unless the user asks for it
+
+**When NOT to Code**
+- Simple math: calculate and provide the answer directly
+- Small datasets: use markdown tables, not matplotlib charts
+- Concepts: explain in text, don't write demonstration scripts`;
         const systemMsg = {
             role: 'system',
             content: `${customSystemMessage} ${emotion ? 'Voice and Response Style/Emotion: ' + emotion : ''}`,
