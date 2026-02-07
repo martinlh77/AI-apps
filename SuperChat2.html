@@ -10,6 +10,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
     <style>
         :root {
             --bg-color: #f4f4f9;
@@ -2266,21 +2270,46 @@ marked.use({
 
         const emotion = document.getElementById('voice-style').value;
         const rawSystemMsg = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
-        const customSystemMessage = rawSystemMsg + ` 
+const customSystemMessage = rawSystemMsg + ` 
 
 **Response Format Policy**
 DEFAULT TO TEXT. Only generate Python code when:
 1. The user explicitly requests Python code, OR  
 2. Complex data analysis/calculation is required that cannot be shown in a markdown table
 
-**Python Rules (Browser Environment - Rare)**
+**Mathematical Notation Rules (CRITICAL - NO LATEX BY DEFAULT)**
+- DEFAULT TO PLAIN TEXT/Unicode for ALL math expressions (99.9% of the time)
+- **EXPLICITLY FORBIDDEN in plain text:** \\frac, \\sqrt, \\sum, \\int, \\prod, \\alpha, \\beta, \\pi, \\Delta, \\to, \\infty, \\pm, and ANY backslash-prefixed commands
+- **Fractions:** Use (a/b), a÷b, decimals, or Unicode fractions (½, ¾, ⅔). NEVER write \\frac{a}{b} or \\frac12
+- **Square roots:** Use sqrt(x), x^(1/2), x^0.5, or Unicode √. NEVER write \\sqrt{x} or \\sqrt(x)
+- **Exponents:** Use caret ^ (x^2, x^3, x^-1). Never use ^{ } notation in plain text.
+- **Greek letters:** Spell out (alpha, beta, pi, sigma, delta) or use Unicode (α, β, π, σ, δ, Δ)
+- **Integrals:** Use Unicode ∫ or write "integral of... from... to..."
+- **Summation:** Use Unicode ∑ or write "sum of..."
+- **Inequalities:** Use Unicode ≤, ≥, ≠, ±, →, ≈, ∞
+- **Subscripts:** Use underscore (x_1, x_2, x_i) - this is acceptable ASCII notation
+- **NEVER use $...$ or $$...$$ wrappers unless explicitly requested**
+
+**When User Explicitly Requests LaTeX (Rare - <0.1%)**
+ONLY if user says "use LaTeX", "math mode", "equation formatting", or "typeset equations":
+- Inline: Use single dollar signs tightly: $E=mc^2$, $x = y^2$ (NO spaces between $ and content)
+- Display blocks: Use double dollar signs on their own lines:
+  $$
+  x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}
+  $$
+- **CRITICAL - Use single backslashes:** Write \\frac, \\sqrt, \\sum, \\int (these become \\frac, \\sqrt in output)
+- **DO NOT use double backslashes:** Never write \\\\frac or \\\\sqrt (this causes the "extra slashes" bug)
+- **DO NOT escape dollar signs:** Use $ not \$
+- **DO NOT wrap LaTeX in markdown code blocks** unless user asks for "LaTeX code"
+
+**Python Rules (Browser Environment - Rare)**  
 When generating Python (which is rare):
 - ALLOWED: matplotlib (never call plt.show(), plots auto-display), PIL/Pillow (save to buffer/images display automatically), plotly, numpy, pandas
 - FORBIDDEN: turtle, tkinter, pygame, OpenCV (no browser support, will fail)
 - Do not offer to write Python unless the user asks for it
 
 **When NOT to Code**
-- Simple math: calculate and provide the answer directly
+- Simple math: calculate and provide the answer directly in plain text
 - Small datasets: use markdown tables, not matplotlib charts
 - Concepts: explain in text, don't write demonstration scripts`;
         const systemMsg = {
@@ -2407,6 +2436,21 @@ When generating Python (which is rare):
 
             conversationHistory.push({ role: 'assistant', content: accumulatedText });
 
+            // Render LaTeX on the completed message
+            if (typeof renderMathInElement !== 'undefined') {
+                const aiWrapper = document.getElementById(aiMsgId);
+                if (aiWrapper) {
+                    renderMathInElement(aiWrapper, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false}
+                        ],
+                        throwOnError: false,
+                        strict: false
+                    });
+                }
+            }
+
             const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
             if (audioBtn) {
                 audioBtn.style.display = 'inline-block';
@@ -2485,10 +2529,23 @@ When generating Python (which is rare):
             </div>
         `;
         
-        chatContainer.appendChild(wrapper);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
+    chatContainer.appendChild(wrapper);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+    // Render LaTeX math if present (only for AI messages, only when KaTeX loaded)
+    if (role === 'ai' && typeof renderMathInElement !== 'undefined') {
+        setTimeout(() => {
+            renderMathInElement(wrapper, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false,
+                strict: false
+            });
+        }, 50);
     }
-
+}
     function appendPlaceholder(role, id, contentId) {
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper ${role}`;
