@@ -1397,17 +1397,17 @@
            
            displayMessage(`Sending generation request for model: **${model}**...`, 'info');
 
-           const isVideoModel = VIDEO_MODELS.includes(model);
-
            if (isVideoModel) {
                // SSE Streaming for video - shows progress instead of blank screen
                try {
                    await new Promise((resolve, reject) => {
-                       const evtSource = new EventSource(`${fullUrl}&key=${getActiveApiKey()}`);
+                       const sseUrl = `${fullUrl}&key=${getActiveApiKey()}`;
+                       const evtSource = new EventSource(sseUrl);
                        
                        evtSource.onmessage = (event) => {
                            try {
                                const data = JSON.parse(event.data);
+                               console.log('SSE event:', data);
                                
                                if (data.progress !== undefined) {
                                    placeholderText.innerHTML = `Generating video... ${Math.round(data.progress)}%`;
@@ -1425,13 +1425,14 @@
                                    reject(new Error(data.error));
                                }
                            } catch (e) {
-                               // Ignore non-JSON events
+                               console.log('SSE parse error:', event.data);
                            }
                        };
                        
-                       evtSource.onerror = () => {
+                       evtSource.onerror = (e) => {
+                           console.error('EventSource error:', e);
                            evtSource.close();
-                           reject(new Error('Video streaming connection failed'));
+                           reject(new Error('Video streaming connection failed. The server may not support SSE for this model, or there is a network issue.'));
                        };
                    });
                } catch (error) {
