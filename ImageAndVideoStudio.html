@@ -1399,10 +1399,14 @@
 
            if (isVideoModel) {
                // SSE Streaming for video - shows progress instead of blank screen
+               // Note: Some models (grok-video) don't support SSE and return video/mp4 directly
+               let useFetchFallback = false;
+               
                try {
                    await new Promise((resolve, reject) => {
                        const sseUrl = `${fullUrl}&key=${getActiveApiKey()}`;
                        const evtSource = new EventSource(sseUrl);
+                       let fallbackTriggered = false;
                        
                        evtSource.onmessage = (event) => {
                            try {
@@ -1430,15 +1434,65 @@
                        };
                        
                        evtSource.onerror = (e) => {
-                           console.error('EventSource error:', e);
-                           evtSource.close();
-                           reject(new Error('Video streaming connection failed. The server may not support SSE for this model, or there is a network issue.'));
+                           console.error('EventSource error - likely non-SSE model:', e);
+                           // If we get a MIME type error (like video/mp4 instead of text/event-stream),
+                           // it means this model doesn't support SSE (e.g., grok-video)
+                           if (!fallbackTriggered) {
+                               fallbackTriggered = true;
+                               evtSource.close();
+                               useFetchFallback = true;
+                               resolve(); // Resolve to trigger fallback below
+                           }
                        };
                    });
                } catch (error) {
                    displayMessage(`Generation failed: ${error.message}`, 'error');
                    toggleLoading(false);
                    return;
+               }
+               
+               // Fallback to standard fetch for models that don't support SSE (grok-video)
+               if (useFetchFallback) {
+                   console.log('Falling back to standard fetch for non-SSE video model');
+                   const maxRetries = 5;
+                   let delay = 2000; 
+                   let responseData = null;
+                   let fetched = false;
+
+                   for (let i = 0; i < maxRetries; i++) {
+                       try {
+                           placeholderText.innerHTML = 'Generating video... (this model does not support progress streaming)';
+                           placeholderText.style.display = 'block';
+                           
+                           const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
+                           if (!response.ok) throw new Error(await response.text());
+
+                           const contentType = response.headers.get("content-type");
+                           if (contentType && contentType.includes("application/json")) {
+                               responseData = await response.json();
+                               generatedImageUrl = responseData.url;
+                           } else if (contentType && contentType.includes("video/")) {
+                               generatedImageUrl = URL.createObjectURL(await response.blob());
+                           } else {
+                                generatedImageUrl = response.url;
+                           }
+                           fetched = true;
+                           break;
+                       } catch (error) {
+                           if (i === maxRetries - 1) {
+                               displayMessage(`Generation failed: ${error.message}`, 'error');
+                               toggleLoading(false);
+                               return;
+                           }
+                           await new Promise(r => setTimeout(r, delay));
+                           delay *= 1.5;
+                       }
+                   }
+                   
+                   if (!fetched) {
+                       toggleLoading(false);
+                       return;
+                   }
                }
            } else {
                // Standard fetch for images (keep existing retry logic)
