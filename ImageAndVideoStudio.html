@@ -1397,33 +1397,78 @@
            
            displayMessage(`Sending generation request for model: **${model}**...`, 'info');
 
-           const maxRetries = 5;
-           let delay = 2000; 
-           let responseData = null;
+           const isVideoModel = VIDEO_MODELS.includes(model);
 
-           for (let i = 0; i < maxRetries; i++) {
+           if (isVideoModel) {
+               // SSE Streaming for video - shows progress instead of blank screen
                try {
-                   const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
-                   if (!response.ok) throw new Error(await response.text());
-
-                   const contentType = response.headers.get("content-type");
-                   if (contentType && contentType.includes("application/json")) {
-                       responseData = await response.json();
-                       generatedImageUrl = responseData.url;
-                   } else if (contentType && contentType.includes("image/") || contentType.includes("video/")) {
-                       generatedImageUrl = URL.createObjectURL(await response.blob());
-                   } else {
-                        generatedImageUrl = response.url;
-                   }
-                   break;
+                   await new Promise((resolve, reject) => {
+                       const evtSource = new EventSource(`${fullUrl}&key=${getActiveApiKey()}`);
+                       
+                       evtSource.onmessage = (event) => {
+                           try {
+                               const data = JSON.parse(event.data);
+                               
+                               if (data.progress !== undefined) {
+                                   placeholderText.innerHTML = `Generating video... ${Math.round(data.progress)}%`;
+                                   placeholderText.style.display = 'block';
+                               }
+                               
+                               if (data.url) {
+                                   generatedImageUrl = data.url;
+                                   evtSource.close();
+                                   resolve();
+                               }
+                               
+                               if (data.error) {
+                                   evtSource.close();
+                                   reject(new Error(data.error));
+                               }
+                           } catch (e) {
+                               // Ignore non-JSON events
+                           }
+                       };
+                       
+                       evtSource.onerror = () => {
+                           evtSource.close();
+                           reject(new Error('Video streaming connection failed'));
+                       };
+                   });
                } catch (error) {
-                   if (i === maxRetries - 1) {
-                       displayMessage(`Generation failed: ${error.message}`, 'error');
-                       toggleLoading(false);
-                       return;
+                   displayMessage(`Generation failed: ${error.message}`, 'error');
+                   toggleLoading(false);
+                   return;
+               }
+           } else {
+               // Standard fetch for images (keep existing retry logic)
+               const maxRetries = 5;
+               let delay = 2000; 
+               let responseData = null;
+
+               for (let i = 0; i < maxRetries; i++) {
+                   try {
+                       const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
+                       if (!response.ok) throw new Error(await response.text());
+
+                       const contentType = response.headers.get("content-type");
+                       if (contentType && contentType.includes("application/json")) {
+                           responseData = await response.json();
+                           generatedImageUrl = responseData.url;
+                       } else if (contentType && contentType.includes("image/") || contentType.includes("video/")) {
+                           generatedImageUrl = URL.createObjectURL(await response.blob());
+                       } else {
+                            generatedImageUrl = response.url;
+                       }
+                       break;
+                   } catch (error) {
+                       if (i === maxRetries - 1) {
+                           displayMessage(`Generation failed: ${error.message}`, 'error');
+                           toggleLoading(false);
+                           return;
+                       }
+                       await new Promise(r => setTimeout(r, delay));
+                       delay *= 1.5;
                    }
-                   await new Promise(r => setTimeout(r, delay));
-                   delay *= 1.5;
                }
            }
 
@@ -1566,7 +1611,3 @@
    </script>
 </body>
 </html>
-
-
-
-
