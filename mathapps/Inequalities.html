@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linear Inequality Practice - 7th Grade</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 30px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 2.2em;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        select, button {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        select {
+            background: white;
+            color: #667eea;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.secondary {
+            background: white;
+            color: #667eea;
+        }
+        
+        button.secondary:hover {
+            background: #f0f4ff;
+        }
+        
+        button.active {
+            background: #48bb78;
+            border-color: #48bb78;
+            color: white;
+        }
+        
+        #problemDisplay {
+            background: #f7fafc;
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 8px;
+            font-size: 1.4em;
+            text-align: center;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        #stepsContainer {
+            margin: 25px 0;
+        }
+        
+        .step {
+            background: #edf2f7;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .step-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .math-display {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 1.1em;
+        }
+        
+        input[type="text"], input[type="number"] {
+            padding: 8px 12px;
+            border: 2px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 16px;
+            width: 80px;
+            text-align: center;
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        select.inequality-select {
+            width: 70px;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        #graphSection {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        #graphSection h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        canvas {
+            border: 3px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            cursor: crosshair;
+            max-width: 100%;
+            touch-action: none;
+        }
+        
+        .tools {
+            margin: 15px 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .hint {
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        #feedback {
+            margin: 25px 0;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        #feedback.success {
+            background: #c6f6d5;
+            border-left: 5px solid #48bb78;
+            color: #22543d;
+            display: block;
+        }
+        
+        #feedback.error {
+            background: #fed7d7;
+            border-left: 5px solid #f56565;
+            color: #742a2a;
+            display: block;
+        }
+        
+        #feedback.info {
+            background: #bee3f8;
+            border-left: 5px solid #4299e1;
+            color: #2a4365;
+            display: block;
+        }
+        
+        #chatSection {
+            margin-top: 40px;
+            border-top: 2px solid #e2e8f0;
+            padding-top: 30px;
+        }
+        
+        #chatSection h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        #chatHistory {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            height: 200px;
+            overflow-y: auto;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+        
+        .message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .message.tutor {
+            background: #e2e8f0;
+            color: #2d3748;
+            margin-right: auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .chat-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #chatInput {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .inequality-hint {
+            color: #667eea;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Linear Inequality Practice</h1>
+            <p style="color: #718096; margin-bottom: 15px;">Master solving and graphing inequalities step by step</p>
+            <div class="controls">
+                <select id="problemType">
+                    <option value="one-step">One-Step Inequalities</option>
+                    <option value="two-step">Two-Step Inequalities</option>
+                    <option value="mixed">Mixed Practice</option>
+                </select>
+                <button id="newProblem">New Problem</button>
+            </div>
+        </header>
+        
+        <div id="problemDisplay">Click "New Problem" to start!</div>
+        
+        <div id="stepsContainer"></div>
+        
+        <div id="graphSection" style="display: none;">
+            <h3>Graph Your Solution on the Number Line</h3>
+            <canvas id="numberLine" width="800" height="200"></canvas>
+            <div class="tools">
+                <button id="toolOpen" class="secondary" title="Click then click on number line">Open Circle ○</button>
+                <button id="toolClosed" class="secondary" title="Click then click on number line">Closed Circle ●</button>
+                <button id="toolLineLeft" class="secondary">Shade Left ←</button>
+                <button id="toolLineRight" class="secondary">Shade Right →</button>
+                <button id="toolClear" class="secondary" style="color: #e53e3e; border-color: #e53e3e;">Clear All</button>
+            </div>
+            <p class="hint">Select a tool, then click on the number line to place it. The circle must be at the boundary value.</p>
+        </div>
+        
+        <div class="actions">
+            <button id="checkWork" style="display: none;">Check My Work</button>
+            <button id="showAnswer" class="secondary" style="display: none;">Show Answer</button>
+        </div>
+        
+        <div id="feedback"></div>
+        
+        <div id="answerSection" style="display: none; margin: 25px 0; padding: 20px; background: #fffaf0; border-left: 5px solid #ed8936; border-radius: 8px;">
+            <h4 style="color: #c05621; margin-bottom: 10px;">Solution:</h4>
+            <div id="answerContent"></div>
+        </div>
+        
+        <div id="chatSection" style="display: none;">
+            <h3>Ask About This Problem</h3>
+            <div id="chatHistory"></div>
+            <div class="chat-controls">
+                <input type="text" id="chatInput" placeholder="e.g., Why do we flip the sign when dividing by a negative?">
+                <button id="chatSend">Ask</button>
+            </div>
+            <p style="font-size: 0.85em; color: #a0aec0; margin-top: 10px;">
+                Ask questions about solving this problem or request one real-life example.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'pk_WlWG5xAS9Wm060JP';
+        const API_ENDPOINT = 'https://gen.pollinations.ai/v1/chat/completions';
+        
+        class InequalityApp {
+            constructor() {
+                this.currentProblem = null;
+                this.drawingState = {
+                    circle: null,
+                    line: null
+                };
+                this.currentTool = null;
+                this.canvas = document.getElementById('numberLine');
+                this.ctx = this.canvas.getContext('2d');
+                this.scale = 40;
+                this.centerX = this.canvas.width / 2;
+                this.centerY = this.canvas.height / 2;
+                
+                this.init();
+            }
+            
+            init() {
+                document.getElementById('newProblem').addEventListener('click', () => this.generateNewProblem());
+                document.getElementById('checkWork').addEventListener('click', () => this.checkWork());
+                document.getElementById('showAnswer').addEventListener('click', () => this.showAnswer());
+                
+                document.getElementById('toolOpen').addEventListener('click', () => this.setTool('open'));
+                document.getElementById('toolClosed').addEventListener('click', () => this.setTool('closed'));
+                document.getElementById('toolLineLeft').addEventListener('click', () => this.addLine('left'));
+                document.getElementById('toolLineRight').addEventListener('click', () => this.addLine('right'));
+                document.getElementById('toolClear').addEventListener('click', () => this.clearDrawing());
+                
+                this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+                
+                document.getElementById('chatSend').addEventListener('click', () => this.sendChat());
+                document.getElementById('chatInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendChat();
+                });
+                
+                this.drawNumberLine();
+            }
+            
+            generateNewProblem() {
+                const type = document.getElementById('problemType').value;
+                const problem = this.createProblem(type);
+                this.currentProblem = problem;
+                
+                this.clearDrawing();
+                document.getElementById('feedback').style.display = 'none';
+                document.getElementById('answerSection').style.display = 'none';
+                document.getElementById('graphSection').style.display = 'block';
+                document.getElementById('checkWork').style.display = 'inline-block';
+                document.getElementById('showAnswer').style.display = 'inline-block';
+                document.getElementById('chatSection').style.display = 'block';
+                document.getElementById('chatHistory').innerHTML = '';
+                
+                document.getElementById('problemDisplay').textContent = `Solve: ${this.formatForDisplay(problem.text)}`;
+                
+                this.setupSteps(problem);
+                this.drawNumberLine();
+            }
+            
+            formatForDisplay(text) {
+                return text.replace(/<=/g, '≤').replace(/>=/g, '≥');
+            }
+            
+            createProblem(type) {
+                if (type === 'mixed') {
+                    type = Math.random() < 0.5 ? 'one-step' : 'two-step';
+                }
+                
+                const variables = ['x', 'n', 'y'];
+                const varName = variables[Math.floor(Math.random() * variables.length)];
+                
+                if (type === 'one-step') {
+                    return this.createOneStep(varName);
+                } else {
+                    return this.createTwoStep(varName);
+                }
+            }
+            
+            getSymbolPair() {
+                const symbols = [
+                    { sym: '<', opp: '>', flip: '>' },
+                    { sym: '>', opp: '<', flip: '<' },
+                    { sym: '<=', opp: '>=', flip: '>=' },
+                    { sym: '>=', opp: '<=', flip: '<=' }
+                ];
+                return symbols[Math.floor(Math.random() * symbols.length)];
+            }
+            
+            createOneStep(varName) {
+                const operations = ['add', 'sub', 'mul', 'div', 'mul_neg', 'div_neg'];
+                const op = operations[Math.floor(Math.random() * operations.length)];
+                const symbolObj = this.getSymbolPair();
+                const symbol = symbolObj.sym;
+                let text, solution, steps = [];
+                
+                let a, b, result;
+                
+                switch(op) {
+                    case 'add':
+                        a = this.getSimpleNumber(1, 9);
+                        result = this.getSimpleNumber(-8, 8);
+                        b = result + a;
+                        text = `${varName} + ${this.formatNumber(a)} ${symbol} ${this.formatNumber(b)}`;
+                        steps = [{
+                            hint: `Start with ${a > 0 ? '+' + a : a} on the left side`,
+                            leftSide: varName,
+                            answer: result,
+                            operator: symbol,
+                            flipped: false
+                        }];
+                        solution = result;
+                        break;
+                        
+                    case 'sub':
+                        a = this.getSimpleNumber(1, 9);
+                        result = this.getSimpleNumber(-8, 8);
+                        b = result - a;
+                        text = `${varName} - ${this.formatNumber(a)} ${symbol} ${this.formatNumber(b)}`;
+                        steps = [{
+                            hint: `Start with -${a} on the left side`,
+                            leftSide: varName,
+                            answer: result,
+                            operator: symbol,
+                            flipped: false
+                        }];
+                        solution = result;
+                        break;
+                        
+                    case 'mul':
+                        a = this.getSimpleNumber(2, 5);
+                        result = this.getSimpleNumber(-5, 5);
+                        if (result === 0) result = 3;
+                        b = a * result;
+                        text = `${a}${varName} ${symbol} ${this.formatNumber(b)}`;
+                        steps = [{
+                            hint: `Start with the coefficient ${a}`,
+                            leftSide: varName,
+                            answer: result,
+                            operator: symbol,
+                            flipped: false
+                        }];
+                        solution = result;
+                        break;
+                        
+                    case 'div':
+                        a = [2, 3, 4, 0.5][Math.floor(Math.random() * 4)];
+                        result = this.getSimpleNumber(-8, 8);
+                        if (result === 0) result = 4;
+                        b = result / a;
+                        if (!this.isCleanNumber(b)) {
+                            return this.createOneStep(varName);
+                        }
+                        text = `${varName} ÷ ${this.formatNumber(a)} ${symbol} ${this.formatNumber(b)}`;
+                        steps = [{
+                            hint: `Start with ÷${this.formatNumber(a)}`,
+                            leftSide: varName,
+                            answer: result,
+                            operator: symbol,
+                            flipped: false
+                        }];
+                        solution = result;
+                        break;
+                        
+                    case 'mul_neg':
+                        a = -this.getSimpleNumber(2, 5);
+                        result = this.getSimpleNumber(-5, 5);
+                        if (result === 0) result = 3;
+                        b = a * result;
+                        text = `${a}${varName} ${symbol} ${this.formatNumber(b)}`;
+                        steps = [{
+                            hint: `Start with the coefficient ${a}`,
+                            leftSide: varName,
+                            answer: result,
+                            operator: symbolObj.flip,
+                            flipped: true,
+                            note: `Flip the inequality when multiplying or dividing by a negative!`
+                        }];
+                        solution = result;
+                        break;
+                        
+                    case 'div_neg':
+                        a = [-2, -3, -4, -0.5][Math.floor(Math.random() * 4)];
+                        result = this.getSimpleNumber(-8, 8);
+                        if (result === 0) result = 4;
+                        b = result / a;
+                        if (!this.isCleanNumber(b)) {
+                            return this.createOneStep(varName);
+                        }
+                        text = `${varName} ÷ ${this.formatNumber(a)} ${symbol} ${this.formatNumber(b)}`;
+                        steps = [{
+                            hint: `Start with ÷${this.formatNumber(a)}`,
+                            leftSide: varName,
+                            answer: result,
+                            operator: symbolObj.flip,
+                            flipped: true,
+                            note: `Flip the inequality when multiplying or dividing by a negative!`
+                        }];
+                        solution = result;
+                        break;
+                }
+                
+                const finalSym = steps[0].operator;
+                const isOpen = finalSym === '<' || finalSym === '>';
+                const direction = finalSym.includes('<') ? 'left' : 'right';
+                
+                return {
+                    text,
+                    solution,
+                    boundary: solution,
+                    isOpen: isOpen,
+                    direction: direction,
+                    steps,
+                    varName,
+                    type: 'one-step',
+                    originalSymbol: symbol
+                };
+            }
+            
+            createTwoStep(varName) {
+                const symbolObj = this.getSymbolPair();
+                const symbol = symbolObj.sym;
+                
+                let a, b, c, solution;
+                let aSign = Math.random() < 0.4 ? -1 : 1;
+                let op1 = Math.random() < 0.5 ? 'add' : 'sub';
+                
+                a = this.getSimpleNumber(2, 4) * aSign;
+                solution = this.getSimpleNumber(-6, 6);
+                if (solution === 0) solution = 2;
+                b = this.getSimpleNumber(1, 8);
+                
+                let leftSideStep1 = a * solution;
+                
+                if (op1 === 'add') {
+                    c = leftSideStep1 + b;
+                } else {
+                    c = leftSideStep1 - b;
+                    b = -b;
+                }
+                
+                if (!this.isCleanNumber(c)) {
+                    return this.createTwoStep(varName);
+                }
+                
+                let text;
+                const aDisplay = a < 0 ? `-${Math.abs(a)}` : a;
+                if (Math.abs(a) === 0.5) {
+                    if (b > 0) {
+                        text = `½${varName} + ${b} ${symbol} ${c}`;
+                    } else if (b < 0) {
+                        text = `½${varName} - ${Math.abs(b)} ${symbol} ${c}`;
+                    } else {
+                        text = `½${varName} ${symbol} ${c}`;
+                    }
+                } else {
+                    if (b > 0) {
+                        text = `${aDisplay}${varName} + ${b} ${symbol} ${c}`;
+                    } else if (b < 0) {
+                        text = `${aDisplay}${varName} - ${Math.abs(b)} ${symbol} ${c}`;
+                    } else {
+                        text = `${aDisplay}${varName} ${symbol} ${c}`;
+                    }
+                }
+                
+                let steps = [];
+                let step1Op = symbol;
+                let step2Op = symbol;
+                let flipped = false;
+                
+                const leftSideAfterStep1 = Math.abs(a) === 0.5 ? `½${varName}` : `${aDisplay}${varName}`;
+                const valueAfterStep1 = a * solution;
+                
+                if (b > 0) {
+                    steps.push({
+                        hint: `Start with the constant +${b}`,
+                        displayLeft: leftSideAfterStep1,
+                        answer: valueAfterStep1,
+                        operator: step1Op,
+                        flipped: false
+                    });
+                } else if (b < 0) {
+                    steps.push({
+                        hint: `Start with the constant ${b}`,
+                        displayLeft: leftSideAfterStep1,
+                        answer: valueAfterStep1,
+                        operator: step1Op,
+                        flipped: false
+                    });
+                } else {
+                    steps.push({
+                        hint: `Start with the coefficient ${aDisplay}`,
+                        displayLeft: varName,
+                        answer: solution,
+                        operator: step2Op,
+                        flipped: false
+                    });
+                }
+                
+                if (b !== 0) {
+                    if (a < 0) {
+                        step2Op = symbolObj.flip;
+                        flipped = true;
+                    }
+                    
+                    let hintText;
+                    if (Math.abs(a) === 0.5) {
+                        hintText = 'The coefficient is ½ (multiply by 2)';
+                    } else if (a < 0) {
+                        hintText = `The coefficient is ${a} (negative - flip the sign!)`;
+                    } else {
+                        hintText = `The coefficient is ${a}`;
+                    }
+                    
+                    let step2 = {
+                        hint: hintText,
+                        displayLeft: varName,
+                        answer: solution,
+                        operator: step2Op,
+                        flipped: flipped
+                    };
+                    
+                    if (flipped) {
+                        step2.note = `Remember: flip the inequality when dividing by ${a}!`;
+                    }
+                    
+                    steps.push(step2);
+                }
+                
+                const finalSym = steps[steps.length - 1].operator;
+                const isOpen = finalSym === '<' || finalSym === '>';
+                const direction = finalSym.includes('<') ? 'left' : 'right';
+                
+                return {
+                    text,
+                    solution,
+                    boundary: solution,
+                    isOpen: isOpen,
+                    direction: direction,
+                    steps,
+                    varName,
+                    type: 'two-step',
+                    originalSymbol: symbol
+                };
+            }
+            
+            getSimpleNumber(min, max) {
+                const r = Math.random();
+                if (r < 0.7) {
+                    return Math.floor(Math.random() * (max - min + 1)) + min;
+                } else if (r < 0.85) {
+                    const base = Math.floor(Math.random() * (max - min + 1)) + min;
+                    return base + 0.5;
+                } else {
+                    const base = Math.floor(Math.random() * (max - min + 1)) + min;
+                    const quarters = [0.25, 0.75][Math.floor(Math.random() * 2)];
+                    return base + quarters;
+                }
+            }
+            
+            isCleanNumber(n) {
+                return Math.abs(n - Math.round(n)) < 0.001 || 
+                       Math.abs((n * 2) - Math.round(n * 2)) < 0.001 ||
+                       Math.abs((n * 4) - Math.round(n * 4)) < 0.001;
+            }
+            
+            formatNumber(n) {
+                if (Math.abs(n - Math.round(n)) < 0.001) return Math.round(n);
+                if (n === 0.5) return '½';
+                if (n === 0.25) return '¼';
+                if (n === 0.75) return '¾';
+                if (n === -0.5) return '-½';
+                if (n === -0.25) return '-¼';
+                if (n === -0.75) return '-¾';
+                return n.toString();
+            }
+            
+            setupSteps(problem) {
+                const container = document.getElementById('stepsContainer');
+                container.innerHTML = '';
+                
+                problem.steps.forEach((step, index) => {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'step';
+                    
+                    const hasLeftSide = step.displayLeft && index < problem.steps.length - 1;
+                    const lastStep = index === problem.steps.length - 1;
+                    
+                    stepDiv.innerHTML = `
+                        <div class="step-number">${index + 1}</div>
+                        <div class="step-content">
+                            <span class="inequality-hint">${step.hint}</span>
+                            ${hasLeftSide ? `<span class="math-display">→ ${this.formatForDisplay(step.displayLeft)}</span>` : ''}
+                            <select class="inequality-select" id="step${index}-op">
+                                <option value="">?</option>
+                                <option value="<">&lt;</option>
+                                <option value=">">&gt;</option>
+                                <option value="<=">≤</option>
+                                <option value=">=">≥</option>
+                            </select>
+                            <input type="text" id="step${index}-val" placeholder="?" autocomplete="off">
+                            ${step.note ? `<div style="width: 100%; margin-top: 8px; font-size: 0.9em; color: #667eea; font-style: italic;">${step.note}</div>` : ''}
+                        </div>
+                    `;
+                    
+                    container.appendChild(stepDiv);
+                });
+                
+                const graphStep = document.createElement('div');
+                graphStep.className = 'step';
+                graphStep.innerHTML = `
+                    <div class="step-number">${problem.steps.length + 1}</div>
+                    <div class="step-content">
+                        <span>Graph the solution on the number line above</span>
+                    </div>
+                `;
+                container.appendChild(graphStep);
+            }
+            
+            setTool(tool) {
+                this.currentTool = tool;
+                ['toolOpen', 'toolClosed'].forEach(id => {
+                    document.getElementById(id).classList.remove('active');
+                });
+                
+                if (tool === 'open') document.getElementById('toolOpen').classList.add('active');
+                if (tool === 'closed') document.getElementById('toolClosed').classList.add('active');
+            }
+            
+            handleCanvasClick(e) {
+                if (!this.currentTool || (this.currentTool !== 'open' && this.currentTool !== 'closed')) return;
+                
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                
+                const mathX = (x - this.centerX) / this.scale;
+                const snappedX = Math.round(mathX * 2) / 2;
+                
+                if (snappedX >= -10 && snappedX <= 10) {
+                    this.drawingState.circle = {
+                        x: snappedX,
+                        type: this.currentTool
+                    };
+                    this.drawNumberLine();
+                }
+            }
+            
+            addLine(direction) {
+                if (!this.drawingState.circle) {
+                    this.showFeedback('Please place a circle on the number line first!', 'error');
+                    return;
+                }
+                this.drawingState.line = { direction };
+                this.drawNumberLine();
+            }
+            
+            clearDrawing() {
+                this.drawingState = { circle: null, line: null };
+                this.currentTool = null;
+                document.querySelectorAll('.tools button').forEach(b => b.classList.remove('active'));
+                this.drawNumberLine();
+            }
+            
+            drawNumberLine() {
+                const ctx = this.ctx;
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                const cy = this.centerY;
+                
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, w, h);
+                
+                ctx.strokeStyle = '#4a5568';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(50, cy);
+                ctx.lineTo(w - 50, cy);
+                ctx.stroke();
+                
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#4a5568';
+                ctx.textAlign = 'center';
+                
+                for (let i = -10; i <= 10; i++) {
+                    const x = this.centerX + i * this.scale;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x, cy - 10);
+                    ctx.lineTo(x, cy + 10);
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    if (i % 2 === 0 || i === 0) {
+                        ctx.fillText(i.toString(), x, cy + 30);
+                    }
+                }
+                
+                this.drawArrow(40, cy, -1);
+                this.drawArrow(w - 40, cy, 1);
+                
+                if (this.drawingState.circle) {
+                    this.drawCircle(this.drawingState.circle.x, this.drawingState.circle.type);
+                }
+                
+                if (this.drawingState.line && this.drawingState.circle) {
+                    this.drawShading(this.drawingState.circle.x, this.drawingState.line.direction);
+                }
+            }
+            
+            drawArrow(x, y, direction) {
+                const ctx = this.ctx;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + (direction * 15), y - 6);
+                ctx.lineTo(x + (direction * 15), y + 6);
+                ctx.closePath();
+                ctx.fillStyle = '#4a5568';
+                ctx.fill();
+            }
+            
+            drawCircle(mathX, type) {
+                const ctx = this.ctx;
+                const x = this.centerX + mathX * this.scale;
+                const y = this.centerY;
+                const radius = 12;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                
+                if (type === 'open') {
+                    ctx.fillStyle = 'white';
+                    ctx.fill();
+                    ctx.strokeStyle = '#667eea';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = '#667eea';
+                    ctx.fill();
+                }
+            }
+            
+            drawShading(startX, direction) {
+                const ctx = this.ctx;
+                const x = this.centerX + startX * this.scale;
+                const y = this.centerY;
+                
+                ctx.strokeStyle = 'rgba(102, 126, 234, 0.3)';
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                
+                if (direction === 'left') {
+                    ctx.lineTo(60, y);
+                } else {
+                    ctx.lineTo(this.canvas.width - 60, y);
+                }
+                
+                ctx.stroke();
+                
+                const endX = direction === 'left' ? 60 : this.canvas.width - 60;
+                ctx.beginPath();
+                if (direction === 'left') {
+                    ctx.moveTo(60, y);
+                    ctx.lineTo(75, y - 8);
+                    ctx.moveTo(60, y);
+                    ctx.lineTo(75, y + 8);
+                } else {
+                    ctx.moveTo(this.canvas.width - 60, y);
+                    ctx.lineTo(this.canvas.width - 75, y - 8);
+                    ctx.moveTo(this.canvas.width - 60, y);
+                    ctx.lineTo(this.canvas.width - 75, y + 8);
+                }
+                ctx.strokeStyle = 'rgba(102, 126, 234, 0.3)';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+            
+            checkWork() {
+                if (!this.currentProblem) return;
+                
+                let stepsCorrect = true;
+                let stepErrors = [];
+                
+                this.currentProblem.steps.forEach((step, index) => {
+                    const opInput = document.getElementById(`step${index}-op`);
+                    const valInput = document.getElementById(`step${index}-val`);
+                    const userOp = opInput.value;
+                    const userVal = parseFloat(valInput.value);
+                    
+                    if (!userOp) {
+                        stepsCorrect = false;
+                        stepErrors.push(`Step ${index + 1}: Please select an inequality symbol.`);
+                        return;
+                    }
+                    
+                    if (isNaN(userVal)) {
+                        stepsCorrect = false;
+                        stepErrors.push(`Step ${index + 1}: Please enter a number.`);
+                        return;
+                    }
+                    
+                    if (userOp !== step.operator) {
+                        stepsCorrect = false;
+                        if (step.flipped) {
+                            stepErrors.push(`Step ${index + 1}: Check your inequality symbol. Did you flip it when working with the negative coefficient?`);
+                        } else {
+                            stepErrors.push(`Step ${index + 1}: Check your inequality symbol.`);
+                        }
+                    }
+                    
+                    if (Math.abs(userVal - step.answer) > 0.01) {
+                        stepsCorrect = false;
+                        stepErrors.push(`Step ${index + 1}: Check your number. The answer should be ${step.answer}.`);
+                    }
+                });
+                
+                if (!stepsCorrect) {
+                    this.showFeedback(stepErrors.join(' '), 'error');
+                    return;
+                }
+                
+                const prob = this.currentProblem;
+                const draw = this.drawingState;
+                
+                if (!draw.circle) {
+                    this.showFeedback('Please place a circle on the number line at the boundary value.', 'error');
+                    return;
+                }
+                
+                const errors = [];
+                
+                if (Math.abs(draw.circle.x - prob.boundary) > 0.1) {
+                    errors.push(`The circle should be at ${prob.boundary}, not at ${draw.circle.x}.`);
+                }
+                
+                const expectedType = prob.isOpen ? 'open' : 'closed';
+                if (draw.circle.type !== expectedType) {
+                    if (prob.isOpen) {
+                        errors.push('You need an OPEN circle (○) for < or >.');
+                    } else {
+                        errors.push('You need a CLOSED/FILLED circle (●) for ≤ or ≥.');
+                    }
+                }
+                
+                if (!draw.line) {
+                    errors.push('Please add shading to show which numbers are included in the solution.');
+                } else if (draw.line.direction !== prob.direction) {
+                    if (prob.direction === 'right') {
+                        errors.push('The shading should go to the RIGHT (toward larger numbers). Remember: the symbol points that way!');
+                    } else {
+                        errors.push('The shading should go to the LEFT (toward smaller numbers). Remember: the symbol points that way!');
+                    }
+                }
+                
+                if (errors.length === 0) {
+                    this.showFeedback('Excellent work! Your algebraic steps and graph are both correct! 🎉', 'success');
+                } else {
+                    this.showFeedback(errors.join(' '), 'error');
+                }
+            }
+            
+            showAnswer() {
+                if (!this.currentProblem) return;
+                
+                const prob = this.currentProblem;
+                const lastStep = prob.steps[prob.steps.length - 1];
+                
+                let html = `<p><strong>Solution:</strong> ${prob.varName} ${this.formatForDisplay(lastStep.operator)} ${prob.boundary}</p>`;
+                html += `<p><strong>Steps:</strong></p><ol>`;
+                
+                prob.steps.forEach((step, index) => {
+                    const leftDisplay = step.displayLeft || prob.varName;
+                    html += `<li>${step.hint}: ${this.formatForDisplay(leftDisplay)} ${this.formatForDisplay(step.operator)} ${step.answer}</li>`;
+                });
+                
+                html += `</ol>`;
+                html += `<p><strong>Graph:</strong> Place a ${prob.isOpen ? 'open circle (○)' : 'closed circle (●)'} at ${prob.boundary} and shade to the ${prob.direction}.</p>`;
+                
+                if (prob.steps.some(s => s.flipped)) {
+                    html += `<p><strong>Note:</strong> When you multiply or divide both sides by a negative number, flip the inequality sign!</p>`;
+                }
+                
+                document.getElementById('answerContent').innerHTML = html;
+                document.getElementById('answerSection').style.display = 'block';
+                
+                prob.steps.forEach((step, index) => {
+                    document.getElementById(`step${index}-op`).value = step.operator;
+                    document.getElementById(`step${index}-val`).value = step.answer;
+                });
+                
+                this.drawingState.circle = {
+                    x: prob.boundary,
+                    type: prob.isOpen ? 'open' : 'closed'
+                };
+                this.drawingState.line = {
+                    direction: prob.direction
+                };
+                this.drawNumberLine();
+            }
+            
+            showFeedback(message, type) {
+                const fb = document.getElementById('feedback');
+                fb.textContent = message;
+                fb.className = type;
+                fb.style.display = 'block';
+            }
+            
+            stripLatex(text) {
+                // Remove LaTeX delimiters
+                let plain = text
+                    .replace(/\$\$(.*?)\$\$/g, '$1')
+                    .replace(/\$(.*?)\$/g, '$1')
+                    .replace(/\\\[(.*?)\\\]/g, '$1')
+                    .replace(/\\\((.*?)\\\)/g, '$1');
+                
+                // Replace common LaTeX commands with plain text
+                // Note: In regex literals, \\ represents a literal backslash in the pattern
+                
+                // \frac{a}{b} -> (a/b)
+                plain = plain.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)');
+                plain = plain.replace(/\\frac(\d)(\d)/g, '$1/$2');
+                
+                // Common operators
+                plain = plain.replace(/\\cdot/g, '×');
+                plain = plain.replace(/\\times/g, '×');
+                plain = plain.replace(/\\div/g, '÷');
+                
+                // Inequalities
+                plain = plain.replace(/\\leq/g, '≤');
+                plain = plain.replace(/\\geq/g, '≥');
+                plain = plain.replace(/\\le/g, '≤');
+                plain = plain.replace(/\\ge/g, '≥');
+                plain = plain.replace(/\\lt/g, '<');
+                plain = plain.replace(/\\gt/g, '>');
+                plain = plain.replace(/\\neq/g, '≠');
+                plain = plain.replace(/\\pm/g, '±');
+                
+                // Roots
+                plain = plain.replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
+                plain = plain.replace(/\\sqrt/g, '√');
+                
+                // Remove structural commands
+                plain = plain.replace(/\\left/g, '');
+                plain = plain.replace(/\\right/g, '');
+                
+                // Escaped braces
+                plain = plain.replace(/\\\{/g, '{');
+                plain = plain.replace(/\\\}/g, '}');
+                
+                // Remove remaining command backslashes (like \alpha, \beta, etc)
+                plain = plain.replace(/\\([a-zA-Z]+)/g, '$1');
+                
+                // Clean up any remaining <= or >= to Unicode
+                plain = plain.replace(/<=/g, '≤').replace(/>=/g, '≥');
+                
+                return plain;
+            }
+            
+            async sendChat() {
+                const input = document.getElementById('chatInput');
+                const message = input.value.trim();
+                if (!message || !this.currentProblem) return;
+                
+                input.value = '';
+                
+                const history = document.getElementById('chatHistory');
+                const userMsg = document.createElement('div');
+                userMsg.className = 'message user';
+                userMsg.textContent = message;
+                history.appendChild(userMsg);
+                history.scrollTop = history.scrollHeight;
+                
+                const loading = document.createElement('div');
+                loading.className = 'message tutor';
+                loading.innerHTML = '<span class="spinner"></span> Thinking...';
+                history.appendChild(loading);
+                
+                const lastStep = this.currentProblem.steps[this.currentProblem.steps.length - 1];
+                const solutionDisplay = `${this.currentProblem.varName} ${this.formatForDisplay(lastStep.operator)} ${this.currentProblem.boundary}`;
+                
+                const systemPrompt = `You are a helpful 7th-grade math tutor. The student is working on: "${this.currentProblem.text}" which solves to "${solutionDisplay}".
+
+GUIDELINES:
+1. Answer questions about solving THIS inequality, including step-by-step help, why signs flip with negatives, or checking work.
+2. You may provide ONE real-life example if asked (e.g., "You need at least $20" for ≥, "Maximum 5 people" for ≤).
+3. Use plain text only - NEVER use LaTeX ($...$ or \\[...\\]).
+4. Use Unicode symbols: ≤ instead of <=, ≥ instead of >=, ÷ for division, × for multiplication.
+5. If the student asks about unrelated topics (games, other subjects), gently redirect: "Let's focus on your inequality. What part would you like help with?"
+6. Be encouraging and concise (2-4 sentences max).`;
+                
+                try {
+                    const response = await fetch(`${API_ENDPOINT}?key=${API_KEY}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            model: 'gemini-fast',
+                            messages: [
+                                { role: 'system', content: systemPrompt },
+                                { role: 'user', content: message }
+                            ]
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    let reply = data.choices[0].message.content;
+                    
+                    // Strip any LaTeX that might have been generated
+                    reply = this.stripLatex(reply);
+                    
+                    loading.remove();
+                    
+                    const tutorMsg = document.createElement('div');
+                    tutorMsg.className = 'message tutor';
+                    tutorMsg.textContent = reply;
+                    history.appendChild(tutorMsg);
+                    history.scrollTop = history.scrollHeight;
+                    
+                } catch (error) {
+                    loading.remove();
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'message tutor';
+                    errorMsg.textContent = "I'm having trouble connecting. Please try again.";
+                    history.appendChild(errorMsg);
+                }
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            window.app = new InequalityApp();
+        });
+    </script>
+</body>
+</html>
