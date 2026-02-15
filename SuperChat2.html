@@ -2362,118 +2362,175 @@ marked.use({
     }
 
     // --- Main Send Message Function ---
-    async function sendMessage(regenerateSeed = null, previousContext = null) {
-        const text = userInput.value.trim();
-        if ((!text && uploadedFiles.length === 0 && !regenerateSeed) || isGenerating) return;
+async function sendMessage(regenerateSeed = null, previousContext = null) {
+    const text = userInput.value.trim();
+    if ((!text && uploadedFiles.length === 0 && !regenerateSeed) || isGenerating) return;
 
-        let messagesPayload = [];
+    let messagesPayload = [];
 
-        if (regenerateSeed && previousContext) {
-            messagesPayload = previousContext;
-        } else {
-            let userContent = [];
-            
-            if (text) userContent.push({ type: "text", text: text });
-            
-            uploadedFiles.forEach(f => {
-                if (f.type === 'image') {
-                    userContent.push({ type: "image_url", image_url: { url: f.content } });
-                } else if (f.type === 'audio') {
-                    userContent.push({ type: "text", text: `[User uploaded audio file: ${f.name}]` }); 
-                } else {
-                    userContent.push({ type: "text", text: `[File: ${f.name}]\n${f.content}` });
-                }
-            });
-
-            const userMsgObj = { role: 'user', content: userContent };
-            
-            if(!regenerateSeed) {
-                appendMessage('user', text, uploadedFiles);
-                conversationHistory.push(userMsgObj);
-                userInput.value = '';
-                userInput.style.height = '44px';
-                uploadedFiles = [];
-                renderFilePreviews();
+    if (regenerateSeed && previousContext) {
+        messagesPayload = previousContext;
+    } else {
+        let userContent = [];
+        
+        if (text) userContent.push({ type: "text", text: text });
+        
+        uploadedFiles.forEach(f => {
+            if (f.type === 'image') {
+                userContent.push({ type: "image_url", image_url: { url: f.content } });
+            } else if (f.type === 'audio') {
+                userContent.push({ type: "text", text: `[User uploaded audio file: ${f.name}]` }); 
+            } else {
+                userContent.push({ type: "text", text: `[File: ${f.name}]\n${f.content}` });
             }
+        });
 
-            messagesPayload = [...conversationHistory];
-        }
-
-        const emotion = document.getElementById('voice-style').value;
-        const rawSystemMsg = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
-        const systemMsg = {
-            role: 'system',
-            content: `${rawSystemMsg} ${emotion ? 'Voice and Response Style/Emotion: ' + emotion : ''}`,
-            cache_control: { type: 'ephemeral' }
-        };
-
-        const finalMessages = [systemMsg, ...messagesPayload];
-
-        const token = tokenInput.value || USER_API_TOKEN;
-        if (!token) {
-            showNotification("Please enter your API Token in settings.");
-            return;
-        }
-
-        const modelSelect = document.getElementById('model-select');
-        let model = modelSelect.value;
-        
-        // Check if trying to use paid model without own key
-        if (PAID_ONLY_MODELS.includes(model) && !hasUserProvidedOwnKey()) {
-            showNotification("🔒 Premium models require your own API key. Enter your key in settings.");
-            return;
-        }
-        
-        const seed = regenerateSeed !== null ? regenerateSeed : Math.floor(Math.random() * 10000);
-
-        const requestBody = {
-    messages: finalMessages,
-    model: model,
-    stream: true,
-    seed: seed,
-    temperature: 1,
-    max_tokens: ['mistral', 'nova-fast', 'qwen-character'].includes(model) ? 4096 : 64000
-};
-
-        isGenerating = true;
-        sendBtn.style.display = 'none';
-        stopBtn.style.display = 'inline-block';
-        abortController = new AbortController();
-        
-        const aiMsgId = 'ai-msg-' + Date.now();
-        const aiContentId = 'ai-content-' + aiMsgId;
+        const userMsgObj = { role: 'user', content: userContent };
         
         if(!regenerateSeed) {
-            appendPlaceholder('ai', aiMsgId, aiContentId);
+            appendMessage('user', text, uploadedFiles);
+            conversationHistory.push(userMsgObj);
+            userInput.value = '';
+            userInput.style.height = '44px';
+            uploadedFiles = [];
+            renderFilePreviews();
         }
 
-        const aiContentDiv = document.getElementById(aiContentId);
-        let accumulatedText = "";
+        messagesPayload = [...conversationHistory];
+    }
 
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(requestBody),
-                signal: abortController.signal
-            });
+    const emotion = document.getElementById('voice-style').value;
+    const rawSystemMsg = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
+    const systemMsg = {
+        role: 'system',
+        content: `${rawSystemMsg} ${emotion ? 'Voice and Response Style/Emotion: ' + emotion : ''}`,
+        cache_control: { type: 'ephemeral' }
+    };
 
-            if (!response.ok) {
-                let errorMsg = response.statusText || `Status ${response.status}`;
-                try {
-                    const errorObj = await response.json();
-                    if (errorObj.error && errorObj.error.message) {
-                        errorMsg = errorObj.error.message;
-                    }
-                } catch (e) {
-                    // Could not parse JSON error, stick to status
-                }
-                throw new Error(errorMsg);
+    let finalMessages = [systemMsg, ...messagesPayload];
+
+    const token = tokenInput.value || USER_API_TOKEN;
+    if (!token) {
+        showNotification("Please enter your API Token in settings.");
+        return;
+    }
+
+    const modelSelect = document.getElementById('model-select');
+    let model = modelSelect.value;
+    
+    // Check if trying to use paid model without own key
+    if (PAID_ONLY_MODELS.includes(model) && !hasUserProvidedOwnKey()) {
+        showNotification("🔒 Premium models require your own API key. Enter your key in settings.");
+        return;
+    }
+    
+    // CRITICAL: qwen-character does not support streaming or array content format
+    const isQwenCharacter = model === 'qwen-character';
+    const useStreaming = !isQwenCharacter;
+    
+    // Convert messages to Bedrock-compatible format for qwen-character
+    if (isQwenCharacter) {
+        finalMessages = finalMessages.map(msg => {
+            // Convert array content to string (Bedrock doesn't support content blocks)
+            if (Array.isArray(msg.content)) {
+                const textParts = msg.content
+                    .filter(part => part.type === 'text')
+                    .map(part => part.text);
+                return {
+                    role: msg.role,
+                    content: textParts.join('\n')
+                };
             }
+            // Remove cache_control if present (Bedrock doesn't support it)
+            if (msg.cache_control) {
+                const { cache_control, ...cleanMsg } = msg;
+                return cleanMsg;
+            }
+            return msg;
+        });
+    }
+    
+    const seed = regenerateSeed !== null ? regenerateSeed : Math.floor(Math.random() * 10000);
 
+    const requestBody = {
+        messages: finalMessages,
+        model: model,
+        stream: useStreaming,
+        seed: seed,
+        temperature: 1
+    };
+    
+    // Only add max_tokens for models that need it, and NOT for qwen-character
+    if (!isQwenCharacter) {
+        requestBody.max_tokens = ['mistral', 'nova-fast'].includes(model) ? 4096 : 64000;
+    }
+
+    isGenerating = true;
+    sendBtn.style.display = 'none';
+    stopBtn.style.display = 'inline-block';
+    abortController = new AbortController();
+    
+    const aiMsgId = 'ai-msg-' + Date.now();
+    const aiContentId = 'ai-content-' + aiMsgId;
+    
+    if(!regenerateSeed) {
+        appendPlaceholder('ai', aiMsgId, aiContentId);
+    }
+
+    const aiContentDiv = document.getElementById(aiContentId);
+    let accumulatedText = "";
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(requestBody),
+            signal: abortController.signal
+        });
+
+        if (!response.ok) {
+            let errorMsg = response.statusText || `Status ${response.status}`;
+            try {
+                const errorObj = await response.json();
+                if (errorObj.error && errorObj.error.message) {
+                    errorMsg = errorObj.error.message;
+                }
+            } catch (e) {
+                // Could not parse JSON error, stick to status
+            }
+            throw new Error(errorMsg);
+        }
+
+        if (isQwenCharacter) {
+            // Non-streaming handling (like Test Chat)
+            const data = await response.json();
+            accumulatedText = data.choices[0].message.content;
+            
+            if (aiContentDiv) {
+                aiContentDiv.innerHTML = marked.parse(accumulatedText);
+            }
+            
+            conversationHistory.push({ role: 'assistant', content: accumulatedText });
+            
+            // Setup audio button if enabled
+            const showAudioButton = document.getElementById('audio-enable')?.checked;
+            if (showAudioButton && accumulatedText) {
+                const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
+                if (audioBtn) {
+                    audioBtn.style.display = 'inline-block';
+                    audioBtn.onclick = function() {
+                        generateAudioForMessage(aiContentId, accumulatedText);
+                    };
+                }
+            }
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+        } else {
+            // Streaming handling (existing code)
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             
@@ -2547,31 +2604,32 @@ marked.use({
                     generateAudioForMessage(aiContentId, accumulatedText);
                 };
             }
+        }
 
-        } catch (error) {
-            if (aiContentDiv) {
-                if (error.name === 'AbortError') {
-                    aiContentDiv.innerHTML += `<br><span style="color:orange">[Stopped by user]</span>`;
-                } else {
-                    if(aiContentDiv.innerHTML.includes('fa-spinner')) {
-                         aiContentDiv.innerHTML = '';                
-                    }
-                    aiContentDiv.innerHTML += `<div style="color:red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin-top: 5px;"><strong>Error:</strong> ${error.message}</div>`;
+    } catch (error) {
+        console.error("Send message error:", error);
+        if (aiContentDiv) {
+            if (error.name === 'AbortError') {
+                aiContentDiv.innerHTML += `<br><span style="color:orange">[Stopped by user]</span>`;
+            } else {
+                if(aiContentDiv.innerHTML.includes('fa-spinner')) {
+                     aiContentDiv.innerHTML = '';                
                 }
+                aiContentDiv.innerHTML += `<div style="color:red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin-top: 5px;"><strong>Error:</strong> ${error.message}</div>`;
             }
-        } finally {
-            // CRITICAL: Reset UI state FIRST before any potentially failing operations
-            isGenerating = false;
-            sendBtn.style.display = 'inline-block';
-            stopBtn.style.display = 'none';
-            abortController = null;
-            
-            // Then attempt to save (non-critical)
-            try {
-                saveConversationToStorage();
-            } catch (e) {
-                console.error("Failed to save conversation:", e);
-                showNotification("Warning: Could not save to storage");
+        }
+    } finally {
+        // Always reset state, even if qwen-character failed
+        isGenerating = false;
+        sendBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+        abortController = null;
+        
+        try {
+            saveConversationToStorage();
+        } catch (e) {
+            console.error("Failed to save conversation:", e);
+              showNotification("Warning: Could not save to storage");
             }
         }
     }
