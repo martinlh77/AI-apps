@@ -1,1669 +1,1670 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Pollinations Studio (Image & Video)V8</title>
-   <script src="https://cdn.tailwindcss.com"></script>
-   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-   <style>
-       /* Custom Dark Theme Variables */
-       :root {
-           --bg: #1e293b;
-           --card: #334155;
-           --text: #f1f5f9;
-           --primary: #6366f1;
-           --primary-hover: #4f46e5;
-           --subtle: #94a3b8;
-           --border: #475569;
-           --input: #475569;
-           --img-bg: #111827;
-           --enhance: #6366f1;
-           --enhance-hover: #4f46e5;
-       }
-       body {
-           font-family: 'Inter', sans-serif;
-           background: var(--bg);
-           color: var(--text);
-           min-height: 100vh;
-           padding: 1rem;
-       }
-       .card {
-           background: var(--card);
-           border-radius: 1rem;
-           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
-           padding: 1.5rem;
-           border: 1px solid var(--border);
-       }
-       input[type="text"], input[type="url"], input[type="number"], input[type="password"], textarea, select {
-           background: var(--input);
-           color: var(--text);
-           border: 1px solid var(--border);
-           border-radius: 0.5rem;
-           padding: 0.75rem;
-           box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-       }
-       input[type=range] {
-           -webkit-appearance: none; 
-           background: transparent; 
-       }
-       input[type=range]::-webkit-slider-thumb {
-           -webkit-appearance: none;
-           height: 16px;
-           width: 16px;
-           border-radius: 50%;
-           background: var(--primary);
-           cursor: pointer;
-           margin-top: -6px; 
-           box-shadow: 0 0 2px rgba(0,0,0,0.5);
-       }
-       input[type=range]::-webkit-slider-runnable-track {
-           width: 100%;
-           height: 4px;
-           cursor: pointer;
-           background: var(--border);
-           border-radius: 2px;
-       }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pollinations Studio (Image & Video)V11.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+      /* Custom Dark Theme Variables */
+      :root {
+          --bg: #1e293b;
+          --card: #334155;
+          --text: #f1f5f9;
+          --primary: #6366f1;
+          --primary-hover: #4f46e5;
+          --subtle: #94a3b8;
+          --border: #475569;
+          --input: #475569;
+          --img-bg: #111827;
+          --enhance: #6366f1;
+          --enhance-hover: #4f46e5;
+      }
+      body {
+          font-family: 'Inter', sans-serif;
+          background: var(--bg);
+          color: var(--text);
+          min-height: 100vh;
+          padding: 1rem;
+      }
+      .card {
+          background: var(--card);
+          border-radius: 1rem;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+          padding: 1.5rem;
+          border: 1px solid var(--border);
+      }
+      input[type="text"], input[type="url"], input[type="number"], input[type="password"], textarea, select {
+          background: var(--input);
+          color: var(--text);
+          border: 1px solid var(--border);
+          border-radius: 0.5rem;
+          padding: 0.75rem;
+          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      input[type=range] {
+          -webkit-appearance: none; 
+          background: transparent; 
+      }
+      input[type=range]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          height: 16px;
+          width: 16px;
+          border-radius: 50%;
+          background: var(--primary);
+          cursor: pointer;
+          margin-top: -6px; 
+          box-shadow: 0 0 2px rgba(0,0,0,0.5);
+      }
+      input[type=range]::-webkit-slider-runnable-track {
+          width: 100%;
+          height: 4px;
+          cursor: pointer;
+          background: var(--border);
+          border-radius: 2px;
+      }
 
-       button {
-           transition: all 0.2s ease;
-       }
-       button:hover {
-           opacity: 0.9;
-           transform: translateY(-1px);
-       }
-       .loading-spinner {
-           border: 4px solid rgba(255, 255, 255, 0.2);
-           border-top: 4px solid var(--primary);
-           border-radius: 50%;
-           width: 30px;
-           height: 30px;
-           animation: spin 1s linear infinite;
-       }
-       .loading-spinner.w-5 {
-            width: 20px;
-            height: 20px;
-            border-width: 3px;
-       }
-       @keyframes spin {
-           0% { transform: rotate(0deg); }
-           100% { transform: rotate(360deg); }
-       }
-       .error-message {
-           background-color: #ef4444;
-           color: white;
-           padding: 0.75rem;
-           border-radius: 0.5rem;
-           text-align: center;
-       }
-
-       .ref-controls {
-           display: flex;
-           flex-wrap: wrap;
-           gap: 10px;
-           margin-bottom: 15px;
-           align-items: center;
-       }
-       .url-group {
-           display: flex;
-           flex-grow: 1;
-           gap: 5px;
-       }
-       .url-group input {
-           flex-grow: 1;
-       }
-       .btn-upload {
-           padding: 0.75rem;
-           background-color: var(--input);
-           color: var(--text);
-           border: 1px solid var(--border);
-           border-radius: 0.5rem;
-           cursor: pointer;
-           text-align: center;
-           font-size: 0.875rem;
-       }
-       .btn-upload:hover {
-           background-color: var(--border);
-       }
-
-       .ref-card-container {
-           width: 100%;
-           display: flex;
-           flex-wrap: wrap;
-           justify-content: flex-start;
-           gap: 15px;
-       }
-       .ref-card {
-           width: 150px;
-           height: auto;
-           background: rgba(0, 0, 0, 0.2);
-           border: 1px solid var(--border);
-           border-radius: 6px;
-           padding: 4px;
-           display: flex;
-           flex-direction: column;
-           align-items: center;
-           position: relative;
-       }
-
-       .ref-card img {
-           width: 100%;
-           max-height: 150px;
-           height: auto;
-           object-fit: contain;
-           background-color: rgba(0,0,0,0.5); 
-           border-radius: 4px;
-       }
-
-       .ref-meta {
-           margin-top: 5px;
-           font-size: 9px;
-           color: var(--subtle);
-           font-family: monospace;
-           text-align: center;
-           overflow: hidden;
-           white-space: nowrap;
-           text-overflow: ellipsis;
-           width: 100%;
-       }
-
-       .ref-remove {
-           position: absolute;
-           top: -4px;
-           right: -4px;
-           background: #ef4444;
-           color: white;
-           border-radius: 50%;
-           width: 16px;
-           height: 16px;
-           text-align: center;
-           line-height: 16px;
-           cursor: pointer;
-           font-size: 10px;
-           box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-           z-index: 10;
-       }
-       
-       video {
-           max-width: 100%;
-           max-height: 100%;
-           border-radius: 0.5rem;
-           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-       }
-
-       /* --- HISTORY STYLES --- */
-       .history-section {
-           margin-top: 1rem;
-           padding-top: 1rem;
-           border-top: 1px solid var(--border);
-       }
-       .history-grid {
-           display: grid;
-           grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-           gap: 10px;
-           margin-top: 10px;
-           max-height: 300px;
-           overflow-y: auto;
-       }
-       .history-item {
-           position: relative;
-           cursor: pointer;
-           border: 2px solid transparent;
-           border-radius: 8px;
-           overflow: hidden;
-           background: rgba(0, 0, 0, 0.3);
-           transition: all 0.2s ease;
-       }
-       .history-item:hover {
-           border-color: var(--primary);
-           transform: scale(1.05);
-       }
-       .history-item img, .history-item video {
-           width: 100%;
-           height: 100px;
-           object-fit: contain;
-           display: block;
-           background: rgba(0, 0, 0, 0.5);
-       }
-       .history-timestamp {
-           position: absolute;
-           bottom: 0;
-           left: 0;
-           right: 0;
-           background: rgba(0, 0, 0, 0.7);
-           color: white;
-           font-size: 10px;
-           padding: 2px 4px;
-           text-align: center;
-           font-family: monospace;
-       }
-       .history-remove {
-           position: absolute;
-           top: 2px;
-           right: 2px;
-           background: #ef4444;
-           color: white;
-           border-radius: 50%;
+      button {
+          transition: all 0.2s ease;
+      }
+      button:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+      }
+      .loading-spinner {
+          border: 4px solid rgba(255, 255, 255, 0.2);
+          border-top: 4px solid var(--primary);
+          border-radius: 50%;
+          width: 30px;
+          height: 30px;
+          animation: spin 1s linear infinite;
+      }
+      .loading-spinner.w-5 {
            width: 20px;
            height: 20px;
-           text-align: center;
-           line-height: 20px;
-           cursor: pointer;
-           font-size: 12px;
-           box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-           z-index: 10;
-           opacity: 0;
-           transition: opacity 0.2s;
-       }
-       .history-item:hover .history-remove {
-           opacity: 1;
-       }
-       .history-empty {
-           text-align: center;
-           color: var(--subtle);
-           font-style: italic;
-           padding: 2rem;
-       }
-   </style>
-   <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
-   <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
-   <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+           border-width: 3px;
+      }
+      @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+      }
+      .error-message {
+          background-color: #ef4444;
+          color: white;
+          padding: 0.75rem;
+          border-radius: 0.5rem;
+          text-align: center;
+      }
+
+      .ref-controls {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+          margin-bottom: 15px;
+          align-items: center;
+      }
+      .url-group {
+          display: flex;
+          flex-grow: 1;
+          gap: 5px;
+      }
+      .url-group input {
+          flex-grow: 1;
+      }
+      .btn-upload {
+          padding: 0.75rem;
+          background-color: var(--input);
+          color: var(--text);
+          border: 1px solid var(--border);
+          border-radius: 0.5rem;
+          cursor: pointer;
+          text-align: center;
+          font-size: 0.875rem;
+      }
+      .btn-upload:hover {
+          background-color: var(--border);
+      }
+
+      .ref-card-container {
+          width: 100%;
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: flex-start;
+          gap: 15px;
+      }
+      .ref-card {
+          width: 150px;
+          height: auto;
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          padding: 4px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          position: relative;
+      }
+
+      .ref-card img {
+          width: 100%;
+          max-height: 150px;
+          height: auto;
+          object-fit: contain;
+          background-color: rgba(0,0,0,0.5); 
+          border-radius: 4px;
+      }
+
+      .ref-meta {
+          margin-top: 5px;
+          font-size: 9px;
+          color: var(--subtle);
+          font-family: monospace;
+          text-align: center;
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          width: 100%;
+      }
+
+      .ref-remove {
+          position: absolute;
+          top: -4px;
+          right: -4px;
+          background: #ef4444;
+          color: white;
+          border-radius: 50%;
+          width: 16px;
+          height: 16px;
+          text-align: center;
+          line-height: 16px;
+          cursor: pointer;
+          font-size: 10px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+          z-index: 10;
+      }
+      
+      video {
+          max-width: 100%;
+          max-height: 100%;
+          border-radius: 0.5rem;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      }
+
+      /* --- HISTORY STYLES --- */
+      .history-section {
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid var(--border);
+      }
+      .history-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+          gap: 10px;
+          margin-top: 10px;
+          max-height: 300px;
+          overflow-y: auto;
+      }
+      .history-item {
+          position: relative;
+          cursor: pointer;
+          border: 2px solid transparent;
+          border-radius: 8px;
+          overflow: hidden;
+          background: rgba(0, 0, 0, 0.3);
+          transition: all 0.2s ease;
+      }
+      .history-item:hover {
+          border-color: var(--primary);
+          transform: scale(1.05);
+      }
+      .history-item img, .history-item video {
+          width: 100%;
+          height: 100px;
+          object-fit: contain;
+          display: block;
+          background: rgba(0, 0, 0, 0.5);
+      }
+      .history-timestamp {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          font-size: 10px;
+          padding: 2px 4px;
+          text-align: center;
+          font-family: monospace;
+      }
+      .history-remove {
+          position: absolute;
+          top: 2px;
+          right: 2px;
+          background: #ef4444;
+          color: white;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          text-align: center;
+          line-height: 20px;
+          cursor: pointer;
+          font-size: 12px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+          z-index: 10;
+          opacity: 0;
+          transition: opacity 0.2s;
+      }
+      .history-item:hover .history-remove {
+          opacity: 1;
+      }
+      .history-empty {
+          text-align: center;
+          color: var(--subtle);
+          font-style: italic;
+          padding: 2rem;
+      }
+  </style>
 </head>
 <body class="p-4 md:p-8">
 
-   <div class="max-w-4xl mx-auto">
-       <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor)V8</h1>
+  <div class="max-w-4xl mx-auto">
+      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor)V11.0</h1>
 
-       <div id="message-area" class="mb-4"></div>
+      <div id="message-area" class="mb-4"></div>
 
-       <div class="card grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-           <div class="space-y-4">
-               <h2 class="text-xl font-semibold mb-3 border-b border-border pb-2">Controls</h2>
+          <div class="space-y-4">
+              <h2 class="text-xl font-semibold mb-3 border-b border-border pb-2">Controls</h2>
 
-               <div>
-                   <label for="apiKeyInput" class="block text-sm font-medium mb-1">Custom API Key (Overrides default)</label>
-                   <input type="password" id="apiKeyInput" class="w-full" placeholder="plln_pk_...">
-               </div>
+              <div>
+                  <label for="apiKeyInput" class="block text-sm font-medium mb-1">Custom API Key (Overrides default)</label>
+                  <input type="password" id="apiKeyInput" class="w-full" placeholder="plln_pk_...">
+              </div>
 
-               <div id="model-select-group">
-                   <label for="modelSelect" class="block text-sm font-medium mb-1">Model Selection</label>
-                   <select id="modelSelect" class="w-full">
-                       <optgroup label="Generators & Editors">
-                           <option value="flux">Flux (Generator)</option>
-                           <option value="zimage" selected>Zimage (Generator)</option>
-                           <option value="imagen-4">Imagen 4 (Generator)</option>
-                           <option value="klein">Flux.2 Klein 4B👁️(Editor/Generator)</option>
-                           <option value="klein-large">Flux.2 Klein 9B👁️(Editor/Generator)</option>
-                           <option value="gptimage">GPT-Image👁️ (Editor/Generator)</option>
-                           <option value="nanobanana">Nano Banana👁️ (Editor/Generator)</option> 
-                           <option value="nanobanana-pro">💎 Nano Banana - Pro👁️ (Editor/Generator)</option>
-                           <option value="seedream">💎 Seedream👁️ (Editor/Generator)</option>
-                           <option value="seedream-pro">💎 Seedream-Pro👁️ (Editor/Generator)</option>
-                           <option value="kontext">💎 Kontex👁️ (Editor/Generator)</option>
-                           <option value="gptimage-large">💎 GPT-Image Large👁️ (Editor/Generator)</option>
-                       </optgroup>
-                       <optgroup label="Video Models">
-                           <option value="grok-video">Grok Imagine Video (Video - T2V & I2V)</option>
-                           <option value="seedance">Seedance (Video - T2V & I2V)</option>
-                           <option value="wan">Wan (Video - T2V & I2V)</option>
-                           <option value="seedance-pro">💎 Seedance-Pro (Video - T2V & I2V)</option>
-                           <option value="veo">💎 Veo (Video - T2V only)</option>
-                       </optgroup>
-                   </select>
-               </div>
+              <div id="model-select-group">
+                  <label for="modelSelect" class="block text-sm font-medium mb-1">Model Selection</label>
+                  <select id="modelSelect" class="w-full">
+                      <optgroup label="Generators & Editors">
+                          <option value="flux">Flux (Generator)</option>
+                          <option value="zimage" selected>Zimage (Generator)</option>
+                          <option value="imagen-4">Imagen 4 (Generator)</option>
+                          <option value="klein">Flux.2 Klein 4B👁️(Editor/Generator)</option>
+                          <option value="klein-large">Flux.2 Klein 9B👁️(Editor/Generator)</option>
+                          <option value="gptimage">GPT-Image👁️ (Editor/Generator)</option>
+                          <option value="nanobanana">Nano Banana👁️ (Editor/Generator)</option> 
+                          <option value="nanobanana-pro">💎 Nano Banana - Pro👁️ (Editor/Generator)</option>
+                          <option value="seedream">💎 Seedream👁️ (Editor/Generator)</option>
+                          <option value="seedream-pro">💎 Seedream-Pro👁️ (Editor/Generator)</option>
+                          <option value="kontext">💎 Kontex👁️ (Editor/Generator)</option>
+                          <option value="gptimage-large">💎 GPT-Image Large👁️ (Editor/Generator)</option>
+                      </optgroup>
+                      <optgroup label="Video Models">
+                          <option value="grok-video">Grok Imagine Video (Video - T2V & I2V)</option>
+                          <option value="seedance">Seedance (Video - T2V & I2V)</option>
+                          <option value="wan">Wan (Video - T2V & I2V)</option>
+                          <option value="seedance-pro">💎 Seedance-Pro (Video - T2V & I2V)</option>
+                          <option value="veo">💎 Veo (Video - T2V & First/Last Frame)</option>
+                          <option value="ltx-2">💎 LTX-2 (Video - T2V & I2V)</option>
+                      </optgroup>
+                  </select>
+              </div>
 
-               <div>
-                   <label for="promptInput" class="block text-sm font-medium mb-1">Prompt</label>
-                   <textarea id="promptInput" rows="3" class="w-full" placeholder="Describe your image or video..."></textarea>
-                   
-                   <div class="mt-2 flex space-x-2" id="prompt-enhance-controls">
-                       <button id="enhancePromptBtn" type="button" class="flex-1 py-2 bg-enhance text-white font-semibold rounded-lg hover:bg-enhance-hover text-sm">
-                           ✨ Prompt Enhance
-                       </button>
-                   </div>
-               </div>
+              <div>
+                  <label for="promptInput" class="block text-sm font-medium mb-1">Prompt</label>
+                  <textarea id="promptInput" rows="3" class="w-full" placeholder="Describe your image or video..."></textarea>
+                  
+                  <div class="mt-2 flex space-x-2" id="prompt-enhance-controls">
+                      <button id="enhancePromptBtn" type="button" class="flex-1 py-2 bg-enhance text-white font-semibold rounded-lg hover:bg-enhance-hover text-sm">
+                          ✨ Prompt Enhance
+                      </button>
+                  </div>
+              </div>
 
-               <div id="negativePromptGroup">
-                   <label for="negativePromptInput" class="block text-sm font-medium mb-1 text-red-400">Negative Prompt</label>
-                   <textarea id="negativePromptInput" rows="2" class="w-full border-red-500" placeholder="blurry, low quality, duplicate, cropped"></textarea>
-               </div>
+              <div id="negativePromptGroup">
+                  <label for="negativePromptInput" class="block text-sm font-medium mb-1 text-red-400">Negative Prompt</label>
+                  <textarea id="negativePromptInput" rows="2" class="w-full border-red-500" placeholder="blurry, low quality, duplicate, cropped"></textarea>
+              </div>
 
-               <div id="imageInputGroup" class="hidden p-3 border border-indigo-400 rounded-lg bg-indigo-900/20 space-y-3">
-                   <label class="block text-sm font-medium mb-1">Reference Images (Max 14)(Video Only 1)</label>
-                   
-                   <div class="ref-controls">
-                       <div class="url-group">
-                           <input type="text" id="ref-url-input" placeholder="Paste image URL..." class="text-sm">
-                           <button id="add-url-btn" type="button" class="bg-primary text-white px-3 py-2 rounded text-sm hover:bg-primary-hover">Add URL</button>
-                       </div>
-                       <div class="w-full md:w-auto">
-                           <label for="ref-file-input" class="btn-upload block text-center w-full">
-                               <span>Upload File(s)</span>
-                           </label>
-                           <input type="file" id="ref-file-input" accept="image/*" multiple style="display: none;">
-                       </div>
-                   </div>
+              <div id="imageInputGroup" class="hidden p-3 border border-indigo-400 rounded-lg bg-indigo-900/20 space-y-3">
+                  <label class="block text-sm font-medium mb-1">Reference Images (Max 14 for Editors, 2 for First/Last Frame Video)</label>
+                  
+                  <div class="ref-controls">
+                      <div class="url-group">
+                          <input type="text" id="ref-url-input" placeholder="Paste image URL..." class="text-sm">
+                          <button id="add-url-btn" type="button" class="bg-primary text-white px-3 py-2 rounded text-sm hover:bg-primary-hover">Add URL</button>
+                      </div>
+                      <div class="w-full md:w-auto">
+                          <label for="ref-file-input" class="btn-upload block text-center w-full">
+                              <span>Upload File(s)</span>
+                          </label>
+                          <input type="file" id="ref-file-input" accept="image/*" multiple style="display: none;">
+                      </div>
+                  </div>
 
-                   <div id="ref-card-container" class="ref-card-container">
-                   </div>
+                  <div id="ref-card-container" class="ref-card-container">
+                  </div>
 
-                   <div id="gallery-placeholder" class="text-xs text-subtle text-center italic mt-2" style="display: block;">
-                       Upload or paste a URL for your reference image(s).
-                   </div>
-                   
-                   <div class="space-y-2 pt-2 border-t border-border mt-3">
-                       <label class="block text-sm font-medium mb-1">Image Usage Mode</label>
-                       <div class="flex space-x-4">
-                           <div class="flex items-center space-x-1">
-                               <input type="radio" id="usageEdit" name="imageUsage" value="edit" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
-                               <label for="usageEdit" class="text-sm">Editing / I2V</label>
-                           </div>
-                           <div class="flex items-center space-x-1">
-                               <input type="radio" id="usageReference" name="imageUsage" value="reference" class="rounded text-primary focus:ring-primary h-4 w-4">
-                               <label for="usageReference" class="text-sm">ControlNet (Ref)</label>
-                           </div>
-                       </div>
+                  <div id="gallery-placeholder" class="text-xs text-subtle text-center italic mt-2" style="display: block;">
+                      Upload or paste a URL for your reference image(s).
+                  </div>
+                  
+                  <div class="space-y-2 pt-2 border-t border-border mt-3">
+                      <label class="block text-sm font-medium mb-1">Image Usage Mode</label>
+                      <div class="flex space-x-4">
+                          <div class="flex items-center space-x-1">
+                              <input type="radio" id="usageEdit" name="imageUsage" value="edit" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
+                              <label for="usageEdit" class="text-sm">Editing / I2V</label>
+                          </div>
+                          <div class="flex items-center space-x-1">
+                              <input type="radio" id="usageReference" name="imageUsage" value="reference" class="rounded text-primary focus:ring-primary h-4 w-4">
+                              <label for="usageReference" class="text-sm">ControlNet (Ref)</label>
+                          </div>
+                      </div>
 
-                       <div class="flex items-center space-x-2" id="dim-check-container">
-                           <input type="checkbox" id="askDimensionsCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4">
-                           <label for="askDimensionsCheckbox" class="text-sm">Use dimensions of first image</label>
-                       </div>
-                   </div>
-               </div>
+                      <div class="flex items-center space-x-2" id="dim-check-container">
+                          <input type="checkbox" id="askDimensionsCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4">
+                          <label for="askDimensionsCheckbox" class="text-sm">Use dimensions of first image</label>
+                      </div>
+                  </div>
+              </div>
 
-               <div class="space-y-3">
-                   
-                   <div>
-                       <div class="flex justify-between items-center mb-1">
-                           <label class="block text-sm font-medium">Guidance Scale</label>
-                           <span class="text-xs text-subtle">Follow Prompt</span>
-                       </div>
-                       <div class="flex items-center space-x-3">
-                            <input type="range" id="guidanceScaleSlider" min="1" max="20" value="7" step="0.5" class="w-full">
-                            <input type="number" id="guidanceScaleInput" min="1" max="20" value="7" step="0.1" class="w-16 p-2 text-sm text-center font-mono">
-                       </div>
-                   </div>
+              <div class="space-y-3">
+                  
+                  <div id="guidanceScaleContainer">
+                      <div class="flex justify-between items-center mb-1">
+                          <label class="block text-sm font-medium">Guidance Scale</label>
+                          <span class="text-xs text-subtle">Follow Prompt</span>
+                      </div>
+                      <div class="flex items-center space-x-3">
+                           <input type="range" id="guidanceScaleSlider" min="1" max="20" value="7" step="0.5" class="w-full">
+                           <input type="number" id="guidanceScaleInput" min="1" max="20" value="7" step="0.1" class="w-16 p-2 text-sm text-center font-mono">
+                      </div>
+                  </div>
 
-                   <div id="image-dimensions-group" class="grid grid-cols-2 gap-4">
-                       <div class="flex items-center space-x-2">
-                           <input type="number" id="seedInput" value="42" class="w-full p-2 text-sm">
-                           <label for="seedInput" class="text-sm font-medium">Seed</label>
-                           <input type="checkbox" id="randomizeSeedCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
-                           <label for="randomizeSeedCheckbox" class="text-xs">Rand</label>
-                       </div>
+                  <div id="image-dimensions-group" class="grid grid-cols-2 gap-4">
+                      <div class="flex items-center space-x-2">
+                          <input type="number" id="seedInput" value="42" class="w-full p-2 text-sm">
+                          <label for="seedInput" class="text-sm font-medium">Seed</label>
+                          <input type="checkbox" id="randomizeSeedCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
+                          <label for="randomizeSeedCheckbox" class="text-xs">Rand</label>
+                      </div>
 
-                       <div class="flex space-x-2">
-                           <input type="number" id="widthInput" value="1024" min="128" max="2048" class="w-1/2 p-2 text-sm text-center" placeholder="W">
-                           <input type="number" id="heightInput" value="1024" min="128" max="2048" class="w-1/2 p-2 text-sm text-center" placeholder="H">
-                       </div>
-                       
-                       <div class="col-span-2 flex items-center space-x-2 bg-gray-700/30 p-2 rounded">
-                           <label class="text-sm font-medium whitespace-nowrap">Quality:</label>
-                           <select id="qualitySelect" class="w-full text-sm py-1">
-                               <option value="medium" selected>Medium</option>
-                               <option value="low">Low</option>
-                               <option value="high">High</option>
-                               <option value="hd">HD</option>
-                           </select>
-                       </div>
-                   </div>
+                      <div class="flex space-x-2">
+                          <input type="number" id="widthInput" value="1024" min="128" max="2048" class="w-1/2 p-2 text-sm text-center" placeholder="W">
+                          <input type="number" id="heightInput" value="1024" min="128" max="2048" class="w-1/2 p-2 text-sm text-center" placeholder="H">
+                      </div>
+                      
+                      <div class="col-span-2 flex items-center space-x-2 bg-gray-700/30 p-2 rounded" id="quality-container">
+                          <label class="text-sm font-medium whitespace-nowrap">Quality:</label>
+                          <select id="qualitySelect" class="w-full text-sm py-1">
+                              <option value="medium" selected>Medium</option>
+                              <option value="low">Low</option>
+                              <option value="high">High</option>
+                              <option value="hd">HD</option>
+                          </select>
+                      </div>
+                  </div>
 
-                   <div id="video-controls-group" class="hidden p-3 border border-pink-400 rounded-lg bg-pink-900/20 space-y-3">
-                       <label class="block text-sm font-medium mb-1 text-pink-300">Video Settings</label>
-                       <div class="grid grid-cols-2 gap-4">
-                           <div>
-                               <label class="block text-xs text-subtle mb-1">Aspect Ratio</label>
-                               <select id="aspectRatioSelect" class="w-full">
-                                   <option value="16:9">16:9 (Landscape)</option>
-                                   <option value="9:16">9:16 (Portrait)</option>
-                                   <option value="1:1">1:1 (Square)</option>
-                               </select>
-                           </div>
-                           <div>
-                               <label class="block text-xs text-subtle mb-1">Duration (Sec)</label>
-                               <select id="durationSelect" class="w-full">
-                               </select>
-                           </div>
-                       </div>
-                       <div id="audio-control-container" class="flex items-center space-x-2 pt-1 hidden">
-                           <input type="checkbox" id="audioCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4">
-                           <label for="audioCheckbox" class="text-sm">Generate Audio (Veo & Wan only)</label>
-                       </div>
-                   </div>
+                  <div id="video-controls-group" class="hidden p-3 border border-pink-400 rounded-lg bg-pink-900/20 space-y-3">
+                      <label class="block text-sm font-medium mb-1 text-pink-300">Video Settings</label>
+                      <div class="grid grid-cols-2 gap-4">
+                          <div>
+                              <label class="block text-xs text-subtle mb-1">Aspect Ratio</label>
+                              <select id="aspectRatioSelect" class="w-full">
+                                  <option value="16:9">16:9 (Landscape)</option>
+                                  <option value="9:16">9:16 (Portrait)</option>
+                                  <option value="1:1">1:1 (Square)</option>
+                              </select>
+                          </div>
+                          <div>
+                              <label class="block text-xs text-subtle mb-1">Duration (Sec)</label>
+                              <select id="durationSelect" class="w-full">
+                              </select>
+                          </div>
+                      </div>
+                      <div id="audio-control-container" class="flex items-center space-x-2 pt-1 hidden">
+                          <input type="checkbox" id="audioCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4">
+                          <label for="audioCheckbox" class="text-sm">Generate Audio</label>
+                      </div>
+                  </div>
 
-                   <div class="flex flex-wrap gap-x-4 gap-y-2 pt-2 border-t border-border">
-                       <div class="flex items-center space-x-2" title="Don't share in public gallery">
-                           <input type="checkbox" id="privateCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
-                           <label for="privateCheckbox" class="text-sm">Private</label>
-                       </div>
-                        <div class="flex items-center space-x-2" title="Don't add to feed">
-                           <input type="checkbox" id="noFeedCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
-                           <label for="noFeedCheckbox" class="text-sm">No Feed</label>
-                       </div>
-                       <div class="flex items-center space-x-2" title="Remove watermark">
-                           <input type="checkbox" id="noLogoCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
-                           <label for="noLogoCheckbox" class="text-sm">No Logo</label>
-                       </div>
-                        <div class="flex items-center space-x-2" title="AI Prompt Enhancement">
-                           <input type="checkbox" id="enhanceCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
-                           <label for="enhanceCheckbox" class="text-sm">Enhance</label>
-                       </div>
-                       <div class="flex items-center space-x-2" title="Enable safety filters">
-                           <input type="checkbox" id="safeCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
-                           <label for="safeCheckbox" class="text-sm">Safe</label>
-                       </div>
-                       <div class="flex items-center space-x-2 hidden" id="transparent-group" title="Transparent background (PNG)">
-                           <input type="checkbox" id="transparentCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4">
-                           <label for="transparentCheckbox" class="text-sm">Transparent</label>
-                       </div>
-                   </div>
-               </div>
+                  <div class="flex flex-wrap gap-x-4 gap-y-2 pt-2 border-t border-border">
+                      <div class="flex items-center space-x-2" title="Don't share in public gallery">
+                          <input type="checkbox" id="privateCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
+                          <label for="privateCheckbox" class="text-sm">Private</label>
+                      </div>
+                       <div class="flex items-center space-x-2" title="Don't add to feed">
+                          <input type="checkbox" id="noFeedCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
+                          <label for="noFeedCheckbox" class="text-sm">No Feed</label>
+                      </div>
+                      <div class="flex items-center space-x-2" title="Remove watermark">
+                          <input type="checkbox" id="noLogoCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
+                          <label for="noLogoCheckbox" class="text-sm">No Logo</label>
+                      </div>
+                       <div class="flex items-center space-x-2" title="AI Prompt Enhancement">
+                          <input type="checkbox" id="enhanceCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
+                          <label for="enhanceCheckbox" class="text-sm">Enhance</label>
+                      </div>
+                      <div class="flex items-center space-x-2" title="Enable safety filters">
+                          <input type="checkbox" id="safeCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4" checked>
+                          <label for="safeCheckbox" class="text-sm">Safe</label>
+                      </div>
+                      <div class="flex items-center space-x-2 hidden" id="transparent-group" title="Transparent background (PNG)">
+                          <input type="checkbox" id="transparentCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4">
+                          <label for="transparentCheckbox" class="text-sm">Transparent</label>
+                      </div>
+                  </div>
+              </div>
 
-               <button id="generateBtn" class="w-full py-3 bg-primary text-white font-bold rounded-xl text-lg hover:bg-primary-hover shadow-lg mt-4">
-                   Generate
-               </button>
-           </div>
+              <button id="generateBtn" class="w-full py-3 bg-primary text-white font-bold rounded-xl text-lg hover:bg-primary-hover shadow-lg mt-4">
+                  Generate
+              </button>
+          </div>
 
-           <div class="space-y-4">
-               <h2 class="text-xl font-semibold mb-3 border-b border-border pb-2">Result Preview</h2>
-               
-               <div id="image-container" class="relative w-full aspect-square bg-img-bg rounded-lg flex items-center justify-center p-4">
-                   <img id="resultImage" class="max-w-full max-h-full rounded-lg shadow-xl" style="display:none;" alt="Generated Image">
-                   <video id="resultVideo" class="max-w-full max-h-full rounded-lg shadow-xl" style="display:none;" controls loop autoplay muted playsinline></video>
-                   
-                   <div id="placeholderText" class="text-subtle text-center">Your generated content will appear here.</div>
-                   <div id="loadingIndicator" class="hidden loading-spinner absolute"></div>
-               </div>
+          <div class="space-y-4">
+              <h2 class="text-xl font-semibold mb-3 border-b border-border pb-2">Result Preview</h2>
+              
+              <div id="image-container" class="relative w-full aspect-square bg-img-bg rounded-lg flex items-center justify-center p-4">
+                  <img id="resultImage" class="max-w-full max-h-full rounded-lg shadow-xl" style="display:none;" alt="Generated Image">
+                  <video id="resultVideo" class="max-w-full max-h-full rounded-lg shadow-xl" style="display:none;" controls loop autoplay muted playsinline></video>
+                  
+                  <div id="placeholderText" class="text-subtle text-center">Your generated content will appear here.</div>
+                  <div id="loadingIndicator" class="hidden loading-spinner absolute"></div>
+              </div>
 
-               <div class="flex space-x-4 mt-4">
-                   <button id="viewBtn" class="flex-1 py-2 bg-gray-500 text-white font-semibold rounded-lg disabled:opacity-50" disabled>View Original URL</button>
-                   <button id="downloadBtn" class="flex-1 py-2 bg-green-600 text-white font-semibold rounded-lg disabled:opacity-50" disabled>Download</button>
-                   <button id="refreshBtn" class="py-2 px-4 bg-red-500 text-white font-semibold rounded-lg">Reset</button>
-               </div>
+              <div class="flex space-x-4 mt-4">
+                  <button id="viewBtn" class="flex-1 py-2 bg-gray-500 text-white font-semibold rounded-lg disabled:opacity-50" disabled>View Original URL</button>
+                  <button id="downloadBtn" class="flex-1 py-2 bg-green-600 text-white font-semibold rounded-lg disabled:opacity-50" disabled>Download</button>
+                  <button id="refreshBtn" class="py-2 px-4 bg-red-500 text-white font-semibold rounded-lg">Reset</button>
+              </div>
 
-               <!-- History Section -->
-               <div class="history-section">
-                   <div class="flex justify-between items-center mb-2">
-                       <h3 class="text-lg font-semibold">Generation History (1000 max)</h3>
-                       <button id="clearHistoryBtn" class="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Clear All</button>
-                   </div>
-                   <div id="historyGrid" class="history-grid">
-                       <div class="history-empty">No history yet. Generate something!</div>
-                   </div>
-               </div>
-           </div>
-       </div>
-   </div>
+              <!-- History Section -->
+              <div class="history-section">
+                  <div class="flex justify-between items-center mb-2">
+                      <h3 class="text-lg font-semibold">Generation History (1000 max)</h3>
+                      <button id="clearHistoryBtn" class="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Clear All</button>
+                  </div>
+                  <div id="historyGrid" class="history-grid">
+                      <div class="history-empty">No history yet. Generate something!</div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
 
-   <script type="module">
-       // --- MANDATORY FIREBASE INITIALIZATION ---
-       const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-       const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-       const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-       
-       let db, auth;
+  <script type="module">
+      // --- DOM Elements ---
+      const apiKeyInput = document.getElementById('apiKeyInput');
+      const modelSelect = document.getElementById('modelSelect');
+      const promptInput = document.getElementById('promptInput');
+      const seedInput = document.getElementById('seedInput');
+      const randomizeSeedCheckbox = document.getElementById('randomizeSeedCheckbox');
+      const widthInput = document.getElementById('widthInput');
+      const heightInput = document.getElementById('heightInput');
+      
+      // Buttons
+      const generateBtn = document.getElementById('generateBtn');
+      const viewBtn = document.getElementById('viewBtn');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const refreshBtn = document.getElementById('refreshBtn');
+      const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
-       if (firebaseConfig) {
-           try {
-               const app = firebase.initializeApp(firebaseConfig);
-               db = firebase.firestore(app);
-               auth = firebase.auth(app);
-               auth.onAuthStateChanged(async (user) => {
-                   if (!user) {
-                       if (initialAuthToken) await auth.signInWithCustomToken(initialAuthToken);
-                       else await auth.signInAnonymously();
-                   }
-                   console.log('Firebase Auth Ready.');
-               });
-           } catch (error) { console.error("Firebase init failed:", error); }
-       }
-       // --- END FIREBASE INITIALIZATION ---
+      // Results
+      const resultImage = document.getElementById('resultImage');
+      const resultVideo = document.getElementById('resultVideo');
+      const placeholderText = document.getElementById('placeholderText');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const messageArea = document.getElementById('message-area');
+      const historyGrid = document.getElementById('historyGrid');
 
-       // --- DOM Elements ---
-       const apiKeyInput = document.getElementById('apiKeyInput');
-       const modelSelect = document.getElementById('modelSelect');
-       const promptInput = document.getElementById('promptInput');
-       const seedInput = document.getElementById('seedInput');
-       const randomizeSeedCheckbox = document.getElementById('randomizeSeedCheckbox');
-       const widthInput = document.getElementById('widthInput');
-       const heightInput = document.getElementById('heightInput');
-       
-       // Buttons
-       const generateBtn = document.getElementById('generateBtn');
-       const viewBtn = document.getElementById('viewBtn');
-       const downloadBtn = document.getElementById('downloadBtn');
-       const refreshBtn = document.getElementById('refreshBtn');
-       const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+      // Groups
+      const imageInputGroup = document.getElementById('imageInputGroup');
+      const negativePromptGroup = document.getElementById('negativePromptGroup');
+      const negativePromptInput = document.getElementById('negativePromptInput');
+      const videoControlsGroup = document.getElementById('video-controls-group');
+      const imageDimensionsGroup = document.getElementById('image-dimensions-group');
+      const promptEnhanceControls = document.getElementById('prompt-enhance-controls');
+      const guidanceScaleContainer = document.getElementById('guidanceScaleContainer');
+      const qualityContainer = document.getElementById('quality-container');
+      
+      // New/Updated Inputs
+      const privateCheckbox = document.getElementById('privateCheckbox');
+      const noLogoCheckbox = document.getElementById('noLogoCheckbox');
+      const enhanceCheckbox = document.getElementById('enhanceCheckbox'); 
+      const askDimensionsCheckbox = document.getElementById('askDimensionsCheckbox');
+      
+      const safeCheckbox = document.getElementById('safeCheckbox');
+      const noFeedCheckbox = document.getElementById('noFeedCheckbox');
+      const transparentCheckbox = document.getElementById('transparentCheckbox');
+      const transparentGroup = document.getElementById('transparent-group');
+      
+      const guidanceScaleSlider = document.getElementById('guidanceScaleSlider');
+      const guidanceScaleInput = document.getElementById('guidanceScaleInput');
+      const qualitySelect = document.getElementById('qualitySelect');
 
-       // Results
-       const resultImage = document.getElementById('resultImage');
-       const resultVideo = document.getElementById('resultVideo');
-       const placeholderText = document.getElementById('placeholderText');
-       const loadingIndicator = document.getElementById('loadingIndicator');
-       const messageArea = document.getElementById('message-area');
-       const historyGrid = document.getElementById('historyGrid');
+      // Video Specific
+      const aspectRatioSelect = document.getElementById('aspectRatioSelect');
+      const durationSelect = document.getElementById('durationSelect');
+      const audioControlContainer = document.getElementById('audio-control-container');
+      const audioCheckbox = document.getElementById('audioCheckbox');
 
-       // Groups
-       const imageInputGroup = document.getElementById('imageInputGroup');
-       const negativePromptGroup = document.getElementById('negativePromptGroup');
-       const negativePromptInput = document.getElementById('negativePromptInput');
-       const videoControlsGroup = document.getElementById('video-controls-group');
-       const imageDimensionsGroup = document.getElementById('image-dimensions-group');
-       const promptEnhanceControls = document.getElementById('prompt-enhance-controls');
-       
-       // New/Updated Inputs
-       const privateCheckbox = document.getElementById('privateCheckbox');
-       const noLogoCheckbox = document.getElementById('noLogoCheckbox');
-       const enhanceCheckbox = document.getElementById('enhanceCheckbox'); 
-       const askDimensionsCheckbox = document.getElementById('askDimensionsCheckbox');
-       
-       const safeCheckbox = document.getElementById('safeCheckbox');
-       const noFeedCheckbox = document.getElementById('noFeedCheckbox');
-       const transparentCheckbox = document.getElementById('transparentCheckbox');
-       const transparentGroup = document.getElementById('transparent-group');
-       
-       const guidanceScaleSlider = document.getElementById('guidanceScaleSlider');
-       const guidanceScaleInput = document.getElementById('guidanceScaleInput');
-       const qualitySelect = document.getElementById('qualitySelect');
-
-       // Video Specific
-       const aspectRatioSelect = document.getElementById('aspectRatioSelect');
-       const durationSelect = document.getElementById('durationSelect');
-       const audioControlContainer = document.getElementById('audio-control-container');
-       const audioCheckbox = document.getElementById('audioCheckbox');
-       const dimCheckContainer = document.getElementById('dim-check-container');
-
-       // Single Image Elements
-       const refUrlInput = document.getElementById('ref-url-input');
-       const addUrlBtn = document.getElementById('add-url-btn');
-       const refFileInput = document.getElementById('ref-file-input');
-       const refCardContainer = document.getElementById('ref-card-container');
-       const galleryPlaceholder = document.getElementById('gallery-placeholder');
+      // Single Image Elements
+      const refUrlInput = document.getElementById('ref-url-input');
+      const addUrlBtn = document.getElementById('add-url-btn');
+      const refFileInput = document.getElementById('ref-file-input');
+      const refCardContainer = document.getElementById('ref-card-container');
+      const galleryPlaceholder = document.getElementById('gallery-placeholder');
 
 
-       // --- State ---
-       let generatedImageUrl = null;
-       let generatedApiUrl = null;
-       let originalPrompt = ''; 
-       let referenceImages = []; 
-       const MAX_IMAGES = 14;
-       const HISTORY_KEY = 'pollinations_generation_history';
-       const MAX_HISTORY = 1000;
-       const API_KEY_STORAGE = 'pollinations_studio_api_key';
+      // --- State ---
+      let generatedImageUrl = null;
+      let generatedApiUrl = null;
+      let originalPrompt = ''; 
+      let referenceImages = []; 
+      const MAX_IMAGES = 14;
+      const HISTORY_KEY = 'pollinations_generation_history';
+      const MAX_HISTORY = 1000;
+      const API_KEY_STORAGE = 'pollinations_studio_api_key';
 
-       // --- Constants ---
-       const IMAGE_API_BASE_URL = 'https://gen.pollinations.ai/image';
-       const TEXT_API_BASE_URL = 'https://gen.pollinations.ai/text';
-       const DEFAULT_DIMENSION = 1024;
-       
-       // Model Classifications
-       const EDITOR_MODELS = ['klein', 'klein-large', 'nanobanana', 'nanobanana-pro','seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', 'seedance', 'seedance-pro', 'wan', 'grok-video', 'veo']; 
-       const VIDEO_MODELS = ['seedance', 'seedance-pro', 'wan', 'grok-video', 'veo'];
-       const SEEDREAM_MODEL = ['seedream', 'seedream-pro'];
-       const PAID_MODELS = ['kontext', 'seedream', 'seedream-pro', 'gptimage-large', 'nanobanana', 'nanobanana-pro', 'seedance-pro', 'veo'];
-       
-       const apiKey = "plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL";
-       const promptEnhancementModel = 'nova-fast';
+      // --- Constants ---
+      const IMAGE_API_BASE_URL = 'https://gen.pollinations.ai/image';
+      const TEXT_API_BASE_URL = 'https://gen.pollinations.ai/text';
+      const DEFAULT_DIMENSION = 1024;
+      
+      // Model Classifications
+      const VIDEO_MODELS = ['grok-video', 'seedance', 'seedance-pro', 'wan', 'veo', 'ltx-2'];
+      
+      // Models that support image input (Editors + Video I2V models)
+      const IMAGE_INPUT_MODELS = ['klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', 'grok-video', 'seedance', 'seedance-pro', 'wan', 'veo', 'ltx-2'];
+      
+      // Models that support guidance scale (Standard diffusion-based image models)
+      const GUIDANCE_SCALE_MODELS = ['flux', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'imagen-4'];
+      
+      // Models that support negative prompts (All except Veo)
+      const NEGATIVE_PROMPT_MODELS = ['flux', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', 'imagen-4', 'seedance', 'seedance-pro', 'wan', 'grok-video', 'ltx-2'];
+      
+      // Models that support transparency (GPT-Image only)
+      const TRANSPARENT_MODELS = ['gptimage', 'gptimage-large'];
+      
+      // Video models that support audio generation
+      const AUDIO_MODELS = ['veo', 'wan', 'grok-video'];
+      
+      // Paid models requiring API key
+      const PAID_MODELS = ['kontext', 'seedream', 'seedream-pro', 'gptimage-large', 'nanobanana', 'nanobanana-pro', 'seedance-pro', 'veo', 'ltx-2'];
+      
+      const apiKey = "plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL";
+      const promptEnhancementModel = 'nova-fast';
 
-       // Helper to get active key
-       function getActiveApiKey() {
-           return apiKeyInput.value.trim() || apiKey;
-       }
+      // Helper to get active key
+      function getActiveApiKey() {
+          return apiKeyInput.value.trim() || apiKey;
+      }
 
-       // --- HISTORY MANAGEMENT ---
-       function loadHistory() {
-           try {
-               const stored = localStorage.getItem(HISTORY_KEY);
-               return stored ? JSON.parse(stored) : [];
-           } catch (e) {
-               console.error('Failed to load history:', e);
-               return [];
-           }
-       }
+      // --- HISTORY MANAGEMENT ---
+      function loadHistory() {
+          try {
+              const stored = localStorage.getItem(HISTORY_KEY);
+              return stored ? JSON.parse(stored) : [];
+          } catch (e) {
+              console.error('Failed to load history:', e);
+              return [];
+          }
+      }
 
-       function saveHistory(history) {
-           try {
-               localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-           } catch (e) {
-               console.error('Failed to save history:', e);
-           }
-       }
+      function saveHistory(history) {
+          try {
+              localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+          } catch (e) {
+              console.error('Failed to save history:', e);
+          }
+      }
 
-       function addToHistory(url, isVideo = false, prompt = '') {
-           // Only store if it's an actual URL, not a blob
-           if (url.startsWith('blob:')) {
-               return; // Skip blob URLs
-           }
-           
-           // Remove API key from URL before storing
-           const cleanUrl = url.split('&key=')[0].split('?key=')[0];
-           
-           const history = loadHistory();
-           
-           // Capture ALL current settings
-           const newItem = {
-               url: cleanUrl,
-               timestamp: Date.now(),
-               isVideo: isVideo,
-               prompt: prompt || promptInput.value.trim(),
-               
-               // Model and core settings
-               model: modelSelect.value,
-               seed: seedInput.value,
-               guidanceScale: guidanceScaleInput.value,
-               
-               // Image settings
-               width: widthInput.value,
-               height: heightInput.value,
-               quality: qualitySelect.value,
-               transparent: transparentCheckbox.checked,
-               
-               // Video settings
-               aspectRatio: aspectRatioSelect.value,
-               duration: durationSelect.value,
-               audio: audioCheckbox.checked,
-               
-               // Privacy and enhancement settings
-               private: privateCheckbox.checked,
-               noFeed: noFeedCheckbox.checked,
-               noLogo: noLogoCheckbox.checked,
-               enhance: enhanceCheckbox.checked,
-               safe: safeCheckbox.checked,
-               
-               // Image input settings
-               imageUsageMode: document.querySelector('input[name="imageUsage"]:checked')?.value,
-               useDimensionsFromImage: askDimensionsCheckbox.checked,
-               
-               // Reference images (store URLs only, not blobs)
-               referenceImages: referenceImages.map(img => ({
-                   type: img.type,
-                   url: img.type === 'url' ? img.source : null, // Only save URL references
-                   width: img.width,
-                   height: img.height
-               })).filter(img => img.url), // Only keep URL-based references
-               
-               // Negative prompt (all models now support it)
-               negativePrompt: negativePromptInput.value.trim()
-           };
-           
-           // Add to beginning of array
-           history.unshift(newItem);
-           
-           // Limit history size
-           if (history.length > MAX_HISTORY) {
-               history.length = MAX_HISTORY;
-           }
-           
-           saveHistory(history);
-           renderHistory();
-       }
+      function addToHistory(url, isVideo = false, prompt = '') {
+          // Only store if it's an actual URL, not a blob
+          if (url.startsWith('blob:')) {
+              return; // Skip blob URLs
+          }
+          
+          // Remove API key from URL before storing
+          const cleanUrl = url.split('&key=')[0].split('?key=')[0];
+          
+          const history = loadHistory();
+          
+          // Capture ALL current settings
+          const newItem = {
+              url: cleanUrl,
+              timestamp: Date.now(),
+              isVideo: isVideo,
+              prompt: prompt || promptInput.value.trim(),
+              
+              // Model and core settings
+              model: modelSelect.value,
+              seed: seedInput.value,
+              guidanceScale: guidanceScaleInput.value,
+              
+              // Image settings
+              width: widthInput.value,
+              height: heightInput.value,
+              quality: qualitySelect.value,
+              transparent: transparentCheckbox.checked,
+              
+              // Video settings
+              aspectRatio: aspectRatioSelect.value,
+              duration: durationSelect.value,
+              audio: audioCheckbox.checked,
+              
+              // Privacy and enhancement settings
+              private: privateCheckbox.checked,
+              noFeed: noFeedCheckbox.checked,
+              noLogo: noLogoCheckbox.checked,
+              enhance: enhanceCheckbox.checked,
+              safe: safeCheckbox.checked,
+              
+              // Image input settings
+              imageUsageMode: document.querySelector('input[name="imageUsage"]:checked')?.value,
+              useDimensionsFromImage: askDimensionsCheckbox.checked,
+              
+              // Reference images (store URLs only, not blobs)
+              referenceImages: referenceImages.map(img => ({
+                  type: img.type,
+                  url: img.type === 'url' ? img.source : null, // Only save URL references
+                  width: img.width,
+                  height: img.height
+              })).filter(img => img.url), // Only keep URL-based references
+              
+              // Negative prompt
+              negativePrompt: negativePromptInput.value.trim()
+          };
+          
+          // Add to beginning of array
+          history.unshift(newItem);
+          
+          // Limit history size
+          if (history.length > MAX_HISTORY) {
+              history.length = MAX_HISTORY;
+          }
+          
+          saveHistory(history);
+          renderHistory();
+      }
 
-       function removeFromHistory(index) {
-           if (confirm('Are you sure you want to remove this item from history?')) {
-               const history = loadHistory();
-               history.splice(index, 1);
-               saveHistory(history);
-               renderHistory();
-               displayMessage('Item removed from history.', 'success');
-           }
-       }
+      function removeFromHistory(index) {
+          if (confirm('Are you sure you want to remove this item from history?')) {
+              const history = loadHistory();
+              history.splice(index, 1);
+              saveHistory(history);
+              renderHistory();
+              displayMessage('Item removed from history.', 'success');
+          }
+      }
 
-       function clearAllHistory() {
-           if (confirm('Are you sure you want to clear all generation history?')) {
-               localStorage.removeItem(HISTORY_KEY);
-               renderHistory();
-               displayMessage('History cleared successfully.', 'success');
-           }
-       }
+      function clearAllHistory() {
+          if (confirm('Are you sure you want to clear all generation history?')) {
+              localStorage.removeItem(HISTORY_KEY);
+              renderHistory();
+              displayMessage('History cleared successfully.', 'success');
+          }
+      }
 
-       function formatTimestamp(timestamp) {
-           const date = new Date(timestamp);
-           const now = new Date();
-           const diff = now - date;
-           
-           // Less than 1 minute
-           if (diff < 60000) {
-               return 'Just now';
-           }
-           // Less than 1 hour
-           if (diff < 3600000) {
-               const mins = Math.floor(diff / 60000);
-               return `${mins}m ago`;
-           }
-           // Less than 1 day
-           if (diff < 86400000) {
-               const hours = Math.floor(diff / 3600000);
-               return `${hours}h ago`;
-           }
-           // Less than 7 days
-           if (diff < 604800000) {
-               const days = Math.floor(diff / 86400000);
-               return `${days}d ago`;
-           }
-           
-           // Otherwise show date
-           return date.toLocaleDateString();
-       }
+      function formatTimestamp(timestamp) {
+          const date = new Date(timestamp);
+          const now = new Date();
+          const diff = now - date;
+          
+          // Less than 1 minute
+          if (diff < 60000) {
+              return 'Just now';
+          }
+          // Less than 1 hour
+          if (diff < 3600000) {
+              const mins = Math.floor(diff / 60000);
+              return `${mins}m ago`;
+          }
+          // Less than 1 day
+          if (diff < 86400000) {
+              const hours = Math.floor(diff / 3600000);
+              return `${hours}h ago`;
+          }
+          // Less than 7 days
+          if (diff < 604800000) {
+              const days = Math.floor(diff / 86400000);
+              return `${days}d ago`;
+          }
+          
+          // Otherwise show date
+          return date.toLocaleDateString();
+      }
 
-       function renderHistory() {
-           const history = loadHistory();
-           
-           if (history.length === 0) {
-               historyGrid.innerHTML = '<div class="history-empty">No history yet. Generate something!</div>';
+      function renderHistory() {
+          const history = loadHistory();
+          
+          if (history.length === 0) {
+              historyGrid.innerHTML = '<div class="history-empty">No history yet. Generate something!</div>';
+              return;
+          }
+          
+          historyGrid.innerHTML = '';
+          
+          history.forEach((item, index) => {
+              const historyItem = document.createElement('div');
+              historyItem.className = 'history-item';
+              historyItem.title = `Model: ${item.model || 'Unknown'}\nSeed: ${item.seed || 'Unknown'}\nClick to load all settings`;
+              
+              // Create media element (img or video)
+              const mediaEl = document.createElement(item.isVideo ? 'video' : 'img');
+              mediaEl.src = item.url;
+              if (item.isVideo) {
+                  mediaEl.muted = true;
+                  mediaEl.loop = true;
+                  mediaEl.playsInline = true;
+                  // Play on hover
+                  historyItem.addEventListener('mouseenter', () => {
+                      mediaEl.play().catch(() => {});
+                  });
+                  historyItem.addEventListener('mouseleave', () => {
+                      mediaEl.pause();
+                      mediaEl.currentTime = 0;
+                  });
+              }
+              
+              // Create timestamp overlay
+              const timestamp = document.createElement('div');
+              timestamp.className = 'history-timestamp';
+              timestamp.textContent = formatTimestamp(item.timestamp);
+              
+              // Create remove button
+              const removeBtn = document.createElement('div');
+              removeBtn.className = 'history-remove';
+              removeBtn.innerHTML = '&times;';
+              removeBtn.onclick = (e) => {
+                  e.stopPropagation();
+                  removeFromHistory(index);
+              };
+              
+              // Click to load into preview with ALL settings
+              historyItem.onclick = () => {
+                  loadHistoryItem(item);
+              };
+              
+              historyItem.appendChild(mediaEl);
+              historyItem.appendChild(timestamp);
+              historyItem.appendChild(removeBtn);
+              historyGrid.appendChild(historyItem);
+          });
+      }
+
+      function loadHistoryItem(item) {
+          // Set both the display URL AND the API URL
+          generatedImageUrl = item.url;
+          generatedApiUrl = item.url;
+          
+          // Load the prompt
+          if (item.prompt) {
+              promptInput.value = item.prompt;
+          }
+          
+          // Load model
+          if (item.model) {
+              modelSelect.value = item.model;
+              updateUIForModel(); // Update UI based on model
+          }
+          
+          // Load core settings
+          if (item.seed !== undefined) {
+              seedInput.value = item.seed;
+              // Do NOT uncheck randomize seed when loading history - maintain setting
+          }
+          
+          if (item.guidanceScale !== undefined) {
+              guidanceScaleInput.value = item.guidanceScale;
+              guidanceScaleSlider.value = item.guidanceScale;
+          }
+          
+          // Load image settings
+          if (item.width !== undefined) widthInput.value = item.width;
+          if (item.height !== undefined) heightInput.value = item.height;
+          if (item.quality !== undefined) qualitySelect.value = item.quality;
+          if (item.transparent !== undefined) transparentCheckbox.checked = item.transparent;
+          
+          // Load video settings
+          if (item.aspectRatio !== undefined) aspectRatioSelect.value = item.aspectRatio;
+          if (item.duration !== undefined) durationSelect.value = item.duration;
+          if (item.audio !== undefined) audioCheckbox.checked = item.audio;
+          
+          // Load privacy and enhancement settings
+          if (item.private !== undefined) privateCheckbox.checked = item.private;
+          if (item.noFeed !== undefined) noFeedCheckbox.checked = item.noFeed;
+          if (item.noLogo !== undefined) noLogoCheckbox.checked = item.noLogo;
+          if (item.enhance !== undefined) enhanceCheckbox.checked = item.enhance;
+          if (item.safe !== undefined) safeCheckbox.checked = item.safe;
+          
+          // Load image input settings
+          if (item.imageUsageMode) {
+              const radioBtn = document.querySelector(`input[name="imageUsage"][value="${item.imageUsageMode}"]`);
+              if (radioBtn) radioBtn.checked = true;
+          }
+          
+          if (item.useDimensionsFromImage !== undefined) {
+              askDimensionsCheckbox.checked = item.useDimensionsFromImage;
+          }
+          
+          // Load reference images (URL-based only)
+          if (item.referenceImages && item.referenceImages.length > 0) {
+              // Clear existing reference images
+              referenceImages.forEach(img => {
+                  if (img.type === 'file' && img.previewUrl) {
+                      URL.revokeObjectURL(img.previewUrl);
+                  }
+              });
+              referenceImages = [];
+              
+              // Add saved reference images
+              item.referenceImages.forEach(savedImg => {
+                  if (savedImg.url) {
+                      setReferenceImage(savedImg.url, 'url');
+                  }
+              });
+          }
+          
+          // Load negative prompt
+          if (item.negativePrompt) {
+              negativePromptInput.value = item.negativePrompt;
+          }
+          
+          // Display the media
+          if (item.isVideo) {
+              resultVideo.src = item.url;
+              resultVideo.style.display = 'block';
+              resultImage.style.display = 'none';
+              resultVideo.load();
+              resultVideo.play().catch(e => console.log("Auto-play prevented"));
+          } else {
+              resultImage.src = item.url;
+              resultImage.style.display = 'block';
+              resultVideo.style.display = 'none';
+          }
+          
+          placeholderText.style.display = 'none';
+          viewBtn.disabled = downloadBtn.disabled = false;
+          
+          displayMessage('✅ Loaded from history with ALL settings restored!', 'success');
+      }
+
+      function updateModelAvailability() {
+          const hasCustomKey = apiKeyInput.value.trim().length > 0;
+          
+          // Handle all paid models uniformly
+          PAID_MODELS.forEach(modelName => {
+              const option = modelSelect.querySelector(`option[value="${modelName}"]`);
+              if (option) {
+                  option.disabled = !hasCustomKey;
+                  if (!hasCustomKey && modelSelect.value === modelName) {
+                      modelSelect.value = 'zimage';
+                      updateUIForModel();
+                  }
+              }
+          });
+      }
+
+      // --- Utility Functions ---
+
+      function displayMessage(html, type = 'info') {
+          let className = '';
+          if (type === 'error') className = 'error-message';
+          else if (type === 'success') className = 'bg-green-500 text-white p-3 rounded-lg text-center';
+          else className = 'bg-blue-500 text-white p-3 rounded-lg text-center';
+
+          const dismissBtn = type === 'error' 
+              ? '<button onclick="this.parentElement.remove()" class="ml-3 px-3 py-1 bg-white/20 hover:bg-white/30 rounded font-semibold">✕ Dismiss</button>' 
+              : '';
+          
+          messageArea.innerHTML = `<div class="${className}">${html}${dismissBtn}</div>`;
+          
+          if (type !== 'error') {
+              setTimeout(() => {
+                  messageArea.innerHTML = '';
+              }, 7000); 
+          }
+      }
+
+      function getRandomSeed() {
+          return Math.floor(Math.random() * 1000000000);
+      }
+
+      async function uploadToLitterbox(file) {
+          const uploadUrl = 'https://litterbox.catbox.moe/resources/internals/api.php';
+          const formData = new FormData();
+          formData.append('reqtype', 'fileupload');
+          formData.append('time', '24h'); 
+          formData.append('fileToUpload', file);
+
+          const response = await fetch(uploadUrl, { method: 'POST', body: formData });
+          if (!response.ok) throw new Error(`Upload failed with status: ${response.status}`);
+          
+          const resultUrl = await response.text();
+          if (!resultUrl.startsWith('http')) throw new Error(`Catbox upload failed: ${resultUrl}`);
+          
+          return resultUrl;
+      }
+
+      function toggleLoading(isLoading, element = generateBtn) {
+          element.disabled = isLoading;
+          if (element === generateBtn) {
+              element.innerHTML = isLoading 
+                  ? '<div class="loading-spinner mx-auto"></div>' 
+                  : 'Generate';
+              loadingIndicator.style.display = isLoading ? 'block' : 'none';
+              placeholderText.style.display = isLoading || generatedImageUrl ? 'none' : 'block';
+          } else if (element.id === 'enhancePromptBtn' || element.id === 'retryEnhanceBtn') {
+               element.innerHTML = isLoading
+                  ? '<div class="loading-spinner w-5 h-5 mx-auto"></div>'
+                  : (element.id === 'enhancePromptBtn' ? '✨ Prompt Enhance' : 'Re-try Enhance');
+          }
+      }
+      
+      // Sync Guidance Scale
+      guidanceScaleSlider.addEventListener('input', (e) => {
+          guidanceScaleInput.value = e.target.value;
+      });
+      guidanceScaleInput.addEventListener('input', (e) => {
+          let val = parseFloat(e.target.value);
+          if(val < 1) val = 1;
+          if(val > 20) val = 20;
+          guidanceScaleSlider.value = val;
+      });
+
+      // --- Multi-Image Logic ---
+
+      function updateGalleryUI() {
+          refCardContainer.innerHTML = '';
+          
+          if (referenceImages.length === 0) {
+              galleryPlaceholder.style.display = 'block';
+              return;
+          }
+
+          galleryPlaceholder.style.display = 'none';
+
+          referenceImages.forEach((imgObj, index) => {
+              const card = document.createElement('div');
+              card.className = 'ref-card';
+
+              const imgEl = document.createElement('img');
+              imgEl.src = imgObj.previewUrl; 
+              
+              const metaEl = document.createElement('div');
+              metaEl.className = 'ref-meta';
+              metaEl.innerText = `${imgObj.width}x${imgObj.height}`;
+
+              const removeBtn = document.createElement('div');
+              removeBtn.className = 'ref-remove';
+              removeBtn.innerHTML = '&times;';
+              removeBtn.onclick = function() {
+                  if (imgObj.type === 'file' && imgObj.previewUrl) {
+                      URL.revokeObjectURL(imgObj.previewUrl);
+                  }
+                  referenceImages.splice(index, 1); 
+                  updateGalleryUI(); 
+              };
+
+              card.appendChild(removeBtn);
+              card.appendChild(imgEl);
+              card.appendChild(metaEl);
+              refCardContainer.appendChild(card);
+          });
+          
+          if (askDimensionsCheckbox.checked && referenceImages.length > 0) {
+              widthInput.value = referenceImages[0].width;
+              heightInput.value = referenceImages[0].height;
+          }
+          
+          const isMax = referenceImages.length >= MAX_IMAGES;
+          refUrlInput.disabled = isMax;
+          addUrlBtn.disabled = isMax;
+          refFileInput.disabled = isMax;
+          
+          if(isMax) {
+              displayMessage(`Maximum of ${MAX_IMAGES} images reached. Remove an image to add more.`, 'info');
+          }
+      }
+
+      function setReferenceImage(source, type) {
+          if (referenceImages.length >= MAX_IMAGES) {
+               displayMessage(`Cannot add more than ${MAX_IMAGES} images.`, 'error');
                return;
-           }
-           
-           historyGrid.innerHTML = '';
-           
-           history.forEach((item, index) => {
-               const historyItem = document.createElement('div');
-               historyItem.className = 'history-item';
-               historyItem.title = `Model: ${item.model || 'Unknown'}\nSeed: ${item.seed || 'Unknown'}\nClick to load all settings`;
-               
-               // Create media element (img or video)
-               const mediaEl = document.createElement(item.isVideo ? 'video' : 'img');
-               mediaEl.src = item.url;
-               if (item.isVideo) {
-                   mediaEl.muted = true;
-                   mediaEl.loop = true;
-                   mediaEl.playsInline = true;
-                   // Play on hover
-                   historyItem.addEventListener('mouseenter', () => {
-                       mediaEl.play().catch(() => {});
-                   });
-                   historyItem.addEventListener('mouseleave', () => {
-                       mediaEl.pause();
-                       mediaEl.currentTime = 0;
-                   });
-               }
-               
-               // Create timestamp overlay
-               const timestamp = document.createElement('div');
-               timestamp.className = 'history-timestamp';
-               timestamp.textContent = formatTimestamp(item.timestamp);
-               
-               // Create remove button
-               const removeBtn = document.createElement('div');
-               removeBtn.className = 'history-remove';
-               removeBtn.innerHTML = '&times;';
-               removeBtn.onclick = (e) => {
-                   e.stopPropagation();
-                   removeFromHistory(index);
-               };
-               
-               // Click to load into preview with ALL settings
-               historyItem.onclick = () => {
-                   loadHistoryItem(item);
-               };
-               
-               historyItem.appendChild(mediaEl);
-               historyItem.appendChild(timestamp);
-               historyItem.appendChild(removeBtn);
-               historyGrid.appendChild(historyItem);
-           });
-       }
+          }
+          
+          const tempImg = new Image();
+          tempImg.crossOrigin = "Anonymous";
+          
+          const srcUrl = type === 'file' ? URL.createObjectURL(source) : source;
+          tempImg.src = srcUrl;
 
-       function loadHistoryItem(item) {
-           // Set both the display URL AND the API URL
-           generatedImageUrl = item.url;
-           generatedApiUrl = item.url;
-           
-           // Load the prompt
-           if (item.prompt) {
-               promptInput.value = item.prompt;
-           }
-           
-           // Load model
-           if (item.model) {
-               modelSelect.value = item.model;
-               updateUIForModel(); // Update UI based on model
-           }
-           
-           // Load core settings
-           if (item.seed !== undefined) {
-               seedInput.value = item.seed;
-               // Do NOT uncheck randomize seed when loading history - maintain setting
-           }
-           
-           if (item.guidanceScale !== undefined) {
-               guidanceScaleInput.value = item.guidanceScale;
-               guidanceScaleSlider.value = item.guidanceScale;
-           }
-           
-           // Load image settings
-           if (item.width !== undefined) widthInput.value = item.width;
-           if (item.height !== undefined) heightInput.value = item.height;
-           if (item.quality !== undefined) qualitySelect.value = item.quality;
-           if (item.transparent !== undefined) transparentCheckbox.checked = item.transparent;
-           
-           // Load video settings
-           if (item.aspectRatio !== undefined) aspectRatioSelect.value = item.aspectRatio;
-           if (item.duration !== undefined) durationSelect.value = item.duration;
-           if (item.audio !== undefined) audioCheckbox.checked = item.audio;
-           
-           // Load privacy and enhancement settings
-           if (item.private !== undefined) privateCheckbox.checked = item.private;
-           if (item.noFeed !== undefined) noFeedCheckbox.checked = item.noFeed;
-           if (item.noLogo !== undefined) noLogoCheckbox.checked = item.noLogo;
-           if (item.enhance !== undefined) enhanceCheckbox.checked = item.enhance;
-           if (item.safe !== undefined) safeCheckbox.checked = item.safe;
-           
-           // Load image input settings
-           if (item.imageUsageMode) {
-               const radioBtn = document.querySelector(`input[name="imageUsage"][value="${item.imageUsageMode}"]`);
-               if (radioBtn) radioBtn.checked = true;
-           }
-           
-           if (item.useDimensionsFromImage !== undefined) {
-               askDimensionsCheckbox.checked = item.useDimensionsFromImage;
-           }
-           
-           // Load reference images (URL-based only)
-           if (item.referenceImages && item.referenceImages.length > 0) {
-               // Clear existing reference images
-               referenceImages.forEach(img => {
-                   if (img.type === 'file' && img.previewUrl) {
-                       URL.revokeObjectURL(img.previewUrl);
-                   }
-               });
-               referenceImages = [];
-               
-               // Add saved reference images
-               item.referenceImages.forEach(savedImg => {
-                   if (savedImg.url) {
-                       setReferenceImage(savedImg.url, 'url');
-                   }
-               });
-           }
-           
-           // Load negative prompt
-           if (item.negativePrompt) {
-               negativePromptInput.value = item.negativePrompt;
-           }
-           
-           // Display the media
-           if (item.isVideo) {
-               resultVideo.src = item.url;
-               resultVideo.style.display = 'block';
-               resultImage.style.display = 'none';
-               resultVideo.load();
-               resultVideo.play().catch(e => console.log("Auto-play prevented"));
-           } else {
-               resultImage.src = item.url;
-               resultImage.style.display = 'block';
-               resultVideo.style.display = 'none';
-           }
-           
-           placeholderText.style.display = 'none';
-           viewBtn.disabled = downloadBtn.disabled = false;
-           
-           displayMessage('✅ Loaded from history with ALL settings restored!', 'success');
-       }
+          tempImg.onload = function() {
+              const newImage = {
+                  type: type,
+                  source: source, 
+                  previewUrl: srcUrl,
+                  width: this.naturalWidth,
+                  height: this.naturalHeight
+              };
+              
+              referenceImages.push(newImage);
+              updateGalleryUI();
+              if (type === 'file') {
+                  displayMessage(`Image uploaded and added to list. Total: ${referenceImages.length}`, 'success');
+              }
+          };
 
-       function updateModelAvailability() {
-           const hasCustomKey = apiKeyInput.value.trim().length > 0;
-           
-           // Handle all paid models uniformly
-           PAID_MODELS.forEach(modelName => {
-               const option = modelSelect.querySelector(`option[value="${modelName}"]`);
-               if (option) {
-                   option.disabled = !hasCustomKey;
-                   if (!hasCustomKey && modelSelect.value === modelName) {
-                       modelSelect.value = 'zimage';
-                       updateUIForModel();
-                   }
-               }
-           });
-       }
+          tempImg.onerror = function() {
+              if (type === 'file' && srcUrl) URL.revokeObjectURL(srcUrl); 
+              displayMessage('Failed to load image. Please check the URL or file.', 'error');
+          };
+      }
 
-       // --- Utility Functions ---
+      addUrlBtn.addEventListener('click', () => {
+          const url = refUrlInput.value.trim();
+          if (url) {
+              setReferenceImage(url, 'url');
+              refUrlInput.value = '';
+          }
+      });
 
-       function displayMessage(html, type = 'info') {
-           let className = '';
-           if (type === 'error') className = 'error-message';
-           else if (type === 'success') className = 'bg-green-500 text-white p-3 rounded-lg text-center';
-           else className = 'bg-blue-500 text-white p-3 rounded-lg text-center';
+      refFileInput.addEventListener('change', (e) => {
+          const files = Array.from(e.target.files);
+          
+          if (files.length + referenceImages.length > MAX_IMAGES) {
+              displayMessage(`Can only add ${MAX_IMAGES - referenceImages.length} more image(s).`, 'error');
+              files.slice(0, MAX_IMAGES - referenceImages.length).forEach(file => {
+                  if (file && file.type.startsWith('image/')) {
+                      setReferenceImage(file, 'file');
+                  }
+              });
+          } else {
+              files.forEach(file => {
+                  if (file && file.type.startsWith('image/')) {
+                      setReferenceImage(file, 'file');
+                  }
+              });
+          }
+          refFileInput.value = ''; 
+      });
+      
+      // --- Prompt Enhancement Logic ---
+      function updatePromptControls(isEnhanced) {
+          promptEnhanceControls.innerHTML = '';
+          if (!isEnhanced) {
+              const enhanceBtn = document.createElement('button');
+              enhanceBtn.id = 'enhancePromptBtn';
+              enhanceBtn.type = 'button';
+              enhanceBtn.className = 'flex-1 py-2 bg-enhance text-white font-semibold rounded-lg hover:bg-enhance-hover text-sm';
+              enhanceBtn.innerHTML = '✨ Prompt Enhance';
+              enhanceBtn.addEventListener('click', handlePromptEnhancement);
+              promptEnhanceControls.appendChild(enhanceBtn);
+          } else {
+              const revertBtn = document.createElement('button');
+              revertBtn.id = 'revertPromptBtn';
+              revertBtn.type = 'button';
+              revertBtn.className = 'w-1/3 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 text-sm';
+              revertBtn.textContent = 'Revert';
+              revertBtn.addEventListener('click', revertPrompt);
+              
+              const retryBtn = document.createElement('button');
+              retryBtn.id = 'retryEnhanceBtn';
+              retryBtn.type = 'button';
+              retryBtn.className = 'w-2/3 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 text-sm';
+              retryBtn.textContent = 'Re-try Enhance';
+              retryBtn.addEventListener('click', handlePromptEnhancement);
 
-           const dismissBtn = type === 'error' 
-               ? '<button onclick="this.parentElement.remove()" class="ml-3 px-3 py-1 bg-white/20 hover:bg-white/30 rounded font-semibold">✕ Dismiss</button>' 
-               : '';
-           
-           messageArea.innerHTML = `<div class="${className}">${html}${dismissBtn}</div>`;
-           
-           if (type !== 'error') {
-               setTimeout(() => {
-                   messageArea.innerHTML = '';
-               }, 7000); 
-           }
-       }
+              promptEnhanceControls.appendChild(revertBtn);
+              promptEnhanceControls.appendChild(retryBtn);
+          }
+      }
+      
+      async function handlePromptEnhancement(event) {
+          const currentElement = event.target;
+          const isRetry = currentElement.id === 'retryEnhanceBtn';
+          let currentPrompt = promptInput.value.trim();
 
-       function getRandomSeed() {
-           return Math.floor(Math.random() * 1000000000);
-       }
+          if (!isRetry) {
+              if (!currentPrompt) {
+                  displayMessage('Please enter a prompt to enhance.', 'error');
+                  return;
+              }
+              originalPrompt = currentPrompt; 
+          } else {
+              currentPrompt = originalPrompt; 
+          }
+          
+          toggleLoading(true, currentElement); 
+          
+          const fullTextPrompt = `Re-write the following prompt to be more detailed and vivid for an image generator. The output must ONLY contain the re-written prompt with no other commentary or niceties. Original prompt: "${currentPrompt}"`;
+          const enhancementSeed = getRandomSeed();
+          
+          const textParams = new URLSearchParams({
+              model: promptEnhancementModel,
+              seed: enhancementSeed,
+          });
 
-       async function uploadToLitterbox(file) {
-           const uploadUrl = 'https://litterbox.catbox.moe/resources/internals/api.php';
-           const formData = new FormData();
-           formData.append('reqtype', 'fileupload');
-           formData.append('time', '24h'); 
-           formData.append('fileToUpload', file);
+          const fullUrl = `${TEXT_API_BASE_URL}/${encodeURIComponent(fullTextPrompt)}?${textParams.toString()}`;
 
-           const response = await fetch(uploadUrl, { method: 'POST', body: formData });
-           if (!response.ok) throw new Error(`Upload failed with status: ${response.status}`);
-           
-           const resultUrl = await response.text();
-           if (!resultUrl.startsWith('http')) throw new Error(`Catbox upload failed: ${resultUrl}`);
-           
-           return resultUrl;
-       }
+          try {
+              const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
+              if (!response.ok) throw new Error(await response.text());
 
-       function toggleLoading(isLoading, element = generateBtn) {
-           element.disabled = isLoading;
-           if (element === generateBtn) {
-               element.innerHTML = isLoading 
-                   ? '<div class="loading-spinner mx-auto"></div>' 
-                   : 'Generate';
-               loadingIndicator.style.display = isLoading ? 'block' : 'none';
-               placeholderText.style.display = isLoading || generatedImageUrl ? 'none' : 'block';
-           } else if (element.id === 'enhancePromptBtn' || element.id === 'retryEnhanceBtn') {
-                element.innerHTML = isLoading
-                   ? '<div class="loading-spinner w-5 h-5 mx-auto"></div>'
-                   : (element.id === 'enhancePromptBtn' ? '✨ Prompt Enhance' : 'Re-try Enhance');
-           }
-       }
-       
-       // Sync Guidance Scale
-       guidanceScaleSlider.addEventListener('input', (e) => {
-           guidanceScaleInput.value = e.target.value;
-       });
-       guidanceScaleInput.addEventListener('input', (e) => {
-           let val = parseFloat(e.target.value);
-           if(val < 1) val = 1;
-           if(val > 20) val = 20;
-           guidanceScaleSlider.value = val;
-       });
+              const enhancedPrompt = await response.text();
+              
+              if (enhancedPrompt.trim()) {
+                  promptInput.value = enhancedPrompt.trim();
+                  updatePromptControls(true); 
+                  displayMessage('Prompt successfully enhanced!', 'success');
+              } else {
+                  throw new Error('Enhancement returned an empty result.');
+              }
+          } catch (error) {
+              let reason = error.message;
+              try {
+                  const errorObj = JSON.parse(error.message);
+                  if (errorObj && errorObj.error && errorObj.error.message) {
+                      const nestedMatch = errorObj.error.message.match(/reason: (.*)/);
+                      reason = nestedMatch ? `API Connection Error. Reason: ${nestedMatch[1]}` : `API Error: ${errorObj.error.message}`;
+                  }
+              } catch (e) {}
+              displayMessage(`Prompt enhancement failed. Detail: ${reason}`, 'error');
+          } finally {
+              toggleLoading(false, currentElement);
+          }
+      }
+      
+      function revertPrompt() {
+          if (originalPrompt) {
+              promptInput.value = originalPrompt;
+              originalPrompt = ''; 
+              updatePromptControls(false); 
+              displayMessage('Prompt reverted to original.', 'info');
+          }
+      }
+      
+      // --- Main Application Logic ---
 
-       // --- Multi-Image Logic ---
+      function updateUIForModel() {
+          const model = modelSelect.value;
+          const isVideoModel = VIDEO_MODELS.includes(model);
+          const hasCustomKey = apiKeyInput.value.trim().length > 0;
 
-       function updateGalleryUI() {
-           refCardContainer.innerHTML = '';
-           
-           if (referenceImages.length === 0) {
-               galleryPlaceholder.style.display = 'block';
-               return;
-           }
+          // Show/hide guidance scale (only for specific image models)
+          if (guidanceScaleContainer) {
+              guidanceScaleContainer.style.display = GUIDANCE_SCALE_MODELS.includes(model) ? 'block' : 'none';
+          }
+          
+          // Show/hide negative prompt (hide for veo only)
+          if (negativePromptGroup) {
+              negativePromptGroup.style.display = (model === 'veo') ? 'none' : 'block';
+          }
+          
+          // Show/hide quality selector (only for GPT-Image models based on API docs)
+          if (qualityContainer) {
+              const isGptImage = model.startsWith('gptimage');
+              qualityContainer.style.display = isGptImage ? 'flex' : 'none';
+          }
+          
+          // Show/hide transparent (only gptimage models)
+          if (transparentGroup) {
+              const showTransparent = TRANSPARENT_MODELS.includes(model);
+              transparentGroup.classList.toggle('hidden', !showTransparent);
+          }
+          
+          // Show/hide image input group (for all models that support images including video I2V)
+          if (imageInputGroup) {
+              imageInputGroup.style.display = IMAGE_INPUT_MODELS.includes(model) ? 'block' : 'none';
+          }
+          
+          // Show/hide audio control (veo, wan, grok-video)
+          if (audioControlContainer) {
+              const showAudio = AUDIO_MODELS.includes(model);
+              audioControlContainer.classList.toggle('hidden', !showAudio);
+          }
+          
+          // Show/hide video controls
+          if (videoControlsGroup) {
+              videoControlsGroup.style.display = isVideoModel ? 'block' : 'none';
+          }
+          
+          // Handle duration options based on model
+          if (durationSelect) {
+              durationSelect.innerHTML = '';
+              
+              if (model === 'veo') {
+                  [4, 6, 8].forEach(val => {
+                      const opt = document.createElement('option');
+                      opt.value = val;
+                      opt.text = `${val} seconds`;
+                      durationSelect.appendChild(opt);
+                  });
+              } else if (model === 'seedance' || model === 'seedance-pro') {
+                  for(let i=2; i<=10; i++) {
+                      const opt = document.createElement('option');
+                      opt.value = i;
+                      opt.text = `${i} seconds${(i > 4 && !hasCustomKey) ? ' (Requires API Key)' : ''}`;
+                      if (i===4) opt.selected = true;
+                      if (i > 4 && !hasCustomKey) opt.disabled = true;
+                      durationSelect.appendChild(opt);
+                  }
+              } else if (model === 'wan' || model === 'grok-video' || model === 'ltx-2') {
+                  // Wan, grok-video, ltx-2: 2-10 seconds with audio support (except ltx-2 audio TBD, but user said all 3 have audio)
+                  for(let i=2; i<=10; i++) {
+                      const opt = document.createElement('option');
+                      opt.value = i;
+                      opt.text = `${i} seconds`;
+                      if(i===5) opt.selected = true;
+                      durationSelect.appendChild(opt);
+                  }
+              }
+          }
+          
+          generateBtn.innerText = isVideoModel ? 'Generate Video' : 'Generate / Edit Image';
+      }
 
-           galleryPlaceholder.style.display = 'none';
+      async function generateImage() {
+          if (!promptInput.value.trim()) {
+              displayMessage('Please enter a prompt.', 'error');
+              return;
+          }
 
-           referenceImages.forEach((imgObj, index) => {
-               const card = document.createElement('div');
-               card.className = 'ref-card';
+          const model = modelSelect.value;
+          const hasCustomKey = apiKeyInput.value.trim().length > 0;
+          
+          // Check for paid models requiring API key
+          if (PAID_MODELS.includes(model) && !hasCustomKey) {
+              displayMessage(`The ${model} model requires a custom API key.`, 'error');
+              return;
+          }
+          
+          if ((model === 'seedance' || model === 'seedance-pro') && VIDEO_MODELS.includes(model)) {
+              const selectedDuration = parseInt(durationSelect.value);
+              if (selectedDuration > 4 && !hasCustomKey) {
+                  displayMessage('Durations longer than 4 seconds require a custom API key for Seedance models.', 'error');
+                  return;
+              }
+          }
 
-               const imgEl = document.createElement('img');
-               imgEl.src = imgObj.previewUrl; 
-               
-               const metaEl = document.createElement('div');
-               metaEl.className = 'ref-meta';
-               metaEl.innerText = `${imgObj.width}x${imgObj.height}`;
+          toggleLoading(true);
+          messageArea.innerHTML = '';
+          resultImage.style.display = 'none';
+          resultVideo.style.display = 'none';
+          resultVideo.src = '';
+          viewBtn.disabled = downloadBtn.disabled = true;
 
-               const removeBtn = document.createElement('div');
-               removeBtn.className = 'ref-remove';
-               removeBtn.innerHTML = '&times;';
-               removeBtn.onclick = function() {
-                   if (imgObj.type === 'file' && imgObj.previewUrl) {
-                       URL.revokeObjectURL(imgObj.previewUrl);
-                   }
-                   referenceImages.splice(index, 1); 
-                   updateGalleryUI(); 
-               };
+          const prompt = promptInput.value;
+          let seed = randomizeSeedCheckbox.checked ? getRandomSeed() : seedInput.value;
+          if (randomizeSeedCheckbox.checked) seedInput.value = seed;
 
-               card.appendChild(removeBtn);
-               card.appendChild(imgEl);
-               card.appendChild(metaEl);
-               refCardContainer.appendChild(card);
-           });
-           
-           if (askDimensionsCheckbox.checked && (!VIDEO_MODELS.includes(modelSelect.value) || modelSelect.value === 'veo') && referenceImages.length > 0) {
-               widthInput.value = referenceImages[0].width;
-               heightInput.value = referenceImages[0].height;
-           }
-           
-           const isMax = referenceImages.length >= MAX_IMAGES;
-           refUrlInput.disabled = isMax;
-           addUrlBtn.disabled = isMax;
-           refFileInput.disabled = isMax;
-           
-           if(isMax) {
-               displayMessage(`Maximum of ${MAX_IMAGES} images reached. Remove an image to add more.`, 'info');
-           }
-       }
+          const isVideoModel = VIDEO_MODELS.includes(model);
+          const supportsImageInput = IMAGE_INPUT_MODELS.includes(model);
 
-       function setReferenceImage(source, type) {
-           if (referenceImages.length >= MAX_IMAGES) {
-                displayMessage(`Cannot add more than ${MAX_IMAGES} images.`, 'error');
-                return;
-           }
-           
-           const tempImg = new Image();
-           tempImg.crossOrigin = "Anonymous";
-           
-           const srcUrl = type === 'file' ? URL.createObjectURL(source) : source;
-           tempImg.src = srcUrl;
+          const params = new URLSearchParams({
+              model: model,
+              seed: seed,
+              private: privateCheckbox.checked ? 'true' : 'false', 
+              nologo: noLogoCheckbox.checked ? 'true' : 'false',
+              enhance: enhanceCheckbox.checked ? 'true' : 'false',
+              safe: safeCheckbox.checked ? 'true' : 'false',
+              nofeed: noFeedCheckbox.checked ? 'true' : 'false'
+          });
 
-           tempImg.onload = function() {
-               const newImage = {
-                   type: type,
-                   source: source, 
-                   previewUrl: srcUrl,
-                   width: this.naturalWidth,
-                   height: this.naturalHeight
-               };
-               
-               referenceImages.push(newImage);
-               updateGalleryUI();
-               if (type === 'file') {
-                   displayMessage(`Image uploaded and added to list. Total: ${referenceImages.length}`, 'success');
-               }
-           };
+          // Add guidance scale only for supported models
+          if (GUIDANCE_SCALE_MODELS.includes(model)) {
+              params.append('guidance_scale', guidanceScaleInput.value);
+          }
 
-           tempImg.onerror = function() {
-               if (type === 'file' && srcUrl) URL.revokeObjectURL(srcUrl); 
-               displayMessage('Failed to load image. Please check the URL or file.', 'error');
-           };
-       }
+          // Add negative prompt for all except veo
+          if (model !== 'veo' && negativePromptInput.value.trim()) {
+              params.append('negative_prompt', negativePromptInput.value.trim());
+          }
 
-       addUrlBtn.addEventListener('click', () => {
-           const url = refUrlInput.value.trim();
-           if (url) {
-               setReferenceImage(url, 'url');
-               refUrlInput.value = '';
-           }
-       });
+          if (isVideoModel) {
+              params.append('aspectRatio', aspectRatioSelect.value);
+              params.append('duration', durationSelect.value);
+              // Audio for veo, wan, grok-video
+              if (AUDIO_MODELS.includes(model)) {
+                  params.append('audio', audioCheckbox.checked ? 'true' : 'false');
+              }
+          } else {
+              // Image models
+              const width = parseInt(widthInput.value) || DEFAULT_DIMENSION;
+              const height = parseInt(heightInput.value) || DEFAULT_DIMENSION;               
+              params.append('width', width);
+              params.append('height', height);
+              
+              // Quality and transparent only for GPT-Image models
+              if (model.startsWith('gptimage')) {
+                  params.append('quality', qualitySelect.value);
+                  params.append('transparent', transparentCheckbox.checked ? 'true' : 'false');
+              }
+          }
 
-       refFileInput.addEventListener('change', (e) => {
-           const files = Array.from(e.target.files);
-           
-           if (files.length + referenceImages.length > MAX_IMAGES) {
-               displayMessage(`Can only add ${MAX_IMAGES - referenceImages.length} more image(s).`, 'error');
-               files.slice(0, MAX_IMAGES - referenceImages.length).forEach(file => {
-                   if (file && file.type.startsWith('image/')) {
-                       setReferenceImage(file, 'file');
-                   }
-               });
-           } else {
-               files.forEach(file => {
-                   if (file && file.type.startsWith('image/')) {
-                       setReferenceImage(file, 'file');
-                   }
-               });
-           }
-           refFileInput.value = ''; 
-       });
-       
-       // --- Prompt Enhancement Logic ---
-       function updatePromptControls(isEnhanced) {
-           promptEnhanceControls.innerHTML = '';
-           if (!isEnhanced) {
-               const enhanceBtn = document.createElement('button');
-               enhanceBtn.id = 'enhancePromptBtn';
-               enhanceBtn.type = 'button';
-               enhanceBtn.className = 'flex-1 py-2 bg-enhance text-white font-semibold rounded-lg hover:bg-enhance-hover text-sm';
-               enhanceBtn.innerHTML = '✨ Prompt Enhance';
-               enhanceBtn.addEventListener('click', handlePromptEnhancement);
-               promptEnhanceControls.appendChild(enhanceBtn);
-           } else {
-               const revertBtn = document.createElement('button');
-               revertBtn.id = 'revertPromptBtn';
-               revertBtn.type = 'button';
-               revertBtn.className = 'w-1/3 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 text-sm';
-               revertBtn.textContent = 'Revert';
-               revertBtn.addEventListener('click', revertPrompt);
-               
-               const retryBtn = document.createElement('button');
-               retryBtn.id = 'retryEnhanceBtn';
-               retryBtn.type = 'button';
-               retryBtn.className = 'w-2/3 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 text-sm';
-               retryBtn.textContent = 'Re-try Enhance';
-               retryBtn.addEventListener('click', handlePromptEnhancement);
+          // Handle reference images / image input
+          if (supportsImageInput && referenceImages.length > 0) {
+              const imageUsageMode = document.querySelector('input[name="imageUsage"]:checked').value;
+              if (imageUsageMode === 'reference') params.append('control', 'reference');
 
-               promptEnhanceControls.appendChild(revertBtn);
-               promptEnhanceControls.appendChild(retryBtn);
-           }
-       }
-       
-       async function handlePromptEnhancement(event) {
-           const currentElement = event.target;
-           const isRetry = currentElement.id === 'retryEnhanceBtn';
-           let currentPrompt = promptInput.value.trim();
+              const finalUrls = [];
+              let uploadCount = 0;
+              let uploadFailed = false;
 
-           if (!isRetry) {
-               if (!currentPrompt) {
-                   displayMessage('Please enter a prompt to enhance.', 'error');
-                   return;
-               }
-               originalPrompt = currentPrompt; 
-           } else {
-               currentPrompt = originalPrompt; 
-           }
-           
-           toggleLoading(true, currentElement); 
-           
-           const fullTextPrompt = `Re-write the following prompt to be more detailed and vivid for an image generator. The output must ONLY contain the re-written prompt with no other commentary or niceties. Original prompt: "${currentPrompt}"`;
-           const enhancementSeed = getRandomSeed();
-           
-           const textParams = new URLSearchParams({
-               model: promptEnhancementModel,
-               seed: enhancementSeed,
-           });
+              for (const refImage of referenceImages) {
+                  if (refImage.type === 'url') {
+                      finalUrls.push(refImage.source);
+                  } else if (refImage.type === 'file') {
+                      try {
+                          uploadCount++;
+                          displayMessage(`Uploading image ${uploadCount} of ${referenceImages.length} (total)...`, 'info');
+                          const uploadedUrl = await uploadToLitterbox(refImage.source);
+                          finalUrls.push(uploadedUrl);
+                      } catch (e) {
+                          displayMessage(`Upload failed for image ${uploadCount}: ${e.message}`, 'error');
+                          uploadFailed = true;
+                          break; 
+                      }
+                  }
+              }
+              
+              if (uploadFailed) {
+                  toggleLoading(false);
+                  return;
+              }
 
-           const fullUrl = `${TEXT_API_BASE_URL}/${encodeURIComponent(fullTextPrompt)}?${textParams.toString()}`;
+              if (finalUrls.length > 0) {
+                  // Check for first/last frame support (Veo and Grok-Video)
+                  if ((model === 'veo' || model === 'grok-video') && finalUrls.length >= 2) {
+                      // Use image[0] and image[1] for first/last frame interpolation
+                      params.append('image[0]', finalUrls[0]);
+                      params.append('image[1]', finalUrls[1]);
+                      // Note: If more than 2 images provided, additional ones are ignored for these models
+                      if (finalUrls.length > 2) {
+                          displayMessage('Note: Only first 2 images used for first/last frame interpolation.', 'info');
+                      }
+                  } else {
+                      // Standard comma-separated for single image or other models
+                      const imageParamValue = finalUrls.join(',');
+                      params.append('image', imageParamValue);
+                  }
+              }
+          }
 
-           try {
-               const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
-               if (!response.ok) throw new Error(await response.text());
+          const fullUrl = `${IMAGE_API_BASE_URL}/${encodeURIComponent(prompt)}?${params.toString()}`;
+          generatedApiUrl = fullUrl;
+          
+          displayMessage(`Sending generation request for model: **${model}**...`, 'info');
 
-               const enhancedPrompt = await response.text();
-               
-               if (enhancedPrompt.trim()) {
-                   promptInput.value = enhancedPrompt.trim();
-                   updatePromptControls(true); 
-                   displayMessage('Prompt successfully enhanced!', 'success');
-               } else {
-                   throw new Error('Enhancement returned an empty result.');
-               }
-           } catch (error) {
-               let reason = error.message;
-               try {
-                   const errorObj = JSON.parse(error.message);
-                   if (errorObj && errorObj.error && errorObj.error.message) {
-                       const nestedMatch = errorObj.error.message.match(/reason: (.*)/);
-                       reason = nestedMatch ? `API Connection Error. Reason: ${nestedMatch[1]}` : `API Error: ${errorObj.error.message}`;
-                   }
-               } catch (e) {}
-               displayMessage(`Prompt enhancement failed. Detail: ${reason}`, 'error');
-           } finally {
-               toggleLoading(false, currentElement);
-           }
-       }
-       
-       function revertPrompt() {
-           if (originalPrompt) {
-               promptInput.value = originalPrompt;
-               originalPrompt = ''; 
-               updatePromptControls(false); 
-               displayMessage('Prompt reverted to original.', 'info');
-           }
-       }
-       
+          if (isVideoModel) {
+              // SSE Streaming for video - shows progress instead of blank screen
+              // Note: Some models (grok-video) don't support SSE and return video/mp4 directly
+              let useFetchFallback = false;
+              
+              try {
+                  await new Promise((resolve, reject) => {
+                      const sseUrl = `${fullUrl}&key=${getActiveApiKey()}`;
+                      const evtSource = new EventSource(sseUrl);
+                      let fallbackTriggered = false;
+                      
+                      evtSource.onmessage = (event) => {
+                          try {
+                              const data = JSON.parse(event.data);
+                              console.log('SSE event:', data);
+                              
+                              if (data.progress !== undefined) {
+                                  placeholderText.innerHTML = `Generating video... ${Math.round(data.progress)}%`;
+                                  placeholderText.style.display = 'block';
+                              }
+                              
+                              if (data.url) {
+                                  generatedImageUrl = data.url;
+                                  evtSource.close();
+                                  resolve();
+                              }
+                              
+                              if (data.error) {
+                                  evtSource.close();
+                                  reject(new Error(data.error));
+                              }
+                          } catch (e) {
+                              console.log('SSE parse error:', event.data);
+                          }
+                      };
+                      
+                      evtSource.onerror = (e) => {
+                          console.error('EventSource error - likely non-SSE model:', e);
+                          // If we get a MIME type error (like video/mp4 instead of text/event-stream),
+                          // it means this model doesn't support SSE (e.g., grok-video)
+                          if (!fallbackTriggered) {
+                              fallbackTriggered = true;
+                              evtSource.close();
+                              useFetchFallback = true;
+                              resolve(); // Resolve to trigger fallback below
+                          }
+                      };
+                  });
+              } catch (error) {
+                  displayMessage(`Generation failed: ${error.message}`, 'error');
+                  toggleLoading(false);
+                  return;
+              }
+              
+              // Fallback to standard fetch for models that don't support SSE (grok-video)
+              if (useFetchFallback) {
+                  console.log('Falling back to standard fetch for non-SSE video model');
+                  const maxRetries = 5;
+                  let delay = 2000; 
+                  let responseData = null;
+                  let fetched = false;
 
-       // --- Main Application Logic ---
+                  for (let i = 0; i < maxRetries; i++) {
+                      try {
+                          placeholderText.innerHTML = 'Generating video... (this model does not support progress streaming)';
+                          placeholderText.style.display = 'block';
+                          
+                          const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
+                          if (!response.ok) throw new Error(await response.text());
 
-       function updateUIForModel() {
-           const model = modelSelect.value;
-           const isVideoModel = VIDEO_MODELS.includes(model);
-           const isEditorModel = EDITOR_MODELS.includes(model);
-           const isSeedream = SEEDREAM_MODEL.includes(model);
-           const isVeo = model === 'veo';
-           const isSeedance = model === 'seedance';
-           const isSeedancePro = model === 'seedance-pro';
-           const isWan = model === 'wan';
-           const isGrokVideo = model === 'grok-video';
-           const hasCustomKey = apiKeyInput.value.trim().length > 0;
+                          const contentType = response.headers.get("content-type");
+                          if (contentType && contentType.includes("application/json")) {
+                              responseData = await response.json();
+                              generatedImageUrl = responseData.url;
+                          } else if (contentType && contentType.includes("video/")) {
+                              generatedImageUrl = URL.createObjectURL(await response.blob());
+                          } else {
+                               generatedImageUrl = response.url;
+                          }
+                          fetched = true;
+                          break;
+                      } catch (error) {
+                          if (i === maxRetries - 1) {
+                              displayMessage(`Generation failed: ${error.message}`, 'error');
+                              toggleLoading(false);
+                              return;
+                          }
+                          await new Promise(r => setTimeout(r, delay));
+                          delay *= 1.5;
+                      }
+                  }
+                  
+                  if (!fetched) {
+                      toggleLoading(false);
+                      return;
+                  }
+              }
+          } else {
+              // Standard fetch for images (keep existing retry logic)
+              const maxRetries = 5;
+              let delay = 2000; 
+              let responseData = null;
 
-           if (isVideoModel) {
-               imageDimensionsGroup.style.display = 'grid'; 
-               transparentGroup.classList.add('hidden');    
-               videoControlsGroup.style.display = 'block';  
-               
-               durationSelect.innerHTML = '';
-               
-               if (isVeo) {
-                   [4, 6, 8].forEach(val => {
-                       const opt = document.createElement('option');
-                       opt.value = val;
-                       opt.text = `${val} seconds`;
-                       durationSelect.appendChild(opt);
-                   });
-                   audioControlContainer.style.display = 'flex'; 
-               } else if (isSeedance || isSeedancePro) {
-                   for(let i=2; i<=10; i++) {
-                       const opt = document.createElement('option');
-                       opt.value = i;
-                       opt.text = `${i} seconds`;
-                       if(i===4) opt.selected = true;
-                       if (i > 4 && !hasCustomKey) {
-                           opt.disabled = true;
-                           opt.text += ' (Requires API Key)';
-                       }
-                       durationSelect.appendChild(opt);
-                   }
-                   audioControlContainer.style.display = 'none'; 
-               } else if (isWan) {
-                   // Wan: 2-10 seconds with audio support
-                   for(let i=2; i<=10; i++) {
-                       const opt = document.createElement('option');
-                       opt.value = i;
-                       opt.text = `${i} seconds`;
-                       if(i===5) opt.selected = true;
-                       durationSelect.appendChild(opt);
-                   }
-                   audioControlContainer.style.display = 'flex';
-                  } else if (isGrokVideo) {
-    // Grok Video: 2-10 seconds (no audio support)
-    for(let i=2; i<=10; i++) {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.text = `${i} seconds`;
-        if(i===5) opt.selected = true; // Default to 5 seconds
-        durationSelect.appendChild(opt);
-    }
-    audioControlContainer.style.display = 'none';
-               }
+              for (let i = 0; i < maxRetries; i++) {
+                  try {
+                      const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
+                      if (!response.ok) throw new Error(await response.text());
 
-           } else {
-               imageDimensionsGroup.style.display = 'grid'; 
-               transparentGroup.classList.remove('hidden'); 
-               videoControlsGroup.style.display = 'none';   
-           }
+                      const contentType = response.headers.get("content-type");
+                      if (contentType && contentType.includes("application/json")) {
+                          responseData = await response.json();
+                          generatedImageUrl = responseData.url;
+                      } else if (contentType && contentType.includes("image/") || contentType.includes("video/")) {
+                          generatedImageUrl = URL.createObjectURL(await response.blob());
+                      } else {
+                           generatedImageUrl = response.url;
+                      }
+                      break;
+                  } catch (error) {
+                      if (i === maxRetries - 1) {
+                          displayMessage(`Generation failed: ${error.message}`, 'error');
+                          toggleLoading(false);
+                          return;
+                      }
+                      await new Promise(r => setTimeout(r, delay));
+                      delay *= 1.5;
+                  }
+              }
+          }
 
-           if (isEditorModel) {
-               imageInputGroup.style.display = 'block';
-               dimCheckContainer.style.display = (isSeedance || isSeedancePro) ? 'none' : 'flex';
-           } else {
-               imageInputGroup.style.display = 'none';
-           }
+          if (generatedImageUrl) {
+              const isVideoResult = isVideoModel || generatedImageUrl.endsWith('.mp4');
 
-           // Enable negative prompt for all models
-           negativePromptGroup.style.display = 'block';
-           
-           generateBtn.innerText = isVideoModel ? 'Generate Video' : 'Generate / Edit Image';
-           
-           // Dimensions persist across model changes unless Reset ALL is pressed
-           // No longer resetting to default dimensions here
-       }
+              if (isVideoResult) {
+                  resultVideo.src = generatedImageUrl;
+                  resultVideo.style.display = 'block';
+                  resultImage.style.display = 'none';
+                  resultVideo.load();
+                  resultVideo.play().catch(e => console.log("Auto-play prevented"));
+              } else {
+                  resultImage.src = generatedImageUrl;
+                  resultImage.style.display = 'block';
+                  resultVideo.style.display = 'none';
+              }
 
-       async function generateImage() {
-           if (!promptInput.value.trim()) {
-               displayMessage('Please enter a prompt.', 'error');
-               return;
-           }
+              toggleLoading(false);
+              viewBtn.disabled = downloadBtn.disabled = false;
+              
+              // ADD TO HISTORY - Use the full API URL, not blob
+              const urlToStore = generatedImageUrl.startsWith('blob:') ? generatedApiUrl : generatedImageUrl;
+              
+              // Wait 1 second before adding to history to ensure the image is available
+              setTimeout(() => {
+                  addToHistory(urlToStore, isVideoResult, prompt);
+              }, 1000);
+              
+              displayMessage(isVideoResult ? 'Video successfully generated!' : 'Image successfully generated!', 'success');
+          }
+      }
 
-           const model = modelSelect.value;
-           const isSeedance = model === 'seedance';
-           const isSeedancePro = model === 'seedance-pro';
-           const hasCustomKey = apiKeyInput.value.trim().length > 0;
-           
-           // Check for paid models requiring API key
-           if (PAID_MODELS.includes(model) && !hasCustomKey) {
-               displayMessage(`The ${model} model requires a custom API key.`, 'error');
-               return;
-           }
-           
-           if ((isSeedance || isSeedancePro) && VIDEO_MODELS.includes(model)) {
-               const selectedDuration = parseInt(durationSelect.value);
-               if (selectedDuration > 4 && !hasCustomKey) {
-                   displayMessage('Durations longer than 4 seconds require a custom API key for Seedance models.', 'error');
-                   return;
-               }
-           }
+      function resetForm() {
+          apiKeyInput.value = '';
+          localStorage.setItem(API_KEY_STORAGE, '');
+          promptInput.value = '';
+          seedInput.value = '42';
+          widthInput.value = DEFAULT_DIMENSION;  
+          heightInput.value = DEFAULT_DIMENSION; 
+          negativePromptInput.value = '';
+          randomizeSeedCheckbox.checked = true;
+          privateCheckbox.checked = true; 
+          noLogoCheckbox.checked = true; 
+          enhanceCheckbox.checked = true; 
+          askDimensionsCheckbox.checked = false;
+          safeCheckbox.checked = true;
+          noFeedCheckbox.checked = true;
+          transparentCheckbox.checked = false;
+          guidanceScaleSlider.value = 7;
+          guidanceScaleInput.value = 7;
+          qualitySelect.value = 'medium';
+          audioCheckbox.checked = false;
+          aspectRatioSelect.selectedIndex = 0;
+          originalPrompt = '';
+          updatePromptControls(false); 
+          referenceImages.forEach(img => {
+              if (img.type === 'file' && img.previewUrl) {
+                  URL.revokeObjectURL(img.previewUrl);
+              }
+          });
+          referenceImages = []; 
+          updateGalleryUI();
+          refUrlInput.value = '';
+          refFileInput.value = '';
+          generatedImageUrl = null;
+          resultImage.style.display = 'none';
+          resultVideo.style.display = 'none';
+          resultVideo.pause();
+          resultVideo.src = '';
+          resultImage.src = '';
+          placeholderText.style.display = 'block';
+          viewBtn.disabled = downloadBtn.disabled = true;
+          messageArea.innerHTML = '';
+          toggleLoading(false);
+          updateUIForModel();
+      }
 
-           toggleLoading(true);
-           messageArea.innerHTML = '';
-           resultImage.style.display = 'none';
-           resultVideo.style.display = 'none';
-           resultVideo.src = '';
-           viewBtn.disabled = downloadBtn.disabled = true;
+      // --- Event Listeners ---
+      modelSelect.addEventListener('change', updateUIForModel);
+      
+      askDimensionsCheckbox.addEventListener('change', () => {
+          if (askDimensionsCheckbox.checked && referenceImages.length > 0) {
+              widthInput.value = referenceImages[0].width;
+              heightInput.value = referenceImages[0].height;
+          } else if (askDimensionsCheckbox.checked) {
+              displayMessage('Add an image first to use its dimensions.', 'info');
+          }
+      });
 
-           const prompt = promptInput.value;
-           let seed = randomizeSeedCheckbox.checked ? getRandomSeed() : seedInput.value;
-           if (randomizeSeedCheckbox.checked) seedInput.value = seed;
+      apiKeyInput.addEventListener('input', () => {
+          localStorage.setItem(API_KEY_STORAGE, apiKeyInput.value);
+          updateModelAvailability();
+      });
 
-           const isVideoModel = VIDEO_MODELS.includes(model);
-           const isEditorModel = EDITOR_MODELS.includes(model);
+      generateBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          generateImage();
+      });
 
-           const params = new URLSearchParams({
-               model: model,
-               seed: seed,
-               private: privateCheckbox.checked ? 'true' : 'false', 
-               nologo: noLogoCheckbox.checked ? 'true' : 'false',
-               enhance: enhanceCheckbox.checked ? 'true' : 'false',
-               safe: safeCheckbox.checked ? 'true' : 'false',
-               nofeed: noFeedCheckbox.checked ? 'true' : 'false',
-               guidance_scale: guidanceScaleInput.value
-           });
+      viewBtn.addEventListener('click', function() {
+          if (generatedApiUrl) {
+              const urlObj = new URL(generatedApiUrl);
+              urlObj.searchParams.delete('token'); 
+              urlObj.searchParams.delete('key');
+              window.open(urlObj.toString(), '_blank');
+          }
+      });
 
-           if (isVideoModel) {
-               params.append('aspectRatio', aspectRatioSelect.value);
-               params.append('duration', durationSelect.value);
-               // Video models use aspect ratio instead of width/height
-               // Veo and Wan support audio
-               if (model === 'veo' || model === 'wan') {
-                   params.append('audio', audioCheckbox.checked ? 'true' : 'false');
-               }
-           } else {
-               // Image models use dimensions
-               const width = parseInt(widthInput.value) || DEFAULT_DIMENSION;
-               const height = parseInt(heightInput.value) || DEFAULT_DIMENSION;               
-               params.append('width', width);
-               params.append('height', height);
-               params.append('quality', qualitySelect.value);
-               params.append('transparent', transparentCheckbox.checked ? 'true' : 'false');
-           }
+      downloadBtn.addEventListener('click', function() {
+          if (generatedImageUrl) {
+              const a = document.createElement('a');
+              a.href = generatedImageUrl;
+              const isVideo = resultVideo.style.display === 'block';
+              const ext = isVideo ? 'mp4' : 'png';
+              a.download = `${modelSelect.value}_generated.${ext}`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+          }
+      });
 
-           if (isEditorModel && referenceImages.length > 0) {
-               const imageUsageMode = document.querySelector('input[name="imageUsage"]:checked').value;
-               if (imageUsageMode === 'reference') params.append('control', 'reference');
+      refreshBtn.addEventListener('click', resetForm);
+      
+      clearHistoryBtn.addEventListener('click', clearAllHistory);
 
-               const finalUrls = [];
-               let uploadCount = 0;
-               let uploadFailed = false;
-
-               for (const refImage of referenceImages) {
-                   if (refImage.type === 'url') {
-                       finalUrls.push(refImage.source);
-                   } else if (refImage.type === 'file') {
-                       try {
-                           uploadCount++;
-                           displayMessage(`Uploading image ${uploadCount} of ${referenceImages.length} (total)...`, 'info');
-                           const uploadedUrl = await uploadToLitterbox(refImage.source);
-                           finalUrls.push(uploadedUrl);
-                       } catch (e) {
-                           displayMessage(`Upload failed for image ${uploadCount}: ${e.message}`, 'error');
-                           uploadFailed = true;
-                           break; 
-                       }
-                   }
-               }
-               
-               if (uploadFailed) {
-                   toggleLoading(false);
-                   return;
-               }
-
-               if (finalUrls.length > 0) {
-                   const imageParamValue = finalUrls.join(',');
-                   params.append('image', imageParamValue);
-               }
-           }
-
-           // Add negative prompt for all models (not just Seedream)
-           if (negativePromptInput.value.trim()) {
-               params.append('negative_prompt', negativePromptInput.value.trim());
-           }
-
-           const fullUrl = `${IMAGE_API_BASE_URL}/${encodeURIComponent(prompt)}?${params.toString()}`;
-           generatedApiUrl = fullUrl;
-           
-           displayMessage(`Sending generation request for model: **${model}**...`, 'info');
-
-           if (isVideoModel) {
-               // SSE Streaming for video - shows progress instead of blank screen
-               // Note: Some models (grok-video) don't support SSE and return video/mp4 directly
-               let useFetchFallback = false;
-               
-               try {
-                   await new Promise((resolve, reject) => {
-                       const sseUrl = `${fullUrl}&key=${getActiveApiKey()}`;
-                       const evtSource = new EventSource(sseUrl);
-                       let fallbackTriggered = false;
-                       
-                       evtSource.onmessage = (event) => {
-                           try {
-                               const data = JSON.parse(event.data);
-                               console.log('SSE event:', data);
-                               
-                               if (data.progress !== undefined) {
-                                   placeholderText.innerHTML = `Generating video... ${Math.round(data.progress)}%`;
-                                   placeholderText.style.display = 'block';
-                               }
-                               
-                               if (data.url) {
-                                   generatedImageUrl = data.url;
-                                   evtSource.close();
-                                   resolve();
-                               }
-                               
-                               if (data.error) {
-                                   evtSource.close();
-                                   reject(new Error(data.error));
-                               }
-                           } catch (e) {
-                               console.log('SSE parse error:', event.data);
-                           }
-                       };
-                       
-                       evtSource.onerror = (e) => {
-                           console.error('EventSource error - likely non-SSE model:', e);
-                           // If we get a MIME type error (like video/mp4 instead of text/event-stream),
-                           // it means this model doesn't support SSE (e.g., grok-video)
-                           if (!fallbackTriggered) {
-                               fallbackTriggered = true;
-                               evtSource.close();
-                               useFetchFallback = true;
-                               resolve(); // Resolve to trigger fallback below
-                           }
-                       };
-                   });
-               } catch (error) {
-                   displayMessage(`Generation failed: ${error.message}`, 'error');
-                   toggleLoading(false);
-                   return;
-               }
-               
-               // Fallback to standard fetch for models that don't support SSE (grok-video)
-               if (useFetchFallback) {
-                   console.log('Falling back to standard fetch for non-SSE video model');
-                   const maxRetries = 5;
-                   let delay = 2000; 
-                   let responseData = null;
-                   let fetched = false;
-
-                   for (let i = 0; i < maxRetries; i++) {
-                       try {
-                           placeholderText.innerHTML = 'Generating video... (this model does not support progress streaming)';
-                           placeholderText.style.display = 'block';
-                           
-                           const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
-                           if (!response.ok) throw new Error(await response.text());
-
-                           const contentType = response.headers.get("content-type");
-                           if (contentType && contentType.includes("application/json")) {
-                               responseData = await response.json();
-                               generatedImageUrl = responseData.url;
-                           } else if (contentType && contentType.includes("video/")) {
-                               generatedImageUrl = URL.createObjectURL(await response.blob());
-                           } else {
-                                generatedImageUrl = response.url;
-                           }
-                           fetched = true;
-                           break;
-                       } catch (error) {
-                           if (i === maxRetries - 1) {
-                               displayMessage(`Generation failed: ${error.message}`, 'error');
-                               toggleLoading(false);
-                               return;
-                           }
-                           await new Promise(r => setTimeout(r, delay));
-                           delay *= 1.5;
-                       }
-                   }
-                   
-                   if (!fetched) {
-                       toggleLoading(false);
-                       return;
-                   }
-               }
-           } else {
-               // Standard fetch for images (keep existing retry logic)
-               const maxRetries = 5;
-               let delay = 2000; 
-               let responseData = null;
-
-               for (let i = 0; i < maxRetries; i++) {
-                   try {
-                       const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
-                       if (!response.ok) throw new Error(await response.text());
-
-                       const contentType = response.headers.get("content-type");
-                       if (contentType && contentType.includes("application/json")) {
-                           responseData = await response.json();
-                           generatedImageUrl = responseData.url;
-                       } else if (contentType && contentType.includes("image/") || contentType.includes("video/")) {
-                           generatedImageUrl = URL.createObjectURL(await response.blob());
-                       } else {
-                            generatedImageUrl = response.url;
-                       }
-                       break;
-                   } catch (error) {
-                       if (i === maxRetries - 1) {
-                           displayMessage(`Generation failed: ${error.message}`, 'error');
-                           toggleLoading(false);
-                           return;
-                       }
-                       await new Promise(r => setTimeout(r, delay));
-                       delay *= 1.5;
-                   }
-               }
-           }
-
-           if (generatedImageUrl) {
-               const isVideoResult = isVideoModel || generatedImageUrl.endsWith('.mp4');
-
-               if (isVideoResult) {
-                   resultVideo.src = generatedImageUrl;
-                   resultVideo.style.display = 'block';
-                   resultImage.style.display = 'none';
-                   resultVideo.load();
-                   resultVideo.play().catch(e => console.log("Auto-play prevented"));
-               } else {
-                   resultImage.src = generatedImageUrl;
-                   resultImage.style.display = 'block';
-                   resultVideo.style.display = 'none';
-               }
-
-               toggleLoading(false);
-               viewBtn.disabled = downloadBtn.disabled = false;
-               
-               // ADD TO HISTORY - Use the full API URL, not blob
-               const urlToStore = generatedImageUrl.startsWith('blob:') ? generatedApiUrl : generatedImageUrl;
-               
-               // Wait 1 second before adding to history to ensure the image is available
-               setTimeout(() => {
-                   addToHistory(urlToStore, isVideoResult, prompt);
-               }, 1000);
-               
-               displayMessage(isVideoResult ? 'Video successfully generated!' : 'Image successfully generated!', 'success');
-           }
-       }
-
-       function resetForm() {
-           apiKeyInput.value = '';
-           localStorage.setItem(API_KEY_STORAGE, '');
-           promptInput.value = '';
-           seedInput.value = '42';
-           widthInput.value = DEFAULT_DIMENSION;  
-           heightInput.value = DEFAULT_DIMENSION; 
-           negativePromptInput.value = '';
-           randomizeSeedCheckbox.checked = true;
-           privateCheckbox.checked = true; 
-           noLogoCheckbox.checked = true; 
-           enhanceCheckbox.checked = true; 
-           askDimensionsCheckbox.checked = false;
-           safeCheckbox.checked = true;
-           noFeedCheckbox.checked = true;
-           transparentCheckbox.checked = false;
-           guidanceScaleSlider.value = 7;
-           guidanceScaleInput.value = 7;
-           qualitySelect.value = 'medium';
-           audioCheckbox.checked = false;
-           aspectRatioSelect.selectedIndex = 0;
-           originalPrompt = '';
-           updatePromptControls(false); 
-           referenceImages.forEach(img => {
-               if (img.type === 'file' && img.previewUrl) {
-                   URL.revokeObjectURL(img.previewUrl);
-               }
-           });
-           referenceImages = []; 
-           updateGalleryUI();
-           refUrlInput.value = '';
-           refFileInput.value = '';
-           generatedImageUrl = null;
-           resultImage.style.display = 'none';
-           resultVideo.style.display = 'none';
-           resultVideo.pause();
-           resultVideo.src = '';
-           resultImage.src = '';
-           placeholderText.style.display = 'block';
-           viewBtn.disabled = downloadBtn.disabled = true;
-           messageArea.innerHTML = '';
-           toggleLoading(false);
-           updateUIForModel();
-       }
-
-       // --- Event Listeners ---
-       modelSelect.addEventListener('change', updateUIForModel);
-       
-       askDimensionsCheckbox.addEventListener('change', () => {
-           if (askDimensionsCheckbox.checked && referenceImages.length > 0) {
-               widthInput.value = referenceImages[0].width;
-               heightInput.value = referenceImages[0].height;
-           } else if (askDimensionsCheckbox.checked) {
-               displayMessage('Add an image first to use its dimensions.', 'info');
-           }
-       });
-
-       apiKeyInput.addEventListener('input', () => {
-           localStorage.setItem(API_KEY_STORAGE, apiKeyInput.value);
-           updateModelAvailability();
-       });
-
-       generateBtn.addEventListener('click', (e) => {
-           e.preventDefault();
-           generateImage();
-       });
-
-       viewBtn.addEventListener('click', function() {
-           if (generatedApiUrl) {
-               const urlObj = new URL(generatedApiUrl);
-               urlObj.searchParams.delete('token'); 
-               urlObj.searchParams.delete('key');
-               window.open(urlObj.toString(), '_blank');
-           }
-       });
-
-       downloadBtn.addEventListener('click', function() {
-           if (generatedImageUrl) {
-               const a = document.createElement('a');
-               a.href = generatedImageUrl;
-               const isVideo = resultVideo.style.display === 'block';
-               const ext = isVideo ? 'mp4' : 'png';
-               a.download = `${modelSelect.value}_generated.${ext}`;
-               document.body.appendChild(a);
-               a.click();
-               a.remove();
-           }
-       });
-
-       refreshBtn.addEventListener('click', resetForm);
-       
-       clearHistoryBtn.addEventListener('click', clearAllHistory);
-
-       // Initialize on page load
-       document.addEventListener('DOMContentLoaded', () => {
-           // Load saved API key
-           const savedKey = localStorage.getItem(API_KEY_STORAGE);
-           if (savedKey !== null) {
-               apiKeyInput.value = savedKey;
-           }
-           
-           updateUIForModel();
-           updatePromptControls(false);
-           updateModelAvailability();
-           renderHistory(); // Load and display history
-       });
-   </script>
+      // Initialize on page load
+      document.addEventListener('DOMContentLoaded', () => {
+          // Load saved API key
+          const savedKey = localStorage.getItem(API_KEY_STORAGE);
+          if (savedKey !== null) {
+              apiKeyInput.value = savedKey;
+          }
+          
+          updateUIForModel();
+          updatePromptControls(false);
+          updateModelAvailability();
+          renderHistory(); // Load and display history
+      });
+  </script>
 </body>
 </html>
-
