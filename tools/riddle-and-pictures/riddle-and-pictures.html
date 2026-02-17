@@ -1,732 +1,872 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <title>Riddle & Art Generator</title>
-   <style>
-       * {
-           margin: 0;
-           padding: 0;
-           box-sizing: border-box;
-       }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Riddle & Art Generator</title>
+  <style>
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+      }
 
-       body {
-           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-           background: linear-gradient(135deg, #1a1d3a 0%, #2d1b4e 100%);
-           min-height: 100vh;
-           color: #e8e8e8;
-           padding: 20px;
-       }
+      body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+          background: linear-gradient(135deg, #1a1d3a 0%, #2d1b4e 100%);
+          min-height: 100vh;
+          color: #e8e8e8;
+          padding: 20px;
+      }
 
-       .container {
-           max-width: 1200px;
-           margin: 0 auto;
-       }
+      .container {
+          max-width: 1200px;
+          margin: 0 auto;
+      }
 
-       header {
-           display: flex;
-           justify-content: space-between;
-           align-items: center;
-           margin-bottom: 40px;
-           padding-bottom: 20px;
-           border-bottom: 1px solid rgba(255,255,255,0.1);
-       }
+      header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 40px;
+          padding-bottom: 20px;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
 
-       h1 {
-           font-size: 1.8rem;
-           background: linear-gradient(90deg, #a78bfa 0%, #c084fc 100%);
-           -webkit-background-clip: text;
-           -webkit-text-fill-color: transparent;
-           background-clip: text;
-           font-weight: 600;
-       }
+      h1 {
+          font-size: 1.8rem;
+          background: linear-gradient(90deg, #a78bfa 0%, #c084fc 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          font-weight: 600;
+      }
 
-       .settings-btn {
-           background: rgba(255,255,255,0.1);
-           border: 1px solid rgba(255,255,255,0.2);
-           color: #fff;
-           width: 40px;
-           height: 40px;
-           border-radius: 50%;
-           cursor: pointer;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           transition: all 0.3s;
-           font-size: 1.2rem;
-       }
+      .settings-btn {
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #fff;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s;
+          font-size: 1.2rem;
+      }
 
-       .settings-btn:hover {
-           background: rgba(255,255,255,0.2);
-           transform: rotate(30deg);
-       }
+      .settings-btn:hover {
+          background: rgba(255,255,255,0.2);
+          transform: rotate(30deg);
+      }
 
-       .main-controls {
-           text-align: center;
-           margin-bottom: 40px;
-       }
+      .main-controls {
+          text-align: center;
+          margin-bottom: 40px;
+      }
 
-       .generate-btn {
-           background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-           color: white;
-           border: none;
-           padding: 16px 48px;
-           font-size: 1.1rem;
-           border-radius: 30px;
-           cursor: pointer;
-           transition: transform 0.2s, box-shadow 0.2s;
-           font-weight: 600;
-           letter-spacing: 0.5px;
-       }
+      .noun-selection {
+          display: flex;
+          gap: 12px;
+          justify-content: center;
+          align-items: center;
+          margin-bottom: 24px;
+          flex-wrap: wrap;
+      }
 
-       .generate-btn:hover {
-           transform: translateY(-2px);
-           box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-       }
+      .noun-selection input {
+          padding: 12px 20px;
+          background: rgba(0,0,0,0.3);
+          border: 1px solid rgba(255,255,255,0.2);
+          border-radius: 25px;
+          color: #fff;
+          font-size: 1rem;
+          width: 300px;
+          max-width: 100%;
+      }
 
-       .generate-btn:disabled {
-           opacity: 0.6;
-           cursor: not-allowed;
-           transform: none;
-       }
+      .noun-selection input:focus {
+          outline: none;
+          border-color: #a78bfa;
+      }
 
-       .riddle-section {
-           background: rgba(255,255,255,0.03);
-           border-radius: 16px;
-           padding: 30px;
-           margin-bottom: 40px;
-           border: 1px solid rgba(255,255,255,0.08);
-           display: none;
-       }
+      .noun-selection input::placeholder {
+          color: rgba(255,255,255,0.4);
+      }
 
-       .riddle-section.active {
-           display: block;
-           animation: fadeIn 0.5s ease;
-       }
+      .random-noun-btn {
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #fff;
+          padding: 12px 20px;
+          border-radius: 25px;
+          cursor: pointer;
+          font-size: 0.95rem;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+      }
 
-       .theme-display {
-           text-align: center;
-           margin-bottom: 20px;
-           color: #a78bfa;
-           font-size: 0.9rem;
-           text-transform: uppercase;
-           letter-spacing: 2px;
-           font-weight: 600;
-       }
+      .random-noun-btn:hover {
+          background: rgba(255,255,255,0.2);
+          transform: translateY(-1px);
+      }
 
-       .section-header {
-           display: flex;
-           justify-content: space-between;
-           align-items: center;
-           margin-bottom: 20px;
-       }
+      .generate-btn {
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          padding: 16px 48px;
+          font-size: 1.1rem;
+          border-radius: 30px;
+          cursor: pointer;
+          transition: transform 0.2s, box-shadow 0.2s;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+      }
 
-       .section-title {
-           font-size: 1.1rem;
-           color: #a0a0a0;
-           text-transform: uppercase;
-           letter-spacing: 2px;
-           font-weight: 500;
-       }
+      .generate-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+      }
 
-       .retry-btn {
-           background: rgba(255,255,255,0.08);
-           border: 1px solid rgba(255,255,255,0.2);
-           color: #fff;
-           padding: 8px 16px;
-           border-radius: 20px;
-           cursor: pointer;
-           font-size: 0.85rem;
-           transition: all 0.2s;
-           display: flex;
-           align-items: center;
-           gap: 6px;
-       }
+      .generate-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+      }
 
-       .retry-btn:hover {
-           background: rgba(255,255,255,0.15);
-           border-color: rgba(255,255,255,0.3);
-       }
+      .riddle-section {
+          background: rgba(255,255,255,0.03);
+          border-radius: 16px;
+          padding: 30px;
+          margin-bottom: 40px;
+          border: 1px solid rgba(255,255,255,0.08);
+          display: none;
+      }
 
-       .retry-btn:disabled {
-           opacity: 0.5;
-           cursor: not-allowed;
-       }
+      .riddle-section.active {
+          display: block;
+          animation: fadeIn 0.5s ease;
+      }
 
-       .riddle-text {
-           font-size: 1.4rem;
-           line-height: 1.8;
-           color: #fff;
-           text-align: center;
-           padding: 30px;
-           font-style: italic;
-           background: rgba(0,0,0,0.2);
-           border-radius: 12px;
-           border-left: 3px solid #667eea;
-           white-space: pre-line;
-       }
+      .theme-display {
+          text-align: center;
+          margin-bottom: 20px;
+          color: #a78bfa;
+          font-size: 0.9rem;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          font-weight: 600;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+      }
 
-       .images-section {
-           display: none;
-       }
+      .theme-display span {
+          color: #fff;
+          font-size: 1.1rem;
+          text-transform: none;
+          letter-spacing: 0;
+      }
 
-       .images-section.active {
-           display: block;
-           animation: fadeIn 0.5s ease;
-       }
+      .small-retry {
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #fff;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          cursor: pointer;
+          font-size: 0.8rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+          vertical-align: middle;
+      }
 
-       .images-grid {
-           display: grid;
-           grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-           gap: 24px;
-           margin-top: 20px;
-       }
+      .small-retry:hover {
+          background: rgba(255,255,255,0.15);
+          transform: rotate(180deg);
+      }
 
-       .image-card {
-           position: relative;
-           border-radius: 12px;
-           overflow: hidden;
-           background: transparent;
-           border: none;
-       }
+      .section-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+      }
 
-       .image-container {
-           position: relative;
-           width: 100%;
-           aspect-ratio: 1 / 1;
-           background: rgba(0,0,0,0.2);
-           border-radius: 12px;
-           overflow: hidden;
-       }
+      .section-title {
+          font-size: 1.1rem;
+          color: #a0a0a0;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          font-weight: 500;
+      }
 
-       .image-container img {
-           width: 100%;
-           height: 100%;
-           object-fit: cover;
-           display: block;
-       }
+      .retry-btn {
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #fff;
+          padding: 8px 16px;
+          border-radius: 20px;
+          cursor: pointer;
+          font-size: 0.85rem;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+      }
 
-       .image-container.loading::after {
-           content: '';
-           position: absolute;
-           top: 50%;
-           left: 50%;
-           width: 40px;
-           height: 40px;
-           margin: -20px 0 0 -20px;
-           border: 3px solid rgba(255,255,255,0.1);
-           border-top-color: #667eea;
-           border-radius: 50%;
-           animation: spin 1s linear infinite;
-       }
+      .retry-btn:hover {
+          background: rgba(255,255,255,0.15);
+          border-color: rgba(255,255,255,0.3);
+      }
 
-       @keyframes spin {
-           to { transform: rotate(360deg); }
-       }
+      .retry-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+      }
 
-       @keyframes fadeIn {
-           from { opacity: 0; transform: translateY(10px); }
-           to { opacity: 1; transform: translateY(0); }
-       }
+      .riddle-text {
+          font-size: 1.4rem;
+          line-height: 1.8;
+          color: #fff;
+          text-align: center;
+          padding: 30px;
+          font-style: italic;
+          background: rgba(0,0,0,0.2);
+          border-radius: 12px;
+          border-left: 3px solid #667eea;
+          white-space: pre-line;
+      }
 
-       .image-info {
-           padding: 12px 4px;
-           display: flex;
-           justify-content: space-between;
-           align-items: center;
-       }
+      .images-section {
+          display: none;
+      }
 
-       .style-name {
-           font-size: 0.9rem;
-           color: #b0b0b0;
-           font-weight: 500;
-           text-transform: capitalize;
-       }
+      .images-section.active {
+          display: block;
+          animation: fadeIn 0.5s ease;
+      }
 
-       .image-retry {
-           background: rgba(255,255,255,0.1);
-           border: 1px solid rgba(255,255,255,0.2);
-           color: #fff;
-           width: 28px;
-           height: 28px;
-           border-radius: 50%;
-           cursor: pointer;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           transition: all 0.2s;
-           font-size: 0.9rem;
-           padding: 0;
-       }
+      .images-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 24px;
+          margin-top: 20px;
+      }
 
-       .image-retry:hover {
-           background: rgba(255,255,255,0.2);
-           transform: rotate(180deg);
-       }
+      .image-card {
+          position: relative;
+          border-radius: 12px;
+          overflow: hidden;
+          background: transparent;
+          border: none;
+      }
 
-       .image-retry:disabled {
-           opacity: 0.5;
-           cursor: not-allowed;
-       }
+      .image-container {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 1 / 1;
+          background: rgba(0,0,0,0.2);
+          border-radius: 12px;
+          overflow: hidden;
+      }
 
-       .modal-overlay {
-           position: fixed;
-           top: 0;
-           left: 0;
-           right: 0;
-           bottom: 0;
-           background: rgba(0,0,0,0.8);
-           display: none;
-           align-items: center;
-           justify-content: center;
-           z-index: 1000;
-           backdrop-filter: blur(5px);
-       }
+      .image-container img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+      }
 
-       .modal-overlay.active {
-           display: flex;
-       }
+      .image-container.loading::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 40px;
+          height: 40px;
+          margin: -20px 0 0 -20px;
+          border: 3px solid rgba(255,255,255,0.1);
+          border-top-color: #667eea;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+      }
 
-       .modal {
-           background: #1e1e3f;
-           border-radius: 16px;
-           padding: 30px;
-           width: 90%;
-           max-width: 500px;
-           border: 1px solid rgba(255,255,255,0.1);
-           box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-       }
+      @keyframes spin {
+          to { transform: rotate(360deg); }
+      }
 
-       .modal h2 {
-           margin-bottom: 24px;
-           color: #fff;
-       }
+      @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+      }
 
-       .form-group {
-           margin-bottom: 20px;
-       }
+      .image-info {
+          padding: 12px 4px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
 
-       .form-group label {
-           display: block;
-           margin-bottom: 8px;
-           color: #a0a0a0;
-           font-size: 0.9rem;
-       }
+      .style-name {
+          font-size: 0.9rem;
+          color: #b0b0b0;
+          font-weight: 500;
+          text-transform: capitalize;
+      }
 
-       .form-group input,
-       .form-group select {
-           width: 100%;
-           padding: 12px;
-           background: rgba(0,0,0,0.3);
-           border: 1px solid rgba(255,255,255,0.1);
-           border-radius: 8px;
-           color: #fff;
-           font-size: 1rem;
-           font-family: inherit;
-       }
+      .image-retry {
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #fff;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+          font-size: 0.9rem;
+          padding: 0;
+      }
 
-       .form-group input:focus,
-       .form-group select:focus {
-           outline: none;
-           border-color: #667eea;
-       }
+      .image-retry:hover {
+          background: rgba(255,255,255,0.2);
+          transform: rotate(180deg);
+      }
 
-       .modal-buttons {
-           display: flex;
-           gap: 12px;
-           justify-content: flex-end;
-           margin-top: 30px;
-       }
+      .image-retry:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+      }
 
-       .btn-secondary {
-           background: rgba(255,255,255,0.1);
-           border: 1px solid rgba(255,255,255,0.2);
-           color: #fff;
-           padding: 10px 24px;
-           border-radius: 8px;
-           cursor: pointer;
-           transition: all 0.2s;
-       }
+      .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.8);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          backdrop-filter: blur(5px);
+      }
 
-       .btn-secondary:hover {
-           background: rgba(255,255,255,0.2);
-       }
+      .modal-overlay.active {
+          display: flex;
+      }
 
-       .btn-primary {
-           background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-           border: none;
-           color: #fff;
-           padding: 10px 24px;
-           border-radius: 8px;
-           cursor: pointer;
-           transition: all 0.2s;
-       }
+      .modal {
+          background: #1e1e3f;
+          border-radius: 16px;
+          padding: 30px;
+          width: 90%;
+          max-width: 500px;
+          border: 1px solid rgba(255,255,255,0.1);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      }
 
-       .btn-primary:hover {
-           opacity: 0.9;
-       }
+      .modal h2 {
+          margin-bottom: 24px;
+          color: #fff;
+      }
 
-       .error-message {
-           background: rgba(255,0,0,0.15);
-           border: 1px solid rgba(255,0,0,0.3);
-           color: #ff9999;
-           padding: 12px;
-           border-radius: 8px;
-           margin-bottom: 20px;
-           display: none;
-       }
+      .form-group {
+          margin-bottom: 20px;
+      }
 
-       .status {
-           text-align: center;
-           color: #a0a0a0;
-           margin-top: 10px;
-           font-size: 0.9rem;
-       }
+      .form-group label {
+          display: block;
+          margin-bottom: 8px;
+          color: #a0a0a0;
+          font-size: 0.9rem;
+      }
 
-       @media (max-width: 768px) {
-           .images-grid {
-               grid-template-columns: 1fr;
-           }
-           
-           h1 {
-               font-size: 1.4rem;
-           }
-           
-           .riddle-text {
-               font-size: 1.2rem;
-               padding: 20px;
-           }
-       }
-   </style>
+      .form-group input,
+      .form-group select {
+          width: 100%;
+          padding: 12px;
+          background: rgba(0,0,0,0.3);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 8px;
+          color: #fff;
+          font-size: 1rem;
+          font-family: inherit;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+          outline: none;
+          border-color: #667eea;
+      }
+
+      .modal-buttons {
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+          margin-top: 30px;
+      }
+
+      .btn-secondary {
+          background: rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.2);
+          color: #fff;
+          padding: 10px 24px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+      }
+
+      .btn-secondary:hover {
+          background: rgba(255,255,255,0.2);
+      }
+
+      .btn-primary {
+          background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+          border: none;
+          color: #fff;
+          padding: 10px 24px;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+      }
+
+      .btn-primary:hover {
+          opacity: 0.9;
+      }
+
+      .error-message {
+          background: rgba(255,0,0,0.15);
+          border: 1px solid rgba(255,0,0,0.3);
+          color: #ff9999;
+          padding: 12px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+          display: none;
+      }
+
+      .status {
+          text-align: center;
+          color: #a0a0a0;
+          margin-top: 10px;
+          font-size: 0.9rem;
+      }
+
+      @media (max-width: 768px) {
+          .images-grid {
+              grid-template-columns: 1fr;
+          }
+          
+          h1 {
+              font-size: 1.4rem;
+          }
+          
+          .riddle-text {
+              font-size: 1.2rem;
+              padding: 20px;
+          }
+
+          .noun-selection {
+              flex-direction: column;
+              width: 100%;
+          }
+
+          .noun-selection input {
+              width: 100%;
+          }
+      }
+  </style>
 </head>
 <body>
-   <div class="container">
-       <header>
-           <h1>Riddle & Art Generator</h1>
-           <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
-       </header>
+  <div class="container">
+      <header>
+          <h1>Riddle & Art Generator</h1>
+          <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
+      </header>
 
-       <div class="main-controls">
-           <button class="generate-btn" id="generateBtn" onclick="generateAll()">Generate Riddle & Art</button>
-           <div class="status" id="status"></div>
-       </div>
+      <div class="main-controls">
+          <div class="noun-selection">
+              <input type="text" id="customNoun" placeholder="Enter custom noun or leave blank for random">
+              <button class="random-noun-btn" onclick="pickRandomNoun()" title="Pick random noun">🎲 Random Noun</button>
+          </div>
+          <button class="generate-btn" id="generateBtn" onclick="generateAll()">Generate Riddle & Art</button>
+          <div class="status" id="status"></div>
+      </div>
 
-       <div class="error-message" id="errorMsg"></div>
+      <div class="error-message" id="errorMsg"></div>
 
-       <div class="riddle-section" id="riddleSection">
-           <div class="theme-display" id="themeDisplay"></div>
-           <div class="section-header">
-               <span class="section-title">What am I?</span>
-               <button class="retry-btn" id="riddleRetry" onclick="retryRiddle()">
-                   🔄 Retry
-               </button>
-           </div>
-           <div class="riddle-text" id="riddleText">Loading...</div>
-       </div>
+      <div class="riddle-section" id="riddleSection">
+          <div class="theme-display" id="themeDisplay">
+              Theme: <span id="themeName">None selected</span>
+              <button class="small-retry" onclick="retryNoun()" title="Get new random noun">🔄</button>
+          </div>
+          <div class="section-header">
+              <span class="section-title">What am I?</span>
+              <button class="retry-btn" id="riddleRetry" onclick="retryRiddle()">
+                  🔄 Retry Riddle
+              </button>
+          </div>
+          <div class="riddle-text" id="riddleText">Loading...</div>
+      </div>
 
-       <div class="images-section" id="imagesSection">
-           <div class="section-header">
-               <span class="section-title">Artistic Interpretations</span>
-           </div>
-           <div class="images-grid" id="imagesGrid"></div>
-       </div>
-   </div>
+      <div class="images-section" id="imagesSection">
+          <div class="section-header">
+              <span class="section-title">Artistic Interpretations</span>
+          </div>
+          <div class="images-grid" id="imagesGrid"></div>
+      </div>
+  </div>
 
-   <div class="modal-overlay" id="settingsModal">
-       <div class="modal">
-           <h2>Settings</h2>
-           
-           <div class="form-group">
-               <label for="apiKey">API Key</label>
-               <input type="password" id="apiKey" placeholder="Enter your Pollinations API key">
-           </div>
+  <div class="modal-overlay" id="settingsModal">
+      <div class="modal">
+          <h2>Settings</h2>
+          
+          <div class="form-group">
+              <label for="apiKey">API Key</label>
+              <input type="password" id="apiKey" placeholder="Enter your Pollinations API key">
+          </div>
 
-           <div class="form-group">
-               <label for="textModel">Text Model</label>
-               <select id="textModel">
-                   <option value="qwen-character">Qwen Character</option>
-                   <option value="nova-fast" selected>Nova Micro</option>
-                   <option value="mistral">Mistral</option>
-                   <option value="gemini-fast">Gemini 2.5 Flash</option>
-                   <option value="openai-fast">OpenAI GPT 5 Nano</option>
-                   <option value="openai">OpenAI GPT 5 Mini</option>
-                   <option value="kimi">Kimi 2.5</option>
-               </select>
-           </div>
+          <div class="form-group">
+              <label for="textModel">Text Model</label>
+              <select id="textModel">
+                  <option value="qwen-character">Qwen Character</option>
+                  <option value="nova-fast" selected>Nova Micro</option>
+                  <option value="mistral">Mistral</option>
+                  <option value="gemini-fast">Gemini 2.5 Flash</option>
+                  <option value="openai-fast">OpenAI GPT 5 Nano</option>
+                  <option value="openai">OpenAI GPT 5 Mini</option>
+                  <option value="kimi">Kimi 2.5</option>
+              </select>
+          </div>
 
-           <div class="form-group">
-               <label for="imageModel">Image Model</label>
-               <select id="imageModel">
-                   <option value="flux">Flux</option>
-                   <option value="zimage" selected>Z-Image Turbo</option>
-                   <option value="imagen-4">Imagen 4</option>
-                   <option value="klein">Flux 2 Klein 4B</option>
-                   <option value="klein-large">Flux 2 Klein 9B</option>
-                   <option value="gptimage">GPT Image mini</option>
-               </select>
-           </div>
+          <div class="form-group">
+              <label for="imageModel">Image Model</label>
+              <select id="imageModel">
+                  <option value="flux">Flux</option>
+                  <option value="zimage" selected>Z-Image Turbo</option>
+                  <option value="imagen-4">Imagen 4</option>
+                  <option value="klein">Flux 2 Klein 4B</option>
+                  <option value="klein-large">Flux 2 Klein 9B</option>
+                  <option value="gptimage">GPT Image mini</option>
+              </select>
+          </div>
 
-           <div class="modal-buttons">
-               <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
-               <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
-           </div>
-       </div>
-   </div>
+          <div class="modal-buttons">
+              <button class="btn-secondary" onclick="closeSettings()">Cancel</button>
+              <button class="btn-primary" onclick="saveSettings()">Save Settings</button>
+          </div>
+      </div>
+  </div>
 
-   <script>
-       // Data sources
-       const NOUNS_URL = 'https://martinlh77.github.io/AI-apps/tools/riddle-and-pictures/tangible-nouns.json';
-       const STYLES_URL = 'https://martinlh77.github.io/AI-apps/tools/riddle-and-pictures/art-styles.json';
+  <script>
+      // Data sources
+      const NOUNS_URL = 'https://martinlh77.github.io/AI-apps/tools/riddle-and-pictures/tangible-nouns.json';
+      const STYLES_URL = 'https://martinlh77.github.io/AI-apps/tools/riddle-and-pictures/art-styles.json';
 
-       // State
-       let nouns = [];
-       let artStyles = [];
-       let currentNoun = null;
-       let currentRiddle = '';
-       let selectedStyles = [];
-       let settings = {
-           apiKey: localStorage.getItem('pollinationsApiKey') || '',
-           textModel: localStorage.getItem('textModel') || 'nova-fast',
-           imageModel: localStorage.getItem('imageModel') || 'zimage'
-       };
+      // State
+      let nouns = [];
+      let artStyles = [];
+      let currentNoun = null;
+      let currentRiddle = '';
+      let selectedStyles = [];
+      let settings = {
+          apiKey: localStorage.getItem('pollinationsApiKey') || '',
+          textModel: localStorage.getItem('textModel') || 'nova-fast',
+          imageModel: localStorage.getItem('imageModel') || 'zimage'
+      };
 
-       // Initialize
-       async function init() {
-           document.getElementById('apiKey').value = settings.apiKey;
-           document.getElementById('textModel').value = settings.textModel;
-           document.getElementById('imageModel').value = settings.imageModel;
-           
-           try {
-               showStatus('Loading data...');
-               const [nounsRes, stylesRes] = await Promise.all([
-                   fetch(NOUNS_URL),
-                   fetch(STYLES_URL)
-               ]);
-               
-               const nounsData = await nounsRes.json();
-               const stylesData = await stylesRes.json();
-               
-               nouns = nounsData.tangible_nouns || [];
-               artStyles = stylesData.all_genres || [];
-               
-               showStatus('');
-           } catch (err) {
-               showError('Failed to load nouns or art styles. Please refresh.');
-               console.error(err);
-           }
-       }
+      // Initialize
+      async function init() {
+          document.getElementById('apiKey').value = settings.apiKey;
+          document.getElementById('textModel').value = settings.textModel;
+          document.getElementById('imageModel').value = settings.imageModel;
+          
+          try {
+              showStatus('Loading data...');
+              const [nounsRes, stylesRes] = await Promise.all([
+                  fetch(NOUNS_URL),
+                  fetch(STYLES_URL)
+              ]);
+              
+              const nounsData = await nounsRes.json();
+              const stylesData = await stylesRes.json();
+              
+              nouns = nounsData.tangible_nouns || [];
+              artStyles = stylesData.all_genres || [];
+              
+              showStatus('');
+          } catch (err) {
+              showError('Failed to load nouns or art styles. Please refresh.');
+              console.error(err);
+          }
+      }
 
-       // Settings management
-       function openSettings() {
-           document.getElementById('settingsModal').classList.add('active');
-       }
+      // Settings management
+      function openSettings() {
+          document.getElementById('settingsModal').classList.add('active');
+      }
 
-       function closeSettings() {
-           document.getElementById('settingsModal').classList.remove('active');
-       }
+      function closeSettings() {
+          document.getElementById('settingsModal').classList.remove('active');
+      }
 
-       function saveSettings() {
-           settings.apiKey = document.getElementById('apiKey').value;
-           settings.textModel = document.getElementById('textModel').value;
-           settings.imageModel = document.getElementById('imageModel').value;
-           
-           localStorage.setItem('pollinationsApiKey', settings.apiKey);
-           localStorage.setItem('textModel', settings.textModel);
-           localStorage.setItem('imageModel', settings.imageModel);
-           
-           closeSettings();
-       }
+      function saveSettings() {
+          settings.apiKey = document.getElementById('apiKey').value;
+          settings.textModel = document.getElementById('textModel').value;
+          settings.imageModel = document.getElementById('imageModel').value;
+          
+          localStorage.setItem('pollinationsApiKey', settings.apiKey);
+          localStorage.setItem('textModel', settings.textModel);
+          localStorage.setItem('imageModel', settings.imageModel);
+          
+          closeSettings();
+      }
 
-       // Utility functions
-       function getRandomInt(max) {
-           return Math.floor(Math.random() * max);
-       }
+      // Utility functions
+      function getRandomInt(max) {
+          return Math.floor(Math.random() * max);
+      }
 
-       function delay(ms) {
-           return new Promise(resolve => setTimeout(resolve, ms));
-       }
+      function delay(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+      }
 
-       function showError(msg) {
-           const el = document.getElementById('errorMsg');
-           if (msg) {
-               el.textContent = msg;
-               el.style.display = 'block';
-           } else {
-               el.style.display = 'none';
-           }
-       }
+      function showError(msg) {
+          const el = document.getElementById('errorMsg');
+          if (msg) {
+              el.textContent = msg;
+              el.style.display = 'block';
+          } else {
+              el.style.display = 'none';
+          }
+      }
 
-       function showStatus(msg) {
-           document.getElementById('status').textContent = msg;
-       }
+      function showStatus(msg) {
+          document.getElementById('status').textContent = msg;
+      }
 
-       // Main generation
-       async function generateAll() {
-           if (!settings.apiKey) {
-               showError('Please set your API key in settings first!');
-               openSettings();
-               return;
-           }
+      function updateThemeDisplay() {
+          const themeName = document.getElementById('themeName');
+          if (currentNoun) {
+              themeName.textContent = currentNoun.charAt(0).toUpperCase() + currentNoun.slice(1);
+          } else {
+              themeName.textContent = 'None selected';
+          }
+      }
 
-           if (nouns.length === 0 || artStyles.length === 0) {
-               showError('Data not loaded yet. Please wait.');
-               return;
-           }
+      // Noun selection functions
+      function pickRandomNoun() {
+          if (nouns.length === 0) {
+              showError('Nouns not loaded yet. Please wait.');
+              return;
+          }
+          currentNoun = nouns[getRandomInt(nouns.length)];
+          document.getElementById('customNoun').value = currentNoun;
+          updateThemeDisplay();
+          
+          // Hide existing results when noun changes
+          document.getElementById('riddleSection').classList.remove('active');
+          document.getElementById('imagesSection').classList.remove('active');
+      }
 
-           showError('');
-           document.getElementById('generateBtn').disabled = true;
-           document.getElementById('riddleSection').classList.remove('active');
-           document.getElementById('imagesSection').classList.remove('active');
-           
-           // Select random noun
-           currentNoun = nouns[getRandomInt(nouns.length)];
-           
-           // Display theme
-           document.getElementById('themeDisplay').textContent = `Theme: ${currentNoun.charAt(0).toUpperCase() + currentNoun.slice(1)}`;
-           
-           // Generate riddle
-           await generateRiddle();
-           
-           // Select 10 random styles
-           selectedStyles = [];
-           const stylesCopy = [...artStyles];
-           for (let i = 0; i < 10 && stylesCopy.length > 0; i++) {
-               const idx = getRandomInt(stylesCopy.length);
-               selectedStyles.push(stylesCopy.splice(idx, 1)[0]);
-           }
-           
-           // Setup image grid
-           setupImageGrid();
-           document.getElementById('imagesSection').classList.add('active');
-           document.getElementById('riddleSection').classList.add('active');
-           
-           // Generate images with delay
-           for (let i = 0; i < selectedStyles.length; i++) {
-               await generateImage(i);
-               if (i < selectedStyles.length - 1) {
-                   await delay(1500); // 1.5 second delay between calls
-               }
-           }
-           
-           document.getElementById('generateBtn').disabled = false;
-           showStatus('');
-       }
+      function retryNoun() {
+          pickRandomNoun();
+          showStatus('New theme selected. Click Generate to create riddle and art.');
+      }
 
-       async function generateRiddle() {
-           showStatus('Generating riddle...');
-           document.getElementById('riddleRetry').disabled = true;
-           
-           const seed = getRandomInt(1000000);
-           const prompt = `Create a rhyming "What am I?" riddle about a ${currentNoun}. Format it as a poem with 4 lines (quatrain) with AABB or ABAB rhyme scheme. Use line breaks between each line. Make it poetic and mysterious. Only return the 4-line riddle, no extra text or quotation marks.`;
-           
-           try {
-               const url = `https://gen.pollinations.ai/text/${encodeURIComponent(prompt)}?model=${settings.textModel}&seed=${seed}&key=${settings.apiKey}`;
-               const response = await fetch(url);
-               
-               if (!response.ok) throw new Error('Failed to generate riddle');
-               
-               let text = await response.text();
-               text = text.trim();
-               
-               // Clean up the text - remove quotes if present
-               text = text.replace(/^["']|["']$/g, '');
-               
-               // Ensure line breaks are preserved for display
-               currentRiddle = text;
-               document.getElementById('riddleText').textContent = currentRiddle;
-           } catch (err) {
-               showError('Failed to generate riddle: ' + err.message);
-               document.getElementById('riddleText').textContent = 'Error generating riddle. Please retry.';
-           } finally {
-               document.getElementById('riddleRetry').disabled = false;
-           }
-       }
+      // Main generation
+      async function generateAll() {
+          if (!settings.apiKey) {
+              showError('Please set your API key in settings first!');
+              openSettings();
+              return;
+          }
 
-       async function retryRiddle() {
-           if (!settings.apiKey) {
-               openSettings();
-               return;
-           }
-           // Keep the same noun but regenerate riddle
-           await generateRiddle();
-       }
+          if (artStyles.length === 0) {
+              showError('Data not loaded yet. Please wait.');
+              return;
+          }
 
-       function setupImageGrid() {
-           const grid = document.getElementById('imagesGrid');
-           grid.innerHTML = '';
-           
-           selectedStyles.forEach((style, index) => {
-               const card = document.createElement('div');
-               card.className = 'image-card';
-               card.id = `card-${index}`;
-               
-               card.innerHTML = `
-                   <div class="image-container loading" id="container-${index}">
-                       <img id="img-${index}" alt="${style.name} style artwork">
-                   </div>
-                   <div class="image-info">
-                       <span class="style-name">${style.name}</span>
-                       <button class="image-retry" id="retry-${index}" onclick="retryImage(${index})" title="Retry">
-                           ↻
-                       </button>
-                   </div>
-               `;
-               
-               grid.appendChild(card);
-           });
-       }
+          showError('');
+          document.getElementById('generateBtn').disabled = true;
+          document.getElementById('riddleSection').classList.remove('active');
+          document.getElementById('imagesSection').classList.remove('active');
+          
+          // Get noun from input or use current/random
+          const customInput = document.getElementById('customNoun').value.trim();
+          if (customInput) {
+              currentNoun = customInput.toLowerCase();
+          } else if (!currentNoun) {
+              // If no custom input and no current noun, pick random
+              if (nouns.length > 0) {
+                  currentNoun = nouns[getRandomInt(nouns.length)];
+              } else {
+                  showError('No nouns available. Please enter a custom noun.');
+                  document.getElementById('generateBtn').disabled = false;
+                  return;
+              }
+          }
+          
+          // Update input to show current noun (in case it was random)
+          document.getElementById('customNoun').value = currentNoun;
+          updateThemeDisplay();
+          
+          // Generate riddle
+          await generateRiddle();
+          
+          // Select 10 random styles
+          selectedStyles = [];
+          const stylesCopy = [...artStyles];
+          for (let i = 0; i < 10 && stylesCopy.length > 0; i++) {
+              const idx = getRandomInt(stylesCopy.length);
+              selectedStyles.push(stylesCopy.splice(idx, 1)[0]);
+          }
+          
+          // Setup image grid
+          setupImageGrid();
+          document.getElementById('imagesSection').classList.add('active');
+          document.getElementById('riddleSection').classList.add('active');
+          
+          // Generate images with delay
+          for (let i = 0; i < selectedStyles.length; i++) {
+              await generateImage(i);
+              if (i < selectedStyles.length - 1) {
+                  await delay(1500); // 1.5 second delay between calls
+              }
+          }
+          
+          document.getElementById('generateBtn').disabled = false;
+          showStatus('');
+      }
 
-       async function generateImage(index) {
-           const style = selectedStyles[index];
-           const container = document.getElementById(`container-${index}`);
-           const img = document.getElementById(`img-${index}`);
-           const retryBtn = document.getElementById(`retry-${index}`);
-           
-           container.classList.add('loading');
-           img.style.opacity = '0';
-           retryBtn.disabled = true;
-           
-           const seed = getRandomInt(1000000);
-           const prompt = `${style.name} style artwork depicting ${currentNoun}, high quality detailed`;
-           
-           try {
-               const url = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?model=${settings.imageModel}&seed=${seed}&quality=high&height=1024&width=1024&key=${settings.apiKey}`;
-               
-               await new Promise((resolve, reject) => {
-                   img.onload = () => {
-                       container.classList.remove('loading');
-                       img.style.opacity = '1';
-                       resolve();
-                   };
-                   img.onerror = () => reject(new Error('Image failed to load'));
-                   img.src = url;
-               });
-               
-           } catch (err) {
-               console.error(`Failed to load image ${index}:`, err);
-               container.classList.remove('loading');
-               img.style.opacity = '0.3';
-           } finally {
-               retryBtn.disabled = false;
-           }
-       }
+      async function generateRiddle() {
+          showStatus('Generating riddle...');
+          document.getElementById('riddleRetry').disabled = true;
+          
+          const seed = getRandomInt(1000000);
+          const prompt = `Create a rhyming "What am I?" riddle about a ${currentNoun}. Format it as a poem with 4 lines (quatrain) with AABB or ABAB rhyme scheme. Use line breaks between each line. Make it poetic and mysterious. Only return the 4-line riddle, no extra text or quotation marks.`;
+          
+          try {
+              const url = `https://gen.pollinations.ai/text/${encodeURIComponent(prompt)}?model=${settings.textModel}&seed=${seed}&key=${settings.apiKey}`;
+              const response = await fetch(url);
+              
+              if (!response.ok) throw new Error('Failed to generate riddle');
+              
+              let text = await response.text();
+              text = text.trim();
+              
+              // Clean up the text - remove quotes if present
+              text = text.replace(/^["']|["']$/g, '');
+              
+              // Ensure line breaks are preserved for display
+              currentRiddle = text;
+              document.getElementById('riddleText').textContent = currentRiddle;
+          } catch (err) {
+              showError('Failed to generate riddle: ' + err.message);
+              document.getElementById('riddleText').textContent = 'Error generating riddle. Please retry.';
+          } finally {
+              document.getElementById('riddleRetry').disabled = false;
+          }
+      }
 
-       async function retryImage(index) {
-           if (!settings.apiKey) {
-               openSettings();
-               return;
-           }
-           await generateImage(index);
-       }
+      async function retryRiddle() {
+          if (!settings.apiKey) {
+              openSettings();
+              return;
+          }
+          // Keep the same noun but regenerate riddle
+          await generateRiddle();
+      }
 
-       // Close modal on outside click
-       document.getElementById('settingsModal').addEventListener('click', function(e) {
-           if (e.target === this) closeSettings();
-       });
+      function setupImageGrid() {
+          const grid = document.getElementById('imagesGrid');
+          grid.innerHTML = '';
+          
+          selectedStyles.forEach((style, index) => {
+              const card = document.createElement('div');
+              card.className = 'image-card';
+              card.id = `card-${index}`;
+              
+              card.innerHTML = `
+                  <div class="image-container loading" id="container-${index}">
+                      <img id="img-${index}" alt="${style.name} style artwork">
+                  </div>
+                  <div class="image-info">
+                      <span class="style-name">${style.name}</span>
+                      <button class="image-retry" id="retry-${index}" onclick="retryImage(${index})" title="Retry">
+                          ↻
+                      </button>
+                  </div>
+              `;
+              
+              grid.appendChild(card);
+          });
+      }
 
-       // Start
-       init();
-   </script>
+      async function generateImage(index) {
+          const style = selectedStyles[index];
+          const container = document.getElementById(`container-${index}`);
+          const img = document.getElementById(`img-${index}`);
+          const retryBtn = document.getElementById(`retry-${index}`);
+          
+          container.classList.add('loading');
+          img.style.opacity = '0';
+          retryBtn.disabled = true;
+          
+          const seed = getRandomInt(1000000);
+          // Updated prompt to be lighter and brighter
+          const prompt = `${style.name} style artwork depicting ${currentNoun}, bright and cheerful, light atmosphere, vibrant colors, positive mood, detailed, high quality`;
+          
+          try {
+              const url = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?model=${settings.imageModel}&seed=${seed}&quality=high&height=1024&width=1024&key=${settings.apiKey}`;
+              
+              await new Promise((resolve, reject) => {
+                  img.onload = () => {
+                      container.classList.remove('loading');
+                      img.style.opacity = '1';
+                      resolve();
+                  };
+                  img.onerror = () => reject(new Error('Image failed to load'));
+                  img.src = url;
+              });
+              
+          } catch (err) {
+              console.error(`Failed to load image ${index}:`, err);
+              container.classList.remove('loading');
+              img.style.opacity = '0.3';
+          } finally {
+              retryBtn.disabled = false;
+          }
+      }
+
+      async function retryImage(index) {
+          if (!settings.apiKey) {
+              openSettings();
+              return;
+          }
+          await generateImage(index);
+      }
+
+      // Close modal on outside click
+      document.getElementById('settingsModal').addEventListener('click', function(e) {
+          if (e.target === this) closeSettings();
+      });
+
+      // Start
+      init();
+  </script>
 </body>
 </html>
