@@ -688,7 +688,7 @@
            retryBtn.disabled = true;
            
            const seed = getRandomInt(1000000);
-           const prompt = `${style.name} style artwork depicting ${currentNoun}, mysterious, artistic interpretation, high quality detailed`;
+           const prompt = `${style.name} style artwork depicting ${currentNoun}, high quality detailed`;
            
            try {
                const url = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?model=${settings.imageModel}&seed=${seed}&quality=high&height=1024&width=1024&key=${settings.apiKey}`;
