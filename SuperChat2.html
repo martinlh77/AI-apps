@@ -1010,7 +1010,6 @@
             <select id="model-select">
 
                 <option value="qwen-character">Qwen Character</option>
-                <option value="qwen-safety">Qwen 3 Guard 8B</option>
                 <option value="nova-fast">Nova-Micro</option>
                 <option value="qwen-coder">Qwen 2.5 Coder💻</option>
                 <option value="gemini-fast">Gemini Fast👁️🔍</option>
@@ -2426,11 +2425,11 @@ async function sendMessage(regenerateSeed = null, previousContext = null) {
     }
     
     // CRITICAL: qwen-character does not support streaming or array content format
-    const isQwenCharacter = model === 'qwen-character';
-    const useStreaming = !isQwenCharacter;
+const isBedrockModel = model === 'qwen-character' || model === 'qwen-safety';
+const useStreaming = !isBedrockModel;
     
-    // Convert messages to Bedrock-compatible format for qwen-character
-    if (isQwenCharacter) {
+// Convert messages to Bedrock-compatible format for Bedrock models
+if (isBedrockModel) {
         finalMessages = finalMessages.map(msg => {
             // Convert array content to string (Bedrock doesn't support content blocks)
             if (Array.isArray(msg.content)) {
@@ -2461,8 +2460,8 @@ async function sendMessage(regenerateSeed = null, previousContext = null) {
         temperature: 1
     };
     
-    // Only add max_tokens for models that need it, and NOT for qwen-character
-    if (!isQwenCharacter) {
+// Only add max_tokens for models that need it, and NOT for Bedrock models
+if (!isBedrockModel) {
         requestBody.max_tokens = ['mistral', 'nova-fast'].includes(model) ? 4096 : 64000;
     }
 
@@ -3766,4 +3765,3 @@ async function sendMessage(regenerateSeed = null, previousContext = null) {
 </body>
 
 </html>
-
