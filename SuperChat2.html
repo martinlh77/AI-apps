@@ -2505,28 +2505,35 @@ if (!isBedrockModel) {
             throw new Error(errorMsg);
         }
 
-        if (isQwenCharacter) {
-            // Non-streaming handling (like Test Chat)
-            const data = await response.json();
-            accumulatedText = data.choices[0].message.content;
-            
-            if (aiContentDiv) {
-                aiContentDiv.innerHTML = marked.parse(accumulatedText);
-            }
-            
-            conversationHistory.push({ role: 'assistant', content: accumulatedText });
-            
-            // Setup audio button if enabled
-            const showAudioButton = document.getElementById('audio-enable')?.checked;
-            if (showAudioButton && accumulatedText) {
-                const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
-                if (audioBtn) {
-                    audioBtn.style.display = 'inline-block';
-                    audioBtn.onclick = function() {
-                        generateAudioForMessage(aiContentId, accumulatedText);
-                    };
-                }
-            }
+if (isBedrockModel) {
+    // Non-streaming handling (like Test Chat)
+    const data = await response.json();
+    accumulatedText = data.choices[0].message.content;
+    
+    if (aiContentDiv) {
+        aiContentDiv.innerHTML = marked.parse(accumulatedText);
+    }
+    
+    conversationHistory.push({ role: 'assistant', content: accumulatedText });
+    
+    // Setup audio button if enabled
+    const showAudioButton = document.getElementById('audio-enable')?.checked;
+    if (showAudioButton && accumulatedText) {
+        const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
+        if (audioBtn) {
+            audioBtn.style.display = 'inline-block';
+            audioBtn.onclick = function() {
+                generateAudioForMessage(aiContentId, accumulatedText);
+            };
+        }
+    }
+    
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+} else {
+    // Streaming handling (existing code)
+    ...
+}
             
             chatContainer.scrollTop = chatContainer.scrollHeight;
             
@@ -2620,7 +2627,7 @@ if (!isBedrockModel) {
             }
         }
     } finally {
-        // Always reset state, even if qwen-character failed
+        // Always reset state, even if Bedrock model failed
         isGenerating = false;
         sendBtn.style.display = 'inline-block';
         stopBtn.style.display = 'none';
