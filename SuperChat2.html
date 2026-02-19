@@ -2532,89 +2532,82 @@ if (isBedrockModel) {
     
 } else {
     // Streaming handling (existing code)
-    ...
-}
-            
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            
-        } else {
-            // Streaming handling (existing code)
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            
-            let buffer = ''; 
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    
+    let buffer = ''; 
+    let firstChunk = true;
 
-            let firstChunk = true;
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
 
-                const chunk = decoder.decode(value, { stream: true });
-                buffer += chunk;
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); 
 
-                const lines = buffer.split('\n');
-                buffer = lines.pop(); 
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
+                if (firstChunk) {
+                    aiContentDiv.innerHTML = '';
+                    firstChunk = false;
+                }
+                try {
+                    const json = JSON.parse(trimmedLine.substring(6));
+                    const delta = json.choices[0].delta;
 
-                for (const line of lines) {
-                    const trimmedLine = line.trim();
-                    if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
-                        if (firstChunk) {
-                            aiContentDiv.innerHTML = '';
-                            firstChunk = false;
-                        }
-                        try {
-                            const json = JSON.parse(trimmedLine.substring(6));
-                            const delta = json.choices[0].delta;
-
-                            if (delta.content) {
-                                accumulatedText += delta.content;
-                                aiContentDiv.innerHTML = marked.parse(accumulatedText);
-                                chatContainer.scrollTop = chatContainer.scrollHeight;
-                                
-                                if (previewPanel.classList.contains('open')) {
-                                    const messageWrapper = aiContentDiv.closest('.message-wrapper.ai');
-                                    if (messageWrapper) {
-                                        extractAllCodeFromMessage(messageWrapper);
-                                        updatePreview();
-                                    }
-                                }
+                    if (delta.content) {
+                        accumulatedText += delta.content;
+                        aiContentDiv.innerHTML = marked.parse(accumulatedText);
+                        chatContainer.scrollTop = chatContainer.scrollHeight;
+                        
+                        if (previewPanel.classList.contains('open')) {
+                            const messageWrapper = aiContentDiv.closest('.message-wrapper.ai');
+                            if (messageWrapper) {
+                                extractAllCodeFromMessage(messageWrapper);
+                                updatePreview();
                             }
-                            
-                        } catch (e) {
-                            console.error("Error parsing stream line", e);
                         }
                     }
+                    
+                } catch (e) {
+                    console.error("Error parsing stream line", e);
                 }
-            }
-
-            conversationHistory.push({ role: 'assistant', content: accumulatedText });
-
-            // Render LaTeX on the completed message
-            if (typeof renderMathInElement !== 'undefined') {
-                const aiWrapper = document.getElementById(aiMsgId);
-                if (aiWrapper) {
-                    renderMathInElement(aiWrapper, {
-                        delimiters: [
-                            {left: '$$', right: '$$', display: true},
-                            {left: '$', right: '$', display: false}
-                        ],
-                        throwOnError: false,
-                        strict: false
-                    });
-                }
-            }
-
-            const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
-            if (audioBtn) {
-                audioBtn.style.display = 'inline-block';
-                audioBtn.onclick = function() {
-                    generateAudioForMessage(aiContentId, accumulatedText);
-                };
             }
         }
+    }
 
-    } catch (error) {
+    conversationHistory.push({ role: 'assistant', content: accumulatedText });
+
+    // Render LaTeX on the completed message
+    if (typeof renderMathInElement !== 'undefined') {
+        const aiWrapper = document.getElementById(aiMsgId);
+        if (aiWrapper) {
+            renderMathInElement(aiWrapper, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false,
+                strict: false
+            });
+        }
+    }
+
+    const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
+    if (audioBtn) {
+        audioBtn.style.display = 'inline-block';
+        audioBtn.onclick = function() {
+            generateAudioForMessage(aiContentId, accumulatedText);
+        };
+    }
+}
+
+} catch (error) {
+
         console.error("Send message error:", error);
         if (aiContentDiv) {
             if (error.name === 'AbortError') {
