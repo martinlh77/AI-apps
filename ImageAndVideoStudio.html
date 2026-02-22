@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pollinations Studio (Image & Video)V11.0</title>
+  <title>Pollinations Studio (Image & Video)V12.1</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -264,12 +264,26 @@
           font-style: italic;
           padding: 2rem;
       }
+
+      /* Character counter */
+      .char-counter {
+          text-align: right;
+          font-size: 0.75rem;
+          margin-top: 0.25rem;
+          color: var(--subtle);
+      }
+      .char-counter.warning {
+          color: #fbbf24;
+      }
+      .char-counter.error {
+          color: #ef4444;
+      }
   </style>
 </head>
 <body class="p-4 md:p-8">
 
   <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor)V11.0</h1>
+      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor)V12.1</h1>
 
       <div id="message-area" class="mb-4"></div>
 
@@ -279,8 +293,14 @@
               <h2 class="text-xl font-semibold mb-3 border-b border-border pb-2">Controls</h2>
 
               <div>
-                  <label for="apiKeyInput" class="block text-sm font-medium mb-1">Custom API Key (Overrides default)</label>
+                  <label for="apiKeyInput" class="block text-sm font-medium mb-1">Pollinations API Key (Optional)</label>
                   <input type="password" id="apiKeyInput" class="w-full" placeholder="plln_pk_...">
+              </div>
+
+              <div id="airforceKeyGroup" class="hidden">
+                  <label for="airforceApiKeyInput" class="block text-sm font-medium mb-1 text-pink-400">Airforce API Key (Required for Grok Video)</label>
+                  <input type="password" id="airforceApiKeyInput" class="w-full border-pink-500/50" placeholder="Enter Airforce API key...">
+                  <p class="text-xs text-pink-300/70 mt-1">Required for Grok Imagine Video via Airforce</p>
               </div>
 
               <div id="model-select-group">
@@ -301,7 +321,7 @@
                           <option value="gptimage-large">💎 GPT-Image Large👁️ (Editor/Generator)</option>
                       </optgroup>
                       <optgroup label="Video Models">
-                          <option value="grok-video">Grok Imagine Video (Video - T2V & I2V)</option>
+                          <option value="grok-video">🎬 Grok Imagine Video (Airforce - 6s)</option>
                           <option value="seedance">Seedance (Video - T2V & I2V)</option>
                           <option value="wan">Wan (Video - T2V & I2V)</option>
                           <option value="seedance-pro">💎 Seedance-Pro (Video - T2V & I2V)</option>
@@ -314,6 +334,7 @@
               <div>
                   <label for="promptInput" class="block text-sm font-medium mb-1">Prompt</label>
                   <textarea id="promptInput" rows="3" class="w-full" placeholder="Describe your image or video..."></textarea>
+                  <div id="promptCharCounter" class="char-counter hidden">0 / 500</div>
                   
                   <div class="mt-2 flex space-x-2" id="prompt-enhance-controls">
                       <button id="enhancePromptBtn" type="button" class="flex-1 py-2 bg-enhance text-white font-semibold rounded-lg hover:bg-enhance-hover text-sm">
@@ -328,7 +349,7 @@
               </div>
 
               <div id="imageInputGroup" class="hidden p-3 border border-indigo-400 rounded-lg bg-indigo-900/20 space-y-3">
-                  <label class="block text-sm font-medium mb-1">Reference Images (Max 14 for Editors, 2 for First/Last Frame Video)</label>
+                  <label class="block text-sm font-medium mb-1">Reference Images (Max 14 for Editors, 2 for Grok Video, 2 for First/Last Frame Video)</label>
                   
                   <div class="ref-controls">
                       <div class="url-group">
@@ -409,7 +430,9 @@
 
                   <div id="video-controls-group" class="hidden p-3 border border-pink-400 rounded-lg bg-pink-900/20 space-y-3">
                       <label class="block text-sm font-medium mb-1 text-pink-300">Video Settings</label>
-                      <div class="grid grid-cols-2 gap-4">
+                      
+                      <!-- Standard Video Controls (Pollinations) -->
+                      <div id="standard-video-controls" class="grid grid-cols-2 gap-4">
                           <div>
                               <label class="block text-xs text-subtle mb-1">Aspect Ratio</label>
                               <select id="aspectRatioSelect" class="w-full">
@@ -424,6 +447,39 @@
                               </select>
                           </div>
                       </div>
+
+                      <!-- Grok Video Specific Controls (Airforce) -->
+                      <div id="grok-video-controls" class="hidden space-y-3">
+                          <div class="grid grid-cols-2 gap-4">
+                              <div>
+                                  <label class="block text-xs text-subtle mb-1">Mode</label>
+                                  <select id="grokModeSelect" class="w-full">
+                                      <option value="normal">Normal</option>
+                                      <option value="spicy">Spicy</option>
+                                      <option value="fun">Fun</option>
+                                  </select>
+                              </div>
+                              <div>
+                                  <label class="block text-xs text-subtle mb-1">Aspect Ratio</label>
+                                  <select id="grokAspectRatioSelect" class="w-full">
+                                      <option value="3:2">3:2 (Landscape)</option>
+                                      <option value="2:3">2:3 (Portrait)</option>
+                                      <option value="1:1">1:1 (Square)</option>
+                                  </select>
+                              </div>
+                          </div>
+                          <div>
+                              <label class="block text-xs text-subtle mb-1">Response Format</label>
+                              <select id="grokResponseFormat" class="w-full">
+                                  <option value="url">URL (Recommended)</option>
+                                  <option value="base64">Base64</option>
+                              </select>
+                          </div>
+                          <div class="text-xs text-pink-300/70 bg-pink-900/30 p-2 rounded">
+                              ℹ️ Grok Video outputs are always 6 seconds. Max 2 image inputs allowed.
+                          </div>
+                      </div>
+
                       <div id="audio-control-container" class="flex items-center space-x-2 pt-1 hidden">
                           <input type="checkbox" id="audioCheckbox" class="rounded text-primary focus:ring-primary h-4 w-4">
                           <label for="audioCheckbox" class="text-sm">Generate Audio</label>
@@ -497,8 +553,11 @@
   <script type="module">
       // --- DOM Elements ---
       const apiKeyInput = document.getElementById('apiKeyInput');
+      const airforceApiKeyInput = document.getElementById('airforceApiKeyInput');
+      const airforceKeyGroup = document.getElementById('airforceKeyGroup');
       const modelSelect = document.getElementById('modelSelect');
       const promptInput = document.getElementById('promptInput');
+      const promptCharCounter = document.getElementById('promptCharCounter');
       const seedInput = document.getElementById('seedInput');
       const randomizeSeedCheckbox = document.getElementById('randomizeSeedCheckbox');
       const widthInput = document.getElementById('widthInput');
@@ -524,6 +583,8 @@
       const negativePromptGroup = document.getElementById('negativePromptGroup');
       const negativePromptInput = document.getElementById('negativePromptInput');
       const videoControlsGroup = document.getElementById('video-controls-group');
+      const standardVideoControls = document.getElementById('standard-video-controls');
+      const grokVideoControls = document.getElementById('grok-video-controls');
       const imageDimensionsGroup = document.getElementById('image-dimensions-group');
       const promptEnhanceControls = document.getElementById('prompt-enhance-controls');
       const guidanceScaleContainer = document.getElementById('guidanceScaleContainer');
@@ -550,6 +611,11 @@
       const audioControlContainer = document.getElementById('audio-control-container');
       const audioCheckbox = document.getElementById('audioCheckbox');
 
+      // Grok Video Specific (Airforce)
+      const grokModeSelect = document.getElementById('grokModeSelect');
+      const grokAspectRatioSelect = document.getElementById('grokAspectRatioSelect');
+      const grokResponseFormat = document.getElementById('grokResponseFormat');
+
       // Single Image Elements
       const refUrlInput = document.getElementById('ref-url-input');
       const addUrlBtn = document.getElementById('add-url-btn');
@@ -563,33 +629,36 @@
       let generatedApiUrl = null;
       let originalPrompt = ''; 
       let referenceImages = []; 
-      const MAX_IMAGES = 14;
+      let MAX_IMAGES = 14;
       const HISTORY_KEY = 'pollinations_generation_history';
       const MAX_HISTORY = 1000;
       const API_KEY_STORAGE = 'pollinations_studio_api_key';
+      const AIRFORCE_KEY_STORAGE = 'airforce_studio_api_key';
 
       // --- Constants ---
       const IMAGE_API_BASE_URL = 'https://gen.pollinations.ai/image';
       const TEXT_API_BASE_URL = 'https://gen.pollinations.ai/text';
+      const AIRFORCE_API_URL = 'https://api.airforce/v1/images/generations';
       const DEFAULT_DIMENSION = 1024;
       
       // Model Classifications
       const VIDEO_MODELS = ['grok-video', 'seedance', 'seedance-pro', 'wan', 'veo', 'ltx-2'];
+      const GROK_VIDEO_MODEL = 'grok-video';
       
       // Models that support image input (Editors + Video I2V models)
-      const IMAGE_INPUT_MODELS = ['klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', 'grok-video', 'seedance', 'seedance-pro', 'wan', 'veo', 'ltx-2'];
+      const IMAGE_INPUT_MODELS = ['klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', GROK_VIDEO_MODEL, 'seedance', 'seedance-pro', 'wan', 'veo', 'ltx-2'];
       
       // Models that support guidance scale (Standard diffusion-based image models)
       const GUIDANCE_SCALE_MODELS = ['flux', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'imagen-4'];
       
       // Models that support negative prompts (All except Veo)
-      const NEGATIVE_PROMPT_MODELS = ['flux', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', 'imagen-4', 'seedance', 'seedance-pro', 'wan', 'grok-video', 'ltx-2'];
+      const NEGATIVE_PROMPT_MODELS = ['flux', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', 'imagen-4', 'seedance', 'seedance-pro', 'wan', 'ltx-2'];
       
       // Models that support transparency (GPT-Image only)
       const TRANSPARENT_MODELS = ['gptimage', 'gptimage-large'];
       
       // Video models that support audio generation
-      const AUDIO_MODELS = ['veo', 'wan', 'grok-video'];
+      const AUDIO_MODELS = ['veo', 'wan'];
       
       // Paid models requiring API key
       const PAID_MODELS = ['kontext', 'seedream', 'seedream-pro', 'gptimage-large', 'nanobanana', 'nanobanana-pro', 'seedance-pro', 'veo', 'ltx-2'];
@@ -600,6 +669,10 @@
       // Helper to get active key
       function getActiveApiKey() {
           return apiKeyInput.value.trim() || apiKey;
+      }
+
+      function getAirforceApiKey() {
+          return airforceApiKeyInput.value.trim();
       }
 
       // --- HISTORY MANAGEMENT ---
@@ -632,6 +705,9 @@
           
           const history = loadHistory();
           
+          // Determine model specific settings
+          const isGrok = modelSelect.value === GROK_VIDEO_MODEL;
+          
           // Capture ALL current settings
           const newItem = {
               url: cleanUrl,
@@ -651,9 +727,13 @@
               transparent: transparentCheckbox.checked,
               
               // Video settings
-              aspectRatio: aspectRatioSelect.value,
+              aspectRatio: isGrok ? grokAspectRatioSelect.value : aspectRatioSelect.value,
               duration: durationSelect.value,
               audio: audioCheckbox.checked,
+              
+              // Grok specific settings
+              grokMode: isGrok ? grokModeSelect.value : null,
+              grokResponseFormat: isGrok ? grokResponseFormat.value : null,
               
               // Privacy and enhancement settings
               private: privateCheckbox.checked,
@@ -829,9 +909,23 @@
           if (item.transparent !== undefined) transparentCheckbox.checked = item.transparent;
           
           // Load video settings
-          if (item.aspectRatio !== undefined) aspectRatioSelect.value = item.aspectRatio;
+          if (item.aspectRatio !== undefined) {
+              if (item.model === GROK_VIDEO_MODEL) {
+                  grokAspectRatioSelect.value = item.aspectRatio;
+              } else {
+                  aspectRatioSelect.value = item.aspectRatio;
+              }
+          }
           if (item.duration !== undefined) durationSelect.value = item.duration;
           if (item.audio !== undefined) audioCheckbox.checked = item.audio;
+          
+          // Load Grok specific settings
+          if (item.grokMode !== undefined && item.grokMode !== null) {
+              grokModeSelect.value = item.grokMode;
+          }
+          if (item.grokResponseFormat !== undefined && item.grokResponseFormat !== null) {
+              grokResponseFormat.value = item.grokResponseFormat;
+          }
           
           // Load privacy and enhancement settings
           if (item.private !== undefined) privateCheckbox.checked = item.private;
@@ -1158,7 +1252,8 @@
               
               if (enhancedPrompt.trim()) {
                   promptInput.value = enhancedPrompt.trim();
-                  updatePromptControls(true); 
+                  updatePromptControls(true);
+                  updatePromptCharCounter(); // Update counter after enhancement
                   displayMessage('Prompt successfully enhanced!', 'success');
               } else {
                   throw new Error('Enhancement returned an empty result.');
@@ -1182,26 +1277,54 @@
           if (originalPrompt) {
               promptInput.value = originalPrompt;
               originalPrompt = ''; 
-              updatePromptControls(false); 
+              updatePromptControls(false);
+              updatePromptCharCounter(); // Update counter after revert
               displayMessage('Prompt reverted to original.', 'info');
           }
       }
+
+      // Prompt character counter for Grok Video (500 limit)
+      function updatePromptCharCounter() {
+          const isGrok = modelSelect.value === GROK_VIDEO_MODEL;
+          if (isGrok) {
+              const len = promptInput.value.length;
+              promptCharCounter.textContent = `${len} / 500`;
+              promptCharCounter.classList.remove('hidden');
+              if (len > 500) {
+                  promptCharCounter.classList.add('error');
+                  promptCharCounter.classList.remove('warning');
+              } else if (len > 450) {
+                  promptCharCounter.classList.add('warning');
+                  promptCharCounter.classList.remove('error');
+              } else {
+                  promptCharCounter.classList.remove('warning', 'error');
+              }
+          } else {
+              promptCharCounter.classList.add('hidden');
+          }
+      }
+
+      promptInput.addEventListener('input', updatePromptCharCounter);
       
       // --- Main Application Logic ---
 
       function updateUIForModel() {
           const model = modelSelect.value;
           const isVideoModel = VIDEO_MODELS.includes(model);
+          const isGrok = model === GROK_VIDEO_MODEL;
           const hasCustomKey = apiKeyInput.value.trim().length > 0;
+
+          // Show/hide airforce key group
+          airforceKeyGroup.classList.toggle('hidden', !isGrok);
 
           // Show/hide guidance scale (only for specific image models)
           if (guidanceScaleContainer) {
               guidanceScaleContainer.style.display = GUIDANCE_SCALE_MODELS.includes(model) ? 'block' : 'none';
           }
           
-          // Show/hide negative prompt (hide for veo only)
+          // Show/hide negative prompt (hide for veo and grok)
           if (negativePromptGroup) {
-              negativePromptGroup.style.display = (model === 'veo') ? 'none' : 'block';
+              negativePromptGroup.style.display = (model === 'veo' || isGrok) ? 'none' : 'block';
           }
           
           // Show/hide quality selector (only for GPT-Image models based on API docs)
@@ -1221,7 +1344,7 @@
               imageInputGroup.style.display = IMAGE_INPUT_MODELS.includes(model) ? 'block' : 'none';
           }
           
-          // Show/hide audio control (veo, wan, grok-video)
+          // Show/hide audio control (veo, wan - NOT grok via airforce)
           if (audioControlContainer) {
               const showAudio = AUDIO_MODELS.includes(model);
               audioControlContainer.classList.toggle('hidden', !showAudio);
@@ -1230,6 +1353,22 @@
           // Show/hide video controls
           if (videoControlsGroup) {
               videoControlsGroup.style.display = isVideoModel ? 'block' : 'none';
+          }
+
+          // Toggle between standard video controls and grok video controls
+          if (isVideoModel) {
+              if (isGrok) {
+                  standardVideoControls.classList.add('hidden');
+                  grokVideoControls.classList.remove('hidden');
+                  MAX_IMAGES = 2; // Grok only accepts 2 images max
+                  // Update char counter visibility
+                  updatePromptCharCounter();
+              } else {
+                  standardVideoControls.classList.remove('hidden');
+                  grokVideoControls.classList.add('hidden');
+                  MAX_IMAGES = 14; // Reset to default for other models
+                  promptCharCounter.classList.add('hidden');
+              }
           }
           
           // Handle duration options based on model
@@ -1252,8 +1391,8 @@
                       if (i > 4 && !hasCustomKey) opt.disabled = true;
                       durationSelect.appendChild(opt);
                   }
-              } else if (model === 'wan' || model === 'grok-video' || model === 'ltx-2') {
-                  // Wan, grok-video, ltx-2: 2-10 seconds with audio support (except ltx-2 audio TBD, but user said all 3 have audio)
+              } else if (model === 'wan' || model === 'ltx-2') {
+                  // Wan, ltx-2: 2-10 seconds with audio support (except ltx-2 audio TBD)
                   for(let i=2; i<=10; i++) {
                       const opt = document.createElement('option');
                       opt.value = i;
@@ -1264,16 +1403,276 @@
               }
           }
           
+          // Update gallery to respect new MAX_IMAGES
+          if (referenceImages.length > MAX_IMAGES) {
+              // Remove excess images from the end
+              while (referenceImages.length > MAX_IMAGES) {
+                  const img = referenceImages.pop();
+                  if (img.type === 'file' && img.previewUrl) {
+                      URL.revokeObjectURL(img.previewUrl);
+                  }
+              }
+              updateGalleryUI();
+              if (isGrok) {
+                  displayMessage('Grok Video supports max 2 images. Excess images removed.', 'info');
+              }
+          } else {
+              updateGalleryUI();
+          }
+          
           generateBtn.innerText = isVideoModel ? 'Generate Video' : 'Generate / Edit Image';
       }
 
+async function generateGrokVideo() {
+    const airforceKey = getAirforceApiKey();
+    if (!airforceKey) {
+        displayMessage('Airforce API key is required.', 'error');
+        return;
+    }
+
+    const prompt = promptInput.value.trim();
+    if (!prompt) {
+        displayMessage('Please enter a prompt.', 'error');
+        return;
+    }
+
+    if (prompt.length > 500) {
+        displayMessage(`Prompt too long (${prompt.length}/500 chars).`, 'error');
+        return;
+    }
+
+    toggleLoading(true);
+    messageArea.innerHTML = '';
+    resultImage.style.display = 'none';
+    resultVideo.style.display = 'none';
+    resultVideo.src = '';
+    viewBtn.disabled = downloadBtn.disabled = true;
+
+    try {
+        // Process images
+        const imageUrls = [];
+        for (const refImage of referenceImages) {
+            if (refImage.type === 'url') {
+                imageUrls.push(refImage.source);
+            } else if (refImage.type === 'file') {
+                displayMessage('Uploading image...', 'info');
+                const uploadedUrl = await uploadToLitterbox(refImage.source);
+                imageUrls.push(uploadedUrl);
+            }
+        }
+
+        // Determine size
+        const aspectRatio = grokAspectRatioSelect.value;
+        let size = '1024x1024';
+        if (aspectRatio === '3:2') size = '1536x1024';
+        else if (aspectRatio === '2:3') size = '1024x1536';
+
+        const requestBody = {
+            model: 'grok-imagine-video',
+            prompt: prompt,
+            n: 1,
+            size: size,
+            response_format: grokResponseFormat.value,
+            sse: true,
+            mode: grokModeSelect.value,
+            aspectRatio: aspectRatio
+        };
+
+        if (imageUrls.length > 0) {
+            requestBody.image = imageUrls.length === 1 ? imageUrls[0] : imageUrls;
+        }
+
+        displayMessage('Generating video...', 'info');
+
+        const response = await fetch(AIRFORCE_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': airforceKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API Error ${response.status}: ${errorText}`);
+        }
+
+        const contentType = response.headers.get('content-type') || '';
+        console.log('Response Content-Type:', contentType);
+
+        let finalUrl = null;
+        let finalBase64 = null;
+        let lastReceivedData = null;
+
+        // Handle JSON response (non-streaming)
+        if (contentType.includes('application/json')) {
+            const data = await response.json();
+            console.log('FULL JSON RESPONSE:', JSON.stringify(data, null, 2));
+            
+            // Deep search for URL
+            const findUrl = (obj, path = '') => {
+                if (!obj || typeof obj !== 'object') return null;
+                
+                for (const [key, val] of Object.entries(obj)) {
+                    const currentPath = path ? `${path}.${key}` : key;
+                    console.log(`Checking field: ${currentPath} = ${typeof val === 'string' ? val.substring(0, 50) : typeof val}`);
+                    
+                    if (typeof val === 'string' && (
+                        val.startsWith('http') || 
+                        val.startsWith('https') ||
+                        (val.includes('.mp4') && val.length > 10)
+                    )) {
+                        console.log('>>> FOUND URL at:', currentPath);
+                        return val;
+                    }
+                    if (typeof val === 'object') {
+                        const found = findUrl(val, currentPath);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            };
+            
+            finalUrl = findUrl(data);
+            lastReceivedData = data;
+        } 
+        // Handle SSE streaming
+        else {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop(); // Keep incomplete line
+                
+                for (const line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed || !trimmed.startsWith('data: ')) continue;
+                    
+                    const dataStr = trimmed.slice(6);
+                    console.log('Raw SSE line:', dataStr.substring(0, 100));
+                    
+                    if (dataStr === '[DONE]' || dataStr === ': keepalive') continue;
+                    
+                    try {
+                        const data = JSON.parse(dataStr);
+                        console.log('Parsed SSE data:', JSON.stringify(data, null, 2));
+                        lastReceivedData = data;
+                        
+                        // Check for progress
+                        if (data.progress !== undefined) {
+                            placeholderText.innerHTML = `Generating... ${Math.round(data.progress)}%`;
+                        }
+                        
+                        // Status check
+                        if (data.status === 'error') {
+                            throw new Error(data.message || 'API returned error status');
+                        }
+                        
+                        // Deep search for URL in this chunk
+                        const findUrl = (obj, path = '') => {
+                            if (!obj || typeof obj !== 'object') return null;
+                            
+                            for (const [key, val] of Object.entries(obj)) {
+                                if (typeof val === 'string') {
+                                    if (val.startsWith('http') && (val.includes('.mp4') || val.includes('video'))) {
+                                        console.log('>>> Found video URL in field:', path ? `${path}.${key}` : key);
+                                        return val;
+                                    }
+                                } else if (typeof val === 'object') {
+                                    const found = findUrl(val, path ? `${path}.${key}` : key);
+                                    if (found) return found;
+                                }
+                            }
+                            return null;
+                        };
+                        
+                        const foundUrl = findUrl(data);
+                        if (foundUrl) {
+                            finalUrl = foundUrl;
+                            console.log('>>> URL acquired:', finalUrl);
+                            // Don't break - continue reading to close stream properly
+                        }
+                        
+                        // Check for base64
+                        if (data.base64 || data.b64_json || (data.data && data.data.base64)) {
+                            finalBase64 = data.base64 || data.b64_json || data.data.base64;
+                            console.log('>>> Found base64 data');
+                        }
+                        
+                    } catch (e) {
+                        if (e.message.includes('API returned error')) throw e;
+                        console.log('Parse error (might be partial data):', e.message);
+                    }
+                }
+            }
+        }
+
+        // If we have base64 but no URL, convert it
+        if (!finalUrl && finalBase64) {
+            try {
+                console.log('Converting base64 to blob...');
+                const byteCharacters = atob(finalBase64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'video/mp4' });
+                finalUrl = URL.createObjectURL(blob);
+            } catch (e) {
+                console.error('Base64 conversion failed:', e);
+            }
+        }
+
+        if (!finalUrl) {
+            console.error('Last received data structure:', lastReceivedData);
+            throw new Error(`No video URL found. Check browser console (F12) to see the exact API response structure. Last data: ${JSON.stringify(lastReceivedData).substring(0, 200)}`);
+        }
+
+        // Success
+        generatedImageUrl = finalUrl;
+        generatedApiUrl = finalUrl;
+
+        resultVideo.src = finalUrl;
+        resultVideo.style.display = 'block';
+        resultVideo.load();
+        resultVideo.play().catch(e => console.log("Autoplay prevented"));
+
+        toggleLoading(false);
+        viewBtn.disabled = downloadBtn.disabled = false;
+        
+        addToHistory(finalUrl.startsWith('blob:') ? `generated_${Date.now()}.mp4` : finalUrl, true, prompt);
+        displayMessage('Video generated successfully!', 'success');
+
+    } catch (error) {
+        toggleLoading(false);
+        displayMessage(`Failed: ${error.message}`, 'error');
+        console.error('Full error:', error);
+    }
+}
+
       async function generateImage() {
+          const model = modelSelect.value;
+          
+          // Route to Grok Video handler if selected
+          if (model === GROK_VIDEO_MODEL) {
+              await generateGrokVideo();
+              return;
+          }
+
+          // Original Pollinations flow for other models
           if (!promptInput.value.trim()) {
               displayMessage('Please enter a prompt.', 'error');
               return;
           }
 
-          const model = modelSelect.value;
           const hasCustomKey = apiKeyInput.value.trim().length > 0;
           
           // Check for paid models requiring API key
@@ -1327,7 +1726,7 @@
           if (isVideoModel) {
               params.append('aspectRatio', aspectRatioSelect.value);
               params.append('duration', durationSelect.value);
-              // Audio for veo, wan, grok-video
+              // Audio for veo, wan
               if (AUDIO_MODELS.includes(model)) {
                   params.append('audio', audioCheckbox.checked ? 'true' : 'false');
               }
@@ -1377,8 +1776,8 @@
               }
 
               if (finalUrls.length > 0) {
-                  // Check for first/last frame support (Veo and Grok-Video)
-                  if ((model === 'veo' || model === 'grok-video') && finalUrls.length >= 2) {
+                  // Check for first/last frame support (Veo)
+                  if (model === 'veo' && finalUrls.length >= 2) {
                       // Use image[0] and image[1] for first/last frame interpolation
                       params.append('image[0]', finalUrls[0]);
                       params.append('image[1]', finalUrls[1]);
@@ -1401,7 +1800,7 @@
 
           if (isVideoModel) {
               // SSE Streaming for video - shows progress instead of blank screen
-              // Note: Some models (grok-video) don't support SSE and return video/mp4 directly
+              // Note: Some models don't support SSE and return video/mp4 directly
               let useFetchFallback = false;
               
               try {
@@ -1438,7 +1837,7 @@
                       evtSource.onerror = (e) => {
                           console.error('EventSource error - likely non-SSE model:', e);
                           // If we get a MIME type error (like video/mp4 instead of text/event-stream),
-                          // it means this model doesn't support SSE (e.g., grok-video)
+                          // it means this model doesn't support SSE
                           if (!fallbackTriggered) {
                               fallbackTriggered = true;
                               evtSource.close();
@@ -1453,7 +1852,7 @@
                   return;
               }
               
-              // Fallback to standard fetch for models that don't support SSE (grok-video)
+              // Fallback to standard fetch for models that don't support SSE
               if (useFetchFallback) {
                   console.log('Falling back to standard fetch for non-SSE video model');
                   const maxRetries = 5;
@@ -1561,7 +1960,9 @@
 
       function resetForm() {
           apiKeyInput.value = '';
+          airforceApiKeyInput.value = '';
           localStorage.setItem(API_KEY_STORAGE, '');
+          localStorage.setItem(AIRFORCE_KEY_STORAGE, '');
           promptInput.value = '';
           seedInput.value = '42';
           widthInput.value = DEFAULT_DIMENSION;  
@@ -1580,8 +1981,16 @@
           qualitySelect.value = 'medium';
           audioCheckbox.checked = false;
           aspectRatioSelect.selectedIndex = 0;
+          
+          // Reset Grok specific controls
+          grokModeSelect.value = 'normal';
+          grokAspectRatioSelect.value = '2:3';
+          grokResponseFormat.value = 'url';
+          
           originalPrompt = '';
-          updatePromptControls(false); 
+          updatePromptControls(false);
+          updatePromptCharCounter();
+          
           referenceImages.forEach(img => {
               if (img.type === 'file' && img.previewUrl) {
                   URL.revokeObjectURL(img.previewUrl);
@@ -1621,6 +2030,10 @@
           updateModelAvailability();
       });
 
+      airforceApiKeyInput.addEventListener('input', () => {
+          localStorage.setItem(AIRFORCE_KEY_STORAGE, airforceApiKeyInput.value);
+      });
+
       generateBtn.addEventListener('click', (e) => {
           e.preventDefault();
           generateImage();
@@ -1632,6 +2045,8 @@
               urlObj.searchParams.delete('token'); 
               urlObj.searchParams.delete('key');
               window.open(urlObj.toString(), '_blank');
+          } else if (generatedImageUrl) {
+              window.open(generatedImageUrl, '_blank');
           }
       });
 
@@ -1654,10 +2069,15 @@
 
       // Initialize on page load
       document.addEventListener('DOMContentLoaded', () => {
-          // Load saved API key
+          // Load saved API keys
           const savedKey = localStorage.getItem(API_KEY_STORAGE);
           if (savedKey !== null) {
               apiKeyInput.value = savedKey;
+          }
+          
+          const savedAirforceKey = localStorage.getItem(AIRFORCE_KEY_STORAGE);
+          if (savedAirforceKey !== null) {
+              airforceApiKeyInput.value = savedAirforceKey;
           }
           
           updateUIForModel();
