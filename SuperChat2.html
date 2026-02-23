@@ -2403,11 +2403,16 @@ async function sendMessage(regenerateSeed = null, previousContext = null) {
 
     const emotion = document.getElementById('voice-style').value;
     const rawSystemMsg = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
-    const systemMsg = {
-        role: 'system',
-        content: `${rawSystemMsg} ${emotion ? 'Voice and Response Style/Emotion: ' + emotion : ''}`,
-        cache_control: { type: 'ephemeral' }
-    };
+const systemMsg = {
+    role: 'system',
+    content: [
+        {
+            type: 'text',
+            text: `${rawSystemMsg} ${emotion ? 'Voice and Response Style/Emotion: ' + emotion : ''}`,
+            cache_control: { type: 'ephemeral' }
+        }
+    ]
+};
 
     let finalMessages = [systemMsg, ...messagesPayload];
 
