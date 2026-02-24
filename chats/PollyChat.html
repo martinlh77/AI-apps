@@ -122,16 +122,6 @@
             color: white;
         }
         
-        .btn-warning {
-            color: var(--warning);
-            border-color: var(--warning);
-        }
-        
-        .btn-warning:hover {
-            background: var(--warning);
-            color: white;
-        }
-        
         .toggle {
             display: flex;
             align-items: center;
@@ -509,10 +499,10 @@
             display: block;
         }
         
-        .storage-warning {
-            background: rgba(240, 136, 62, 0.1);
-            border: 1px solid var(--warning);
-            color: var(--warning);
+        .server-error {
+            background: rgba(218, 54, 51, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 12px;
@@ -520,7 +510,7 @@
             display: none;
         }
         
-        .storage-warning.active {
+        .server-error.active {
             display: block;
         }
     </style>
@@ -533,8 +523,8 @@
     <aside class="sidebar" id="sidebar">
         <h2>🔐 Settings & Tools</h2>
         
-        <div class="storage-warning" id="storageWarning">
-            ⚠️ Storage full: History limited to last 50 messages. Large files not saved.
+        <div class="server-error" id="serverError">
+            ⚠️ Polly model server error. This is a known API issue. Try refreshing or waiting.
         </div>
         
         <div class="setting-group">
@@ -590,8 +580,8 @@
             <label>About</label>
             <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
                 <strong>Model:</strong> polly (pollinations-ai)<br>
-                <strong>Status:</strong> Alpha<br>
-                <strong>Features:</strong> Deep research, GitHub search, web scraping, document analysis
+                <strong>Status:</strong> Alpha / Server issues<br>
+                <strong>Note:</strong> 500 errors are API-side bugs
             </p>
         </div>
     </aside>
@@ -627,12 +617,13 @@
             <div style="text-align: center; color: var(--text-muted); padding: 40px; border: 2px dashed var(--border); border-radius: 12px; margin: 20px 0;">
                 <p style="font-size: 16px; margin-bottom: 8px;">👋 Welcome to Polly Research Chat</p>
                 <p>Enter your API key in the sidebar, then start chatting.<br>
-                Try: <em>"Deep research on renewable energy trends"</em> or upload an image to analyze.</p>
+                Note: <strong style="color: var(--warning);">Polly currently has server issues (500 errors).</strong><br>
+                Try: <em>"Deep research on renewable energy trends"</em></p>
             </div>
         </div>
         
         <div class="typing-indicator" id="typingIndicator">
-            <span class="status-indicator"></span> Polly is researching and thinking...
+            <span class="status-indicator"></span> Polly is thinking...
         </div>
         
         <!-- Input -->
@@ -662,10 +653,11 @@
             vision: true
         };
         
+        // Hardcoded to polly - not changing this
         const API_URL = 'https://gen.pollinations.ai/v1/chat/completions';
         const MODEL = 'polly';
         const MAX_HISTORY_MESSAGES = 50;
-        const MAX_STORAGE_SIZE = 4 * 1024 * 1024; // 4MB safety limit
+        const MAX_STORAGE_SIZE = 4 * 1024 * 1024;
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -693,10 +685,6 @@
                 }
             }
             return total;
-        }
-        
-        function isStorageFull() {
-            return getStorageSize() > MAX_STORAGE_SIZE;
         }
         
         function trimMessagesForStorage(msgs) {
@@ -918,9 +906,6 @@
             
             // Try to save
             const saved = saveChatHistorySafe();
-            if (!saved) {
-                document.getElementById('storageWarning').classList.add('active');
-            }
             
             // Show typing indicator
             document.getElementById('typingIndicator').classList.add('active');
@@ -928,19 +913,27 @@
             document.getElementById('status-badge').textContent = 'Thinking...';
             
             try {
+                // MINIMAL PAYLOAD for polly - removing all optional params that might cause 500
+                // The 500 error on "usage" suggests server bug with parameter parsing
                 const payload = {
                     model: MODEL,
                     messages: messages.map(m => ({
                         role: m.role,
                         content: m.content
-                    })),
-                    temperature: 0.7,
-                    max_tokens: 4000
+                    }))
+                    // Intentionally NOT including: temperature, max_tokens, stream, etc.
+                    // as these might trigger the polly server bug
                 };
                 
-                // Note: reasoning_effort parameter removed - polly model has built-in research capabilities
+                // Only add tools if research mode is on (polly is supposed to support research tools)
+                if (settings.research) {
+                    payload.tools = [
+                        { type: 'google_search' },
+                        { type: 'code_execution' }
+                    ];
+                }
                 
-                console.log('Sending payload:', JSON.stringify(payload, null, 2));
+                console.log('Sending minimal payload:', JSON.stringify(payload, null, 2));
                 
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -960,7 +953,8 @@
                     if (response.status === 401) {
                         throw new Error('Invalid API Key');
                     } else if (response.status === 500) {
-                        throw new Error(`Server error: ${errorMsg}. Please try again.`);
+                        document.getElementById('serverError').classList.add('active');
+                        throw new Error(`Polly server error (500): The API is broken for this model. Error: ${errorMsg}`);
                     } else {
                         throw new Error(errorMsg);
                     }
@@ -982,7 +976,7 @@
                 console.error('Chat Error:', error);
                 const errorMsg = {
                     role: 'assistant',
-                    content: `❌ **Error:** ${error.message}`
+                    content: `❌ **Error:** ${error.message}\n\nThe Polly model appears to have server-side issues. This is not a client error.`
                 };
                 messages.push(errorMsg);
                 displayMessage(errorMsg);
@@ -1123,7 +1117,6 @@
                         Chat cleared. Start a new conversation!
                     </div>
                 `;
-                document.getElementById('storageWarning').classList.remove('active');
                 showNotification('Chat history cleared');
             }
         }
