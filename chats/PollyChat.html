@@ -3,323 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polly Deep Research Chat</title>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <title>Polly & Nomnom Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js"></script>
     <style>
-        :root {
-            --bg-dark: #0d1117;
-            --bg-card: #161b22;
-            --border: #30363d;
-            --text: #c9d1d9;
-            --text-muted: #8b949e;
-            --accent: #58a6ff;
-            --accent-green: #238636;
-            --user-bubble: #1f6feb;
-            --ai-bubble: #21262d;
-            --danger: #da3633;
-            --warning: #f0883e;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        
+        .drag-active {
+            border: 2px dashed #6366f1 !important;
+            background-color: rgba(99, 102, 241, 0.1) !important;
         }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-            background: var(--bg-dark);
-            color: var(--text);
-            height: 100vh;
-            overflow: hidden;
-            display: flex;
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            width: 300px;
-            background: var(--bg-card);
-            border-right: 1px solid var(--border);
-            padding: 20px;
-            overflow-y: auto;
-            flex-shrink: 0;
-        }
-        
-        .sidebar h2 {
-            font-size: 16px;
-            margin-bottom: 20px;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .setting-group {
-            margin-bottom: 24px;
-        }
-        
-        .setting-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            letter-spacing: 0.5px;
-        }
-        
-        input[type="password"], input[type="text"] {
-            width: 100%;
-            padding: 8px 12px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text);
-            font-size: 14px;
-            font-family: monospace;
-        }
-        
-        input[type="password"]:focus, input[type="text"]:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-        
-        .btn {
-            padding: 6px 12px;
-            border: 1px solid var(--border);
-            background: var(--bg-dark);
-            color: var(--text);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.2s;
-            width: 100%;
-            margin-top: 8px;
-        }
-        
-        .btn:hover {
-            background: var(--border);
-        }
-        
-        .btn-primary {
-            background: var(--accent-green);
-            border-color: var(--accent-green);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #2ea043;
-        }
-        
-        .btn-danger {
-            color: var(--danger);
-            border-color: var(--danger);
-        }
-        
-        .btn-danger:hover {
-            background: var(--danger);
-            color: white;
-        }
-        
-        .toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-        }
-        
-        .toggle-switch {
-            position: relative;
-            width: 40px;
-            height: 20px;
-            background: var(--border);
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        
-        .toggle-switch.active {
-            background: var(--accent-green);
-        }
-        
-        .toggle-switch::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            background: white;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: transform 0.3s;
-        }
-        
-        .toggle-switch.active::after {
-            transform: translateX(20px);
-        }
-        
-        .status-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent-green);
-            margin-right: 6px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        /* Main Chat Area */
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            position: relative;
-        }
-        
-        .header {
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-card);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header h1 {
-            font-size: 18px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .badge {
-            font-size: 11px;
-            padding: 2px 8px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text-muted);
-        }
-        
-        /* Drop Zone */
-        .drop-zone {
-            margin: 16px 24px;
-            padding: 24px;
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            text-align: center;
-            background: var(--bg-card);
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        
-        .drop-zone.drag-over {
-            border-color: var(--accent-green);
-            background: rgba(35, 134, 54, 0.1);
-        }
-        
-        .drop-zone p {
-            color: var(--text-muted);
-            margin: 8px 0;
-            font-size: 14px;
-        }
-        
-        .drop-zone .icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-        }
-        
-        #file-input {
-            display: none;
-        }
-        
-        .file-preview {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 16px;
-            justify-content: center;
-        }
-        
-        .file-item {
-            position: relative;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 8px;
-            max-width: 150px;
-        }
-        
-        .file-item img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-        
-        .file-item .doc-icon {
-            width: 100%;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 40px;
-            background: var(--bg-card);
-            border-radius: 4px;
-        }
-        
-        .file-item .remove {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            width: 20px;
-            height: 20px;
-            background: var(--danger);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .file-item .name {
-            font-size: 11px;
-            margin-top: 4px;
-            word-break: break-all;
-            color: var(--text-muted);
-        }
-        
-        /* Chat Messages */
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        
-        .message {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-            line-height: 1.6;
-            position: relative;
-            animation: fadeIn 0.3s ease;
+        .message-bubble {
+            max-width: 85%;
+            animation: fadeIn 0.3s ease-out;
         }
         
         @keyframes fadeIn {
@@ -327,841 +28,578 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        .message.user {
-            align-self: flex-end;
-            background: var(--user-bubble);
-            color: white;
-            border-bottom-right-radius: 4px;
+        .streaming-cursor::after {
+            content: '▋';
+            animation: blink 1s infinite;
+            color: #6366f1;
         }
         
-        .message.assistant {
-            align-self: flex-start;
-            background: var(--ai-bubble);
-            border: 1px solid var(--border);
-            border-bottom-left-radius: 4px;
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
         }
         
-        .message .role {
-            font-size: 11px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            opacity: 0.8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .file-chip {
+            animation: slideIn 0.2s ease-out;
         }
         
-        .message pre {
-            background: var(--bg-dark);
-            padding: 12px;
-            border-radius: 6px;
-            overflow-x: auto;
-            margin: 8px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
+        @keyframes slideIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
         }
         
-        .message code {
-            background: rgba(255,255,255,0.1);
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: monospace;
-            font-size: 12px;
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
         
-        .message ul, .message ol {
-            margin: 8px 0;
-            padding-left: 20px;
-        }
-        
-        .message img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin: 8px 0;
-        }
-        
-        .attached-files {
-            font-size: 11px;
-            opacity: 0.8;
-            margin-top: 8px;
-            padding-top: 8px;
-            border-top: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        /* Input Area */
-        .input-area {
-            padding: 16px 24px;
-            border-top: 1px solid var(--border);
-            background: var(--bg-card);
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-        }
-        
-        .input-wrapper {
-            flex: 1;
+        .code-block {
             position: relative;
         }
-        
-        textarea {
-            width: 100%;
-            min-height: 56px;
-            max-height: 200px;
-            padding: 12px 16px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text);
-            font-size: 14px;
-            resize: vertical;
-            font-family: inherit;
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        
-        textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-        
-        .send-btn {
-            padding: 12px 24px;
-            background: var(--accent-green);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            height: 56px;
-            transition: background 0.2s;
-        }
-        
-        .send-btn:hover:not(:disabled) {
-            background: #2ea043;
-        }
-        
-        .send-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .typing-indicator {
-            display: none;
-            padding: 12px 16px;
-            color: var(--text-muted);
-            font-style: italic;
-            align-self: flex-start;
-        }
-        
-        .typing-indicator.active {
-            display: block;
-        }
-        
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                position: fixed;
-                left: -100%;
-                z-index: 100;
-                height: 100vh;
-                transition: left 0.3s;
-                width: 80%;
-                max-width: 300px;
-            }
-            
-            .sidebar.open {
-                left: 0;
-            }
-            
-            .menu-toggle {
-                display: block !important;
-            }
-        }
-        
-        .menu-toggle {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--text);
-            font-size: 20px;
-            cursor: pointer;
-        }
-        
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 99;
-        }
-        
-        .overlay.active {
-            display: block;
-        }
-        
-        .server-error {
-            background: rgba(218, 54, 51, 0.1);
-            border: 1px solid var(--danger);
-            color: var(--danger);
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            margin-bottom: 12px;
-            display: none;
-        }
-        
-        .server-error.active {
-            display: block;
+        .code-block:hover .copy-btn {
+            opacity: 1;
         }
     </style>
 </head>
-<body>
-    <!-- Overlay for mobile sidebar -->
-    <div class="overlay" onclick="toggleSidebar()"></div>
-    
+<body class="bg-gray-50 h-screen flex overflow-hidden text-gray-800">
+
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <h2>🔐 Settings & Tools</h2>
-        
-        <div class="server-error" id="serverError">
-            ⚠️ Polly model server error. This is a known API issue. Try refreshing or waiting.
+    <aside class="w-80 bg-white border-r border-gray-200 flex flex-col shadow-sm z-10">
+        <div class="p-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-1">
+                Polly & Nomnom
+            </h1>
+            <p class="text-xs text-gray-500">Pollinations AI Chat</p>
         </div>
-        
-        <div class="setting-group">
-            <label>API Key</label>
-            <input type="password" id="apiKey" placeholder="Enter Pollinations API key...">
-            <div style="display: flex; gap: 8px; margin-top: 8px;">
-                <button class="btn btn-primary" onclick="saveApiKey()" style="flex: 1;">💾 Save</button>
-                <button class="btn btn-danger" onclick="clearApiKey()" style="flex: 1;">🗑️ Clear</button>
+
+        <div class="p-6 space-y-6 flex-1 overflow-y-auto">
+            <!-- API Key -->
+            <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+                    API Key
+                </label>
+                <input type="password" id="apiKey" placeholder="sk_..." 
+                    class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-mono transition-all"
+                    onchange="saveApiKey()">
+                <p class="text-xs text-gray-500">Stored locally in your browser</p>
             </div>
-            <p style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
-                Stored locally in your browser only
-            </p>
-        </div>
-        
-        <div class="setting-group">
-            <label>Capabilities</label>
-            
-            <div class="toggle" onclick="toggleSetting('research')">
-                <span>🔍 Deep Research</span>
-                <div class="toggle-switch active" id="toggle-research"></div>
+
+            <!-- Model Selection -->
+            <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    Model
+                </label>
+                <select id="modelSelect" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    <option value="polly">Polly</option>
+                    <option value="nomnom">Nomnom</option>
+                </select>
+                <div class="text-xs text-gray-500 space-y-1">
+                    <p id="modelDesc" class="italic">Friendly, helpful assistant</p>
+                </div>
             </div>
-            
-            <div class="toggle" onclick="toggleSetting('github')">
-                <span>🐙 GitHub Tools</span>
-                <div class="toggle-switch active" id="toggle-github"></div>
+
+            <!-- Temperature -->
+            <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-700 flex justify-between">
+                    <span>Creativity</span>
+                    <span id="tempValue" class="text-indigo-600">0.7</span>
+                </label>
+                <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.7"
+                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    oninput="document.getElementById('tempValue').textContent = this.value">
             </div>
-            
-            <div class="toggle" onclick="toggleSetting('web')">
-                <span>🌐 Web Scraping</span>
-                <div class="toggle-switch active" id="toggle-web"></div>
+
+            <!-- System Prompt -->
+            <div class="space-y-2">
+                <label class="text-sm font-semibold text-gray-700">System Prompt</label>
+                <textarea id="systemPrompt" rows="3" placeholder="Optional instructions..."
+                    class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm resize-none"></textarea>
             </div>
-            
-            <div class="toggle" onclick="toggleSetting('vision')">
-                <span>👁️ Vision/Images</span>
-                <div class="toggle-switch active" id="toggle-vision"></div>
-            </div>
-        </div>
-        
-        <div class="setting-group">
-            <label>Chat History</label>
-            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
-                Max 50 messages (storage limit)
-            </div>
-            <button class="btn" onclick="clearChat()" style="margin-bottom: 8px;">
-                🧹 Clear Chat
+
+            <button onclick="clearChat()" class="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                Clear Conversation
             </button>
-            <button class="btn btn-primary" onclick="exportChat()">
-                💾 Export JSON
-            </button>
         </div>
-        
-        <div class="setting-group">
-            <label>About</label>
-            <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-                <strong>Model:</strong> polly (pollinations-ai)<br>
-                <strong>Status:</strong> Alpha / Server issues<br>
-                <strong>Note:</strong> 500 errors are API-side bugs
-            </p>
+
+        <div class="p-4 border-t border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between text-xs text-gray-500">
+                <span id="tokenCount">0 messages</span>
+                <a href="https://enter.pollinations.ai" target="_blank" class="text-indigo-600 hover:underline">Get API Key →</a>
+            </div>
         </div>
     </aside>
-    
-    <!-- Main Content -->
-    <main class="main">
-        <header class="header">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-                <h1>
-                    <span style="font-size: 24px;">🔬</span>
-                    Polly Deep Research
-                    <span class="badge" id="status-badge">Ready</span>
-                </h1>
+
+    <!-- Main Chat Area -->
+    <main class="flex-1 flex flex-col relative">
+        <!-- Drag Overlay -->
+        <div id="dragOverlay" class="absolute inset-0 bg-indigo-50/90 backdrop-blur-sm z-50 hidden flex items-center justify-center border-4 border-indigo-500 border-dashed m-4 rounded-2xl">
+            <div class="text-center">
+                <svg class="w-16 h-16 text-indigo-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                <p class="text-xl font-semibold text-indigo-900">Drop files here</p>
+                <p class="text-sm text-indigo-600 mt-1">Images and documents supported</p>
             </div>
-            <div style="font-size: 12px; color: var(--text-muted);">
-                Drag & drop files anywhere
+        </div>
+
+        <!-- Messages -->
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50">
+            <div id="welcomeScreen" class="h-full flex flex-col items-center justify-center text-gray-400 space-y-4">
+                <div class="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mb-2">
+                    <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                </div>
+                <p class="text-lg font-medium">Start a conversation</p>
+                <p class="text-sm text-center max-w-md">Drop images or files anywhere, or type a message below.<br>Polly and Nomnom can analyze images and documents.</p>
             </div>
-        </header>
-        
-        <!-- Drop Zone -->
-        <div class="drop-zone" id="dropZone" onclick="document.getElementById('file-input').click()">
-            <div class="icon">📁</div>
-            <p><strong>Click to upload</strong> or drag & drop files here</p>
-            <p style="font-size: 12px;">Images (PNG, JPG, GIF, WebP) & Documents (TXT, MD, JSON, PDF, Code files)</p>
-            <input type="file" id="file-input" multiple accept="image/*,.txt,.md,.json,.csv,.py,.js,.html,.pdf,.doc,.docx" onchange="handleFiles(this.files)">
+        </div>
+
+        <!-- Input Area -->
+        <div class="border-t border-gray-200 bg-white p-4 shadow-lg z-20">
+            <!-- Attached Files Preview -->
+            <div id="attachedFiles" class="flex flex-wrap gap-2 mb-3 empty:hidden"></div>
             
-            <div class="file-preview" id="filePreview"></div>
-        </div>
-        
-        <!-- Chat Area -->
-        <div class="chat-container" id="chatContainer">
-            <div style="text-align: center; color: var(--text-muted); padding: 40px; border: 2px dashed var(--border); border-radius: 12px; margin: 20px 0;">
-                <p style="font-size: 16px; margin-bottom: 8px;">👋 Welcome to Polly Research Chat</p>
-                <p>Enter your API key in the sidebar, then start chatting.<br>
-                Note: <strong style="color: var(--warning);">Polly currently has server issues (500 errors).</strong><br>
-                Try: <em>"Deep research on renewable energy trends"</em></p>
+            <div class="flex gap-3 items-end max-w-4xl mx-auto">
+                <div class="flex-1 relative">
+                    <textarea id="userInput" rows="1" placeholder="Message Polly or Nomnom... (Drop files anywhere)"
+                        class="w-full px-4 py-3 pr-12 bg-gray-100 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none max-h-32 overflow-y-auto"
+                        onkeydown="handleKeydown(event)"
+                        oninput="autoResize(this)"></textarea>
+                    <button onclick="document.getElementById('fileInput').click()" 
+                        class="absolute right-3 bottom-3 p-1.5 text-gray-400 hover:text-indigo-600 transition-colors rounded-lg hover:bg-gray-200"
+                        title="Attach files">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    </button>
+                    <input type="file" id="fileInput" multiple class="hidden" onchange="handleFileSelect(event)">
+                </div>
+                <button onclick="sendMessage()" id="sendBtn" 
+                    class="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                </button>
             </div>
-        </div>
-        
-        <div class="typing-indicator" id="typingIndicator">
-            <span class="status-indicator"></span> Polly is thinking...
-        </div>
-        
-        <!-- Input -->
-        <div class="input-area">
-            <div class="input-wrapper">
-                <textarea 
-                    id="userInput" 
-                    placeholder="Ask anything... (Shift+Enter for new line, Enter to send)"
-                    onkeydown="handleKeyDown(event)"
-                    rows="2"
-                ></textarea>
-            </div>
-            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-                ➤ Send
-            </button>
+            <p class="text-xs text-gray-400 text-center mt-2">Shift + Enter for new line • Drop files anywhere to attach</p>
         </div>
     </main>
 
     <script>
         // State
-        let uploadedFiles = [];
         let messages = [];
-        let settings = {
-            research: true,
-            github: true,
-            web: true,
-            vision: true
-        };
-        
-        // Hardcoded to polly - not changing this
-        const API_URL = 'https://gen.pollinations.ai/v1/chat/completions';
-        const MODEL = 'polly';
-        const MAX_HISTORY_MESSAGES = 50;
-        const MAX_STORAGE_SIZE = 4 * 1024 * 1024;
-        
+        let attachedFiles = [];
+        let isStreaming = false;
+        const API_BASE = 'https://gen.pollinations.ai';
+
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            loadApiKey();
-            loadChatHistory();
-            setupDragAndDrop();
+        window.onload = () => {
+            const savedKey = localStorage.getItem('pollinations_api_key');
+            if (savedKey) document.getElementById('apiKey').value = savedKey;
             
-            const savedSettings = localStorage.getItem('polly_settings');
-            if (savedSettings) {
-                try {
-                    settings = JSON.parse(savedSettings);
-                    updateToggleVisuals();
-                } catch (e) {
-                    console.error('Failed to parse settings:', e);
-                }
-            }
-        });
-        
-        // Storage management
-        function getStorageSize() {
-            let total = 0;
-            for (let key in localStorage) {
-                if (localStorage.hasOwnProperty(key)) {
-                    total += localStorage[key].length * 2;
-                }
-            }
-            return total;
-        }
-        
-        function trimMessagesForStorage(msgs) {
-            if (msgs.length > MAX_HISTORY_MESSAGES) {
-                return msgs.slice(-MAX_HISTORY_MESSAGES);
-            }
-            return msgs;
-        }
-        
-        function stripFileContentForStorage(msgs) {
-            return msgs.map(msg => {
-                if (msg.role === 'user' && Array.isArray(msg.content)) {
-                    const strippedContent = msg.content.map(part => {
-                        if (part.type === 'image_url' && part.image_url && part.image_url.url.startsWith('data:')) {
-                            return { type: 'image_url', image_url: { url: '[IMAGE_DATA_REMOVED_FOR_STORAGE]' } };
-                        }
-                        return part;
-                    });
-                    return { ...msg, content: strippedContent };
-                }
-                return msg;
-            });
-        }
-        
-        // API Key Management
-        function saveApiKey() {
-            const key = document.getElementById('apiKey').value;
-            if (key) {
-                try {
-                    localStorage.setItem('polly_api_key', key);
-                    showNotification('API Key saved locally');
-                } catch (e) {
-                    if (e.name === 'QuotaExceededError') {
-                        showNotification('Storage full - cannot save API key. Clear chat history first.', 'error');
-                    } else {
-                        throw e;
-                    }
-                }
-            }
-        }
-        
-        function loadApiKey() {
-            try {
-                const key = localStorage.getItem('polly_api_key');
-                if (key) {
-                    document.getElementById('apiKey').value = key;
-                }
-            } catch (e) {
-                console.error('Failed to load API key:', e);
-            }
-        }
-        
-        function clearApiKey() {
-            localStorage.removeItem('polly_api_key');
-            document.getElementById('apiKey').value = '';
-            showNotification('API Key cleared');
-        }
-        
-        function getApiKey() {
-            return localStorage.getItem('polly_api_key') || document.getElementById('apiKey').value;
-        }
-        
-        // Settings Toggle
-        function toggleSetting(key) {
-            settings[key] = !settings[key];
-            localStorage.setItem('polly_settings', JSON.stringify(settings));
-            updateToggleVisuals();
-        }
-        
-        function updateToggleVisuals() {
-            Object.keys(settings).forEach(key => {
-                const el = document.getElementById(`toggle-${key}`);
-                if (el) {
-                    if (settings[key]) el.classList.add('active');
-                    else el.classList.remove('active');
-                }
-            });
-        }
-        
-        // Drag and Drop
-        function setupDragAndDrop() {
-            const dropZone = document.getElementById('dropZone');
+            const savedModel = localStorage.getItem('pollinations_model') || 'polly';
+            document.getElementById('modelSelect').value = savedModel;
             
+            document.getElementById('modelSelect').addEventListener('change', (e) => {
+                localStorage.setItem('pollinations_model', e.target.value);
+                updateModelDesc(e.target.value);
+            });
+            updateModelDesc(savedModel);
+
+            // Drag and drop handlers
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, preventDefaults, false);
                 document.body.addEventListener(eventName, preventDefaults, false);
             });
             
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
-            });
-            
-            dropZone.addEventListener('drop', (e) => {
-                const files = e.dataTransfer.files;
-                handleFiles(files);
-            }, false);
-        }
-        
+            document.body.addEventListener('dragenter', showDragOverlay);
+            document.body.addEventListener('drop', handleDrop);
+            document.getElementById('dragOverlay').addEventListener('dragleave', hideDragOverlay);
+        };
+
         function preventDefaults(e) {
             e.preventDefault();
             e.stopPropagation();
         }
-        
-        // File Handling
-        function handleFiles(files) {
-            Array.from(files).forEach(file => {
-                if (uploadedFiles.some(f => f.name === file.name && f.size === file.size)) return;
-                uploadedFiles.push(file);
-                displayFile(file);
-            });
+
+        function showDragOverlay() {
+            document.getElementById('dragOverlay').classList.remove('hidden');
         }
-        
-        function displayFile(file) {
-            const preview = document.getElementById('filePreview');
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            div.dataset.filename = file.name;
-            
-            const isImage = file.type.startsWith('image/');
-            
-            if (isImage) {
-                const url = URL.createObjectURL(file);
-                div.innerHTML = `
-                    <img src="${url}" alt="${escapeHtml(file.name)}">
-                    <button class="remove" onclick="removeFile('${escapeHtml(file.name)}')">×</button>
-                    <div class="name">${escapeHtml(file.name)}</div>
-                `;
-            } else {
-                const icon = file.name.endsWith('.pdf') ? '📕' : 
-                           file.name.endsWith('.py') ? '🐍' : 
-                           file.name.endsWith('.js') ? '📜' : 
-                           file.name.endsWith('.json') ? '📋' : '📄';
-                div.innerHTML = `
-                    <div class="doc-icon">${icon}</div>
-                    <button class="remove" onclick="removeFile('${escapeHtml(file.name)}')">×</button>
-                    <div class="name">${escapeHtml(file.name)}</div>
-                `;
-            }
-            
-            preview.appendChild(div);
+
+        function hideDragOverlay() {
+            document.getElementById('dragOverlay').classList.add('hidden');
         }
-        
-        function removeFile(filename) {
-            uploadedFiles = uploadedFiles.filter(f => f.name !== filename);
-            const el = document.querySelector(`.file-item[data-filename="${CSS.escape(filename)}"]`);
-            if (el) el.remove();
+
+        function updateModelDesc(model) {
+            const desc = model === 'polly' ? 'Friendly, helpful assistant' : 'Creative, playful personality';
+            document.getElementById('modelDesc').textContent = desc;
         }
-        
-        // Chat Functions
-        async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const text = input.value.trim();
-            
-            if (!text && uploadedFiles.length === 0) return;
-            
-            const apiKey = getApiKey();
-            if (!apiKey) {
-                showNotification('Please enter an API key in the sidebar', 'error');
-                toggleSidebar();
-                return;
-            }
-            
-            // Build content parts
-            let contentParts = [];
-            
-            if (text) {
-                contentParts.push({ type: 'text', text: text });
-            }
-            
-            // Process images
-            for (const file of uploadedFiles) {
-                if (file.type.startsWith('image/') && settings.vision) {
-                    const base64 = await fileToBase64(file);
-                    contentParts.push({
-                        type: 'image_url',
-                        image_url: { url: `data:${file.type};base64,${base64}` }
-                    });
-                }
-            }
-            
-            // Process documents
-            for (const file of uploadedFiles) {
-                if (!file.type.startsWith('image/')) {
-                    try {
-                        const text = await file.text();
-                        const maxLen = 10000;
-                        const truncated = text.length > maxLen ? text.substring(0, maxLen) + '\n\n[Document truncated...]' : text;
-                        contentParts.push({
-                            type: 'text',
-                            text: `\n\n--- Content of ${file.name} ---\n${truncated}\n--- End of ${file.name} ---`
-                        });
-                    } catch (e) {
-                        contentParts.push({
-                            type: 'text',
-                            text: `\n\n[File attached: ${file.name} - Could not read content]`
-                        });
-                    }
-                }
-            }
-            
-            // Add to messages
-            const userMessage = {
-                role: 'user',
-                content: contentParts.length === 1 ? contentParts[0].text : contentParts,
-                files: uploadedFiles.map(f => f.name)
-            };
-            
-            messages.push(userMessage);
-            displayMessage(userMessage);
-            
-            // Clear input and files
-            input.value = '';
-            uploadedFiles = [];
-            document.getElementById('filePreview').innerHTML = '';
-            
-            // Try to save
-            const saved = saveChatHistorySafe();
-            
-            // Show typing indicator
-            document.getElementById('typingIndicator').classList.add('active');
-            document.getElementById('sendBtn').disabled = true;
-            document.getElementById('status-badge').textContent = 'Thinking...';
-            
-            try {
-                // MINIMAL PAYLOAD for polly - removing all optional params that might cause 500
-                // The 500 error on "usage" suggests server bug with parameter parsing
-                const payload = {
-                    model: MODEL,
-                    messages: messages.map(m => ({
-                        role: m.role,
-                        content: m.content
-                    }))
-                    // Intentionally NOT including: temperature, max_tokens, stream, etc.
-                    // as these might trigger the polly server bug
-                };
-                
-                // Only add tools if research mode is on (polly is supposed to support research tools)
-                if (settings.research) {
-                    payload.tools = [
-                        { type: 'google_search' },
-                        { type: 'code_execution' }
-                    ];
-                }
-                
-                console.log('Sending minimal payload:', JSON.stringify(payload, null, 2));
-                
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
-                    console.error('API Error:', errorData);
-                    
-                    const errorMsg = errorData.error?.message || `API Error: ${response.status}`;
-                    
-                    if (response.status === 401) {
-                        throw new Error('Invalid API Key');
-                    } else if (response.status === 500) {
-                        document.getElementById('serverError').classList.add('active');
-                        throw new Error(`Polly server error (500): The API is broken for this model. Error: ${errorMsg}`);
-                    } else {
-                        throw new Error(errorMsg);
-                    }
-                }
-                
-                const data = await response.json();
-                console.log('API Response:', data);
-                
-                const assistantMsg = {
-                    role: 'assistant',
-                    content: data.choices[0].message.content
-                };
-                
-                messages.push(assistantMsg);
-                displayMessage(assistantMsg);
-                saveChatHistorySafe();
-                
-            } catch (error) {
-                console.error('Chat Error:', error);
-                const errorMsg = {
-                    role: 'assistant',
-                    content: `❌ **Error:** ${error.message}\n\nThe Polly model appears to have server-side issues. This is not a client error.`
-                };
-                messages.push(errorMsg);
-                displayMessage(errorMsg);
-            } finally {
-                document.getElementById('typingIndicator').classList.remove('active');
-                document.getElementById('sendBtn').disabled = false;
-                document.getElementById('status-badge').textContent = 'Ready';
-                scrollToBottom();
-            }
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKey').value;
+            localStorage.setItem('pollinations_api_key', key);
         }
-        
-        function displayMessage(msg) {
-            const container = document.getElementById('chatContainer');
-            
-            if (container.children.length === 1 && container.children[0].style.textAlign === 'center') {
-                container.innerHTML = '';
-            }
-            
-            const div = document.createElement('div');
-            div.className = `message ${msg.role}`;
-            
-            let html = '';
-            
-            if (msg.role === 'assistant') {
-                html = marked.parse(msg.content);
-            } else {
-                if (Array.isArray(msg.content)) {
-                    const textPart = msg.content.find(c => c.type === 'text');
-                    if (textPart) html = `<p>${escapeHtml(textPart.text)}</p>`;
-                    
-                    const hasImages = msg.content.some(c => c.type === 'image_url');
-                    if (hasImages) {
-                        html += `<div class="attached-files">📎 Image attached</div>`;
-                    }
-                    
-                    if (msg.files && msg.files.length > 0) {
-                        const fileNames = msg.files.map(escapeHtml).join(', ');
-                        html += `<div class="attached-files">📎 ${fileNames}</div>`;
-                    }
-                } else {
-                    html = `<p>${escapeHtml(msg.content)}</p>`;
-                }
-            }
-            
-            div.innerHTML = html;
-            container.appendChild(div);
-            scrollToBottom();
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
         }
-        
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const base64 = reader.result.split(',')[1];
-                    resolve(base64);
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-        
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        function scrollToBottom() {
-            const container = document.getElementById('chatContainer');
-            container.scrollTop = container.scrollHeight;
-        }
-        
-        function handleKeyDown(e) {
+
+        function handleKeydown(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
         }
-        
-        // Chat History Management
-        function saveChatHistorySafe() {
-            try {
-                let dataToStore = trimMessagesForStorage(messages);
-                dataToStore = stripFileContentForStorage(dataToStore);
+
+        // File Handling
+        async function handleDrop(e) {
+            hideDragOverlay();
+            const files = Array.from(e.dataTransfer.files);
+            await processFiles(files);
+        }
+
+        async function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            await processFiles(files);
+            e.target.value = ''; // Reset
+        }
+
+        async function processFiles(files) {
+            for (const file of files) {
+                const reader = new FileReader();
+                const promise = new Promise((resolve) => {
+                    reader.onload = (e) => {
+                        const base64 = e.target.result;
+                        attachedFiles.push({
+                            name: file.name,
+                            type: file.type,
+                            base64: base64,
+                            size: file.size
+                        });
+                        renderAttachedFiles();
+                        resolve();
+                    };
+                });
                 
-                const serialized = JSON.stringify(dataToStore);
-                
-                if (serialized.length * 2 > MAX_STORAGE_SIZE) {
-                    console.warn('History too large, trimming further...');
-                    dataToStore = messages.slice(-20);
-                    dataToStore = stripFileContentForStorage(dataToStore);
-                }
-                
-                localStorage.setItem('polly_chat_history', JSON.stringify(dataToStore));
-                return true;
-            } catch (e) {
-                if (e.name === 'QuotaExceededError' || e.code === 22) {
-                    console.error('Storage quota exceeded:', e);
-                    try {
-                        const emergencyData = stripFileContentForStorage(messages.slice(-10));
-                        localStorage.setItem('polly_chat_history', JSON.stringify(emergencyData));
-                        return true;
-                    } catch (e2) {
-                        console.error('Even emergency save failed:', e2);
-                        return false;
-                    }
+                if (file.type.startsWith('image/')) {
+                    reader.readAsDataURL(file);
                 } else {
-                    console.error('Failed to save history:', e);
-                    return false;
+                    reader.readAsDataURL(file); // For other files too, API accepts base64
                 }
+                await promise;
             }
         }
-        
-        function loadChatHistory() {
+
+        function renderAttachedFiles() {
+            const container = document.getElementById('attachedFiles');
+            container.innerHTML = attachedFiles.map((file, idx) => `
+                <div class="file-chip flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm border border-indigo-200">
+                    ${file.type.startsWith('image/') ? 
+                        `<img src="${file.base64}" class="w-6 h-6 object-cover rounded">` : 
+                        `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`
+                    }
+                    <span class="truncate max-w-xs">${file.name}</span>
+                    <button onclick="removeFile(${idx})" class="hover:text-red-600 ml-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(idx) {
+            attachedFiles.splice(idx, 1);
+            renderAttachedFiles();
+        }
+
+        // Chat Functions
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            const apiKey = document.getElementById('apiKey').value;
+            
+            if (!text && attachedFiles.length === 0) return;
+            if (!apiKey) {
+                alert('Please enter your API key in the sidebar');
+                document.getElementById('apiKey').focus();
+                return;
+            }
+            if (isStreaming) return;
+
+            // Build content parts
+            const contentParts = [];
+            
+            if (text) {
+                contentParts.push({ type: 'text', text });
+            }
+            
+            attachedFiles.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    contentParts.push({
+                        type: 'image_url',
+                        image_url: { url: file.base64 }
+                    });
+                } else {
+                    contentParts.push({
+                        type: 'file',
+                        file: {
+                            file_name: file.name,
+                            mime_type: file.type,
+                            file_data: file.base64.split(',')[1] // Remove data:... prefix
+                        }
+                    });
+                }
+            });
+
+            // Add user message
+            const userMessage = { role: 'user', content: contentParts };
+            messages.push(userMessage);
+            
+            renderMessage(userMessage, 'user');
+            updateTokenCount();
+            
+            // Clear input
+            input.value = '';
+            input.style.height = 'auto';
+            attachedFiles = [];
+            renderAttachedFiles();
+            document.getElementById('welcomeScreen')?.remove();
+
+            // Prepare API payload
+            const model = document.getElementById('modelSelect').value;
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const systemPrompt = document.getElementById('systemPrompt').value;
+            
+            const payloadMessages = [...messages];
+            if (systemPrompt && messages.filter(m => m.role === 'system').length === 0) {
+                payloadMessages.unshift({ role: 'system', content: systemPrompt });
+            }
+
+            const payload = {
+                model: model,
+                messages: payloadMessages,
+                temperature: temperature,
+                stream: true
+            };
+
+            // Send request
+            isStreaming = true;
+            document.getElementById('sendBtn').disabled = true;
+            
             try {
-                const saved = localStorage.getItem('polly_chat_history');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed)) {
-                        messages = parsed;
-                        messages.forEach(msg => displayMessage(msg));
+                const response = await fetch(`${API_BASE}/v1/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || `HTTP ${response.status}`);
+                }
+
+                // Create assistant message placeholder
+                const assistantDiv = createAssistantMessageElement();
+                
+                // Handle streaming
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let assistantContent = '';
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    
+                    for (const line of lines) {
+                        if (line.trim() === '') continue;
+                        if (line.trim() === 'data: [DONE]') continue;
+                        
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                const delta = data.choices?.[0]?.delta?.content || '';
+                                const reasoning = data.choices?.[0]?.delta?.reasoning_content || '';
+                                
+                                if (delta || reasoning) {
+                                    assistantContent += delta;
+                                    // Handle reasoning if present
+                                    if (reasoning && !assistantContent.includes('<thinking>')) {
+                                        assistantContent = `<thinking>${reasoning}</thinking>\n\n${assistantContent}`;
+                                    }
+                                    updateAssistantMessage(assistantDiv, assistantContent);
+                                }
+                            } catch (e) {
+                                console.error('Parse error:', e);
+                            }
+                        }
                     }
                 }
-            } catch (e) {
-                console.error('Failed to load chat history:', e);
-                messages = [];
-                localStorage.removeItem('polly_chat_history');
+
+                // Finalize
+                messages.push({ role: 'assistant', content: assistantContent });
+                finalizeAssistantMessage(assistantDiv, assistantContent);
+                updateTokenCount();
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError(error.message);
+            } finally {
+                isStreaming = false;
+                document.getElementById('sendBtn').disabled = false;
             }
         }
-        
-        function clearChat() {
-            if (confirm('Clear all chat history?')) {
-                messages = [];
-                localStorage.removeItem('polly_chat_history');
-                document.getElementById('chatContainer').innerHTML = `
-                    <div style="text-align: center; color: var(--text-muted); padding: 40px;">
-                        Chat cleared. Start a new conversation!
-                    </div>
-                `;
-                showNotification('Chat history cleared');
-            }
-        }
-        
-        function exportChat() {
-            const dataStr = JSON.stringify(messages, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `polly-chat-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-        
-        // UI Helpers
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.querySelector('.overlay');
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('active');
-        }
-        
-        function showNotification(msg, type = 'success') {
+
+        function createAssistantMessageElement() {
+            const container = document.getElementById('chatContainer');
             const div = document.createElement('div');
-            div.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${type === 'error' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--accent-green)'};
-                color: white;
-                padding: 12px 20px;
-                border-radius: 8px;
-                z-index: 1000;
-                font-size: 14px;
-                animation: slideIn 0.3s ease;
-                max-width: 300px;
-                word-wrap: break-word;
+            div.className = 'flex justify-start';
+            div.innerHTML = `
+                <div class="message-bubble bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-5 py-3 shadow-sm max-w-[85%]">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                            ${document.getElementById('modelSelect').value === 'polly' ? 'P' : 'N'}
+                        </div>
+                        <span class="text-xs font-semibold text-gray-600">${document.getElementById('modelSelect').value}</span>
+                    </div>
+                    <div class="prose prose-sm max-w-none streaming-content streaming-cursor text-gray-800 leading-relaxed"></div>
+                </div>
             `;
-            div.textContent = msg;
-            document.body.appendChild(div);
-            setTimeout(() => div.remove(), 3000);
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return div.querySelector('.streaming-content');
         }
-        
-        window.addEventListener('resize', scrollToBottom);
+
+        function updateAssistantMessage(element, content) {
+            // Simple markdown rendering for streaming (minimal)
+            element.innerHTML = marked.parse(content, { breaks: true });
+            hljs.highlightAll();
+            const container = document.getElementById('chatContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function finalizeAssistantMessage(element, content) {
+            element.classList.remove('streaming-cursor');
+            element.innerHTML = marked.parse(content, { breaks: true });
+            hljs.highlightAll();
+            
+            // Add copy buttons to code blocks
+            element.querySelectorAll('pre code').forEach((block) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'code-block relative';
+                block.parentNode.parentNode.insertBefore(wrapper, block.parentNode);
+                wrapper.appendChild(block.parentNode);
+                
+                const btn = document.createElement('button');
+                btn.className = 'copy-btn px-2 py-1 bg-gray-700 text-white text-xs rounded hover:bg-gray-600';
+                btn.textContent = 'Copy';
+                btn.onclick = () => {
+                    navigator.clipboard.writeText(block.textContent);
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => btn.textContent = 'Copy', 2000);
+                };
+                wrapper.appendChild(btn);
+            });
+        }
+
+        function renderMessage(message, role) {
+            const container = document.getElementById('chatContainer');
+            const div = document.createElement('div');
+            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            let contentHtml = '';
+            
+            if (Array.isArray(message.content)) {
+                message.content.forEach(part => {
+                    if (part.type === 'text') {
+                        contentHtml += `<div class="text-gray-800 leading-relaxed">${marked.parse(part.text, { breaks: true })}</div>`;
+                    } else if (part.type === 'image_url') {
+                        contentHtml += `<img src="${part.image_url.url}" class="max-w-sm rounded-lg mt-2 border border-gray-200">`;
+                    } else if (part.type === 'file') {
+                        contentHtml += `
+                            <div class="flex items-center gap-2 mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <span>${part.file?.file_name || 'Attached file'}</span>
+                            </div>`;
+                    }
+                });
+            } else {
+                contentHtml = `<div class="text-gray-800 leading-relaxed">${marked.parse(message.content, { breaks: true })}</div>`;
+            }
+            
+            div.innerHTML = `
+                <div class="message-bubble ${role === 'user' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white border border-gray-200 rounded-tl-sm'} rounded-2xl px-5 py-3 shadow-sm max-w-[85%]">
+                    ${role === 'assistant' ? `
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+                            ${document.getElementById('modelSelect').value === 'polly' ? 'P' : 'N'}
+                        </div>
+                        <span class="text-xs font-semibold text-gray-600">${document.getElementById('modelSelect').value}</span>
+                    </div>` : ''}
+                    ${contentHtml}
+                </div>
+            `;
+            
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showError(message) {
+            const container = document.getElementById('chatContainer');
+            const div = document.createElement('div');
+            div.className = 'flex justify-center';
+            div.innerHTML = `
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm max-w-md">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearChat() {
+            messages = [];
+            document.getElementById('chatContainer').innerHTML = `
+                <div id="welcomeScreen" class="h-full flex flex-col items-center justify-center text-gray-400 space-y-4">
+                    <div class="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mb-2">
+                        <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    </div>
+                    <p class="text-lg font-medium">Start a conversation</p>
+                    <p class="text-sm text-center max-w-md">Drop images or files anywhere, or type a message below.<br>Polly and Nomnom can analyze images and documents.</p>
+                </div>
+            `;
+            updateTokenCount();
+        }
+
+        function updateTokenCount() {
+            const count = messages.length;
+            document.getElementById('tokenCount').textContent = `${count} message${count !== 1 ? 's' : ''}`;
+        }
+
+        // Click outside to close drag overlay (safety)
+        document.addEventListener('dragenter', (e) => {
+            if (e.target === document.body) showDragOverlay();
+        });
     </script>
 </body>
 </html>
