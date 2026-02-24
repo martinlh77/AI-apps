@@ -127,6 +127,7 @@
             justify-content: space-between;
             padding: 8px 0;
             border-bottom: 1px solid var(--border);
+            cursor: pointer;
         }
         
         .toggle-switch {
@@ -738,9 +739,9 @@
             if (isImage) {
                 const url = URL.createObjectURL(file);
                 div.innerHTML = `
-                    <img src="${url}" alt="${file.name}">
-                    <button class="remove" onclick="removeFile('${file.name}')">×</button>
-                    <div class="name">${file.name}</div>
+                    <img src="${url}" alt="${escapeHtml(file.name)}">
+                    <button class="remove" onclick="removeFile('${escapeHtml(file.name)}')">×</button>
+                    <div class="name">${escapeHtml(file.name)}</div>
                 `;
             } else {
                 const icon = file.name.endsWith('.pdf') ? '📕' : 
@@ -749,8 +750,8 @@
                            file.name.endsWith('.json') ? '📋' : '📄';
                 div.innerHTML = `
                     <div class="doc-icon">${icon}</div>
-                    <button class="remove" onclick="removeFile('${file.name}')">×</button>
-                    <div class="name">${file.name}</div>
+                    <button class="remove" onclick="removeFile('${escapeHtml(file.name)}')">×</button>
+                    <div class="name">${escapeHtml(file.name)}</div>
                 `;
             }
             
@@ -759,7 +760,7 @@
         
         function removeFile(filename) {
             uploadedFiles = uploadedFiles.filter(f => f.name !== filename);
-            const el = document.querySelector(`.file-item[data-filename="${filename}"]`);
+            const el = document.querySelector(`.file-item[data-filename="${CSS.escape(filename)}"]`);
             if (el) el.remove();
         }
         
@@ -848,10 +849,16 @@
                     max_tokens: 4000
                 };
                 
+                // FIX: Use correct API parameters for research mode
                 if (settings.research) {
-                    payload.tools = true;
-                    payload.reasoning = true;
+                    // reasoning_effort is a string enum: "none", "minimal", "low", "medium", "high", "xhigh"
+                    payload.reasoning_effort = 'high';
+                    
+                    // Enable specific tools if needed (optional - polly model may have built-in research)
+                    // payload.tools = [{ type: 'google_search' }]; // Uncomment if needed
                 }
+                
+                console.log('Sending payload:', JSON.stringify(payload, null, 2)); // Debug logging
                 
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -863,13 +870,17 @@
                 });
                 
                 if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
+                    console.error('API Error:', errorData);
                     if (response.status === 401) {
                         throw new Error('Invalid API Key');
                     }
-                    throw new Error(`API Error: ${response.status}`);
+                    throw new Error(errorData.error?.message || `API Error: ${response.status}`);
                 }
                 
                 const data = await response.json();
+                console.log('API Response:', data); // Debug logging
+                
                 const assistantMsg = {
                     role: 'assistant',
                     content: data.choices[0].message.content
@@ -880,6 +891,7 @@
                 saveChatHistory();
                 
             } catch (error) {
+                console.error('Chat Error:', error);
                 const errorMsg = {
                     role: 'assistant',
                     content: `❌ **Error:** ${error.message}\n\nPlease check your API key and try again.`
@@ -918,7 +930,7 @@
                     
                     // Show file attachments indicator
                     if (msg.files && msg.files.length > 0) {
-                        html += `<div class="attached-files">📎 ${msg.files.join(', ')}</div>`;
+                        html += `<div class="attached-files">📎 ${msg.files.map(escapeHtml).join(', ')}</div>`;
                     }
                 } else {
                     html = `<p>${escapeHtml(msg.content)}</p>`;
@@ -943,6 +955,7 @@
         }
         
         function escapeHtml(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
@@ -968,8 +981,16 @@
         function loadChatHistory() {
             const saved = localStorage.getItem('polly_chat_history');
             if (saved) {
-                messages = JSON.parse(saved);
-                messages.forEach(msg => displayMessage(msg));
+                try {
+                    messages = JSON.parse(saved);
+                    // Validate messages format
+                    if (Array.isArray(messages)) {
+                        messages.forEach(msg => displayMessage(msg));
+                    }
+                } catch (e) {
+                    console.error('Failed to load chat history:', e);
+                    messages = [];
+                }
             }
         }
         
@@ -1005,7 +1026,6 @@
         }
         
         function showNotification(msg, type = 'success') {
-            // Simple notification - could be enhanced with a toast library
             const div = document.createElement('div');
             div.style.cssText = `
                 position: fixed;
@@ -1018,6 +1038,8 @@
                 z-index: 1000;
                 font-size: 14px;
                 animation: slideIn 0.3s ease;
+                max-width: 300px;
+                word-wrap: break-word;
             `;
             div.textContent = msg;
             document.body.appendChild(div);
