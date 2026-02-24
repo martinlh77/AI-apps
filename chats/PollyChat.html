@@ -17,6 +17,7 @@
             --user-bubble: #1f6feb;
             --ai-bubble: #21262d;
             --danger: #da3633;
+            --warning: #f0883e;
         }
         
         * {
@@ -118,6 +119,16 @@
         
         .btn-danger:hover {
             background: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            color: var(--warning);
+            border-color: var(--warning);
+        }
+        
+        .btn-warning:hover {
+            background: var(--warning);
             color: white;
         }
         
@@ -497,6 +508,21 @@
         .overlay.active {
             display: block;
         }
+        
+        .storage-warning {
+            background: rgba(240, 136, 62, 0.1);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            display: none;
+        }
+        
+        .storage-warning.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -506,6 +532,10 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <h2>🔐 Settings & Tools</h2>
+        
+        <div class="storage-warning" id="storageWarning">
+            ⚠️ Storage full: History limited to last 50 messages. Large files not saved.
+        </div>
         
         <div class="setting-group">
             <label>API Key</label>
@@ -545,6 +575,9 @@
         
         <div class="setting-group">
             <label>Chat History</label>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">
+                Max 50 messages (storage limit)
+            </div>
             <button class="btn" onclick="clearChat()" style="margin-bottom: 8px;">
                 🧹 Clear Chat
             </button>
@@ -631,6 +664,8 @@
         
         const API_URL = 'https://gen.pollinations.ai/v1/chat/completions';
         const MODEL = 'polly';
+        const MAX_HISTORY_MESSAGES = 50;
+        const MAX_STORAGE_SIZE = 4 * 1024 * 1024; // 4MB safety limit (localStorage is usually 5-10MB)
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -641,24 +676,81 @@
             // Load saved settings
             const savedSettings = localStorage.getItem('polly_settings');
             if (savedSettings) {
-                settings = JSON.parse(savedSettings);
-                updateToggleVisuals();
+                try {
+                    settings = JSON.parse(savedSettings);
+                    updateToggleVisuals();
+                } catch (e) {
+                    console.error('Failed to parse settings:', e);
+                }
             }
         });
+        
+        // Storage management
+        function getStorageSize() {
+            let total = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    total += localStorage[key].length * 2; // UTF-16 = 2 bytes per char
+                }
+            }
+            return total;
+        }
+        
+        function isStorageFull() {
+            return getStorageSize() > MAX_STORAGE_SIZE;
+        }
+        
+        function trimMessagesForStorage(msgs) {
+            // Keep only last N messages to save space
+            if (msgs.length > MAX_HISTORY_MESSAGES) {
+                return msgs.slice(-MAX_HISTORY_MESSAGES);
+            }
+            return msgs;
+        }
+        
+        function stripFileContentForStorage(msgs) {
+            // Create a copy without heavy base64 image data for storage
+            // but keep the text content and file metadata
+            return msgs.map(msg => {
+                if (msg.role === 'user' && Array.isArray(msg.content)) {
+                    const strippedContent = msg.content.map(part => {
+                        if (part.type === 'image_url' && part.image_url && part.image_url.url.startsWith('data:')) {
+                            // Replace base64 with placeholder to save space
+                            return { type: 'image_url', image_url: { url: '[IMAGE_DATA_REMOVED_FOR_STORAGE]' } };
+                        }
+                        return part;
+                    });
+                    return { ...msg, content: strippedContent };
+                }
+                return msg;
+            });
+        }
         
         // API Key Management
         function saveApiKey() {
             const key = document.getElementById('apiKey').value;
             if (key) {
-                localStorage.setItem('polly_api_key', key);
-                showNotification('API Key saved locally');
+                try {
+                    localStorage.setItem('polly_api_key', key);
+                    showNotification('API Key saved locally');
+                } catch (e) {
+                    if (e.name === 'QuotaExceededError') {
+                        showNotification('Storage full - cannot save API key. Clear chat history first.', 'error');
+                    } else {
+                        throw e;
+                    }
+                }
             }
         }
         
         function loadApiKey() {
-            const key = localStorage.getItem('polly_api_key');
-            if (key) {
-                document.getElementById('apiKey').value = key;
+            try {
+                const key = localStorage.getItem('polly_api_key');
+                if (key) {
+                    document.getElementById('apiKey').value = key;
+                }
+            } catch (e) {
+                console.error('Failed to load API key:', e);
             }
         }
         
@@ -831,7 +923,12 @@
             input.value = '';
             uploadedFiles = [];
             document.getElementById('filePreview').innerHTML = '';
-            saveChatHistory();
+            
+            // Try to save, but don't block if storage is full
+            const saved = saveChatHistorySafe();
+            if (!saved) {
+                document.getElementById('storageWarning').classList.add('active');
+            }
             
             // Show typing indicator
             document.getElementById('typingIndicator').classList.add('active');
@@ -851,14 +948,10 @@
                 
                 // FIX: Use correct API parameters for research mode
                 if (settings.research) {
-                    // reasoning_effort is a string enum: "none", "minimal", "low", "medium", "high", "xhigh"
                     payload.reasoning_effort = 'high';
-                    
-                    // Enable specific tools if needed (optional - polly model may have built-in research)
-                    // payload.tools = [{ type: 'google_search' }]; // Uncomment if needed
                 }
                 
-                console.log('Sending payload:', JSON.stringify(payload, null, 2)); // Debug logging
+                console.log('Sending payload:', JSON.stringify(payload, null, 2));
                 
                 const response = await fetch(API_URL, {
                     method: 'POST',
@@ -879,7 +972,7 @@
                 }
                 
                 const data = await response.json();
-                console.log('API Response:', data); // Debug logging
+                console.log('API Response:', data);
                 
                 const assistantMsg = {
                     role: 'assistant',
@@ -888,7 +981,9 @@
                 
                 messages.push(assistantMsg);
                 displayMessage(assistantMsg);
-                saveChatHistory();
+                
+                // Try to save assistant message
+                saveChatHistorySafe();
                 
             } catch (error) {
                 console.error('Chat Error:', error);
@@ -920,17 +1015,22 @@
             let html = '';
             
             if (msg.role === 'assistant') {
-                // Parse markdown for assistant messages
                 html = marked.parse(msg.content);
             } else {
-                // Simple text for user, but handle array content
                 if (Array.isArray(msg.content)) {
                     const textPart = msg.content.find(c => c.type === 'text');
                     if (textPart) html = `<p>${escapeHtml(textPart.text)}</p>`;
                     
+                    // Check if there are images
+                    const hasImages = msg.content.some(c => c.type === 'image_url');
+                    if (hasImages) {
+                        html += `<div class="attached-files">📎 Image attached</div>`;
+                    }
+                    
                     // Show file attachments indicator
                     if (msg.files && msg.files.length > 0) {
-                        html += `<div class="attached-files">📎 ${msg.files.map(escapeHtml).join(', ')}</div>`;
+                        const fileNames = msg.files.map(escapeHtml).join(', ');
+                        html += `<div class="attached-files">📎 ${fileNames}</div>`;
                     }
                 } else {
                     html = `<p>${escapeHtml(msg.content)}</p>`;
@@ -973,24 +1073,59 @@
             }
         }
         
-        // Chat History Management
-        function saveChatHistory() {
-            localStorage.setItem('polly_chat_history', JSON.stringify(messages));
+        // Chat History Management with Quota handling
+        function saveChatHistorySafe() {
+            try {
+                // Prepare data for storage - strip heavy base64 data
+                let dataToStore = trimMessagesForStorage(messages);
+                dataToStore = stripFileContentForStorage(dataToStore);
+                
+                const serialized = JSON.stringify(dataToStore);
+                
+                // Check size before attempting save
+                if (serialized.length * 2 > MAX_STORAGE_SIZE) {
+                    console.warn('History too large, trimming further...');
+                    // Keep only last 20 messages if still too large
+                    dataToStore = messages.slice(-20);
+                    dataToStore = stripFileContentForStorage(dataToStore);
+                }
+                
+                localStorage.setItem('polly_chat_history', JSON.stringify(dataToStore));
+                return true;
+            } catch (e) {
+                if (e.name === 'QuotaExceededError' || e.code === 22) {
+                    console.error('Storage quota exceeded:', e);
+                    // Try emergency cleanup - keep only last 10 messages
+                    try {
+                        const emergencyData = stripFileContentForStorage(messages.slice(-10));
+                        localStorage.setItem('polly_chat_history', JSON.stringify(emergencyData));
+                        return true;
+                    } catch (e2) {
+                        console.error('Even emergency save failed:', e2);
+                        return false;
+                    }
+                } else {
+                    console.error('Failed to save history:', e);
+                    return false;
+                }
+            }
         }
         
         function loadChatHistory() {
-            const saved = localStorage.getItem('polly_chat_history');
-            if (saved) {
-                try {
-                    messages = JSON.parse(saved);
-                    // Validate messages format
-                    if (Array.isArray(messages)) {
+            try {
+                const saved = localStorage.getItem('polly_chat_history');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed)) {
+                        messages = parsed;
                         messages.forEach(msg => displayMessage(msg));
                     }
-                } catch (e) {
-                    console.error('Failed to load chat history:', e);
-                    messages = [];
                 }
+            } catch (e) {
+                console.error('Failed to load chat history:', e);
+                messages = [];
+                // Clear corrupted data
+                localStorage.removeItem('polly_chat_history');
             }
         }
         
@@ -1003,6 +1138,8 @@
                         Chat cleared. Start a new conversation!
                     </div>
                 `;
+                document.getElementById('storageWarning').classList.remove('active');
+                showNotification('Chat history cleared');
             }
         }
         
@@ -1031,7 +1168,7 @@
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: ${type === 'error' ? 'var(--danger)' : 'var(--accent-green)'};
+                background: ${type === 'error' ? 'var(--danger)' : type === 'warning' ? 'var(--warning)' : 'var(--accent-green)'};
                 color: white;
                 padding: 12px 20px;
                 border-radius: 8px;
