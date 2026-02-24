@@ -938,15 +938,7 @@
                     max_tokens: 4000
                 };
                 
-                // FIX: Only add reasoning_effort for models that support it
-                // 'polly' model doesn't support this parameter (causes 500 error)
-                // Supported models: openai, claude, deepseek, etc.
-                if (settings.research && MODEL !== 'polly') {
-                    payload.reasoning_effort = 'high';
-                }
-                
-                // If you want to use reasoning with polly, you may need to use a different approach
-                // such as adding system prompts or using tools array instead
+                // Note: reasoning_effort parameter removed - polly model has built-in research capabilities
                 
                 console.log('Sending payload:', JSON.stringify(payload, null, 2));
                 
@@ -968,12 +960,7 @@
                     if (response.status === 401) {
                         throw new Error('Invalid API Key');
                     } else if (response.status === 500) {
-                        // Specific handling for the polly model reasoning error
-                        if (errorMsg.includes('usage') || errorMsg.includes('Invalid input')) {
-                            throw new Error(`Model ${MODEL} doesn't support 'reasoning_effort' parameter. Try disabling Research mode or switching to 'openai' model.`);
-                        } else {
-                            throw new Error(`Server error: ${errorMsg}`);
-                        }
+                        throw new Error(`Server error: ${errorMsg}. Please try again.`);
                     } else {
                         throw new Error(errorMsg);
                     }
