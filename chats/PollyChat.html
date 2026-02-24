@@ -665,7 +665,7 @@
         const API_URL = 'https://gen.pollinations.ai/v1/chat/completions';
         const MODEL = 'polly';
         const MAX_HISTORY_MESSAGES = 50;
-        const MAX_STORAGE_SIZE = 4 * 1024 * 1024; // 4MB safety limit (localStorage is usually 5-10MB)
+        const MAX_STORAGE_SIZE = 4 * 1024 * 1024; // 4MB safety limit
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
@@ -673,7 +673,6 @@
             loadChatHistory();
             setupDragAndDrop();
             
-            // Load saved settings
             const savedSettings = localStorage.getItem('polly_settings');
             if (savedSettings) {
                 try {
@@ -690,7 +689,7 @@
             let total = 0;
             for (let key in localStorage) {
                 if (localStorage.hasOwnProperty(key)) {
-                    total += localStorage[key].length * 2; // UTF-16 = 2 bytes per char
+                    total += localStorage[key].length * 2;
                 }
             }
             return total;
@@ -701,7 +700,6 @@
         }
         
         function trimMessagesForStorage(msgs) {
-            // Keep only last N messages to save space
             if (msgs.length > MAX_HISTORY_MESSAGES) {
                 return msgs.slice(-MAX_HISTORY_MESSAGES);
             }
@@ -709,13 +707,10 @@
         }
         
         function stripFileContentForStorage(msgs) {
-            // Create a copy without heavy base64 image data for storage
-            // but keep the text content and file metadata
             return msgs.map(msg => {
                 if (msg.role === 'user' && Array.isArray(msg.content)) {
                     const strippedContent = msg.content.map(part => {
                         if (part.type === 'image_url' && part.image_url && part.image_url.url.startsWith('data:')) {
-                            // Replace base64 with placeholder to save space
                             return { type: 'image_url', image_url: { url: '[IMAGE_DATA_REMOVED_FOR_STORAGE]' } };
                         }
                         return part;
@@ -812,9 +807,7 @@
         // File Handling
         function handleFiles(files) {
             Array.from(files).forEach(file => {
-                // Check if already added
                 if (uploadedFiles.some(f => f.name === file.name && f.size === file.size)) return;
-                
                 uploadedFiles.push(file);
                 displayFile(file);
             });
@@ -893,7 +886,6 @@
                 if (!file.type.startsWith('image/')) {
                     try {
                         const text = await file.text();
-                        // Truncate large files
                         const maxLen = 10000;
                         const truncated = text.length > maxLen ? text.substring(0, maxLen) + '\n\n[Document truncated...]' : text;
                         contentParts.push({
@@ -924,7 +916,7 @@
             uploadedFiles = [];
             document.getElementById('filePreview').innerHTML = '';
             
-            // Try to save, but don't block if storage is full
+            // Try to save
             const saved = saveChatHistorySafe();
             if (!saved) {
                 document.getElementById('storageWarning').classList.add('active');
@@ -933,7 +925,7 @@
             // Show typing indicator
             document.getElementById('typingIndicator').classList.add('active');
             document.getElementById('sendBtn').disabled = true;
-            document.getElementById('status-badge').textContent = 'Researching...';
+            document.getElementById('status-badge').textContent = 'Thinking...';
             
             try {
                 const payload = {
@@ -946,10 +938,15 @@
                     max_tokens: 4000
                 };
                 
-                // FIX: Use correct API parameters for research mode
-                if (settings.research) {
+                // FIX: Only add reasoning_effort for models that support it
+                // 'polly' model doesn't support this parameter (causes 500 error)
+                // Supported models: openai, claude, deepseek, etc.
+                if (settings.research && MODEL !== 'polly') {
                     payload.reasoning_effort = 'high';
                 }
+                
+                // If you want to use reasoning with polly, you may need to use a different approach
+                // such as adding system prompts or using tools array instead
                 
                 console.log('Sending payload:', JSON.stringify(payload, null, 2));
                 
@@ -965,10 +962,21 @@
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
                     console.error('API Error:', errorData);
+                    
+                    const errorMsg = errorData.error?.message || `API Error: ${response.status}`;
+                    
                     if (response.status === 401) {
                         throw new Error('Invalid API Key');
+                    } else if (response.status === 500) {
+                        // Specific handling for the polly model reasoning error
+                        if (errorMsg.includes('usage') || errorMsg.includes('Invalid input')) {
+                            throw new Error(`Model ${MODEL} doesn't support 'reasoning_effort' parameter. Try disabling Research mode or switching to 'openai' model.`);
+                        } else {
+                            throw new Error(`Server error: ${errorMsg}`);
+                        }
+                    } else {
+                        throw new Error(errorMsg);
                     }
-                    throw new Error(errorData.error?.message || `API Error: ${response.status}`);
                 }
                 
                 const data = await response.json();
@@ -981,15 +989,13 @@
                 
                 messages.push(assistantMsg);
                 displayMessage(assistantMsg);
-                
-                // Try to save assistant message
                 saveChatHistorySafe();
                 
             } catch (error) {
                 console.error('Chat Error:', error);
                 const errorMsg = {
                     role: 'assistant',
-                    content: `❌ **Error:** ${error.message}\n\nPlease check your API key and try again.`
+                    content: `❌ **Error:** ${error.message}`
                 };
                 messages.push(errorMsg);
                 displayMessage(errorMsg);
@@ -1004,7 +1010,6 @@
         function displayMessage(msg) {
             const container = document.getElementById('chatContainer');
             
-            // Remove welcome message if present
             if (container.children.length === 1 && container.children[0].style.textAlign === 'center') {
                 container.innerHTML = '';
             }
@@ -1021,13 +1026,11 @@
                     const textPart = msg.content.find(c => c.type === 'text');
                     if (textPart) html = `<p>${escapeHtml(textPart.text)}</p>`;
                     
-                    // Check if there are images
                     const hasImages = msg.content.some(c => c.type === 'image_url');
                     if (hasImages) {
                         html += `<div class="attached-files">📎 Image attached</div>`;
                     }
                     
-                    // Show file attachments indicator
                     if (msg.files && msg.files.length > 0) {
                         const fileNames = msg.files.map(escapeHtml).join(', ');
                         html += `<div class="attached-files">📎 ${fileNames}</div>`;
@@ -1073,19 +1076,16 @@
             }
         }
         
-        // Chat History Management with Quota handling
+        // Chat History Management
         function saveChatHistorySafe() {
             try {
-                // Prepare data for storage - strip heavy base64 data
                 let dataToStore = trimMessagesForStorage(messages);
                 dataToStore = stripFileContentForStorage(dataToStore);
                 
                 const serialized = JSON.stringify(dataToStore);
                 
-                // Check size before attempting save
                 if (serialized.length * 2 > MAX_STORAGE_SIZE) {
                     console.warn('History too large, trimming further...');
-                    // Keep only last 20 messages if still too large
                     dataToStore = messages.slice(-20);
                     dataToStore = stripFileContentForStorage(dataToStore);
                 }
@@ -1095,7 +1095,6 @@
             } catch (e) {
                 if (e.name === 'QuotaExceededError' || e.code === 22) {
                     console.error('Storage quota exceeded:', e);
-                    // Try emergency cleanup - keep only last 10 messages
                     try {
                         const emergencyData = stripFileContentForStorage(messages.slice(-10));
                         localStorage.setItem('polly_chat_history', JSON.stringify(emergencyData));
@@ -1124,7 +1123,6 @@
             } catch (e) {
                 console.error('Failed to load chat history:', e);
                 messages = [];
-                // Clear corrupted data
                 localStorage.removeItem('polly_chat_history');
             }
         }
@@ -1183,7 +1181,6 @@
             setTimeout(() => div.remove(), 3000);
         }
         
-        // Auto-scroll on resize
         window.addEventListener('resize', scrollToBottom);
     </script>
 </body>
