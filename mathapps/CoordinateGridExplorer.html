@@ -33,11 +33,11 @@
         }
         
         #sidebar {
-            width: 320px;
+            width: 340px;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             max-height: 600px;
             overflow-y: auto;
             padding-right: 10px;
@@ -67,7 +67,7 @@
         h1 {
             margin: 0 0 10px 0;
             color: #333;
-            font-size: 24px;
+            font-size: 22px;
             text-align: center;
         }
         
@@ -137,28 +137,38 @@
         .input-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             margin: 10px 0;
         }
         
-        .point-input {
+        .point-row {
             display: flex;
             gap: 8px;
             align-items: center;
             background: white;
-            padding: 8px;
+            padding: 6px 8px;
             border-radius: 4px;
             border: 1px solid #ccc;
             font-size: 14px;
         }
         
-        .point-input strong {
-            min-width: 70px;
+        .point-label {
+            min-width: 55px;
+            font-weight: bold;
+            color: #555;
             font-size: 13px;
         }
         
+        .point-row.required .point-label {
+            color: #e74c3c;
+        }
+        
+        .point-row.optional .point-label {
+            color: #7f8c8d;
+        }
+        
         input[type="number"] {
-            width: 50px;
+            width: 55px;
             padding: 6px;
             border: 2px solid #ddd;
             border-radius: 4px;
@@ -172,7 +182,7 @@
         }
         
         button.action-btn {
-            padding: 8px 16px;
+            padding: 10px 16px;
             background: #2196F3;
             color: white;
             border: none;
@@ -182,6 +192,7 @@
             transition: background 0.3s;
             font-size: 14px;
             width: 100%;
+            margin-top: 5px;
         }
         
         button.action-btn:hover {
@@ -199,7 +210,6 @@
             transition: background 0.3s;
             font-size: 14px;
             width: 100%;
-            margin-top: 5px;
         }
         
         button.secondary-btn:hover {
@@ -245,7 +255,7 @@
         label {
             font-weight: 600;
             color: #555;
-            font-size: 13px;
+            font-size: 12px;
         }
         
         .hint {
@@ -253,9 +263,24 @@
             color: #666;
             margin-top: 5px;
             font-style: italic;
+            line-height: 1.3;
         }
         
-        /* Mobile responsive */
+        .point-list {
+            margin: 8px 0;
+            font-size: 13px;
+        }
+        
+        .on-line {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .off-line {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
         @media (max-width: 900px) {
             #mainContainer {
                 flex-direction: column;
@@ -286,74 +311,91 @@
             <h1>📐 Grid Explorer</h1>
             
             <div class="section">
-                <div class="section-title">Select Mode</div>
+                <div class="section-title">Pick an Activity</div>
                 <div id="modeButtons">
-                    <button class="mode-btn active" onclick="setMode(1)">1. Plot a Point</button>
-                    <button class="mode-btn" onclick="setMode(2)">2. Find the Point</button>
-                    <button class="mode-btn" onclick="setMode(3)">3. Check for Line</button>
+                    <button class="mode-btn active" onclick="setMode(1)">1. Show a Point</button>
+                    <button class="mode-btn" onclick="setMode(2)">2. Find the Dot</button>
+                    <button class="mode-btn" onclick="setMode(3)">3. Build a Line</button>
                 </div>
-                <button class="secondary-btn danger-btn" onclick="clearGrid()">🗑️ Clear Grid</button>
+                <button class="secondary-btn danger-btn" onclick="clearGrid()">🗑️ Clear Everything</button>
             </div>
             
             <!-- Mode 1: Plot Point -->
             <div id="panel1" class="panel active section">
-                <div class="section-title">Plot Coordinates</div>
+                <div class="section-title">Graph a Point</div>
                 <div class="input-group">
-                    <div class="point-input">
+                    <div class="point-row">
+                        <span class="point-label">Point:</span>
                         <label>X:</label>
                         <input type="number" id="p1x" min="-10" max="10" value="3" step="1">
                         <label>Y:</label>
                         <input type="number" id="p1y" min="-10" max="10" value="4" step="1">
                     </div>
-                    <button class="action-btn" onclick="plotPoint()">Plot Point</button>
+                    <button class="action-btn" onclick="plotPoint()">Show on Grid</button>
                 </div>
-                <div id="feedback1" class="feedback info">Enter coordinates between -10 and 10</div>
+                <div id="feedback1" class="feedback info">Type coordinates (-10 to 10)</div>
             </div>
             
             <!-- Mode 2: Quiz -->
             <div id="panel2" class="panel section">
-                <div class="section-title">Identify the Point</div>
-                <button class="action-btn" onclick="generateQuizPoint()">Generate New Point</button>
+                <div class="section-title">Mystery Point Game</div>
+                <button class="action-btn" onclick="generateQuizPoint()">Make a Mystery Point</button>
                 
                 <div id="quizControls" style="display: none; margin-top: 10px;">
                     <div class="input-group">
-                        <div class="point-input">
+                        <div class="point-row">
+                            <span class="point-label">Your Guess:</span>
                             <label>X:</label>
                             <input type="number" id="quizX" min="-10" max="10" step="1">
                             <label>Y:</label>
                             <input type="number" id="quizY" min="-10" max="10" step="1">
                         </div>
-                        <button class="action-btn" onclick="checkQuiz()">Submit Answer</button>
+                        <button class="action-btn" onclick="checkQuiz()">Check My Answer</button>
                     </div>
                 </div>
-                <div id="feedback2" class="feedback info">Click "Generate New Point" to start</div>
+                <div id="feedback2" class="feedback info">Click "Make a Mystery Point" to start!</div>
             </div>
             
-            <!-- Mode 3: Line Check -->
+            <!-- Mode 3: Line Builder -->
             <div id="panel3" class="panel section">
-                <div class="section-title">Check Collinearity</div>
-                <p class="hint">Enter 2 or 3 points. If collinear, a line with arrows will appear.</p>
+                <div class="section-title">Line Builder</div>
+                <p class="hint">Enter 2 to 6 points. The first 2 points always make a line! See if the others land on it.</p>
                 
                 <div class="input-group">
-                    <div class="point-input">
-                        <strong>Point 1:</strong>
+                    <div class="point-row required">
+                        <span class="point-label">Point 1:</span>
                         <input type="number" id="l1x" min="-10" max="10" step="1" placeholder="x">
                         <input type="number" id="l1y" min="-10" max="10" step="1" placeholder="y">
                     </div>
-                    <div class="point-input">
-                        <strong>Point 2:</strong>
+                    <div class="point-row required">
+                        <span class="point-label">Point 2:</span>
                         <input type="number" id="l2x" min="-10" max="10" step="1" placeholder="x">
                         <input type="number" id="l2y" min="-10" max="10" step="1" placeholder="y">
                     </div>
-                    <div class="point-input">
-                        <strong>Point 3:</strong>
-                        <input type="number" id="l3x" min="-10" max="10" step="1" placeholder="x (opt)">
-                        <input type="number" id="l3y" min="-10" max="10" step="1" placeholder="y (opt)">
+                    <div class="point-row optional">
+                        <span class="point-label">Point 3:</span>
+                        <input type="number" id="l3x" min="-10" max="10" step="1" placeholder="x">
+                        <input type="number" id="l3y" min="-10" max="10" step="1" placeholder="y">
+                    </div>
+                    <div class="point-row optional">
+                        <span class="point-label">Point 4:</span>
+                        <input type="number" id="l4x" min="-10" max="10" step="1" placeholder="x">
+                        <input type="number" id="l4y" min="-10" max="10" step="1" placeholder="y">
+                    </div>
+                    <div class="point-row optional">
+                        <span class="point-label">Point 5:</span>
+                        <input type="number" id="l5x" min="-10" max="10" step="1" placeholder="x">
+                        <input type="number" id="l5y" min="-10" max="10" step="1" placeholder="y">
+                    </div>
+                    <div class="point-row optional">
+                        <span class="point-label">Point 6:</span>
+                        <input type="number" id="l6x" min="-10" max="10" step="1" placeholder="x">
+                        <input type="number" id="l6y" min="-10" max="10" step="1" placeholder="y">
                     </div>
                 </div>
                 
-                <button class="action-btn" onclick="checkLine()">Check for Line</button>
-                <div id="feedback3" class="feedback info">Enter at least 2 points</div>
+                <button class="action-btn" onclick="checkLine()">Draw Line & Plot Points</button>
+                <div id="feedback3" class="feedback info">Enter at least 2 points to make a line</div>
             </div>
         </div>
         
@@ -368,7 +410,7 @@
         const ctx = canvas.getContext('2d');
         const SIZE = 600;
         const CENTER = SIZE / 2;
-        const SCALE = SIZE / 20; // 30 pixels per unit
+        const SCALE = SIZE / 20;
         const MAX = 10;
         
         let quizPoint = null;
@@ -414,7 +456,7 @@
             drawArrowhead(p1.x, p1.y, angle2, 12, color);
         }
         
-        function drawGridPoint(x, y, color = '#e74c3c', label = null) {
+        function drawGridPoint(x, y, color = '#e74c3c', label = null, isOnLine = null) {
             const pos = toCanvas(x, y);
             
             ctx.fillStyle = color;
@@ -431,7 +473,13 @@
                 ctx.font = 'bold 16px Arial';
                 ctx.textAlign = 'left';
                 ctx.textBaseline = 'bottom';
-                ctx.fillText(label, pos.x + 12, pos.y - 8);
+                
+                // Add checkmark or X if we know if it's on the line
+                let symbol = '';
+                if (isOnLine === true) symbol = ' ✓';
+                if (isOnLine === false) symbol = ' ✗';
+                
+                ctx.fillText(label + symbol, pos.x + 12, pos.y - 8);
             }
         }
         
@@ -513,14 +561,12 @@
         
         function clearGrid() {
             drawGrid();
-            // Reset feedback messages
             document.getElementById('feedback1').className = 'feedback info';
-            document.getElementById('feedback1').textContent = 'Enter coordinates between -10 and 10';
+            document.getElementById('feedback1').textContent = 'Type coordinates (-10 to 10)';
             document.getElementById('feedback2').className = 'feedback info';
-            document.getElementById('feedback2').textContent = 'Click "Generate New Point" to start';
+            document.getElementById('feedback2').textContent = 'Click "Make a Mystery Point" to start!';
             document.getElementById('feedback3').className = 'feedback info';
-            document.getElementById('feedback3').textContent = 'Enter at least 2 points';
-            // Hide quiz controls
+            document.getElementById('feedback3').textContent = 'Enter at least 2 points to make a line';
             document.getElementById('quizControls').style.display = 'none';
             quizPoint = null;
         }
@@ -532,7 +578,7 @@
             
             if (isNaN(x) || isNaN(y) || x < -MAX || x > MAX || y < -MAX || y > MAX) {
                 feedback.className = 'feedback error';
-                feedback.textContent = '❌ Please enter valid coordinates between -10 and 10.';
+                feedback.textContent = 'Oops! Use numbers between -10 and 10.';
                 return;
             }
             
@@ -540,7 +586,7 @@
             drawGridPoint(x, y, '#e74c3c', `(${x}, ${y})`);
             
             feedback.className = 'feedback success';
-            feedback.textContent = `✅ Plotted at (${x}, ${y})`;
+            feedback.textContent = `Point plotted at (${x}, ${y})`;
         }
         
         function generateQuizPoint() {
@@ -559,7 +605,7 @@
             
             const fb = document.getElementById('feedback2');
             fb.className = 'feedback info';
-            fb.textContent = '🔍 Enter the coordinates of the blue dot';
+            fb.textContent = 'Where is the blue dot? Type your guess!';
         }
         
         function checkQuiz() {
@@ -571,7 +617,7 @@
             
             if (isNaN(x) || isNaN(y)) {
                 fb.className = 'feedback error';
-                fb.textContent = '❌ Please enter both coordinates';
+                fb.textContent = 'Please type both X and Y numbers';
                 return;
             }
             
@@ -579,71 +625,107 @@
                 drawGrid();
                 drawGridPoint(quizPoint.x, quizPoint.y, '#27ae60', `(${quizPoint.x}, ${quizPoint.y})`);
                 fb.className = 'feedback success';
-                fb.textContent = `✅ Correct! (${quizPoint.x}, ${quizPoint.y})`;
+                fb.textContent = `Correct! It was at (${quizPoint.x}, ${quizPoint.y})!`;
             } else {
                 fb.className = 'feedback error';
-                fb.textContent = `❌ Incorrect. Try again!`;
+                fb.textContent = `Not quite! You guessed (${x}, ${y}). Try again!`;
             }
         }
         
         function checkLine() {
-            const p1 = {
-                x: parseFloat(document.getElementById('l1x').value),
-                y: parseFloat(document.getElementById('l1y').value)
-            };
-            const p2 = {
-                x: parseFloat(document.getElementById('l2x').value),
-                y: parseFloat(document.getElementById('l2y').value)
-            };
-            const p3 = {
-                x: parseFloat(document.getElementById('l3x').value),
-                y: parseFloat(document.getElementById('l3y').value)
-            };
+            // Collect up to 6 points
+            const points = [];
+            const ids = [
+                ['l1x', 'l1y'], ['l2x', 'l2y'], ['l3x', 'l3y'],
+                ['l4x', 'l4y'], ['l5x', 'l5y'], ['l6x', 'l6y']
+            ];
+            
+            for (let i = 0; i < ids.length; i++) {
+                const x = parseFloat(document.getElementById(ids[i][0]).value);
+                const y = parseFloat(document.getElementById(ids[i][1]).value);
+                
+                if (!isNaN(x) && !isNaN(y) && x >= -MAX && x <= MAX && y >= -MAX && y <= MAX) {
+                    points.push({x, y, num: i + 1});
+                }
+            }
             
             const fb = document.getElementById('feedback3');
             
-            if ([p1, p2].some(p => isNaN(p.x) || isNaN(p.y) || p.x < -MAX || p.x > MAX || p.y < -MAX || p.y > MAX)) {
+            if (points.length < 2) {
                 fb.className = 'feedback error';
-                fb.textContent = '❌ Points 1 & 2 must be valid (-10 to 10)';
+                fb.textContent = 'You need at least 2 points to make a line. Check your numbers!';
                 return;
             }
             
-            const hasP3 = !isNaN(p3.x) && !isNaN(p3.y) && 
-                          p3.x >= -MAX && p3.x <= MAX && 
-                          p3.y >= -MAX && p3.y <= MAX;
-            
             drawGrid();
             
-            drawGridPoint(p1.x, p1.y, '#9b59b6', 'P1');
-            drawGridPoint(p2.x, p2.y, '#9b59b6', 'P2');
-            if (hasP3) drawGridPoint(p3.x, p3.y, '#9b59b6', 'P3');
+            const p1 = points[0];
+            const p2 = points[1];
             
+            // Always draw line through first 2 points
             const intersections = getBoundaryIntersections(p1, p2);
+            if (intersections.length >= 2) {
+                const start = toCanvas(intersections[0].x, intersections[0].y);
+                const end = toCanvas(intersections[1].x, intersections[1].y);
+                drawArrowLine(start, end, '#2980b9', 5);
+            }
             
-            if (hasP3) {
-                const crossProduct = (p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y);
-                const isCollinear = Math.abs(crossProduct) < 0.0001;
-                
-                if (isCollinear) {
-                    if (intersections.length >= 2) {
-                        const start = toCanvas(intersections[0].x, intersections[0].y);
-                        const end = toCanvas(intersections[1].x, intersections[1].y);
-                        drawArrowLine(start, end, '#2980b9', 5);
-                    }
-                    fb.className = 'feedback success';
-                    fb.textContent = `✅ Collinear! Forms a straight line.`;
+            // Check which points are on the line (for points 3+)
+            const onLine = [p1, p2]; // First two always "on line" since they define it
+            const offLine = [];
+            
+            // Calculate line equation coefficients for checking: (y2-y1)x - (x2-x1)y + C = 0
+            // Or use cross product method: (x2-x1)(y-y1) vs (y2-y1)(x-x1)
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            
+            for (let i = 2; i < points.length; i++) {
+                const p = points[i];
+                // Cross product: if zero, point is on line
+                const cross = dx * (p.y - p1.y) - dy * (p.x - p1.x);
+                if (Math.abs(cross) < 0.0001) {
+                    onLine.push(p);
                 } else {
-                    fb.className = 'feedback error';
-                    fb.textContent = `❌ Not collinear.`;
+                    offLine.push(p);
                 }
-            } else {
-                if (intersections.length >= 2) {
-                    const start = toCanvas(intersections[0].x, intersections[0].y);
-                    const end = toCanvas(intersections[1].x, intersections[1].y);
-                    drawArrowLine(start, end, '#2980b9', 5);
-                }
+            }
+            
+            // Draw all points with appropriate labels
+            // P1 and P2 in purple, others in orange (differentiated)
+            const colors = ['#9b59b6', '#9b59b6', '#e67e22', '#e67e22', '#e67e22', '#e67e22'];
+            
+            for (let i = 0; i < points.length; i++) {
+                const p = points[i];
+                let isOn = null;
+                if (i < 2) isOn = true;
+                else isOn = onLine.includes(p);
+                
+                drawGridPoint(p.x, p.y, colors[i], `P${p.num}`, isOn);
+            }
+            
+            // Build feedback message
+            let msg = '';
+            if (points.length === 2) {
                 fb.className = 'feedback info';
-                fb.textContent = `ℹ️ Two points define a line (shown).`;
+                fb.innerHTML = 'Good! You drew a line through P1 and P2.<br>Add more points to see if they land on your line!';
+            } else {
+                const onLineNums = onLine.map(p => `P${p.num}`).join(', ');
+                const offLineNums = offLine.map(p => `P${p.num}`).join(', ');
+                
+                if (offLine.length === 0) {
+                    fb.className = 'feedback success';
+                    fb.innerHTML = `<span class="on-line">Perfect! All ${points.length} points line up!</span><br>They all sit on the same straight line.`;
+                } else {
+                    fb.className = 'feedback info';
+                    let html = `<span class="on-line">On the line: ${onLineNums}</span><br>`;
+                    html += `<span class="off-line">Off the line: ${offLineNums}</span><br>`;
+                    if (offLine.length === 1) {
+                        html += 'One point misses the line - that makes it crooked!';
+                    } else {
+                        html += 'These points don\'t land on the line between P1 and P2.';
+                    }
+                    fb.innerHTML = html;
+                }
             }
         }
         
