@@ -211,7 +211,7 @@
             const savedKey = localStorage.getItem('pollinations_api_key');
             if (savedKey) document.getElementById('apiKey').value = savedKey;
             
-            const savedModel = localStorage.getItem('pollinations_model') || 'polly';
+            const savedModel = localStorage.getItem('pollinations_model') || 'polly-ai';
             document.getElementById('modelSelect').value = savedModel;
             
             document.getElementById('modelSelect').addEventListener('change', (e) => {
@@ -244,7 +244,7 @@
         }
 
         function updateModelDesc(model) {
-            const desc = model === 'polly' ? 'Friendly, helpful assistant' : 'Creative, playful personality';
+            const desc = model === 'polly-ai' ? 'Friendly, helpful assistant' : 'Creative, playful personality';
             document.getElementById('modelDesc').textContent = desc;
         }
 
@@ -478,9 +478,9 @@
                 <div class="message-bubble bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-5 py-3 shadow-sm max-w-[85%]">
                     <div class="flex items-center gap-2 mb-2">
                         <div class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
-                            ${document.getElementById('modelSelect').value === 'polly' ? 'P' : 'N'}
+                            ${document.getElementById('modelSelect').value === 'polly-ai' ? 'P' : 'N'}
                         </div>
-                        <span class="text-xs font-semibold text-gray-600">${document.getElementById('modelSelect').value}</span>
+                        <span class="text-xs font-semibold text-gray-600">${document.getElementById('modelSelect').value === 'polly-ai' ? 'Polly' : 'Nomnom'}</span>
                     </div>
                     <div class="prose prose-sm max-w-none streaming-content streaming-cursor text-gray-800 leading-relaxed"></div>
                 </div>
@@ -552,7 +552,7 @@
                     ${role === 'assistant' ? `
                     <div class="flex items-center gap-2 mb-2">
                         <div class="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
-                            ${document.getElementById('modelSelect').value === 'polly' ? 'P' : 'N'}
+                            ${document.getElementById('modelSelect').value === 'polly-ai' ? 'P' : 'N'}
                         </div>
                         <span class="text-xs font-semibold text-gray-600">${document.getElementById('modelSelect').value}</span>
                     </div>` : ''}
