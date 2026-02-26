@@ -35,12 +35,25 @@
             margin-top: 30px; 
             display: none;
         }
-        img { 
+        #previewContainer {
+            margin-top: 20px;
+        }
+        #previewContainer img, #previewContainer video {
             max-width: 100%; 
             max-height: 500px;
-            margin-top: 20px; 
             border: 1px solid #ddd;
             border-radius: 4px;
+        }
+        #previewContainer audio {
+            width: 100%;
+            margin: 10px 0;
+        }
+        #previewContainer iframe {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
         }
         .url-box {
             margin: 10px 0;
@@ -51,6 +64,7 @@
             font-family: monospace;
             font-size: 13px;
             border-left: 3px solid #0066cc;
+            text-align: left;
         }
         .url-label {
             font-weight: bold;
@@ -70,15 +84,33 @@
             color: #2e7d32;
             font-weight: bold;
         }
+        .download-box {
+            padding: 30px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .download-box a {
+            display: inline-block; 
+            padding: 12px 24px; 
+            background: #0066cc; 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .download-box a:hover {
+            background: #0052a3;
+        }
     </style>
 </head>
 <body>
-    <h1>Anondrop Image Upload</h1>
-    <p>Upload images directly to Anondrop from GitHub Pages</p>
+    <h1>Anondrop File Upload</h1>
+    <p>Upload any file type - the direct link will use your file's actual extension</p>
     
-    <input type="file" id="fileInput" accept="image/*">
+    <input type="file" id="fileInput">
     <br>
-    <button id="uploadBtn" onclick="uploadImage()">Upload Image</button>
+    <button id="uploadBtn" onclick="uploadFile()">Upload File</button>
     
     <div id="status" class="status">Ready</div>
     <div id="error" class="error"></div>
@@ -90,33 +122,40 @@
         </div>
         
         <div class="url-box">
-            <div class="url-label">Direct Image URL:</div>
+            <div class="url-label">Direct File URL:</div>
             <span id="directUrl"></span>
         </div>
         
-        <img id="uploadedImage" alt="Uploaded image">
+        <div id="previewContainer"></div>
     </div>
 
     <script>
-        async function uploadImage() {
+        async function uploadFile() {
             const fileInput = document.getElementById('fileInput');
             const statusDiv = document.getElementById('status');
             const errorDiv = document.getElementById('error');
             const resultDiv = document.getElementById('result');
             const anondropLink = document.getElementById('anondropLink');
             const directUrlSpan = document.getElementById('directUrl');
-            const imgDisplay = document.getElementById('uploadedImage');
+            const previewContainer = document.getElementById('previewContainer');
             const uploadBtn = document.getElementById('uploadBtn');
             
             errorDiv.textContent = '';
             resultDiv.style.display = 'none';
+            previewContainer.innerHTML = '';
             
             if (!fileInput.files || fileInput.files.length === 0) {
-                alert('Please select an image first');
+                alert('Please select a file first');
                 return;
             }
             
             const file = fileInput.files[0];
+            const fileName = file.name;
+            
+            // Extract extension
+            const lastDot = fileName.lastIndexOf('.');
+            const extension = lastDot !== -1 ? fileName.slice(lastDot + 1).toLowerCase() : '';
+            
             uploadBtn.disabled = true;
             
             try {
@@ -161,44 +200,58 @@
                 const uploadResult = await uploadResponse.text();
                 console.log('Upload response:', uploadResult);
                 
-                // Parse the response: "File Link: <a href='https://anondrop.net/1476720722570379376'>https://anondrop.net/1476720722570379376</a>"
-                // Extract the URL from the href attribute
+                // Parse the response to get file ID
                 const linkMatch = uploadResult.match(/href='(https:\/\/anondrop\.net\/(\d+))'/);
                 
                 if (!linkMatch) {
-                    // Fallback: try to find any anondrop.net URL with numbers
-                    const fallbackMatch = uploadResult.match(/https:\/\/anondrop\.net\/(\d+)/);
-                    if (!fallbackMatch) {
-                        throw new Error('Could not extract file link from response: ' + uploadResult);
-                    }
+                    throw new Error('Could not extract file link from response: ' + uploadResult);
                 }
                 
-                // linkMatch[1] is the full URL, linkMatch[2] is just the ID
-                const anondropUrl = linkMatch ? linkMatch[1] : `https://anondrop.net/${fallbackMatch[1]}`;
-                const fileId = linkMatch ? linkMatch[2] : fallbackMatch[1];
-                const directImageUrl = `https://anondrop.net/${fileId}/image.jpg`;
+                const anondropUrl = linkMatch[1];
+                const fileId = linkMatch[2];
+                
+                // Build direct URL with the actual file extension
+                const directFileUrl = extension 
+                    ? `https://anondrop.net/${fileId}/file.${extension}`
+                    : `https://anondrop.net/${fileId}/file`;
                 
                 console.log('File ID:', fileId);
-                console.log('Anondrop URL:', anondropUrl);
-                console.log('Direct URL:', directImageUrl);
+                console.log('Extension:', extension);
+                console.log('Direct URL:', directFileUrl);
                 
                 // Display results
                 anondropLink.href = anondropUrl;
                 anondropLink.textContent = anondropUrl;
-                directUrlSpan.textContent = directImageUrl;
-                imgDisplay.src = directImageUrl;
+                directUrlSpan.textContent = directFileUrl;
                 
-                imgDisplay.onload = function() {
-                    statusDiv.innerHTML = '<span class="success">Upload complete!</span>';
-                    resultDiv.style.display = 'block';
-                    uploadBtn.disabled = false;
-                };
+                // Determine preview type based on extension
+                const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+                const videoExts = ['mp4', 'webm', 'ogv', 'mov', 'mkv', 'avi'];
+                const audioExts = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'wma'];
+                const textExts = ['txt', 'html', 'css', 'js', 'json', 'md', 'csv', 'log', 'xml'];
                 
-                imgDisplay.onerror = function() {
-                    statusDiv.textContent = 'Upload complete, but image failed to load (may need time to propagate)';
-                    resultDiv.style.display = 'block';
-                    uploadBtn.disabled = false;
-                };
+                if (imageExts.includes(extension)) {
+                    previewContainer.innerHTML = `<img src="${directFileUrl}" alt="${fileName}" onload="showSuccess()" onerror="showPreviewError()">`;
+                } else if (videoExts.includes(extension)) {
+                    previewContainer.innerHTML = `<video controls src="${directFileUrl}" onloadeddata="showSuccess()" onerror="showPreviewError()"></video>`;
+                } else if (audioExts.includes(extension)) {
+                    previewContainer.innerHTML = `<audio controls src="${directFileUrl}" onloadeddata="showSuccess()" onerror="showPreviewError()"></audio>`;
+                } else if (textExts.includes(extension)) {
+                    // Use iframe for text files to avoid CORS issues with fetch
+                    previewContainer.innerHTML = `<iframe src="${directFileUrl}" onload="showSuccess()" onerror="showPreviewError()"></iframe>`;
+                    showSuccess(); // iframe load detection is unreliable across origins
+                } else {
+                    // For other files (zip, pdf, doc, etc.) show download button
+                    previewContainer.innerHTML = `
+                        <div class="download-box">
+                            <p>File type (.${extension || 'unknown'}) preview not available inline.</p>
+                            <a href="${directFileUrl}" download="${fileName}">Download ${fileName}</a>
+                        </div>
+                    `;
+                    showSuccess();
+                }
+                
+                resultDiv.style.display = 'block';
                 
             } catch (error) {
                 console.error('Error:', error);
@@ -206,6 +259,16 @@
                 statusDiv.textContent = 'Failed';
                 uploadBtn.disabled = false;
             }
+        }
+        
+        function showSuccess() {
+            document.getElementById('status').innerHTML = '<span class="success">Upload complete!</span>';
+            document.getElementById('uploadBtn').disabled = false;
+        }
+        
+        function showPreviewError() {
+            document.getElementById('status').textContent = 'Upload complete, but preview failed to load (file may still be processing)';
+            document.getElementById('uploadBtn').disabled = false;
         }
     </script>
 </body>
