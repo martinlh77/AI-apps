@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Combiner Pro v.1.7 - MP4 & WebM</title>
+  <title>Video Combiner Pro v.1.8 - MP4 & WebM</title>
   <style>
     body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
@@ -422,9 +422,9 @@
     </div>
   </div>
 
-  <!-- Load FFmpeg UMD version (NO Worker CORS issues) -->
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+  <!-- Load FFmpeg from local repository (same-origin, no CORS issues) -->
+  <script src="./ffmpeg/ffmpeg.js"></script>
+  <script src="./ffmpeg/index.js"></script>
   
   <script>
     // Use global FFmpeg objects (loaded via UMD scripts above)
@@ -458,12 +458,9 @@
           updateProgress(percent, `Processing... ${percent}%`);
         });
         
-        // CRITICAL: Use same-origin URLs from your repository
-        // Adjust path if needed: './ffmpeg-core.js' assumes files are in same folder as HTML
-        // If files are in parent directory or subfolder, adjust accordingly:
-        // '../ffmpeg-core.js' or './subdir/ffmpeg-core.js'
-        const coreURL = './ffmpeg-core.js';
-        const wasmURL = './ffmpeg-core.wasm';
+        // CRITICAL: Use same-origin URLs from local ffmpeg folder
+        const coreURL = './ffmpeg/ffmpeg-core.js';
+        const wasmURL = './ffmpeg/ffmpeg-core.wasm';
         
         showStatus('Initializing FFmpeg engine...', 'info');
         
@@ -492,9 +489,10 @@
             <div style="font-size: 0.9em; margin-top: 10px; color: #666; text-align: left; max-width: 400px; margin: 10px auto;">
               <strong>Error:</strong> ${err.message}<br><br>
               <strong>Fix this:</strong><br>
-              1. Ensure ffmpeg-core.js and ffmpeg-core.wasm are in the same folder as this HTML file<br>
-              2. Check browser console (F12) for 404 errors<br>
-              3. Verify file paths are correct
+              1. Ensure ffmpeg-core.js and ffmpeg-core.wasm are in the ./ffmpeg/ folder<br>
+              2. Ensure 814.ffmpeg.js is in the same ./ffmpeg/ folder as ffmpeg.js<br>
+              3. Check browser console (F12) for 404 errors<br>
+              4. Verify file paths are correct relative to this HTML file
             </div>
           </div>
         `;
