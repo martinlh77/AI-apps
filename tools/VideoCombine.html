@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Combiner Pro v.2.2 - MP4 & WebM</title>
+  <title>Video Combiner Pro v.2.3 - MP4 & WebM</title>
   <style>
     body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
@@ -422,9 +422,9 @@
     </div>
   </div>
 
-  <!-- FIXED: Use relative paths for GitHub Pages, not GitHub blob URLs -->
-  <script src="./ffmpeg.js"></script>
-  <script src="./index.js"></script>
+  <!-- Load FFmpeg from local repository (same-origin, no CORS issues) -->
+  <script src="https://github.com/martinlh77/AI-apps/tools/ffmpeg/ffmpeg.js"></script>
+  <script src="https://github.com/martinlh77/AI-apps/tools/ffmpeg/index.js"></script>
   
   <script>
     // Use global FFmpeg objects (loaded via UMD scripts above)
@@ -458,9 +458,9 @@
           updateProgress(percent, `Processing... ${percent}%`);
         });
         
-        // FIXED: Use relative paths for same-origin loading
-        const coreURL = './ffmpeg-core.js';
-        const wasmURL = './ffmpeg-core.wasm';
+        // CRITICAL: Use same-origin URLs from local ffmpeg folder
+        const coreURL = 'https://github.com/martinlh77/AI-apps/tools/ffmpeg/ffmpeg-core.js';
+        const wasmURL = 'https://github.com/martinlh77/AI-apps/tools/ffmpeg/ffmpeg-core.wasm';
         
         showStatus('Initializing FFmpeg engine...', 'info');
         
