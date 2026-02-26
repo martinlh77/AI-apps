@@ -37,23 +37,36 @@
         }
         #previewContainer {
             margin-top: 20px;
+            text-align: left;
         }
         #previewContainer img, #previewContainer video {
             max-width: 100%; 
             max-height: 500px;
             border: 1px solid #ddd;
             border-radius: 4px;
+            display: block;
+            margin: 0 auto;
         }
         #previewContainer audio {
             width: 100%;
             margin: 10px 0;
         }
-        #previewContainer iframe {
-            width: 100%;
-            height: 300px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #f9f9f9;
+        .text-preview {
+            background: #f5f5f5; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            padding: 15px; 
+            max-height: 400px; 
+            overflow: auto;
+            text-align: left;
+        }
+        .text-preview pre {
+            margin: 0; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            font-family: monospace; 
+            font-size: 13px; 
+            line-height: 1.4;
         }
         .url-box {
             margin: 10px 0;
@@ -65,6 +78,13 @@
             font-size: 13px;
             border-left: 3px solid #0066cc;
             text-align: left;
+        }
+        .url-box a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .url-box a:hover {
+            text-decoration: underline;
         }
         .url-label {
             font-weight: bold;
@@ -98,9 +118,16 @@
             text-decoration: none; 
             border-radius: 4px;
             font-weight: bold;
+            margin: 5px;
         }
         .download-box a:hover {
             background: #0052a3;
+        }
+        .download-box a.secondary {
+            background: #4caf50;
+        }
+        .download-box a.secondary:hover {
+            background: #45a049;
         }
     </style>
 </head>
@@ -123,20 +150,27 @@
         
         <div class="url-box">
             <div class="url-label">Direct File URL:</div>
-            <span id="directUrl"></span>
+            <a id="directUrl" href="" target="_blank"></a>
         </div>
         
         <div id="previewContainer"></div>
     </div>
 
     <script>
+        // Helper to escape HTML for safe display
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
         async function uploadFile() {
             const fileInput = document.getElementById('fileInput');
             const statusDiv = document.getElementById('status');
             const errorDiv = document.getElementById('error');
             const resultDiv = document.getElementById('result');
             const anondropLink = document.getElementById('anondropLink');
-            const directUrlSpan = document.getElementById('directUrl');
+            const directUrlLink = document.getElementById('directUrl');
             const previewContainer = document.getElementById('previewContainer');
             const uploadBtn = document.getElementById('uploadBtn');
             
@@ -219,16 +253,17 @@
                 console.log('Extension:', extension);
                 console.log('Direct URL:', directFileUrl);
                 
-                // Display results
+                // Display results - both are now clickable links
                 anondropLink.href = anondropUrl;
                 anondropLink.textContent = anondropUrl;
-                directUrlSpan.textContent = directFileUrl;
+                directUrlLink.href = directFileUrl;
+                directUrlLink.textContent = directFileUrl;
                 
                 // Determine preview type based on extension
                 const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
                 const videoExts = ['mp4', 'webm', 'ogv', 'mov', 'mkv', 'avi'];
                 const audioExts = ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'wma'];
-                const textExts = ['txt', 'html', 'css', 'js', 'json', 'md', 'csv', 'log', 'xml'];
+                const textExts = ['txt', 'html', 'css', 'js', 'json', 'md', 'csv', 'log', 'xml', 'py', 'java', 'cpp', 'c', 'h', 'php', 'rb', 'go', 'rs'];
                 
                 if (imageExts.includes(extension)) {
                     previewContainer.innerHTML = `<img src="${directFileUrl}" alt="${fileName}" onload="showSuccess()" onerror="showPreviewError()">`;
@@ -237,15 +272,40 @@
                 } else if (audioExts.includes(extension)) {
                     previewContainer.innerHTML = `<audio controls src="${directFileUrl}" onloadeddata="showSuccess()" onerror="showPreviewError()"></audio>`;
                 } else if (textExts.includes(extension)) {
-                    // Use iframe for text files to avoid CORS issues with fetch
-                    previewContainer.innerHTML = `<iframe src="${directFileUrl}" onload="showSuccess()" onerror="showPreviewError()"></iframe>`;
-                    showSuccess(); // iframe load detection is unreliable across origins
+                    // Try to fetch text content (iframe doesn't work due to X-Frame-Options)
+                    statusDiv.textContent = 'Step 3: Loading text preview...';
+                    
+                    try {
+                        const textResponse = await fetch(directFileUrl);
+                        if (!textResponse.ok) throw new Error('Failed to fetch text');
+                        const textContent = await textResponse.text();
+                        
+                        // Display in styled pre block
+                        previewContainer.innerHTML = `
+                            <div class="text-preview">
+                                <div style="font-weight: bold; margin-bottom: 10px; font-family: sans-serif; color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Preview: ${escapeHtml(fileName)}</div>
+                                <pre>${escapeHtml(textContent)}</pre>
+                            </div>
+                        `;
+                        showSuccess();
+                    } catch (fetchErr) {
+                        // If CORS blocks fetch, show buttons instead
+                        previewContainer.innerHTML = `
+                            <div class="download-box">
+                                <p>Text file (.${extension}) - preview unavailable due to browser security restrictions.</p>
+                                <a href="${directFileUrl}" target="_blank">View in New Tab</a>
+                                <a href="${directFileUrl}" download="${fileName}" class="secondary">Download ${fileName}</a>
+                            </div>
+                        `;
+                        showSuccess();
+                    }
                 } else {
                     // For other files (zip, pdf, doc, etc.) show download button
                     previewContainer.innerHTML = `
                         <div class="download-box">
                             <p>File type (.${extension || 'unknown'}) preview not available inline.</p>
                             <a href="${directFileUrl}" download="${fileName}">Download ${fileName}</a>
+                            <a href="${directFileUrl}" target="_blank" class="secondary">Open in New Tab</a>
                         </div>
                     `;
                     showSuccess();
