@@ -37,18 +37,26 @@
         }
         img { 
             max-width: 100%; 
+            max-height: 500px;
             margin-top: 20px; 
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        .url-display {
-            margin: 15px 0;
-            padding: 10px;
-            background: #f0f0f0;
+        .url-box {
+            margin: 10px 0;
+            padding: 12px;
+            background: #f5f5f5;
             border-radius: 4px;
             word-break: break-all;
             font-family: monospace;
-            font-size: 14px;
+            font-size: 13px;
+            border-left: 3px solid #0066cc;
+        }
+        .url-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+            font-family: sans-serif;
         }
         .status {
             margin: 10px 0;
@@ -58,11 +66,15 @@
             color: #d32f2f;
             margin: 10px 0;
         }
+        .success {
+            color: #2e7d32;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <h1>Anondrop Image Upload</h1>
-    <p>Step 1: Get key from /register | Step 2: Upload to /upload | Step 3: Display image</p>
+    <p>Upload images directly to Anondrop from GitHub Pages</p>
     
     <input type="file" id="fileInput" accept="image/*">
     <br>
@@ -72,7 +84,16 @@
     <div id="error" class="error"></div>
     
     <div id="result">
-        <div class="url-display" id="urlDisplay"></div>
+        <div class="url-box">
+            <div class="url-label">Anondrop Page:</div>
+            <a id="anondropLink" href="" target="_blank"></a>
+        </div>
+        
+        <div class="url-box">
+            <div class="url-label">Direct Image URL:</div>
+            <span id="directUrl"></span>
+        </div>
+        
         <img id="uploadedImage" alt="Uploaded image">
     </div>
 
@@ -82,11 +103,13 @@
             const statusDiv = document.getElementById('status');
             const errorDiv = document.getElementById('error');
             const resultDiv = document.getElementById('result');
-            const urlDisplay = document.getElementById('urlDisplay');
+            const anondropLink = document.getElementById('anondropLink');
+            const directUrlSpan = document.getElementById('directUrl');
             const imgDisplay = document.getElementById('uploadedImage');
             const uploadBtn = document.getElementById('uploadBtn');
             
             errorDiv.textContent = '';
+            resultDiv.style.display = 'none';
             
             if (!fileInput.files || fileInput.files.length === 0) {
                 alert('Please select an image first');
@@ -98,7 +121,7 @@
             
             try {
                 // Step 1: GET /register to obtain user key
-                statusDiv.textContent = 'Step 1: Getting user key from /register...';
+                statusDiv.textContent = 'Step 1: Getting user key...';
                 
                 const registerResponse = await fetch('https://anondrop.net/register', {
                     method: 'GET'
@@ -107,7 +130,7 @@
                 const registerText = await registerResponse.text();
                 console.log('Register response:', registerText);
                 
-                // Extract the user key from the localStorage script
+                // Extract the user key from localStorage.setItem('userkey', 'NUMBER');
                 const keyMatch = registerText.match(/localStorage\.setItem\('userkey',\s*'(\d+)'\)/);
                 
                 if (!keyMatch || !keyMatch[1]) {
@@ -118,7 +141,7 @@
                 console.log('Got user key:', userKey);
                 
                 // Step 2: POST file to /upload with the key
-                statusDiv.textContent = 'Step 2: Uploading file to /upload...';
+                statusDiv.textContent = 'Step 2: Uploading file...';
                 
                 const formData = new FormData();
                 formData.append('file', file);
@@ -138,41 +161,41 @@
                 const uploadResult = await uploadResponse.text();
                 console.log('Upload response:', uploadResult);
                 
-                // Step 3: The response should be the file ID or contain it
-                // Based on your earlier finding, it might return just the number
-                // or a URL. Let's check if it's just a number.
-                const fileIdMatch = uploadResult.match(/(\d{18,20})/);
-                let fileId;
+                // Parse the response: "File Link: <a href='https://anondrop.net/1476720722570379376'>https://anondrop.net/1476720722570379376</a>"
+                // Extract the URL from the href attribute
+                const linkMatch = uploadResult.match(/href='(https:\/\/anondrop\.net\/(\d+))'/);
                 
-                if (fileIdMatch) {
-                    fileId = fileIdMatch[1];
-                } else if (uploadResult.includes('anondrop.net')) {
-                    // It might return the full URL, extract the ID from it
-                    const urlMatch = uploadResult.match(/anondrop\.net\/(\d+)/);
-                    if (urlMatch) fileId = urlMatch[1];
-                } else {
-                    // Assume the response text itself is the ID if it's just numbers
-                    fileId = uploadResult.trim();
+                if (!linkMatch) {
+                    // Fallback: try to find any anondrop.net URL with numbers
+                    const fallbackMatch = uploadResult.match(/https:\/\/anondrop\.net\/(\d+)/);
+                    if (!fallbackMatch) {
+                        throw new Error('Could not extract file link from response: ' + uploadResult);
+                    }
                 }
                 
-                if (!fileId) {
-                    throw new Error('Could not extract file ID from upload response: ' + uploadResult);
-                }
+                // linkMatch[1] is the full URL, linkMatch[2] is just the ID
+                const anondropUrl = linkMatch ? linkMatch[1] : `https://anondrop.net/${fallbackMatch[1]}`;
+                const fileId = linkMatch ? linkMatch[2] : fallbackMatch[1];
+                const directImageUrl = `https://anondrop.net/${fileId}/image.jpg`;
                 
-                // Step 4: Display the image
-                const imageUrl = `https://anondrop.net/${fileId}/image.jpg`;
+                console.log('File ID:', fileId);
+                console.log('Anondrop URL:', anondropUrl);
+                console.log('Direct URL:', directImageUrl);
                 
-                urlDisplay.textContent = imageUrl;
-                imgDisplay.src = imageUrl;
+                // Display results
+                anondropLink.href = anondropUrl;
+                anondropLink.textContent = anondropUrl;
+                directUrlSpan.textContent = directImageUrl;
+                imgDisplay.src = directImageUrl;
                 
                 imgDisplay.onload = function() {
-                    statusDiv.textContent = 'Upload complete!';
+                    statusDiv.innerHTML = '<span class="success">Upload complete!</span>';
                     resultDiv.style.display = 'block';
                     uploadBtn.disabled = false;
                 };
                 
                 imgDisplay.onerror = function() {
-                    statusDiv.textContent = 'Upload complete, but image preview failed to load';
+                    statusDiv.textContent = 'Upload complete, but image failed to load (may need time to propagate)';
                     resultDiv.style.display = 'block';
                     uploadBtn.disabled = false;
                 };
