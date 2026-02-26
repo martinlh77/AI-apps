@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Combiner - Merge Videos Locally</title>
+  <title>Video Combiner Pro v.1.1 - MP4 & WebM</title>
   <style>
     body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
-      max-width: 900px; 
+      max-width: 1000px; 
       margin: 40px auto; 
       padding: 20px;
       background: #f5f5f5;
@@ -20,7 +20,6 @@
     }
     h2 { margin-top: 0; color: #333; }
     
-    /* Input Section */
     .input-section {
       background: #f8f9fa;
       padding: 20px;
@@ -62,11 +61,7 @@
       margin: 5px 0;
     }
     
-    /* Video Queue / Playlist */
-    #videoQueue {
-      margin: 25px 0;
-      min-height: 100px;
-    }
+    #videoQueue { margin: 25px 0; min-height: 100px; }
     
     .queue-header {
       display: flex;
@@ -100,11 +95,7 @@
       position: relative;
     }
     
-    .video-item:hover {
-      border-color: #007cba;
-      box-shadow: 0 2px 8px rgba(0,124,186,0.1);
-    }
-    
+    .video-item:hover { border-color: #007cba; }
     .video-item.dragging {
       opacity: 0.5;
       border-color: #007cba;
@@ -118,8 +109,6 @@
       user-select: none;
     }
     
-    .drag-handle:active { cursor: grabbing; }
-    
     .video-thumb {
       width: 80px;
       height: 60px;
@@ -128,10 +117,7 @@
       background: #000;
     }
     
-    .video-info {
-      flex: 1;
-      min-width: 0;
-    }
+    .video-info { flex: 1; min-width: 0; }
     
     .video-name {
       font-weight: 500;
@@ -171,7 +157,6 @@
       justify-content: center;
       transition: background 0.2s;
     }
-    
     .remove-btn:hover { background: #c82333; }
     
     .empty-state {
@@ -183,7 +168,6 @@
       background: #fafafa;
     }
     
-    /* Settings */
     .settings-panel {
       background: #f8f9fa;
       padding: 20px;
@@ -202,7 +186,7 @@
     .setting-label {
       font-weight: 500;
       color: #333;
-      min-width: 120px;
+      min-width: 140px;
     }
     
     select {
@@ -211,15 +195,9 @@
       border-radius: 6px;
       font-size: 14px;
       background: white;
+      min-width: 200px;
     }
     
-    .info-text {
-      font-size: 0.85em;
-      color: #666;
-      margin-left: 10px;
-    }
-    
-    /* Action Button */
     .combine-btn {
       width: 100%;
       padding: 16px;
@@ -237,19 +215,17 @@
       justify-content: center;
       gap: 10px;
     }
-    
     .combine-btn:hover:not(:disabled) { background: #218838; }
     .combine-btn:disabled { 
       background: #ccc; 
       cursor: not-allowed;
+      opacity: 0.7;
     }
     
-    /* Progress & Status */
     .progress-container {
       display: none;
       margin: 20px 0;
     }
-    
     .progress-container.active { display: block; }
     
     .progress-bar {
@@ -281,38 +257,17 @@
       display: none;
       font-size: 0.95em;
     }
-    
     .status.active { display: block; }
     .status.info { background: #e8f4f8; border-left: 4px solid #007cba; }
     .status.success { background: #d4edda; border-left: 4px solid #28a745; }
     .status.error { background: #f8d7da; border-left: 4px solid #dc3545; }
     
-    .spinner {
-      display: none;
-      width: 40px;
-      height: 40px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #007cba;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    
-    .spinner.active { display: block; }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    /* Preview Section */
     #previewSection {
       display: none;
       margin-top: 30px;
       padding-top: 30px;
       border-top: 2px solid #e0e0e0;
     }
-    
     #previewSection.active { display: block; }
     
     #resultVideo {
@@ -334,8 +289,8 @@
       text-align: center;
       font-weight: 500;
       box-sizing: border-box;
+      margin-bottom: 10px;
     }
-    
     .download-btn:hover { background: #005a87; }
     
     .warning {
@@ -348,7 +303,16 @@
       color: #856404;
     }
     
-    /* Responsive */
+    .loading-ffmpeg {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      background: #e8f4f8;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .loading-ffmpeg.active { display: block; }
+    
     @media (max-width: 600px) {
       .setting-row { flex-direction: column; align-items: flex-start; gap: 8px; }
       .video-item { padding: 10px; }
@@ -358,15 +322,22 @@
 </head>
 <body>
   <div class="container">
-    <h2>🎬 Video Combiner</h2>
-    <p style="color: #666; margin-top: -10px;">Merge multiple videos into one. All processing happens locally in your browser.</p>
+    <h2>🎬 Video Combiner Pro</h2>
+    <p style="color: #666; margin-top: -10px;">Merge multiple videos into one MP4 file. All processing happens locally using FFmpeg.</p>
     
     <div class="warning">
-      ⚠️ <strong>Privacy First:</strong> Videos are processed entirely on your device and never uploaded to any server.
+      ⚠️ <strong>First time setup:</strong> This app downloads FFmpeg WebAssembly (~25MB) on first use. Videos are processed entirely on your device.
+    </div>
+    
+    <!-- FFmpeg Loading Indicator -->
+    <div class="loading-ffmpeg" id="ffmpegLoading">
+      <div style="font-size: 2em; margin-bottom: 10px;">⏳</div>
+      <div><strong>Loading FFmpeg...</strong></div>
+      <div style="font-size: 0.9em; color: #666; margin-top: 5px;">This may take 10-30 seconds on first load</div>
     </div>
     
     <!-- Input Section -->
-    <div class="input-section">
+    <div class="input-section" id="inputSection" style="opacity: 0.5; pointer-events: none;">
       <div class="input-type-selector">
         <button type="button" class="active" onclick="switchInputType('file')">📁 Upload Files</button>
         <button type="button" onclick="switchInputType('url')">🔗 Add from URL</button>
@@ -374,7 +345,7 @@
       
       <div id="filePanel" class="input-panel active">
         <input type="file" id="fileInput" accept="video/*" multiple onchange="handleFileSelect(event)">
-        <small style="color: #666;">Hold Ctrl/Cmd to select multiple files</small>
+        <small style="color: #666;">Hold Ctrl/Cmd to select multiple files (MP4, WebM, MOV supported)</small>
       </div>
       
       <div id="urlPanel" class="input-panel">
@@ -382,55 +353,51 @@
         <button type="button" onclick="addVideoFromUrl()" style="margin-top: 8px; width: 100%; padding: 10px; background: #007cba; color: white; border: none; border-radius: 6px; cursor: pointer;">
           Add Video from URL
         </button>
-        <small style="color: #666; display: block; margin-top: 5px;">Note: URL must support CORS or be from the same domain</small>
+        <small style="color: #666; display: block; margin-top: 5px;">Note: URL must support CORS or use CORS proxy</small>
       </div>
     </div>
     
     <!-- Video Queue -->
-    <div id="videoQueue">
+    <div id="videoQueue" style="opacity: 0.5; pointer-events: none;">
       <div class="queue-header">
-        <span class="video-count" id="videoCount">No videos added</span>
+        <span class="video-count" id="videoCount">Loading FFmpeg...</span>
         <button onclick="clearAll()" style="background: none; border: none; color: #dc3545; cursor: pointer; font-size: 0.9em;">Clear All</button>
       </div>
       <div id="videoList" class="video-list">
         <div class="empty-state">
           <div style="font-size: 3em; margin-bottom: 10px;">📭</div>
-          <div>Add videos above to start combining</div>
+          <div>Waiting for FFmpeg to load...</div>
         </div>
       </div>
     </div>
     
     <!-- Settings -->
-    <div class="settings-panel">
+    <div class="settings-panel" id="settingsPanel" style="opacity: 0.5; pointer-events: none;">
       <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.1em;">⚙️ Output Settings</h3>
       
       <div class="setting-row">
         <span class="setting-label">Resolution:</span>
         <select id="resolutionSelect">
-          <option value="1080">1080p (Full HD) - 1920×1080</option>
-          <option value="720" selected>720p (HD) - 1280×720</option>
+          <option value="original">Original (match first video)</option>
+          <option value="1080" selected>1080p (Full HD) - 1920×1080</option>
+          <option value="720">720p (HD) - 1280×720</option>
           <option value="480">480p (SD) - 854×480</option>
-          <option value="360">360p - 640×360</option>
         </select>
-        <span class="info-text">All videos will be scaled to fit this resolution while maintaining aspect ratio</span>
       </div>
       
       <div class="setting-row">
-        <span class="setting-label">Frame Rate:</span>
-        <select id="fpsSelect">
-          <option value="60">60 fps (Smooth)</option>
-          <option value="30" selected>30 fps (Standard)</option>
-          <option value="24">24 fps (Cinematic)</option>
+        <span class="setting-label">Output Format:</span>
+        <select id="formatSelect">
+          <option value="mp4" selected>MP4 (H.264) - Universal compatibility</option>
+          <option value="webm">WebM (VP9) - Better compression</option>
         </select>
-        <span class="info-text">Output frame rate</span>
       </div>
       
       <div class="setting-row">
-        <span class="setting-label">Aspect Ratio:</span>
-        <select id="aspectSelect">
-          <option value="maintain">Maintain original (letterbox if different)</option>
-          <option value="stretch">Stretch to fill (may distort)</option>
-          <option value="crop">Crop to fill (may cut edges)</option>
+        <span class="setting-label">Audio:</span>
+        <select id="audioSelect">
+          <option value="keep" selected>Keep audio from all videos</option>
+          <option value="mute">Remove audio (silent video)</option>
         </select>
       </div>
     </div>
@@ -446,35 +413,80 @@
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill">0%</div>
       </div>
-      <div style="text-align: center; color: #666; margin-top: 8px; font-size: 0.9em;" id="progressText">Preparing...</div>
+      <div style="text-align: center; color: #666; margin-top: 8px; font-size: 0.9em;" id="progressText">Initializing...</div>
     </div>
     
-    <div class="spinner" id="spinner"></div>
     <div class="status" id="status"></div>
     
     <!-- Preview Section -->
     <div id="previewSection">
       <h3 style="margin-bottom: 15px;">✅ Combined Video</h3>
       <video id="resultVideo" controls></video>
-      <a id="downloadLink" class="download-btn" download="combined-video.webm">
-        ⬇️ Download Combined Video (WebM)
+      <a id="downloadLink" class="download-btn" download="combined-video.mp4">
+        ⬇️ Download Combined Video
       </a>
-      <div style="margin-top: 10px; font-size: 0.85em; color: #666; text-align: center;">
-        Note: Safari users may need to use "Save Video As..." from the player context menu
-      </div>
     </div>
   </div>
 
+  <!-- Load FFmpeg.wasm -->
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+  
   <script>
+    const { FFmpeg } = FFmpegWASM;
+    const { fetchFile } = FFmpegUtil;
+    
+    let ffmpeg = null;
     let videoQueue = [];
     let dragSrcEl = null;
     let isProcessing = false;
     
-    // CORS Proxy for external URLs (using a public proxy - in production, use your own)
     const CORS_PROXIES = [
       'https://api.allorigins.win/raw?url=',
       'https://corsproxy.io/?'
     ];
+    
+    // Initialize FFmpeg
+    async function initFFmpeg() {
+      try {
+        document.getElementById('ffmpegLoading').classList.add('active');
+        
+        ffmpeg = new FFmpeg();
+        
+        ffmpeg.on('log', ({ message }) => {
+          console.log('FFmpeg:', message);
+        });
+        
+        ffmpeg.on('progress', ({ progress, time }) => {
+          const percent = Math.round(progress * 100);
+          updateProgress(percent, `Processing... ${percent}%`);
+        });
+        
+        // Load FFmpeg from CDN
+        await ffmpeg.load({
+          coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+        });
+        
+        // Enable UI
+        document.getElementById('ffmpegLoading').classList.remove('active');
+        document.getElementById('inputSection').style.opacity = '1';
+        document.getElementById('inputSection').style.pointerEvents = 'auto';
+        document.getElementById('videoQueue').style.opacity = '1';
+        document.getElementById('videoQueue').style.pointerEvents = 'auto';
+        document.getElementById('settingsPanel').style.opacity = '1';
+        document.getElementById('settingsPanel').style.pointerEvents = 'auto';
+        
+        showStatus('✅ FFmpeg loaded! Ready to combine videos.', 'success');
+        renderQueue();
+        
+      } catch (err) {
+        console.error(err);
+        showStatus('❌ Failed to load FFmpeg: ' + err.message, 'error');
+      }
+    }
+    
+    // Start loading immediately
+    initFFmpeg();
     
     function switchInputType(type) {
       document.querySelectorAll('.input-type-selector button').forEach(btn => {
@@ -487,7 +499,7 @@
     function handleFileSelect(event) {
       const files = Array.from(event.target.files);
       files.forEach(file => addVideoToQueue(file, file.name, URL.createObjectURL(file)));
-      event.target.value = ''; // Reset input
+      event.target.value = '';
     }
     
     async function addVideoFromUrl() {
@@ -501,49 +513,42 @@
       showStatus('Loading video from URL...', 'info');
       
       try {
-        // Try direct fetch first (works if CORS is enabled)
-        let response;
         let blob;
         let usedProxy = false;
         
         try {
-          response = await fetch(url);
+          const response = await fetch(url);
           if (!response.ok) throw new Error('Direct fetch failed');
           blob = await response.blob();
         } catch (e) {
-          // Try with CORS proxies
           for (const proxy of CORS_PROXIES) {
             try {
-              response = await fetch(proxy + encodeURIComponent(url));
+              const response = await fetch(proxy + encodeURIComponent(url));
               if (response.ok) {
                 blob = await response.blob();
                 usedProxy = true;
                 break;
               }
-            } catch (err) {
-              continue;
-            }
+            } catch (err) { continue; }
           }
-          if (!blob) throw new Error('Unable to fetch video. The server may block cross-origin requests.');
+          if (!blob) throw new Error('Unable to fetch video. Server may block cross-origin requests.');
         }
         
-        if (!blob.type.startsWith('video/')) {
+        if (!blob.type.startsWith('video/') && !blob.type.startsWith('application/octet')) {
           throw new Error('URL does not point to a valid video file');
         }
         
         const objectUrl = URL.createObjectURL(blob);
         const name = url.split('/').pop().split('?')[0] || 'video-from-url.mp4';
-        addVideoToQueue(blob, name, objectUrl, usedProxy ? '(via CORS proxy)' : '');
+        await addVideoToQueue(blob, name, objectUrl, usedProxy ? '(via CORS proxy)' : '');
         urlInput.value = '';
         showStatus('Video added successfully!', 'success');
       } catch (err) {
         showStatus('Error: ' + err.message, 'error');
-        console.error(err);
       }
     }
     
     async function addVideoToQueue(fileOrBlob, name, objectUrl, extraInfo = '') {
-      // Create video element to get metadata
       const video = document.createElement('video');
       video.preload = 'metadata';
       video.src = objectUrl;
@@ -551,7 +556,6 @@
       await new Promise((resolve, reject) => {
         video.onloadedmetadata = () => {
           if (video.duration === Infinity) {
-            // Some browsers report Infinity for certain formats, seek to get real duration
             video.currentTime = 1e101;
             video.ontimeupdate = () => {
               video.ontimeupdate = null;
@@ -569,7 +573,6 @@
       const width = video.videoWidth;
       const height = video.videoHeight;
       
-      // Generate thumbnail
       video.currentTime = Math.min(1, duration / 2);
       await new Promise(r => video.onseeked = r);
       
@@ -612,7 +615,8 @@
         return;
       }
       
-      countEl.textContent = `${videoQueue.length} video${videoQueue.length !== 1 ? 's' : ''} • Total duration: ${formatDuration(videoQueue.reduce((acc, v) => acc + v.duration, 0))}`;
+      const totalDur = videoQueue.reduce((acc, v) => acc + v.duration, 0);
+      countEl.textContent = `${videoQueue.length} video${videoQueue.length !== 1 ? 's' : ''} • Total: ${formatDuration(totalDur)}`;
       
       container.innerHTML = '';
       videoQueue.forEach((video, index) => {
@@ -634,7 +638,6 @@
           <button class="remove-btn" onclick="removeVideo(${index})" title="Remove">×</button>
         `;
         
-        // Drag events
         item.addEventListener('dragstart', handleDragStart);
         item.addEventListener('dragenter', handleDragEnter);
         item.addEventListener('dragover', handleDragOver);
@@ -660,24 +663,16 @@
       return false;
     }
     
-    function handleDragEnter(e) {
-      this.classList.add('dragging');
-    }
-    
-    function handleDragLeave(e) {
-      this.classList.remove('dragging');
-    }
+    function handleDragEnter(e) { this.classList.add('dragging'); }
+    function handleDragLeave(e) { this.classList.remove('dragging'); }
     
     function handleDrop(e) {
       if (e.stopPropagation) e.stopPropagation();
       if (dragSrcEl !== this) {
         const fromIndex = parseInt(dragSrcEl.dataset.index);
         const toIndex = parseInt(this.dataset.index);
-        
-        // Reorder array
         const item = videoQueue.splice(fromIndex, 1)[0];
         videoQueue.splice(toIndex, 0, item);
-        
         renderQueue();
       }
       return false;
@@ -711,210 +706,126 @@
     }
     
     function updateCombineButton() {
-      document.getElementById('combineBtn').disabled = videoQueue.length < 2 || isProcessing;
+      document.getElementById('combineBtn').disabled = videoQueue.length < 2 || isProcessing || !ffmpeg;
     }
     
     async function combineVideos() {
-      if (videoQueue.length < 2) return;
+      if (videoQueue.length < 2 || !ffmpeg) return;
       if (isProcessing) return;
       
       isProcessing = true;
       updateCombineButton();
       document.getElementById('previewSection').classList.remove('active');
-      
-      const resolution = parseInt(document.getElementById('resolutionSelect').value);
-      const fps = parseInt(document.getElementById('fpsSelect').value);
-      const aspectMode = document.getElementById('aspectSelect').value;
-      
-      // Calculate output dimensions (16:9 for standard, but we'll fit the first video's aspect ratio if maintain is selected)
-      let targetWidth = resolution;
-      let targetHeight = Math.round(resolution * 9 / 16); // Default 16:9
-      
-      if (aspectMode === 'maintain' && videoQueue.length > 0) {
-        // Use the first video's aspect ratio as the container
-        const firstVideo = videoQueue[0];
-        const firstAspect = firstVideo.width / firstVideo.height;
-        if (firstAspect > 1) {
-          targetWidth = resolution;
-          targetHeight = Math.round(resolution / firstAspect);
-        } else {
-          targetHeight = resolution;
-          targetWidth = Math.round(resolution * firstAspect);
-        }
-      }
-      
-      showStatus('Initializing video processing...', 'info');
       document.getElementById('progressContainer').classList.add('active');
-      document.getElementById('spinner').classList.add('active');
+      
+      const resolution = document.getElementById('resolutionSelect').value;
+      const format = document.getElementById('formatSelect').value;
+      const audioMode = document.getElementById('audioSelect').value;
       
       try {
-        // Setup canvas
-        const canvas = document.createElement('canvas');
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-        const ctx = canvas.getContext('2d');
+        showStatus('Preparing videos for processing...', 'info');
+        updateProgress(5, 'Writing files to memory...');
         
-        // Setup MediaRecorder
-        const stream = canvas.captureStream(fps);
-        const mimeTypes = [
-          'video/webm;codecs=vp9',
-          'video/webm;codecs=vp8',
-          'video/webm',
-          'video/mp4'
-        ];
-        
-        let selectedMimeType = mimeTypes.find(type => MediaRecorder.isTypeSupported(type));
-        if (!selectedMimeType) selectedMimeType = '';
-        
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: selectedMimeType,
-          videoBitsPerSecond: 5000000 // 5 Mbps
-        });
-        
-        const chunks = [];
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) chunks.push(e.data);
-        };
-        
-        mediaRecorder.onstop = () => {
-          const blob = new Blob(chunks, { type: selectedMimeType || 'video/webm' });
-          const url = URL.createObjectURL(blob);
-          
-          const video = document.getElementById('resultVideo');
-          video.src = url;
-          document.getElementById('downloadLink').href = url;
-          document.getElementById('downloadLink').download = `combined-video.${selectedMimeType.includes('mp4') ? 'mp4' : 'webm'}`;
-          
-          document.getElementById('previewSection').classList.add('active');
-          document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
-          
-          showStatus('✅ Videos combined successfully!', 'success');
-          document.getElementById('progressContainer').classList.remove('active');
-          document.getElementById('spinner').classList.remove('active');
-          isProcessing = false;
-          updateCombineButton();
-        };
-        
-        mediaRecorder.start();
-        
-        let totalDuration = videoQueue.reduce((acc, v) => acc + v.duration, 0);
-        let processedDuration = 0;
-        
-        // Process each video
+        // Write all input files to FFmpeg virtual filesystem
+        const inputFiles = [];
         for (let i = 0; i < videoQueue.length; i++) {
-          const videoData = videoQueue[i];
-          await processVideoSegment(videoData, canvas, ctx, mediaRecorder, fps, targetWidth, targetHeight, aspectMode, (progress) => {
-            const segmentProgress = progress * videoData.duration;
-            const currentTotal = processedDuration + segmentProgress;
-            const percent = (currentTotal / totalDuration) * 100;
-            updateProgress(percent, `Processing video ${i + 1} of ${videoQueue.length}...`);
-          });
-          processedDuration += videoData.duration;
+          const video = videoQueue[i];
+          const inputName = `input${i}.mp4`;
+          await ffmpeg.writeFile(inputName, await fetchFile(video.file));
+          inputFiles.push(inputName);
+          updateProgress(5 + ((i + 1) / videoQueue.length) * 15, `Loading video ${i + 1}...`);
         }
         
-        mediaRecorder.stop();
+        // Create concat list file
+        showStatus('Creating concatenation list...', 'info');
+        const concatList = inputFiles.map(f => `file '${f}'`).join('\n');
+        await ffmpeg.writeFile('concat_list.txt', concatList);
+        
+        // Determine output settings
+        let scaleFilter = '';
+        let outputName = `output.${format}`;
+        
+        if (resolution !== 'original') {
+          const targetHeight = parseInt(resolution);
+          // Scale to target height, maintain aspect ratio, pad with black if needed
+          scaleFilter = `scale=-2:${targetHeight}:force_original_aspect_ratio=decrease,pad=${Math.round(targetHeight * 16/9)}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black,setsar=1`;
+        } else {
+          // Use first video's resolution as target
+          const first = videoQueue[0];
+          scaleFilter = `scale=${first.width}:${first.height}:force_original_aspect_ratio=decrease,pad=${first.width}:${first.height}:(ow-iw)/2:(oh-ih)/2:black,setsar=1`;
+        }
+        
+        // Build FFmpeg command
+        const args = [
+          '-f', 'concat',
+          '-safe', '0',
+          '-i', 'concat_list.txt',
+          '-vf', scaleFilter,
+          '-c:v', format === 'mp4' ? 'libx264' : 'libvpx-vp9',
+          '-preset', 'fast',
+          '-crf', '23',
+          '-movflags', '+faststart', // Web optimization for MP4
+          '-pix_fmt', 'yuv420p', // Compatibility
+        ];
+        
+        // Audio settings
+        if (audioMode === 'mute') {
+          args.push('-an'); // No audio
+        } else {
+          args.push('-c:a', format === 'mp4' ? 'aac' : 'libopus');
+          args.push('-b:a', '128k');
+        }
+        
+        // Output file
+        args.push('-y', outputName);
+        
+        showStatus('Combining videos (this may take a while)...', 'info');
+        updateProgress(25, 'Concatenating and encoding...');
+        
+        // Execute FFmpeg
+        await ffmpeg.exec(args);
+        
+        updateProgress(90, 'Finalizing...');
+        
+        // Read the output file
+        const data = await ffmpeg.readFile(outputName);
+        const blob = new Blob([data.buffer], { type: format === 'mp4' ? 'video/mp4' : 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        
+        // Setup download and preview
+        const video = document.getElementById('resultVideo');
+        video.src = url;
+        
+        const downloadLink = document.getElementById('downloadLink');
+        downloadLink.href = url;
+        downloadLink.download = `combined-video.${format}`;
+        downloadLink.textContent = `⬇️ Download Combined Video (${format.toUpperCase()})`;
+        
+        document.getElementById('previewSection').classList.add('active');
+        document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
+        
+        // Cleanup FFmpeg filesystem
+        for (const file of inputFiles) {
+          await ffmpeg.deleteFile(file);
+        }
+        await ffmpeg.deleteFile('concat_list.txt');
+        await ffmpeg.deleteFile(outputName);
+        
+        showStatus(`✅ Success! Combined ${videoQueue.length} videos into ${format.toUpperCase()} format.`, 'success');
+        updateProgress(100, 'Complete!');
+        
+        setTimeout(() => {
+          document.getElementById('progressContainer').classList.remove('active');
+        }, 2000);
         
       } catch (err) {
         console.error(err);
-        showStatus('Error: ' + err.message, 'error');
+        showStatus('❌ Error: ' + err.message, 'error');
         document.getElementById('progressContainer').classList.remove('active');
-        document.getElementById('spinner').classList.remove('active');
-        isProcessing = false;
-        updateCombineButton();
       }
-    }
-    
-    async function processVideoSegment(videoData, canvas, ctx, recorder, fps, targetW, targetH, aspectMode, onProgress) {
-      return new Promise((resolve, reject) => {
-        const video = document.createElement('video');
-        video.src = videoData.url;
-        video.muted = true; // Important for autoplay
-        video.playsInline = true;
-        video.playbackRate = 1;
-        
-        let frameInterval;
-        let nextFrameTime;
-        
-        const drawFrame = () => {
-          if (video.paused || video.ended) return;
-          
-          // Calculate scaling based on aspect mode
-          let drawX = 0, drawY = 0, drawW = targetW, drawH = targetH;
-          
-          if (aspectMode === 'maintain') {
-            // Letterbox: fit within target maintaining aspect ratio
-            const videoAspect = videoData.width / videoData.height;
-            const targetAspect = targetW / targetH;
-            
-            if (videoAspect > targetAspect) {
-              drawW = targetW;
-              drawH = targetW / videoAspect;
-              drawY = (targetH - drawH) / 2;
-            } else {
-              drawH = targetH;
-              drawW = targetH * videoAspect;
-              drawX = (targetW - drawW) / 2;
-            }
-            
-            // Clear background (black bars)
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, targetW, targetH);
-          } else if (aspectMode === 'crop') {
-            // Crop to fill
-            const videoAspect = videoData.width / videoData.height;
-            const targetAspect = targetW / targetH;
-            
-            let renderW, renderH, srcX, srcY, srcW, srcH;
-            if (videoAspect > targetAspect) {
-              // Video is wider: crop sides
-              renderH = videoData.height;
-              renderW = videoData.height * targetAspect;
-              srcX = (videoData.width - renderW) / 2;
-              srcY = 0;
-              srcW = renderW;
-              srcH = renderH;
-            } else {
-              // Video is taller: crop top/bottom
-              renderW = videoData.width;
-              renderH = videoData.width / targetAspect;
-              srcX = 0;
-              srcY = (videoData.height - renderH) / 2;
-              srcW = renderW;
-              srcH = renderH;
-            }
-            
-            ctx.drawImage(video, srcX, srcY, srcW, srcH, 0, 0, targetW, targetH);
-            
-            if (video.currentTime < video.duration) {
-              onProgress(video.currentTime / video.duration);
-              requestAnimationFrame(drawFrame);
-            }
-            return;
-          }
-          // stretch mode uses full canvas automatically
-          
-          ctx.drawImage(video, drawX, drawY, drawW, drawH);
-          
-          if (video.currentTime < video.duration) {
-            onProgress(video.currentTime / video.duration);
-            requestAnimationFrame(drawFrame);
-          }
-        };
-        
-        video.onplay = () => {
-          drawFrame();
-        };
-        
-        video.onended = () => {
-          resolve();
-        };
-        
-        video.onerror = () => {
-          reject(new Error(`Failed to load video: ${videoData.name}`));
-        };
-        
-        video.play().catch(reject);
-      });
+      
+      isProcessing = false;
+      updateCombineButton();
     }
     
     function updateProgress(percent, text) {
@@ -931,7 +842,7 @@
       status.className = 'status ' + type + ' active';
       if (type === 'success' || type === 'error') {
         setTimeout(() => {
-          if (type === 'error') status.classList.remove('active');
+          if (status.textContent === message) status.classList.remove('active');
         }, 5000);
       }
     }
@@ -948,9 +859,6 @@
       div.textContent = text;
       return div.innerHTML;
     }
-    
-    // Initialize
-    showStatus('Ready! Add at least 2 videos to combine.', 'info');
   </script>
 </body>
 </html>
