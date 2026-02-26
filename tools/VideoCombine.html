@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Combiner Pro v.2.3 - MP4 & WebM</title>
+  <title>Video Combiner Pro v.2.4 - MP4 & WebM</title>
   <style>
     body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
@@ -422,9 +422,10 @@
     </div>
   </div>
 
-  <!-- Load FFmpeg from local repository (same-origin, no CORS issues) -->
-  <script src="https://github.com/martinlh77/AI-apps/tools/ffmpeg/ffmpeg.js"></script>
-  <script src="https://github.com/martinlh77/AI-apps/tools/ffmpeg/index.js"></script>
+  <!-- CRITICAL: Use GitHub Pages URLs, not GitHub repository URLs -->
+  <!-- GitHub Pages serves raw files, GitHub.com serves HTML pages -->
+  <script src="https://martinlh77.github.io/AI-apps/tools/ffmpeg/ffmpeg.js"></script>
+  <script src="https://martinlh77.github.io/AI-apps/tools/ffmpeg/index.js"></script>
   
   <script>
     // Use global FFmpeg objects (loaded via UMD scripts above)
@@ -441,11 +442,16 @@
       'https://corsproxy.io/?'
     ];
     
-    // Initialize FFmpeg with LOCAL files from your repository
+    // Initialize FFmpeg with GitHub Pages hosted files
     async function initFFmpeg() {
       try {
         document.getElementById('ffmpegLoading').classList.add('active');
-        showStatus('Loading FFmpeg from repository...', 'info');
+        showStatus('Loading FFmpeg from GitHub Pages...', 'info');
+        
+        // Check if libraries loaded
+        if (typeof FFmpegWASM === 'undefined' || typeof FFmpegUtil === 'undefined') {
+          throw new Error('FFmpeg libraries failed to load. Check that script URLs are correct and files exist.');
+        }
         
         ffmpeg = new FFmpeg();
         
@@ -458,13 +464,13 @@
           updateProgress(percent, `Processing... ${percent}%`);
         });
         
-        // CRITICAL: Use same-origin URLs from local ffmpeg folder
-        const coreURL = 'https://github.com/martinlh77/AI-apps/tools/ffmpeg/ffmpeg-core.js';
-        const wasmURL = 'https://github.com/martinlh77/AI-apps/tools/ffmpeg/ffmpeg-core.wasm';
+        // CRITICAL: Use GitHub Pages URLs for core files
+        const coreURL = 'https://martinlh77.github.io/AI-apps/tools/ffmpeg/ffmpeg-core.js';
+        const wasmURL = 'https://martinlh77.github.io/AI-apps/tools/ffmpeg/ffmpeg-core.wasm';
         
         showStatus('Initializing FFmpeg engine...', 'info');
         
-        // Load FFmpeg using local files (same-origin, no CORS issues)
+        // Load FFmpeg using GitHub Pages hosted files
         await ffmpeg.load({ coreURL, wasmURL });
         
         // Enable UI
@@ -488,11 +494,12 @@
             <div><strong>Failed to load FFmpeg</strong></div>
             <div style="font-size: 0.9em; margin-top: 10px; color: #666; text-align: left; max-width: 400px; margin: 10px auto;">
               <strong>Error:</strong> ${err.message}<br><br>
-              <strong>Fix this:</strong><br>
-              1. Ensure ffmpeg-core.js and ffmpeg-core.wasm are in the ./ffmpeg/ folder<br>
-              2. Ensure 814.ffmpeg.js is in the same ./ffmpeg/ folder as ffmpeg.js<br>
-              3. Check browser console (F12) for 404 errors<br>
-              4. Verify file paths are correct relative to this HTML file
+              <strong>Common fixes:</strong><br>
+              1. Ensure all 5 files are uploaded to: https://github.com/martinlh77/AI-apps/tree/main/tools/ffmpeg/<br>
+              2. Verify GitHub Pages is enabled in Settings > Pages<br>
+              3. Wait 2-3 minutes after pushing for GitHub Pages to update<br>
+              4. Check browser console (F12) for 404 errors on specific files<br>
+              5. Ensure 814.ffmpeg.js exists (worker file auto-loaded by ffmpeg.js)
             </div>
           </div>
         `;
