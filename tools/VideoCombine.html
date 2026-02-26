@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Video Combiner Pro v.1.1 - MP4 & WebM</title>
+  <title>Video Combiner Pro v.1.2 - MP4 & WebM</title>
   <style>
     body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; 
@@ -312,12 +312,6 @@
       margin: 20px 0;
     }
     .loading-ffmpeg.active { display: block; }
-    
-    @media (max-width: 600px) {
-      .setting-row { flex-direction: column; align-items: flex-start; gap: 8px; }
-      .video-item { padding: 10px; }
-      .video-thumb { width: 60px; height: 45px; }
-    }
   </style>
 </head>
 <body>
@@ -333,7 +327,7 @@
     <div class="loading-ffmpeg" id="ffmpegLoading">
       <div style="font-size: 2em; margin-bottom: 10px;">⏳</div>
       <div><strong>Loading FFmpeg...</strong></div>
-      <div style="font-size: 0.9em; color: #666; margin-top: 5px;">This may take 10-30 seconds on first load</div>
+      <div style="font-size: 0.9em; color: #666; margin-top: 5px;">Downloading required files (one-time only)</div>
     </div>
     
     <!-- Input Section -->
@@ -428,14 +422,8 @@
     </div>
   </div>
 
-  <!-- Load FFmpeg.wasm -->
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
-  
   <script>
-    const { FFmpeg } = FFmpegWASM;
-    const { fetchFile } = FFmpegUtil;
-    
+    // FFmpeg setup with CORS fix using Blob URLs
     let ffmpeg = null;
     let videoQueue = [];
     let dragSrcEl = null;
@@ -446,10 +434,25 @@
       'https://corsproxy.io/?'
     ];
     
-    // Initialize FFmpeg
+    // Helper to convert URL to Blob URL (bypasses CORS for Workers)
+    async function toBlobURL(url, mimeType) {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    }
+    
+    // Initialize FFmpeg with proper CORS handling
     async function initFFmpeg() {
       try {
         document.getElementById('ffmpegLoading').classList.add('active');
+        showStatus('Downloading FFmpeg (one-time setup)...', 'info');
+        
+        // Dynamically import FFmpeg as ES modules to avoid UMD worker issues
+        const { FFmpeg } = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js');
+        const { fetchFile } = await import('https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js');
+        
+        // Make fetchFile available globally
+        window.fetchFile = fetchFile;
         
         ffmpeg = new FFmpeg();
         
@@ -462,10 +465,12 @@
           updateProgress(percent, `Processing... ${percent}%`);
         });
         
-        // Load FFmpeg from CDN
-        await ffmpeg.load({
-          coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-        });
+        // Load FFmpeg core and wasm as Blob URLs to bypass CORS restrictions on Workers
+        const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+        const coreURL = await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript');
+        const wasmURL = await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm');
+        
+        await ffmpeg.load({ coreURL, wasmURL });
         
         // Enable UI
         document.getElementById('ffmpegLoading').classList.remove('active');
@@ -481,7 +486,7 @@
         
       } catch (err) {
         console.error(err);
-        showStatus('❌ Failed to load FFmpeg: ' + err.message, 'error');
+        showStatus('❌ Failed to load FFmpeg: ' + err.message + '. Try refreshing the page.', 'error');
       }
     }
     
@@ -731,7 +736,7 @@
         for (let i = 0; i < videoQueue.length; i++) {
           const video = videoQueue[i];
           const inputName = `input${i}.mp4`;
-          await ffmpeg.writeFile(inputName, await fetchFile(video.file));
+          await ffmpeg.writeFile(inputName, await window.fetchFile(video.file));
           inputFiles.push(inputName);
           updateProgress(5 + ((i + 1) / videoQueue.length) * 15, `Loading video ${i + 1}...`);
         }
@@ -747,10 +752,8 @@
         
         if (resolution !== 'original') {
           const targetHeight = parseInt(resolution);
-          // Scale to target height, maintain aspect ratio, pad with black if needed
           scaleFilter = `scale=-2:${targetHeight}:force_original_aspect_ratio=decrease,pad=${Math.round(targetHeight * 16/9)}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black,setsar=1`;
         } else {
-          // Use first video's resolution as target
           const first = videoQueue[0];
           scaleFilter = `scale=${first.width}:${first.height}:force_original_aspect_ratio=decrease,pad=${first.width}:${first.height}:(ow-iw)/2:(oh-ih)/2:black,setsar=1`;
         }
@@ -764,25 +767,22 @@
           '-c:v', format === 'mp4' ? 'libx264' : 'libvpx-vp9',
           '-preset', 'fast',
           '-crf', '23',
-          '-movflags', '+faststart', // Web optimization for MP4
-          '-pix_fmt', 'yuv420p', // Compatibility
+          '-movflags', '+faststart',
+          '-pix_fmt', 'yuv420p',
         ];
         
-        // Audio settings
         if (audioMode === 'mute') {
-          args.push('-an'); // No audio
+          args.push('-an');
         } else {
           args.push('-c:a', format === 'mp4' ? 'aac' : 'libopus');
           args.push('-b:a', '128k');
         }
         
-        // Output file
         args.push('-y', outputName);
         
         showStatus('Combining videos (this may take a while)...', 'info');
         updateProgress(25, 'Concatenating and encoding...');
         
-        // Execute FFmpeg
         await ffmpeg.exec(args);
         
         updateProgress(90, 'Finalizing...');
@@ -792,7 +792,6 @@
         const blob = new Blob([data.buffer], { type: format === 'mp4' ? 'video/mp4' : 'video/webm' });
         const url = URL.createObjectURL(blob);
         
-        // Setup download and preview
         const video = document.getElementById('resultVideo');
         video.src = url;
         
@@ -804,7 +803,7 @@
         document.getElementById('previewSection').classList.add('active');
         document.getElementById('previewSection').scrollIntoView({ behavior: 'smooth' });
         
-        // Cleanup FFmpeg filesystem
+        // Cleanup
         for (const file of inputFiles) {
           await ffmpeg.deleteFile(file);
         }
