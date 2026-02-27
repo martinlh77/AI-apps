@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Video Workflow Studio</title>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-hover: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #475569;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --success: #22c55e;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --radius: 0.75rem;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+        }
+        
+        [data-theme="light"] {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-hover: #f1f5f9;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        
+        .controls { display: flex; gap: 0.5rem; align-items: center; }
+        
+        button, .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        button:hover, .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        button.secondary { background: var(--surface-hover); }
+        
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            overflow-x: auto;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            color: var(--text-muted);
+            border-radius: var(--radius) var(--radius) 0 0;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: var(--surface);
+        }
+        
+        .panel { display: none; }
+        .panel.active { display: block; animation: fadeIn 0.3s; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        
+        .grid { display: grid; gap: 1rem; }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        
+        label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; }
+        
+        input[type="text"], input[type="url"], input[type="password"], input[type="number"], textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        textarea { resize: vertical; min-height: 100px; }
+        
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--bg);
+        }
+        
+        .upload-zone:hover { border-color: var(--primary); background: rgba(99, 102, 241, 0.05); }
+        
+        .image-preview {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .preview-item {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 2px solid var(--border);
+        }
+        
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .preview-item .remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: var(--error);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        
+        .video-player {
+            width: 100%;
+            max-height: 500px;
+            border-radius: var(--radius);
+            background: #000;
+            margin: 1rem 0;
+        }
+        
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .history-item {
+            position: relative;
+            background: var(--bg);
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .history-item:hover { border-color: var(--primary); transform: scale(1.02); }
+        .history-item img, .history-item video {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .history-meta {
+            padding: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .history-actions {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .history-item:hover .history-actions { opacity: 1; }
+        
+        .icon-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        
+        .icon-btn:hover { background: var(--primary); }
+        
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: var(--radius);
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border);
+            cursor: move;
+        }
+        
+        .queue-item.dragging { opacity: 0.5; border-color: var(--primary); }
+        
+        .queue-thumb { width: 80px; height: 60px; object-fit: cover; border-radius: 0.5rem; background: #000; }
+        .queue-info { flex: 1; min-width: 0; }
+        .queue-title { font-weight: 500; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .queue-meta { font-size: 0.85rem; color: var(--text-muted); }
+        
+        .progress-container {
+            margin: 1rem 0;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 30px;
+            background: var(--bg);
+            border-radius: var(--radius);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), #818cf8);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .status {
+            padding: 1rem;
+            border-radius: var(--radius);
+            margin: 1rem 0;
+            display: none;
+        }
+        
+        .status.active { display: block; }
+        .status.info { background: rgba(99, 102, 241, 0.1); border-left: 4px solid var(--primary); }
+        .status.success { background: rgba(34, 197, 94, 0.1); border-left: 4px solid var(--success); }
+        .status.error { background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--error); }
+        
+        .frame-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        
+        canvas.frame-canvas {
+            max-width: 100%;
+            border-radius: var(--radius);
+            border: 2px solid var(--border);
+            background: #000;
+        }
+        
+        .hidden { display: none !important; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .modal.active { display: flex; }
+        .modal-content {
+            background: var(--surface);
+            border-radius: var(--radius);
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        
+        .trim-controls {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--bg);
+            border-radius: var(--radius);
+        }
+        
+        .range-slider {
+            margin: 1rem 0;
+        }
+        
+        .range-slider label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 0.5rem;
+            z-index: 100;
+        }
+        
+        .mobile-menu button {
+            flex: 1;
+            padding: 0.75rem;
+            font-size: 0.8rem;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--surface);
+            color: var(--text);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            border-left: 4px solid var(--primary);
+            box-shadow: var(--shadow);
+            transform: translateX(150%);
+            transition: transform 0.3s;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        
+        .toast.active { transform: translateX(0); }
+        .toast.success { border-left-color: var(--success); }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        @media (max-width: 768px) {
+            .mobile-menu { display: flex; }
+            .container { padding-bottom: 80px; }
+            .tabs { display: none; }
+            h1 { font-size: 1.2rem; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .queue-item { flex-direction: column; text-align: center; }
+            .queue-thumb { width: 100%; height: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 Video Workflow Studio</h1>
+            <div class="controls">
+                <button onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+                    <span id="themeIcon">☀️</span>
+                </button>
+                <button onclick="showApiKeyModal()" class="secondary">🔑 API Key</button>
+            </div>
+        </header>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('generate')">🎨 Generate</button>
+            <button class="tab" onclick="switchTab('extract')">📸 Extract Frames</button>
+            <button class="tab" onclick="switchTab('combine')">🎬 Combine</button>
+            <button class="tab" onclick="switchTab('history')">📚 History</button>
+        </div>
+        
+        <!-- Generate Panel -->
+        <div id="generatePanel" class="panel active">
+            <div class="card">
+                <div class="grid grid-2">
+                    <div>
+                        <label>Prompt (max 500 chars)</label>
+                        <textarea id="promptInput" placeholder="Describe the video you want to generate..." maxlength="500"></textarea>
+                        <div style="text-align: right; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            <span id="charCount">0</span>/500
+                        </div>
+                        
+                        <label style="margin-top: 1rem;">Mode</label>
+                        <select id="grokMode">
+                            <option value="normal">Normal</option>
+                            <option value="spicy">Spicy</option>
+                            <option value="fun">Fun</option>
+                        </select>
+                        
+                        <label style="margin-top: 1rem;">Aspect Ratio</label>
+                        <select id="grokAspectRatio">
+                            <option value="2:3">2:3 Portrait</option>
+                            <option value="3:2">3:2 Landscape</option>
+                            <option value="1:1">1:1 Square</option>
+                        </select>
+                        
+                        <div style="margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: var(--radius); font-size: 0.9rem; color: var(--text-muted);">
+                            ℹ️ Images auto-upload to AnonDrop (required by Grok API). Max 2 images.
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label>Reference Images (Optional, max 2)</label>
+                        <div class="upload-zone" onclick="document.getElementById('imageUpload').click()" id="dropZone">
+                            <div>📁 Click or drag images here</div>
+                            <input type="file" id="imageUpload" accept="image/*" multiple style="display: none;" onchange="handleImageSelect(event)">
+                        </div>
+                        
+                        <div id="imagePreviewContainer" class="image-preview"></div>
+                        
+                        <button onclick="generateVideo()" id="generateBtn" style="width: 100%; margin-top: 1rem; padding: 1rem; font-size: 1.1rem;">
+                            <span id="genSpinner" class="spinner hidden"></span>
+                            Generate Video
+                        </button>
+                        
+                        <div id="generateStatus" class="status"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" id="resultCard" style="display: none;">
+                <h3>Generated Result</h3>
+                <video id="resultVideo" class="video-player" controls loop></video>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+                    <button onclick="downloadCurrentVideo()" class="btn">⬇️ Download</button>
+                    <button onclick="addToCombineFromCurrent()" class="btn secondary">➕ Add to Combine</button>
+                    <button onclick="extractFromCurrent()" class="btn secondary">✂️ Extract Frames</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Extract Panel -->
+        <div id="extractPanel" class="panel">
+            <div class="card">
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <select id="extractSource" onchange="changeExtractSource()">
+                        <option value="history">From History</option>
+                        <option value="file">Upload File</option>
+                        <option value="url">From URL</option>
+                    </select>
+                    <select id="historySelect" style="flex: 1; min-width: 200px;"></select>
+                    <input type="file" id="extractFileInput" accept="video/*" style="display: none;" onchange="handleExtractFile(event)">
+                    <input type="url" id="extractUrlInput" placeholder="https://example.com/video.mp4" style="display: none; flex: 1;">
+                    <button id="extractLoadBtn" onclick="loadExtractVideo()" class="btn">Load Video</button>
+                </div>
+                
+                <video id="extractVideo" class="video-player" controls style="display: none;"></video>
+                
+                <div id="extractControls" style="display: none;">
+                    <div class="frame-controls">
+                        <button onclick="seekFrame(-1)">⏮️ Frame</button>
+                        <button onclick="seekFrame(1)">⏭️ Frame</button>
+                        <button onclick="goToStart()">⏹️ First</button>
+                        <button onclick="goToEnd()">⏏️ Last</button>
+                        <button onclick="captureFrame()">📸 Capture</button>
+                        <span id="timeDisplay" style="margin-left: auto; font-family: monospace;">00:00:00</span>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;">
+                        <div>
+                            <canvas id="frameCanvas" class="frame-canvas" width="640" height="360"></canvas>
+                        </div>
+                        <div>
+                            <div class="trim-controls">
+                                <h4>Quick Extract</h4>
+                                <button onclick="extractSpecificFrame('first')" class="btn secondary" style="width: 100%; margin-bottom: 0.5rem;">📥 First Frame</button>
+                                <button onclick="extractSpecificFrame('last')" class="btn secondary" style="width: 100%;">📥 Last Frame</button>
+                            </div>
+                            
+                            <div id="uploadFrameSection" style="display: none; padding: 1rem; background: var(--bg); border-radius: var(--radius);">
+                                <h4>Upload to AnonDrop</h4>
+                                <div id="frameUploadPreview" style="margin: 0.5rem 0;"></div>
+                                <button onclick="uploadCapturedFrame()" id="uploadFrameBtn" class="btn" style="width: 100%;">☁️ Get Link</button>
+                                <div id="frameUploadResult" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="range-slider">
+                        <label>Video Position <span id="sliderValue">0%</span></label>
+                        <input type="range" id="videoSlider" min="0" max="100" step="0.1" value="0" style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Combine Panel -->
+        <div id="combinePanel" class="panel">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h3 style="margin: 0;">Video Queue (Drag to reorder)</h3>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <select id="addFromHistory">
+                            <option value="">Add from history...</option>
+                        </select>
+                        <button onclick="addSelectedToQueue()" class="btn secondary">Add</button>
+                        <button onclick="clearQueue()" class="btn secondary">Clear</button>
+                    </div>
+                </div>
+                
+                <div id="videoQueue" style="min-height: 100px; margin-bottom: 1rem;">
+                    <div style="text-align: center; padding: 2rem; color: var(--text-muted);">No videos in queue</div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label>Resolution</label>
+                        <select id="combineResolution">
+                            <option value="original">Original</option>
+                            <option value="1080" selected>1080p</option>
+                            <option value="720">720p</option>
+                            <option value="480">480p</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Audio</label>
+                        <select id="combineAudio">
+                            <option value="keep" selected>Keep audio</option>
+                            <option value="mute">Mute</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button onclick="combineVideos()" id="combineBtn" class="btn" style="width: 100%; padding: 1rem; font-size: 1.1rem;" disabled>
+                    🎬 Combine Videos
+                </button>
+                
+                <div id="combineProgress" class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="combineProgressFill" style="width: 0%">0%</div>
+                    </div>
+                    <div id="combineStatusText" style="text-align: center; margin-top: 0.5rem; color: var(--text-muted);">Initializing...</div>
+                </div>
+                
+                <div id="combineResult" style="display: none; margin-top: 1rem;">
+                    <video id="combinedVideo" class="video-player" controls></video>
+                    <a id="combinedDownload" class="btn" style="width: 100%; margin-top: 0.5rem; text-decoration: none; display: block; text-align: center;" download="combined.mp4">⬇️ Download Combined Video</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- History Panel -->
+        <div id="historyPanel" class="panel">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <h3 style="margin: 0;">Generation History</h3>
+                    <div>
+                        <button onclick="exportHistory()" class="btn secondary" style="font-size: 0.85rem;">📤 Export</button>
+                        <button onclick="document.getElementById('importFile').click()" class="btn secondary" style="font-size: 0.85rem;">📥 Import</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importHistory(event)">
+                        <button onclick="clearHistory()" class="btn secondary" style="font-size: 0.85rem; margin-left: 0.5rem;">Clear</button>
+                    </div>
+                </div>
+                <div id="historyGrid" class="history-grid"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mobile Menu -->
+    <nav class="mobile-menu">
+        <button onclick="switchTab('generate')">Generate</button>
+        <button onclick="switchTab('extract')">Extract</button>
+        <button onclick="switchTab('combine')">Combine</button>
+        <button onclick="switchTab('history')">History</button>
+    </nav>
+    
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+    
+    <!-- API Key Modal -->
+    <div id="apiKeyModal" class="modal" onclick="if(event.target===this)hideApiKeyModal()">
+        <div class="modal-content">
+            <h3>API Configuration</h3>
+            <label>Airforce API Key (required for video generation)</label>
+            <input type="password" id="airforceKeyInput" placeholder="Enter your API key...">
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button onclick="hideApiKeyModal()" class="secondary">Cancel</button>
+                <button onclick="saveApiKey()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management ---
+        const state = {
+            apiKey: localStorage.getItem('airforce_api_key') || '',
+            history: JSON.parse(localStorage.getItem('video_history') || '[]'),
+            referenceImages: [],
+            currentVideoUrl: null,
+            capturedFrame: null,
+            combineQueue: [],
+            ffmpeg: null,
+            ffmpegLoaded: false,
+            extractVideo: null
+        };
+
+        // --- Theme ---
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            const next = isDark ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            document.getElementById('themeIcon').textContent = isDark ? '🌙' : '☀️';
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            document.getElementById('themeIcon').textContent = saved === 'dark' ? '☀️' : '🌙';
+        }
+
+        // --- Navigation ---
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Panel').classList.add('active');
+            
+            if (tab === 'history') renderHistory();
+            if (tab === 'combine') updateCombineSelect();
+            if (tab === 'extract') populateExtractHistory();
+            
+            // Update mobile menu
+            document.querySelectorAll('.mobile-menu button').forEach((btn, idx) => {
+                const tabs = ['generate', 'extract', 'combine', 'history'];
+                btn.style.background = tabs[idx] === tab ? 'var(--primary)' : 'var(--surface)';
+            });
+        }
+
+        // --- Utilities ---
+        function showToast(msg, type='info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast active ' + type;
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        }
+
+        function showStatus(id, msg, type='info') {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.className = 'status active ' + type;
+            if (type !== 'error') setTimeout(() => el.classList.remove('active'), 5000);
+        }
+
+        // --- AnonDrop Upload ---
+        async function uploadToAnonDrop(file) {
+            try {
+                const reg = await fetch('https://anondrop.net/register');
+                const text = await reg.text();
+                const match = text.match(/localStorage\.setItem\('userkey',\s*'(\d+)'\)/);
+                if (!match) throw new Error('Failed to get upload key');
+                
+                const key = match[1];
+                const form = new FormData();
+                form.append('file', file);
+                
+                const upload = await fetch(`https://anondrop.net/upload?key=${key}`, {
+                    method: 'POST',
+                    body: form
+                });
+                
+                if (!upload.ok) throw new Error('Upload failed');
+                const result = await upload.text();
+                const linkMatch = result.match(/href='(https:\/\/anondrop\.net\/(\d+))'/);
+                if (!linkMatch) throw new Error('Failed to parse upload result');
+                
+                const ext = file.name.split('.').pop();
+                return `https://anondrop.net/${linkMatch[2]}/file.${ext}`;
+            } catch (err) {
+                throw new Error('AnonDrop: ' + err.message);
+            }
+        }
+
+        // --- Generate Video ---
+        document.getElementById('promptInput').addEventListener('input', (e) => {
+            document.getElementById('charCount').textContent = e.target.value.length;
+        });
+
+        function handleImageSelect(e) {
+            const files = Array.from(e.target.files);
+            if (state.referenceImages.length + files.length > 2) {
+                showToast('Max 2 images allowed', 'error');
+                return;
+            }
+            files.forEach(file => {
+                const url = URL.createObjectURL(file);
+                state.referenceImages.push({ file, url, anondropUrl: null });
+            });
+            renderImagePreviews();
+        }
+
+        function renderImagePreviews() {
+            const container = document.getElementById('imagePreviewContainer');
+            container.innerHTML = state.referenceImages.map((img, idx) => `
+                <div class="preview-item">
+                    <img src="${img.url}">
+                    <div class="remove" onclick="removeImage(${idx})">×</div>
+                </div>
+            `).join('');
+        }
+
+        function removeImage(idx) {
+            URL.revokeObjectURL(state.referenceImages[idx].url);
+            state.referenceImages.splice(idx, 1);
+            renderImagePreviews();
+        }
+
+        // Drag and drop
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--primary)'; });
+        dropZone.addEventListener('dragleave', () => dropZone.style.borderColor = 'var(--border)');
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--border)';
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            if (state.referenceImages.length + files.length > 2) return showToast('Max 2 images', 'error');
+            files.forEach(file => state.referenceImages.push({ file, url: URL.createObjectURL(file), anondropUrl: null }));
+            renderImagePreviews();
+        });
+
+        async function generateVideo() {
+            const prompt = document.getElementById('promptInput').value.trim();
+            if (!prompt) return showStatus('generateStatus', 'Enter a prompt', 'error');
+            if (!state.apiKey) return showStatus('generateStatus', 'Set API key first', 'error');
+            if (prompt.length > 500) return showStatus('generateStatus', 'Prompt too long', 'error');
+
+            const btn = document.getElementById('generateBtn');
+            const spinner = document.getElementById('genSpinner');
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+
+            try {
+                // Upload images to AnonDrop
+                const imageUrls = [];
+                for (let img of state.referenceImages) {
+                    if (!img.anondropUrl) {
+                        showStatus('generateStatus', 'Uploading images...', 'info');
+                        img.anondropUrl = await uploadToAnonDrop(img.file);
+                    }
+                    imageUrls.push(img.anondropUrl);
+                }
+
+                const aspect = document.getElementById('grokAspectRatio').value;
+                let size = '1024x1024';
+                if (aspect === '3:2') size = '1536x1024';
+                if (aspect === '2:3') size = '1024x1536';
+
+                const body = {
+                    model: 'grok-imagine-video',
+                    prompt: prompt,
+                    n: 1,
+                    size: size,
+                    response_format: 'url',
+                    mode: document.getElementById('grokMode').value
+                };
+                if (imageUrls.length) body.image = imageUrls.length === 1 ? imageUrls[0] : imageUrls;
+
+                showStatus('generateStatus', 'Generating video (~30-60s)...', 'info');
+
+                const res = await fetch('https://api.airforce/v1/images/generations', {
+                    method: 'POST',
+                    headers: { 'Authorization': state.apiKey, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+
+                let finalUrl = null;
+                const contentType = res.headers.get('content-type');
+                
+                if (contentType?.includes('json')) {
+                    const data = await res.json();
+                    const findUrl = (obj) => {
+                        if (!obj || typeof obj !== 'object') return null;
+                        for (const [k, v] of Object.entries(obj)) {
+                            if (typeof v === 'string' && v.startsWith('http')) return v;
+                            const found = findUrl(v);
+                            if (found) return found;
+                        }
+                        return null;
+                    };
+                    finalUrl = findUrl(data);
+                } else {
+                    // SSE
+                    const reader = res.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop();
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    if (data.progress) showStatus('generateStatus', `Generating... ${Math.round(data.progress)}%`, 'info');
+                                    if (data.url) finalUrl = data.url;
+                                } catch (e) {}
+                            }
+                        }
+                    }
+                }
+
+                if (!finalUrl) throw new Error('No video URL received');
+
+                state.currentVideoUrl = finalUrl;
+                document.getElementById('resultVideo').src = finalUrl;
+                document.getElementById('resultCard').style.display = 'block';
+                
+                // Save to history
+                state.history.unshift({
+                    url: finalUrl,
+                    prompt: prompt,
+                    timestamp: Date.now(),
+                    type: 'video'
+                });
+                localStorage.setItem('video_history', JSON.stringify(state.history.slice(0, 100)));
+                
+                showStatus('generateStatus', 'Success!', 'success');
+                document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (err) {
+                showStatus('generateStatus', err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function downloadCurrentVideo() {
+            if (!state.currentVideoUrl) return;
+            const a = document.createElement('a');
+            a.href = state.currentVideoUrl;
+            a.download = `video-${Date.now()}.mp4`;
+            a.click();
+        }
+
+        function addToCombineFromCurrent() {
+            if (!state.currentVideoUrl) return;
+            addToQueue({ url: state.currentVideoUrl, name: 'Generated video' });
+            showToast('Added to combine queue');
+        }
+
+        function extractFromCurrent() {
+            if (!state.currentVideoUrl) return;
+            switchTab('extract');
+            document.getElementById('extractSource').value = 'url';
+            changeExtractSource();
+            document.getElementById('extractUrlInput').value = state.currentVideoUrl;
+            loadExtractVideo();
+        }
+
+        // --- Extract Frames ---
+        function changeExtractSource() {
+            const source = document.getElementById('extractSource').value;
+            document.getElementById('historySelect').style.display = source === 'history' ? 'block' : 'none';
+            document.getElementById('extractFileInput').style.display = source === 'file' ? 'block' : 'none';
+            document.getElementById('extractUrlInput').style.display = source === 'url' ? 'block' : 'none';
+            document.getElementById('extractLoadBtn').style.display = source === 'file' ? 'none' : 'inline-flex';
+            if (source === 'history') populateExtractHistory();
+        }
+
+        function populateExtractHistory() {
+            const sel = document.getElementById('historySelect');
+            sel.innerHTML = '<option value="">Select video...</option>' + 
+                state.history.map(h => `<option value="${h.url}">${h.prompt?.substring(0,40)||'Video'}...</option>`).join('');
+        }
+
+        function handleExtractFile(e) {
+            const file = e.target.files[0];
+            if (file) setupExtractVideo(URL.createObjectURL(file));
+        }
+
+        function loadExtractVideo() {
+            const source = document.getElementById('extractSource').value;
+            let url = '';
+            if (source === 'history') url = document.getElementById('historySelect').value;
+            else if (source === 'url') url = document.getElementById('extractUrlInput').value.trim();
+            
+            if (!url) return alert('Select or enter a video');
+            setupExtractVideo(url);
+        }
+
+        function setupExtractVideo(url) {
+            const video = document.getElementById('extractVideo');
+            video.src = url;
+            video.style.display = 'block';
+            document.getElementById('extractControls').style.display = 'block';
+            state.extractVideo = video;
+            
+            video.onloadedmetadata = () => {
+                const canvas = document.getElementById('frameCanvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                const slider = document.getElementById('videoSlider');
+                slider.max = video.duration;
+                slider.value = 0;
+                slider.oninput = () => {
+                    video.currentTime = slider.value;
+                    document.getElementById('sliderValue').textContent = Math.round((slider.value / video.duration) * 100) + '%';
+                };
+                
+                drawFrame();
+            };
+            
+            video.addEventListener('timeupdate', drawFrame);
+        }
+
+        function drawFrame() {
+            if (!state.extractVideo || !state.extractVideo.videoWidth) return;
+            const canvas = document.getElementById('frameCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(state.extractVideo, 0, 0);
+            document.getElementById('timeDisplay').textContent = formatTime(state.extractVideo.currentTime);
+        }
+
+        function seekFrame(dir) {
+            if (!state.extractVideo) return;
+            state.extractVideo.currentTime += dir * (1/30);
+        }
+
+        function goToStart() { if (state.extractVideo) state.extractVideo.currentTime = 0; }
+        function goToEnd() { if (state.extractVideo) state.extractVideo.currentTime = state.extractVideo.duration; }
+
+        function formatTime(s) {
+            if (isNaN(s)) return '00:00:00';
+            const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60);
+            return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+        }
+
+        function captureFrame() {
+            const canvas = document.getElementById('frameCanvas');
+            canvas.toBlob(blob => {
+                state.capturedFrame = blob;
+                const url = URL.createObjectURL(blob);
+                document.getElementById('frameUploadPreview').innerHTML = `<img src="${url}" style="max-width: 100%; border-radius: 4px;">`;
+                document.getElementById('uploadFrameSection').style.display = 'block';
+            }, 'image/jpeg', 0.95);
+        }
+
+        function extractSpecificFrame(which) {
+            if (!state.extractVideo) return;
+            state.extractVideo.currentTime = which === 'first' ? 0 : state.extractVideo.duration;
+            setTimeout(captureFrame, 100);
+        }
+
+        async function uploadCapturedFrame() {
+            if (!state.capturedFrame) return;
+            const btn = document.getElementById('uploadFrameBtn');
+            const result = document.getElementById('frameUploadResult');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Uploading...';
+            
+            try {
+                const file = new File([state.capturedFrame], `frame-${Date.now()}.jpg`, { type: 'image/jpeg' });
+                const url = await uploadToAnonDrop(file);
+                result.innerHTML = `<div style="background: var(--success); color: white; padding: 0.5rem; border-radius: 4px; word-break: break-all;">${url}</div>`;
+                navigator.clipboard.writeText(url);
+                showToast('URL copied to clipboard!', 'success');
+            } catch (err) {
+                result.innerHTML = `<div style="color: var(--error);">${err.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '☁️ Get Link';
+            }
+        }
+
+        // --- Combine Videos ---
+        function updateCombineSelect() {
+            const sel = document.getElementById('addFromHistory');
+            sel.innerHTML = '<option value="">Select from history...</option>' +
+                state.history.map(h => `<option value="${h.url}">${h.prompt?.substring(0,40)||'Video'}...</option>`).join('');
+        }
+
+        function addSelectedToQueue() {
+            const url = document.getElementById('addFromHistory').value;
+            if (!url) return;
+            const item = state.history.find(h => h.url === url);
+            addToQueue({ url, name: item?.prompt?.substring(0,50) || 'Video' });
+        }
+
+        function addToQueue(video) {
+            state.combineQueue.push({ ...video, id: Date.now() });
+            renderQueue();
+        }
+
+        function renderQueue() {
+            const container = document.getElementById('videoQueue');
+            const btn = document.getElementById('combineBtn');
+            
+            if (!state.combineQueue.length) {
+                container.innerHTML = '<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No videos in queue</div>';
+                btn.disabled = true;
+                return;
+            }
+            
+            btn.disabled = state.combineQueue.length < 2 || !state.ffmpegLoaded;
+            
+            container.innerHTML = state.combineQueue.map((v, i) => `
+                <div class="queue-item" draggable="true" data-index="${i}">
+                    <span style="cursor: grab; color: var(--text-muted);">⋮⋮</span>
+                    <img src="${v.url}#t=0.001" class="queue-thumb" onerror="this.style.display='none'">
+                    <div class="queue-info">
+                        <div class="queue-title">${v.name}</div>
+                        <div class="queue-meta">Position ${i+1}</div>
+                    </div>
+                    <button onclick="removeFromQueue(${i})" class="icon-btn" style="background: var(--error);">×</button>
+                </div>
+            `).join('');
+            
+            // Drag handlers
+            let dragSrc = null;
+            container.querySelectorAll('.queue-item').forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    dragSrc = parseInt(item.dataset.index);
+                    item.style.opacity = '0.5';
+                });
+                item.addEventListener('dragend', () => item.style.opacity = '1');
+                item.addEventListener('dragover', (e) => e.preventDefault());
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const to = parseInt(item.dataset.index);
+                    if (dragSrc !== to) {
+                        const [moved] = state.combineQueue.splice(dragSrc, 1);
+                        state.combineQueue.splice(to, 0, moved);
+                        renderQueue();
+                    }
+                });
+            });
+        }
+
+        function removeFromQueue(idx) {
+            state.combineQueue.splice(idx, 1);
+            renderQueue();
+        }
+
+        function clearQueue() {
+            state.combineQueue = [];
+            renderQueue();
+            document.getElementById('combineResult').style.display = 'none';
+        }
+
+        async function initFFmpeg() {
+            if (state.ffmpegLoaded) return;
+            try {
+                const { FFmpeg } = FFmpegWASM;
+                const { fetchFile } = FFmpegUtil;
+                const ffmpeg = new FFmpeg();
+                
+                ffmpeg.on('progress', ({ progress }) => {
+                    const pct = Math.round(progress * 100);
+                    document.getElementById('combineProgressFill').style.width = pct + '%';
+                    document.getElementById('combineProgressFill').textContent = pct + '%';
+                });
+                
+                await ffmpeg.load({
+                    coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.4/dist/umd/ffmpeg-core.js',
+                    wasmURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.4/dist/umd/ffmpeg-core.wasm'
+                });
+                
+                state.ffmpeg = ffmpeg;
+                state.fetchFile = fetchFile;
+                state.ffmpegLoaded = true;
+                if (state.combineQueue.length >= 2) document.getElementById('combineBtn').disabled = false;
+            } catch (err) {
+                console.error('FFmpeg init failed:', err);
+            }
+        }
+
+        async function combineVideos() {
+            if (!state.ffmpegLoaded) await initFFmpeg();
+            if (state.combineQueue.length < 2) return;
+            
+            const btn = document.getElementById('combineBtn');
+            const progress = document.getElementById('combineProgress');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Processing...';
+            progress.style.display = 'block';
+            
+            try {
+                const { ffmpeg, fetchFile } = state;
+                const inputs = [];
+                
+                for (let i = 0; i < state.combineQueue.length; i++) {
+                    const v = state.combineQueue[i];
+                    document.getElementById('combineStatusText').textContent = `Loading video ${i+1}...`;
+                    const res = await fetch(v.url);
+                    const blob = await res.blob();
+                    const name = `input${i}.mp4`;
+                    await ffmpeg.writeFile(name, await fetchFile(blob));
+                    inputs.push(name);
+                }
+                
+                const list = inputs.map(f => `file '${f}'`).join('\n');
+                await ffmpeg.writeFile('list.txt', list);
+                
+                const res = document.getElementById('combineResolution').value;
+                const audio = document.getElementById('combineAudio').value;
+                
+                const args = ['-f', 'concat', '-safe', '0', '-i', 'list.txt'];
+                if (res !== 'original') {
+                    const h = parseInt(res);
+                    const w = Math.round(h * 16/9);
+                    args.push('-vf', `scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2`);
+                }
+                args.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-pix_fmt', 'yuv420p');
+                if (audio === 'mute') args.push('-an');
+                else args.push('-c:a', 'aac', '-b:a', '128k');
+                args.push('-y', 'output.mp4');
+                
+                document.getElementById('combineStatusText').textContent = 'Combining...';
+                await ffmpeg.exec(args);
+                
+                const data = await ffmpeg.readFile('output.mp4');
+                const blob = new Blob([data.buffer], { type: 'video/mp4' });
+                const url = URL.createObjectURL(blob);
+                
+                document.getElementById('combinedVideo').src = url;
+                document.getElementById('combinedDownload').href = url;
+                document.getElementById('combinedDownload').download = `combined-${Date.now()}.mp4`;
+                document.getElementById('combineResult').style.display = 'block';
+                
+                inputs.forEach(f => ffmpeg.deleteFile(f));
+                ffmpeg.deleteFile('list.txt');
+                ffmpeg.deleteFile('output.mp4');
+                
+                showToast('Videos combined!', 'success');
+                
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🎬 Combine Videos';
+                progress.style.display = 'none';
+            }
+        }
+
+        // --- History Management ---
+        function renderHistory() {
+            const grid = document.getElementById('historyGrid');
+            if (!state.history.length) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No history</div>';
+                return;
+            }
+            
+            grid.innerHTML = state.history.map((h, i) => `
+                <div class="history-item" onclick="window.open('${h.url}', '_blank')">
+                    <video src="${h.url}" muted loop preload="metadata" onmouseenter="this.play()" onmouseleave="this.pause()"></video>
+                    <div class="history-meta">${new Date(h.timestamp).toLocaleDateString()}</div>
+                    <div class="history-actions" onclick="event.stopPropagation()">
+                        <button class="icon-btn" onclick="navigator.clipboard.writeText('${h.url}')" title="Copy URL">📋</button>
+                        <button class="icon-btn" onclick="addToQueueFromHistory(${i})" title="Add to Combine">➕</button>
+                        <button class="icon-btn" onclick="deleteHistoryItem(${i})" title="Delete" style="background: var(--error);">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addToQueueFromHistory(idx) {
+            const item = state.history[idx];
+            addToQueue({ url: item.url, name: item.prompt?.substring(0,50) || 'Video' });
+            showToast('Added to combine queue');
+        }
+
+        function deleteHistoryItem(idx) {
+            if (!confirm('Delete this item?')) return;
+            state.history.splice(idx, 1);
+            localStorage.setItem('video_history', JSON.stringify(state.history));
+            renderHistory();
+        }
+
+        function clearHistory() {
+            if (!confirm('Clear all history?')) return;
+            state.history = [];
+            localStorage.setItem('video_history', '[]');
+            renderHistory();
+        }
+
+        function exportHistory() {
+            const data = { version: 1, exported: Date.now(), history: state.history };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `workflow-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showToast('History exported');
+        }
+
+        function importHistory(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (!confirm(`Import ${data.history?.length||0} items?`)) return;
+                    state.history = [...data.history, ...state.history].filter((v,i,a) => a.findIndex(t => t.url===v.url)===i);
+                    localStorage.setItem('video_history', JSON.stringify(state.history));
+                    renderHistory();
+                    showToast('History imported', 'success');
+                } catch (err) {
+                    showToast('Invalid file', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- API Key ---
+        function showApiKeyModal() {
+            document.getElementById('airforceKeyInput').value = state.apiKey;
+            document.getElementById('apiKeyModal').classList.add('active');
+        }
+
+        function hideApiKeyModal() {
+            document.getElementById('apiKeyModal').classList.remove('active');
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('airforceKeyInput').value.trim();
+            state.apiKey = key;
+            localStorage.setItem('airforce_api_key', key);
+            hideApiKeyModal();
+            showToast('API key saved');
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            changeExtractSource();
+            setTimeout(initFFmpeg, 1000); // Preload FFmpeg
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && state.currentTab === 'extract' && state.extractVideo) {
+                    e.preventDefault();
+                    state.extractVideo.paused ? state.extractVideo.play() : state.extractVideo.pause();
+                }
+                if (e.key === 'Escape') hideApiKeyModal();
+            });
+        });
+    </script>
+</body>
+</html>
