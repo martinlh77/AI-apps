@@ -2,10 +2,11 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Video Workflow Studio</title>
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.7/dist/umd/ffmpeg.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+    <!-- Same FFmpeg files as VideoCombine.html -->
+    <script src="https://martinlh77.github.io/AI-apps/tools/ffmpeg/ffmpeg.js"></script>
+    <script src="https://martinlh77.github.io/AI-apps/tools/ffmpeg/index.js"></script>
     <style>
         :root {
             --bg: #0f172a;
@@ -22,7 +23,6 @@
             --radius: 0.75rem;
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
         }
-        
         [data-theme="light"] {
             --bg: #f8fafc;
             --surface: #ffffff;
@@ -33,9 +33,7 @@
             --primary: #4f46e5;
             --primary-hover: #4338ca;
         }
-        
         * { box-sizing: border-box; }
-        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg);
@@ -43,11 +41,8 @@
             margin: 0;
             padding: 0;
             line-height: 1.6;
-            transition: background 0.3s, color 0.3s;
         }
-        
         .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
-        
         header {
             display: flex;
             justify-content: space-between;
@@ -58,11 +53,8 @@
             flex-wrap: wrap;
             gap: 1rem;
         }
-        
         h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
-        
         .controls { display: flex; gap: 0.5rem; align-items: center; }
-        
         button, .btn {
             background: var(--primary);
             color: white;
@@ -78,11 +70,9 @@
             justify-content: center;
             gap: 0.5rem;
         }
-        
         button:hover, .btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         button.secondary { background: var(--surface-hover); }
-        
         .tabs {
             display: flex;
             gap: 0.5rem;
@@ -90,7 +80,6 @@
             border-bottom: 2px solid var(--border);
             overflow-x: auto;
         }
-        
         .tab {
             padding: 0.75rem 1.5rem;
             background: none;
@@ -102,18 +91,14 @@
             cursor: pointer;
             border: none;
         }
-        
         .tab.active {
             color: var(--primary);
             border-bottom-color: var(--primary);
             background: var(--surface);
         }
-        
         .panel { display: none; }
         .panel.active { display: block; animation: fadeIn 0.3s; }
-        
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
         .card {
             background: var(--surface);
             border-radius: var(--radius);
@@ -122,12 +107,9 @@
             box-shadow: var(--shadow);
             border: 1px solid var(--border);
         }
-        
         .grid { display: grid; gap: 1rem; }
         .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-        
         label { display: block; margin-bottom: 0.5rem; font-weight: 500; font-size: 0.9rem; }
-        
         input[type="text"], input[type="url"], input[type="password"], input[type="number"], textarea, select {
             width: 100%;
             padding: 0.75rem;
@@ -138,15 +120,12 @@
             font-family: inherit;
             font-size: 0.95rem;
         }
-        
         input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
-        
         textarea { resize: vertical; min-height: 100px; }
-        
         .upload-zone {
             border: 2px dashed var(--border);
             border-radius: var(--radius);
@@ -156,16 +135,13 @@
             transition: all 0.2s;
             background: var(--bg);
         }
-        
         .upload-zone:hover { border-color: var(--primary); background: rgba(99, 102, 241, 0.05); }
-        
         .image-preview {
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
             margin-top: 1rem;
         }
-        
         .preview-item {
             position: relative;
             width: 120px;
@@ -174,13 +150,11 @@
             overflow: hidden;
             border: 2px solid var(--border);
         }
-        
         .preview-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        
         .preview-item .remove {
             position: absolute;
             top: 4px;
@@ -197,7 +171,6 @@
             font-size: 1.2rem;
             line-height: 1;
         }
-        
         .video-player {
             width: 100%;
             max-height: 500px;
@@ -205,14 +178,12 @@
             background: #000;
             margin: 1rem 0;
         }
-        
         .history-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 1rem;
             margin-top: 1rem;
         }
-        
         .history-item {
             position: relative;
             background: var(--bg);
@@ -222,7 +193,6 @@
             border: 2px solid transparent;
             transition: all 0.2s;
         }
-        
         .history-item:hover { border-color: var(--primary); transform: scale(1.02); }
         .history-item img, .history-item video {
             width: 100%;
@@ -230,7 +200,6 @@
             object-fit: cover;
             display: block;
         }
-        
         .history-meta {
             padding: 0.5rem;
             font-size: 0.75rem;
@@ -239,7 +208,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
         .history-actions {
             position: absolute;
             top: 4px;
@@ -249,9 +217,7 @@
             opacity: 0;
             transition: opacity 0.2s;
         }
-        
         .history-item:hover .history-actions { opacity: 1; }
-        
         .icon-btn {
             width: 28px;
             height: 28px;
@@ -265,9 +231,7 @@
             justify-content: center;
             font-size: 1rem;
         }
-        
         .icon-btn:hover { background: var(--primary); }
-        
         .queue-item {
             display: flex;
             align-items: center;
@@ -279,19 +243,15 @@
             border: 1px solid var(--border);
             cursor: move;
         }
-        
         .queue-item.dragging { opacity: 0.5; border-color: var(--primary); }
-        
         .queue-thumb { width: 80px; height: 60px; object-fit: cover; border-radius: 0.5rem; background: #000; }
         .queue-info { flex: 1; min-width: 0; }
         .queue-title { font-weight: 500; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .queue-meta { font-size: 0.85rem; color: var(--text-muted); }
-        
         .progress-container {
             margin: 1rem 0;
             display: none;
         }
-        
         .progress-bar {
             height: 30px;
             background: var(--bg);
@@ -300,7 +260,6 @@
             position: relative;
             border: 1px solid var(--border);
         }
-        
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, var(--primary), #818cf8);
@@ -311,19 +270,16 @@
             color: white;
             font-weight: bold;
         }
-        
         .status {
             padding: 1rem;
             border-radius: var(--radius);
             margin: 1rem 0;
             display: none;
         }
-        
         .status.active { display: block; }
         .status.info { background: rgba(99, 102, 241, 0.1); border-left: 4px solid var(--primary); }
         .status.success { background: rgba(34, 197, 94, 0.1); border-left: 4px solid var(--success); }
         .status.error { background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--error); }
-        
         .frame-controls {
             display: flex;
             gap: 0.5rem;
@@ -331,16 +287,13 @@
             margin: 1rem 0;
             flex-wrap: wrap;
         }
-        
         canvas.frame-canvas {
             max-width: 100%;
             border-radius: var(--radius);
             border: 2px solid var(--border);
             background: #000;
         }
-        
         .hidden { display: none !important; }
-        
         .modal {
             display: none;
             position: fixed;
@@ -351,7 +304,6 @@
             justify-content: center;
             padding: 1rem;
         }
-        
         .modal.active { display: flex; }
         .modal-content {
             background: var(--surface);
@@ -362,61 +314,6 @@
             overflow-y: auto;
             padding: 1.5rem;
         }
-        
-        .trim-controls {
-            margin: 1rem 0;
-            padding: 1rem;
-            background: var(--bg);
-            border-radius: var(--radius);
-        }
-        
-        .range-slider {
-            margin: 1rem 0;
-        }
-        
-        .range-slider label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-        
-        .mobile-menu {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--surface);
-            border-top: 1px solid var(--border);
-            padding: 0.5rem;
-            z-index: 100;
-        }
-        
-        .mobile-menu button {
-            flex: 1;
-            padding: 0.75rem;
-            font-size: 0.8rem;
-        }
-        
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--surface);
-            color: var(--text);
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius);
-            border-left: 4px solid var(--primary);
-            box-shadow: var(--shadow);
-            transform: translateX(150%);
-            transition: transform 0.3s;
-            z-index: 1000;
-            max-width: 300px;
-        }
-        
-        .toast.active { transform: translateX(0); }
-        .toast.success { border-left-color: var(--success); }
-        
         .spinner {
             display: inline-block;
             width: 20px;
@@ -426,14 +323,8 @@
             border-top-color: white;
             animation: spin 1s ease-in-out infinite;
         }
-        
         @keyframes spin { to { transform: rotate(360deg); } }
-        
         @media (max-width: 768px) {
-            .mobile-menu { display: flex; }
-            .container { padding-bottom: 80px; }
-            .tabs { display: none; }
-            h1 { font-size: 1.2rem; }
             .grid-2 { grid-template-columns: 1fr; }
             .queue-item { flex-direction: column; text-align: center; }
             .queue-thumb { width: 100%; height: auto; }
@@ -454,7 +345,7 @@
         
         <div class="tabs">
             <button class="tab active" onclick="switchTab('generate')">🎨 Generate</button>
-            <button class="tab" onclick="switchTab('extract')">📸 Extract Frames</button>
+            <button class="tab" onclick="switchTab('extract')">📸 Extract</button>
             <button class="tab" onclick="switchTab('combine')">🎬 Combine</button>
             <button class="tab" onclick="switchTab('history')">📚 History</button>
         </div>
@@ -465,7 +356,7 @@
                 <div class="grid grid-2">
                     <div>
                         <label>Prompt (max 500 chars)</label>
-                        <textarea id="promptInput" placeholder="Describe the video you want to generate..." maxlength="500"></textarea>
+                        <textarea id="promptInput" placeholder="Describe the video..." maxlength="500"></textarea>
                         <div style="text-align: right; font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
                             <span id="charCount">0</span>/500
                         </div>
@@ -485,7 +376,7 @@
                         </select>
                         
                         <div style="margin-top: 1rem; padding: 1rem; background: var(--bg); border-radius: var(--radius); font-size: 0.9rem; color: var(--text-muted);">
-                            ℹ️ Images auto-upload to AnonDrop (required by Grok API). Max 2 images.
+                            ℹ️ Max 2 images. Images auto-upload to AnonDrop (required).
                         </div>
                     </div>
                     
@@ -551,14 +442,11 @@
                             <canvas id="frameCanvas" class="frame-canvas" width="640" height="360"></canvas>
                         </div>
                         <div>
-                            <div class="trim-controls">
-                                <h4>Quick Extract</h4>
-                                <button onclick="extractSpecificFrame('first')" class="btn secondary" style="width: 100%; margin-bottom: 0.5rem;">📥 First Frame</button>
-                                <button onclick="extractSpecificFrame('last')" class="btn secondary" style="width: 100%;">📥 Last Frame</button>
-                            </div>
+                            <button onclick="extractSpecificFrame('first')" class="btn secondary" style="width: 100%; margin-bottom: 0.5rem;">📥 First Frame</button>
+                            <button onclick="extractSpecificFrame('last')" class="btn secondary" style="width: 100%; margin-bottom: 0.5rem;">📥 Last Frame</button>
                             
-                            <div id="uploadFrameSection" style="display: none; padding: 1rem; background: var(--bg); border-radius: var(--radius);">
-                                <h4>Upload to AnonDrop</h4>
+                            <div id="uploadFrameSection" style="display: none; padding: 1rem; background: var(--bg); border-radius: var(--radius); margin-top: 1rem;">
+                                <h4 style="margin-top: 0;">Upload to AnonDrop</h4>
                                 <div id="frameUploadPreview" style="margin: 0.5rem 0;"></div>
                                 <button onclick="uploadCapturedFrame()" id="uploadFrameBtn" class="btn" style="width: 100%;">☁️ Get Link</button>
                                 <div id="frameUploadResult" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
@@ -566,9 +454,9 @@
                         </div>
                     </div>
                     
-                    <div class="range-slider">
-                        <label>Video Position <span id="sliderValue">0%</span></label>
-                        <input type="range" id="videoSlider" min="0" max="100" step="0.1" value="0" style="width: 100%;">
+                    <div style="margin-top: 1rem;">
+                        <label>Video Position</label>
+                        <input type="range" id="videoSlider" min="0" max="100" step="0.1" value="0" style="width: 100%;" oninput="updateVideoFromSlider()">
                     </div>
                 </div>
             </div>
@@ -580,9 +468,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
                     <h3 style="margin: 0;">Video Queue (Drag to reorder)</h3>
                     <div style="display: flex; gap: 0.5rem;">
-                        <select id="addFromHistory">
-                            <option value="">Add from history...</option>
-                        </select>
+                        <select id="addFromHistory"><option value="">Add from history...</option></select>
                         <button onclick="addSelectedToQueue()" class="btn secondary">Add</button>
                         <button onclick="clearQueue()" class="btn secondary">Clear</button>
                     </div>
@@ -646,17 +532,6 @@
         </div>
     </div>
     
-    <!-- Mobile Menu -->
-    <nav class="mobile-menu">
-        <button onclick="switchTab('generate')">Generate</button>
-        <button onclick="switchTab('extract')">Extract</button>
-        <button onclick="switchTab('combine')">Combine</button>
-        <button onclick="switchTab('history')">History</button>
-    </nav>
-    
-    <!-- Toast -->
-    <div id="toast" class="toast"></div>
-    
     <!-- API Key Modal -->
     <div id="apiKeyModal" class="modal" onclick="if(event.target===this)hideApiKeyModal()">
         <div class="modal-content">
@@ -671,7 +546,7 @@
     </div>
 
     <script>
-        // --- State Management ---
+        // --- State ---
         const state = {
             apiKey: localStorage.getItem('airforce_api_key') || '',
             history: JSON.parse(localStorage.getItem('video_history') || '[]'),
@@ -683,6 +558,11 @@
             ffmpegLoaded: false,
             extractVideo: null
         };
+
+        const CORS_PROXIES = [
+            'https://api.allorigins.win/raw?url=',
+            'https://corsproxy.io/?'
+        ];
 
         // --- Theme ---
         function toggleTheme() {
@@ -706,26 +586,12 @@
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             event.target.classList.add('active');
             document.getElementById(tab + 'Panel').classList.add('active');
-            
             if (tab === 'history') renderHistory();
             if (tab === 'combine') updateCombineSelect();
             if (tab === 'extract') populateExtractHistory();
-            
-            // Update mobile menu
-            document.querySelectorAll('.mobile-menu button').forEach((btn, idx) => {
-                const tabs = ['generate', 'extract', 'combine', 'history'];
-                btn.style.background = tabs[idx] === tab ? 'var(--primary)' : 'var(--surface)';
-            });
         }
 
         // --- Utilities ---
-        function showToast(msg, type='info') {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.className = 'toast active ' + type;
-            setTimeout(() => toast.classList.remove('active'), 3000);
-        }
-
         function showStatus(id, msg, type='info') {
             const el = document.getElementById(id);
             el.textContent = msg;
@@ -733,36 +599,53 @@
             if (type !== 'error') setTimeout(() => el.classList.remove('active'), 5000);
         }
 
-        // --- AnonDrop Upload ---
+        // --- AnonDrop (Exact logic from AnonDropUpload5) ---
         async function uploadToAnonDrop(file) {
             try {
-                const reg = await fetch('https://anondrop.net/register');
-                const text = await reg.text();
-                const match = text.match(/localStorage\.setItem\('userkey',\s*'(\d+)'\)/);
-                if (!match) throw new Error('Failed to get upload key');
+                // Step 1: Get user key
+                const regResponse = await fetch('https://anondrop.net/register', { method: 'GET' });
+                const regText = await regResponse.text();
+                const keyMatch = regText.match(/localStorage\.setItem\('userkey',\s*'(\d+)'\)/);
                 
-                const key = match[1];
-                const form = new FormData();
-                form.append('file', file);
+                if (!keyMatch || !keyMatch[1]) {
+                    throw new Error('Could not extract user key from /register response');
+                }
                 
-                const upload = await fetch(`https://anondrop.net/upload?key=${key}`, {
+                const userKey = keyMatch[1];
+                
+                // Step 2: Upload
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const uploadUrl = `https://anondrop.net/upload?key=${userKey}`;
+                const uploadResponse = await fetch(uploadUrl, {
                     method: 'POST',
-                    body: form
+                    body: formData
                 });
                 
-                if (!upload.ok) throw new Error('Upload failed');
-                const result = await upload.text();
-                const linkMatch = result.match(/href='(https:\/\/anondrop\.net\/(\d+))'/);
-                if (!linkMatch) throw new Error('Failed to parse upload result');
+                if (!uploadResponse.ok) {
+                    const errorText = await uploadResponse.text();
+                    throw new Error(`Upload failed: ${uploadResponse.status} - ${errorText}`);
+                }
                 
-                const ext = file.name.split('.').pop();
-                return `https://anondrop.net/${linkMatch[2]}/file.${ext}`;
+                const uploadResult = await uploadResponse.text();
+                const linkMatch = uploadResult.match(/href='(https:\/\/anondrop\.net\/(\d+))'/);
+                
+                if (!linkMatch) {
+                    throw new Error('Could not extract file link from response');
+                }
+                
+                const fileId = linkMatch[2];
+                const extension = file.name.split('.').pop().toLowerCase();
+                const directUrl = `https://anondrop.net/${fileId}/file.${extension}`;
+                
+                return directUrl;
             } catch (err) {
-                throw new Error('AnonDrop: ' + err.message);
+                throw new Error('AnonDrop Error: ' + err.message);
             }
         }
 
-        // --- Generate Video ---
+        // --- Generate (Exact logic from ImageAndVideoStudio) ---
         document.getElementById('promptInput').addEventListener('input', (e) => {
             document.getElementById('charCount').textContent = e.target.value.length;
         });
@@ -770,7 +653,7 @@
         function handleImageSelect(e) {
             const files = Array.from(e.target.files);
             if (state.referenceImages.length + files.length > 2) {
-                showToast('Max 2 images allowed', 'error');
+                showStatus('generateStatus', 'Maximum 2 images allowed', 'error');
                 return;
             }
             files.forEach(file => {
@@ -796,24 +679,41 @@
             renderImagePreviews();
         }
 
-        // Drag and drop
+        // Drag and drop for images
         const dropZone = document.getElementById('dropZone');
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--primary)'; });
-        dropZone.addEventListener('dragleave', () => dropZone.style.borderColor = 'var(--border)');
+        dropZone.addEventListener('dragover', (e) => { 
+            e.preventDefault(); 
+            dropZone.style.borderColor = 'var(--primary)'; 
+            dropZone.style.background = 'rgba(99, 102, 241, 0.1)';
+        });
+        dropZone.addEventListener('dragleave', () => { 
+            dropZone.style.borderColor = 'var(--border)'; 
+            dropZone.style.background = 'var(--bg)';
+        });
         dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
             dropZone.style.borderColor = 'var(--border)';
+            dropZone.style.background = 'var(--bg)';
             const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-            if (state.referenceImages.length + files.length > 2) return showToast('Max 2 images', 'error');
-            files.forEach(file => state.referenceImages.push({ file, url: URL.createObjectURL(file), anondropUrl: null }));
+            if (state.referenceImages.length + files.length > 2) {
+                showStatus('generateStatus', 'Maximum 2 images allowed', 'error');
+                return;
+            }
+            files.forEach(file => {
+                state.referenceImages.push({ 
+                    file, 
+                    url: URL.createObjectURL(file), 
+                    anondropUrl: null 
+                });
+            });
             renderImagePreviews();
         });
 
         async function generateVideo() {
             const prompt = document.getElementById('promptInput').value.trim();
-            if (!prompt) return showStatus('generateStatus', 'Enter a prompt', 'error');
-            if (!state.apiKey) return showStatus('generateStatus', 'Set API key first', 'error');
-            if (prompt.length > 500) return showStatus('generateStatus', 'Prompt too long', 'error');
+            if (!prompt) return showStatus('generateStatus', 'Please enter a prompt', 'error');
+            if (!state.apiKey) return showStatus('generateStatus', 'API key required. Click 🔑', 'error');
+            if (prompt.length > 500) return showStatus('generateStatus', 'Prompt exceeds 500 characters', 'error');
 
             const btn = document.getElementById('generateBtn');
             const spinner = document.getElementById('genSpinner');
@@ -821,99 +721,134 @@
             spinner.classList.remove('hidden');
 
             try {
-                // Upload images to AnonDrop
+                // Upload reference images to AnonDrop (required by Grok)
                 const imageUrls = [];
                 for (let img of state.referenceImages) {
                     if (!img.anondropUrl) {
-                        showStatus('generateStatus', 'Uploading images...', 'info');
+                        showStatus('generateStatus', 'Uploading image to AnonDrop...', 'info');
                         img.anondropUrl = await uploadToAnonDrop(img.file);
                     }
                     imageUrls.push(img.anondropUrl);
                 }
 
-                const aspect = document.getElementById('grokAspectRatio').value;
+                // Prepare request (exactly as in ImageAndVideoStudio)
+                const aspectRatio = document.getElementById('grokAspectRatio').value;
                 let size = '1024x1024';
-                if (aspect === '3:2') size = '1536x1024';
-                if (aspect === '2:3') size = '1024x1536';
+                if (aspectRatio === '3:2') size = '1536x1024';
+                if (aspectRatio === '2:3') size = '1024x1536';
 
-                const body = {
+                const requestBody = {
                     model: 'grok-imagine-video',
                     prompt: prompt,
                     n: 1,
                     size: size,
                     response_format: 'url',
-                    mode: document.getElementById('grokMode').value
+                    sse: true,
+                    mode: document.getElementById('grokMode').value,
+                    aspectRatio: aspectRatio
                 };
-                if (imageUrls.length) body.image = imageUrls.length === 1 ? imageUrls[0] : imageUrls;
 
-                showStatus('generateStatus', 'Generating video (~30-60s)...', 'info');
+                if (imageUrls.length > 0) {
+                    requestBody.image = imageUrls.length === 1 ? imageUrls[0] : imageUrls;
+                }
 
-                const res = await fetch('https://api.airforce/v1/images/generations', {
+                showStatus('generateStatus', 'Generating video... (30-60s)', 'info');
+
+                // API call
+                const response = await fetch('https://api.airforce/v1/images/generations', {
                     method: 'POST',
-                    headers: { 'Authorization': state.apiKey, 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
+                    headers: {
+                        'Authorization': state.apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
                 });
 
-                if (!res.ok) throw new Error(await res.text());
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`API Error ${response.status}: ${errorText}`);
+                }
 
+                // Handle response (SSE or JSON)
                 let finalUrl = null;
-                const contentType = res.headers.get('content-type');
-                
-                if (contentType?.includes('json')) {
-                    const data = await res.json();
+                const contentType = response.headers.get('content-type') || '';
+
+                if (contentType.includes('application/json')) {
+                    const data = await response.json();
+                    // Deep search for URL
                     const findUrl = (obj) => {
                         if (!obj || typeof obj !== 'object') return null;
-                        for (const [k, v] of Object.entries(obj)) {
-                            if (typeof v === 'string' && v.startsWith('http')) return v;
-                            const found = findUrl(v);
+                        for (const [key, val] of Object.entries(obj)) {
+                            if (typeof val === 'string' && val.startsWith('http')) return val;
+                            const found = findUrl(val);
                             if (found) return found;
                         }
                         return null;
                     };
                     finalUrl = findUrl(data);
                 } else {
-                    // SSE
-                    const reader = res.body.getReader();
+                    // SSE streaming
+                    const reader = response.body.getReader();
                     const decoder = new TextDecoder();
                     let buffer = '';
+                    
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
                         buffer += decoder.decode(value, { stream: true });
                         const lines = buffer.split('\n');
                         buffer = lines.pop();
+                        
                         for (const line of lines) {
-                            if (line.startsWith('data: ')) {
-                                try {
-                                    const data = JSON.parse(line.slice(6));
-                                    if (data.progress) showStatus('generateStatus', `Generating... ${Math.round(data.progress)}%`, 'info');
-                                    if (data.url) finalUrl = data.url;
-                                } catch (e) {}
-                            }
+                            const trimmed = line.trim();
+                            if (!trimmed || !trimmed.startsWith('data: ')) continue;
+                            const dataStr = trimmed.slice(6);
+                            if (dataStr === '[DONE]' || dataStr === ': keepalive') continue;
+                            
+                            try {
+                                const data = JSON.parse(dataStr);
+                                if (data.progress !== undefined) {
+                                    showStatus('generateStatus', `Generating... ${Math.round(data.progress)}%`, 'info');
+                                }
+                                // Search for URL
+                                const findUrl = (obj) => {
+                                    if (!obj || typeof obj !== 'object') return null;
+                                    for (const [k, v] of Object.entries(obj)) {
+                                        if (typeof v === 'string' && v.startsWith('http') && v.includes('.mp4')) return v;
+                                        const found = findUrl(v);
+                                        if (found) return found;
+                                    }
+                                    return null;
+                                };
+                                const found = findUrl(data);
+                                if (found) finalUrl = found;
+                            } catch (e) {}
                         }
                     }
                 }
 
-                if (!finalUrl) throw new Error('No video URL received');
+                if (!finalUrl) throw new Error('No video URL received from API');
 
+                // Success
                 state.currentVideoUrl = finalUrl;
                 document.getElementById('resultVideo').src = finalUrl;
                 document.getElementById('resultCard').style.display = 'block';
                 
-                // Save to history
+                // Add to history
                 state.history.unshift({
                     url: finalUrl,
                     prompt: prompt,
                     timestamp: Date.now(),
-                    type: 'video'
+                    model: 'grok-video'
                 });
                 localStorage.setItem('video_history', JSON.stringify(state.history.slice(0, 100)));
                 
-                showStatus('generateStatus', 'Success!', 'success');
+                showStatus('generateStatus', 'Video generated successfully!', 'success');
                 document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
 
-            } catch (err) {
-                showStatus('generateStatus', err.message, 'error');
+            } catch (error) {
+                console.error(error);
+                showStatus('generateStatus', 'Failed: ' + error.message, 'error');
             } finally {
                 btn.disabled = false;
                 spinner.classList.add('hidden');
@@ -924,26 +859,33 @@
             if (!state.currentVideoUrl) return;
             const a = document.createElement('a');
             a.href = state.currentVideoUrl;
-            a.download = `video-${Date.now()}.mp4`;
+            a.download = `grok-video-${Date.now()}.mp4`;
+            document.body.appendChild(a);
             a.click();
+            a.remove();
         }
 
         function addToCombineFromCurrent() {
             if (!state.currentVideoUrl) return;
-            addToQueue({ url: state.currentVideoUrl, name: 'Generated video' });
-            showToast('Added to combine queue');
+            addToQueue({ url: state.currentVideoUrl, name: `Generated ${new Date().toLocaleTimeString()}` });
+            showStatus('generateStatus', 'Added to combine queue! Switch to Combine tab.', 'success');
         }
 
         function extractFromCurrent() {
             if (!state.currentVideoUrl) return;
-            switchTab('extract');
+            // Switch to extract tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab')[1].classList.add('active'); // Extract tab
+            document.getElementById('extractPanel').classList.add('active');
+            
             document.getElementById('extractSource').value = 'url';
             changeExtractSource();
             document.getElementById('extractUrlInput').value = state.currentVideoUrl;
             loadExtractVideo();
         }
 
-        // --- Extract Frames ---
+        // --- Extract Frames (Exact logic from MP4GIF_andMore) ---
         function changeExtractSource() {
             const source = document.getElementById('extractSource').value;
             document.getElementById('historySelect').style.display = source === 'history' ? 'block' : 'none';
@@ -955,26 +897,34 @@
 
         function populateExtractHistory() {
             const sel = document.getElementById('historySelect');
-            sel.innerHTML = '<option value="">Select video...</option>' + 
+            sel.innerHTML = '<option value="">Select from history...</option>' + 
                 state.history.map(h => `<option value="${h.url}">${h.prompt?.substring(0,40)||'Video'}...</option>`).join('');
         }
 
         function handleExtractFile(e) {
             const file = e.target.files[0];
-            if (file) setupExtractVideo(URL.createObjectURL(file));
+            if (file) setupExtractVideo(URL.createObjectURL(file), file.name);
         }
 
-        function loadExtractVideo() {
+        async function loadExtractVideo() {
             const source = document.getElementById('extractSource').value;
             let url = '';
-            if (source === 'history') url = document.getElementById('historySelect').value;
-            else if (source === 'url') url = document.getElementById('extractUrlInput').value.trim();
             
-            if (!url) return alert('Select or enter a video');
-            setupExtractVideo(url);
+            if (source === 'history') {
+                url = document.getElementById('historySelect').value;
+            } else if (source === 'url') {
+                url = document.getElementById('extractUrlInput').value.trim();
+            }
+            
+            if (!url && source !== 'file') {
+                alert('Please select or enter a video URL');
+                return;
+            }
+            
+            if (url) setupExtractVideo(url, 'Video');
         }
 
-        function setupExtractVideo(url) {
+        function setupExtractVideo(url, name) {
             const video = document.getElementById('extractVideo');
             video.src = url;
             video.style.display = 'block';
@@ -982,44 +932,53 @@
             state.extractVideo = video;
             
             video.onloadedmetadata = () => {
+                // Set canvas size proportional
                 const canvas = document.getElementById('frameCanvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
+                const maxWidth = 640;
+                const scale = maxWidth / video.videoWidth;
+                canvas.width = maxWidth;
+                canvas.height = video.videoHeight * scale;
                 
+                // Setup slider
                 const slider = document.getElementById('videoSlider');
                 slider.max = video.duration;
                 slider.value = 0;
-                slider.oninput = () => {
-                    video.currentTime = slider.value;
-                    document.getElementById('sliderValue').textContent = Math.round((slider.value / video.duration) * 100) + '%';
-                };
+                slider.step = 0.01;
                 
                 drawFrame();
             };
-            
-            video.addEventListener('timeupdate', drawFrame);
+        }
+
+        function updateVideoFromSlider() {
+            if (!state.extractVideo) return;
+            state.extractVideo.currentTime = document.getElementById('videoSlider').value;
         }
 
         function drawFrame() {
-            if (!state.extractVideo || !state.extractVideo.videoWidth) return;
+            if (!state.extractVideo || state.extractVideo.readyState < 2) return;
             const canvas = document.getElementById('frameCanvas');
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(state.extractVideo, 0, 0);
+            ctx.drawImage(state.extractVideo, 0, 0, canvas.width, canvas.height);
             document.getElementById('timeDisplay').textContent = formatTime(state.extractVideo.currentTime);
+            document.getElementById('videoSlider').value = state.extractVideo.currentTime;
         }
 
-        function seekFrame(dir) {
+        // Update frame as video plays
+        document.getElementById('extractVideo').addEventListener('timeupdate', drawFrame);
+
+        function seekFrame(direction) {
             if (!state.extractVideo) return;
-            state.extractVideo.currentTime += dir * (1/30);
+            state.extractVideo.currentTime += direction * (1/30);
         }
 
-        function goToStart() { if (state.extractVideo) state.extractVideo.currentTime = 0; }
-        function goToEnd() { if (state.extractVideo) state.extractVideo.currentTime = state.extractVideo.duration; }
+        function goToStart() {
+            if (!state.extractVideo) return;
+            state.extractVideo.currentTime = 0;
+        }
 
-        function formatTime(s) {
-            if (isNaN(s)) return '00:00:00';
-            const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60);
-            return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+        function goToEnd() {
+            if (!state.extractVideo) return;
+            state.extractVideo.currentTime = state.extractVideo.duration;
         }
 
         function captureFrame() {
@@ -1027,42 +986,55 @@
             canvas.toBlob(blob => {
                 state.capturedFrame = blob;
                 const url = URL.createObjectURL(blob);
-                document.getElementById('frameUploadPreview').innerHTML = `<img src="${url}" style="max-width: 100%; border-radius: 4px;">`;
+                document.getElementById('frameUploadPreview').innerHTML = `<img src="${url}" style="max-width: 200px; border-radius: 4px; border: 2px solid var(--border);">`;
                 document.getElementById('uploadFrameSection').style.display = 'block';
+                document.getElementById('frameUploadResult').innerHTML = '';
             }, 'image/jpeg', 0.95);
         }
 
         function extractSpecificFrame(which) {
             if (!state.extractVideo) return;
-            state.extractVideo.currentTime = which === 'first' ? 0 : state.extractVideo.duration;
+            if (which === 'first') {
+                state.extractVideo.currentTime = 0;
+            } else {
+                state.extractVideo.currentTime = state.extractVideo.duration;
+            }
+            // Wait for seek to complete
             setTimeout(captureFrame, 100);
         }
 
         async function uploadCapturedFrame() {
             if (!state.capturedFrame) return;
+            
             const btn = document.getElementById('uploadFrameBtn');
-            const result = document.getElementById('frameUploadResult');
+            const resultDiv = document.getElementById('frameUploadResult');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span> Uploading...';
             
             try {
                 const file = new File([state.capturedFrame], `frame-${Date.now()}.jpg`, { type: 'image/jpeg' });
                 const url = await uploadToAnonDrop(file);
-                result.innerHTML = `<div style="background: var(--success); color: white; padding: 0.5rem; border-radius: 4px; word-break: break-all;">${url}</div>`;
+                
+                resultDiv.innerHTML = `
+                    <div style="background: var(--success); color: white; padding: 0.75rem; border-radius: var(--radius); word-break: break-all; font-size: 0.9rem;">
+                        ✅ Uploaded!<br>
+                        <div style="margin-top: 0.5rem; background: rgba(255,255,255,0.2); padding: 0.5rem; border-radius: 4px;">${url}</div>
+                    </div>
+                `;
                 navigator.clipboard.writeText(url);
-                showToast('URL copied to clipboard!', 'success');
+                showStatus('generateStatus', 'Frame URL copied to clipboard!', 'success');
             } catch (err) {
-                result.innerHTML = `<div style="color: var(--error);">${err.message}</div>`;
+                resultDiv.innerHTML = `<div style="background: var(--error); color: white; padding: 0.75rem; border-radius: var(--radius);">${err.message}</div>`;
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '☁️ Get Link';
             }
         }
 
-        // --- Combine Videos ---
+        // --- Combine Videos (Exact logic from VideoCombine) ---
         function updateCombineSelect() {
             const sel = document.getElementById('addFromHistory');
-            sel.innerHTML = '<option value="">Select from history...</option>' +
+            sel.innerHTML = '<option value="">Add from history...</option>' +
                 state.history.map(h => `<option value="${h.url}">${h.prompt?.substring(0,40)||'Video'}...</option>`).join('');
         }
 
@@ -1074,7 +1046,7 @@
         }
 
         function addToQueue(video) {
-            state.combineQueue.push({ ...video, id: Date.now() });
+            state.combineQueue.push({ ...video, id: Date.now() + Math.random() });
             renderQueue();
         }
 
@@ -1090,36 +1062,47 @@
             
             btn.disabled = state.combineQueue.length < 2 || !state.ffmpegLoaded;
             
-            container.innerHTML = state.combineQueue.map((v, i) => `
-                <div class="queue-item" draggable="true" data-index="${i}">
-                    <span style="cursor: grab; color: var(--text-muted);">⋮⋮</span>
-                    <img src="${v.url}#t=0.001" class="queue-thumb" onerror="this.style.display='none'">
+            container.innerHTML = '';
+            state.combineQueue.forEach((video, index) => {
+                const div = document.createElement('div');
+                div.className = 'queue-item';
+                div.draggable = true;
+                div.innerHTML = `
+                    <span style="cursor: grab; color: var(--text-muted); font-size: 1.2rem; user-select: none;">⋮⋮</span>
+                    <img src="${video.url}#t=0.001" class="queue-thumb" onerror="this.style.display='none'" alt="">
                     <div class="queue-info">
-                        <div class="queue-title">${v.name}</div>
-                        <div class="queue-meta">Position ${i+1}</div>
+                        <div class="queue-title">${video.name}</div>
+                        <div class="queue-meta">Position ${index + 1} • Drag to reorder</div>
                     </div>
-                    <button onclick="removeFromQueue(${i})" class="icon-btn" style="background: var(--error);">×</button>
-                </div>
-            `).join('');
-            
-            // Drag handlers
-            let dragSrc = null;
-            container.querySelectorAll('.queue-item').forEach(item => {
-                item.addEventListener('dragstart', (e) => {
-                    dragSrc = parseInt(item.dataset.index);
-                    item.style.opacity = '0.5';
+                    <button onclick="removeFromQueue(${index})" class="icon-btn" style="background: var(--error); width: 32px; height: 32px;">×</button>
+                `;
+                
+                // Drag and drop handlers
+                div.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', index);
+                    div.style.opacity = '0.5';
                 });
-                item.addEventListener('dragend', () => item.style.opacity = '1');
-                item.addEventListener('dragover', (e) => e.preventDefault());
-                item.addEventListener('drop', (e) => {
+                
+                div.addEventListener('dragend', () => {
+                    div.style.opacity = '1';
+                });
+                
+                div.addEventListener('dragover', (e) => {
                     e.preventDefault();
-                    const to = parseInt(item.dataset.index);
-                    if (dragSrc !== to) {
-                        const [moved] = state.combineQueue.splice(dragSrc, 1);
-                        state.combineQueue.splice(to, 0, moved);
+                });
+                
+                div.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                    const toIdx = index;
+                    if (fromIdx !== toIdx) {
+                        const [moved] = state.combineQueue.splice(fromIdx, 1);
+                        state.combineQueue.splice(toIdx, 0, moved);
                         renderQueue();
                     }
                 });
+                
+                container.appendChild(div);
             });
         }
 
@@ -1134,31 +1117,65 @@
             document.getElementById('combineResult').style.display = 'none';
         }
 
+        // FFmpeg initialization (same as VideoCombine.html)
         async function initFFmpeg() {
-            if (state.ffmpegLoaded) return;
+            if (state.ffmpegLoaded || state.ffmpegLoading) return;
+            state.ffmpegLoading = true;
+            
             try {
+                // Use globals from the scripts (FFmpegWASM, FFmpegUtil)
                 const { FFmpeg } = FFmpegWASM;
                 const { fetchFile } = FFmpegUtil;
+                
                 const ffmpeg = new FFmpeg();
                 
-                ffmpeg.on('progress', ({ progress }) => {
-                    const pct = Math.round(progress * 100);
-                    document.getElementById('combineProgressFill').style.width = pct + '%';
-                    document.getElementById('combineProgressFill').textContent = pct + '%';
+                ffmpeg.on('log', ({ message }) => {
+                    console.log('FFmpeg:', message);
                 });
                 
+                ffmpeg.on('progress', ({ progress, time }) => {
+                    const percent = Math.round(progress * 100);
+                    document.getElementById('combineProgressFill').style.width = percent + '%';
+                    document.getElementById('combineProgressFill').textContent = percent + '%';
+                    document.getElementById('combineStatusText').textContent = `Processing... ${percent}%`;
+                });
+                
+                // Same URLs as VideoCombine.html
                 await ffmpeg.load({
-                    coreURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.4/dist/umd/ffmpeg-core.js',
-                    wasmURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.4/dist/umd/ffmpeg-core.wasm'
+                    coreURL: 'https://martinlh77.github.io/AI-apps/tools/ffmpeg/ffmpeg-core.js',
+                    wasmURL: 'https://martinlh77.github.io/AI-apps/tools/ffmpeg/ffmpeg-core.wasm'
                 });
                 
                 state.ffmpeg = ffmpeg;
                 state.fetchFile = fetchFile;
                 state.ffmpegLoaded = true;
-                if (state.combineQueue.length >= 2) document.getElementById('combineBtn').disabled = false;
+                
+                if (state.combineQueue.length >= 2) {
+                    document.getElementById('combineBtn').disabled = false;
+                }
             } catch (err) {
                 console.error('FFmpeg init failed:', err);
+                alert('Failed to load FFmpeg. Ensure files are in tools/ffmpeg/ directory.');
+            } finally {
+                state.ffmpegLoading = false;
             }
+        }
+
+        // Fetch video with CORS proxy fallback (from VideoCombine.html)
+        async function fetchVideoWithCors(url) {
+            try {
+                const response = await fetch(url);
+                if (response.ok) return await response.blob();
+            } catch (e) {
+                // Try CORS proxies
+                for (const proxy of CORS_PROXIES) {
+                    try {
+                        const response = await fetch(proxy + encodeURIComponent(url));
+                        if (response.ok) return await response.blob();
+                    } catch (err) { continue; }
+                }
+            }
+            throw new Error('Unable to fetch video. CORS blocked and proxies failed.');
         }
 
         async function combineVideos() {
@@ -1166,66 +1183,89 @@
             if (state.combineQueue.length < 2) return;
             
             const btn = document.getElementById('combineBtn');
-            const progress = document.getElementById('combineProgress');
+            const progressContainer = document.getElementById('combineProgress');
+            const statusText = document.getElementById('combineStatusText');
+            
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span> Processing...';
-            progress.style.display = 'block';
+            progressContainer.style.display = 'block';
             
             try {
                 const { ffmpeg, fetchFile } = state;
-                const inputs = [];
+                const inputFiles = [];
                 
+                // Download videos (with CORS handling)
                 for (let i = 0; i < state.combineQueue.length; i++) {
-                    const v = state.combineQueue[i];
-                    document.getElementById('combineStatusText').textContent = `Loading video ${i+1}...`;
-                    const res = await fetch(v.url);
-                    const blob = await res.blob();
-                    const name = `input${i}.mp4`;
-                    await ffmpeg.writeFile(name, await fetchFile(blob));
-                    inputs.push(name);
+                    const video = state.combineQueue[i];
+                    statusText.textContent = `Loading video ${i + 1} of ${state.combineQueue.length}...`;
+                    
+                    const blob = await fetchVideoWithCors(video.url);
+                    const fileName = `input${i}.mp4`;
+                    await ffmpeg.writeFile(fileName, await fetchFile(blob));
+                    inputFiles.push(fileName);
                 }
                 
-                const list = inputs.map(f => `file '${f}'`).join('\n');
-                await ffmpeg.writeFile('list.txt', list);
+                // Create concat list
+                statusText.textContent = 'Preparing combination...';
+                const concatList = inputFiles.map(f => `file '${f}'`).join('\n');
+                await ffmpeg.writeFile('concat_list.txt', concatList);
                 
-                const res = document.getElementById('combineResolution').value;
-                const audio = document.getElementById('combineAudio').value;
+                // Build FFmpeg command
+                const resolution = document.getElementById('combineResolution').value;
+                const audioMode = document.getElementById('combineAudio').value;
                 
-                const args = ['-f', 'concat', '-safe', '0', '-i', 'list.txt'];
-                if (res !== 'original') {
-                    const h = parseInt(res);
-                    const w = Math.round(h * 16/9);
-                    args.push('-vf', `scale=${w}:${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2`);
+                const args = ['-f', 'concat', '-safe', '0', '-i', 'concat_list.txt'];
+                
+                if (resolution !== 'original') {
+                    const targetHeight = parseInt(resolution);
+                    const targetWidth = Math.round(targetHeight * 16/9);
+                    args.push('-vf', `scale=${targetWidth}:${targetHeight}:force_original_aspect_ratio=decrease,pad=${targetWidth}:${targetHeight}:(ow-iw)/2:(oh-ih)/2:black,setsar=1`);
                 }
-                args.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-pix_fmt', 'yuv420p');
-                if (audio === 'mute') args.push('-an');
-                else args.push('-c:a', 'aac', '-b:a', '128k');
+                
+                args.push('-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-pix_fmt', 'yuv420p', '-movflags', '+faststart');
+                
+                if (audioMode === 'mute') {
+                    args.push('-an');
+                } else {
+                    args.push('-c:a', 'aac', '-b:a', '128k');
+                }
+                
                 args.push('-y', 'output.mp4');
                 
-                document.getElementById('combineStatusText').textContent = 'Combining...';
+                statusText.textContent = 'Combining and encoding...';
                 await ffmpeg.exec(args);
                 
+                // Read result
+                statusText.textContent = 'Finalizing...';
                 const data = await ffmpeg.readFile('output.mp4');
                 const blob = new Blob([data.buffer], { type: 'video/mp4' });
                 const url = URL.createObjectURL(blob);
                 
+                // Display
                 document.getElementById('combinedVideo').src = url;
                 document.getElementById('combinedDownload').href = url;
                 document.getElementById('combinedDownload').download = `combined-${Date.now()}.mp4`;
                 document.getElementById('combineResult').style.display = 'block';
                 
-                inputs.forEach(f => ffmpeg.deleteFile(f));
-                ffmpeg.deleteFile('list.txt');
-                ffmpeg.deleteFile('output.mp4');
+                // Cleanup
+                for (const file of inputFiles) {
+                    await ffmpeg.deleteFile(file);
+                }
+                await ffmpeg.deleteFile('concat_list.txt');
+                await ffmpeg.deleteFile('output.mp4');
                 
-                showToast('Videos combined!', 'success');
+                statusText.textContent = 'Complete!';
                 
             } catch (err) {
-                alert('Error: ' + err.message);
+                console.error(err);
+                alert('Error combining videos: ' + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '🎬 Combine Videos';
-                progress.style.display = 'none';
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    document.getElementById('combineProgressFill').style.width = '0%';
+                }, 3000);
             }
         }
 
@@ -1233,67 +1273,89 @@
         function renderHistory() {
             const grid = document.getElementById('historyGrid');
             if (!state.history.length) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No history</div>';
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 2rem;">No history yet. Generate some videos!</div>';
                 return;
             }
             
-            grid.innerHTML = state.history.map((h, i) => `
-                <div class="history-item" onclick="window.open('${h.url}', '_blank')">
-                    <video src="${h.url}" muted loop preload="metadata" onmouseenter="this.play()" onmouseleave="this.pause()"></video>
-                    <div class="history-meta">${new Date(h.timestamp).toLocaleDateString()}</div>
+            grid.innerHTML = state.history.map((item, idx) => `
+                <div class="history-item" onclick="window.open('${item.url}', '_blank')">
+                    <video src="${item.url}" muted loop preload="metadata" onmouseenter="this.play()" onmouseleave="this.pause()"></video>
+                    <div class="history-meta">${new Date(item.timestamp).toLocaleDateString()}</div>
                     <div class="history-actions" onclick="event.stopPropagation()">
-                        <button class="icon-btn" onclick="navigator.clipboard.writeText('${h.url}')" title="Copy URL">📋</button>
-                        <button class="icon-btn" onclick="addToQueueFromHistory(${i})" title="Add to Combine">➕</button>
-                        <button class="icon-btn" onclick="deleteHistoryItem(${i})" title="Delete" style="background: var(--error);">🗑️</button>
+                        <button class="icon-btn" onclick="copyUrl('${item.url}')" title="Copy URL">📋</button>
+                        <button class="icon-btn" onclick="addToQueueFromHistory(${idx})" title="Add to Combine">➕</button>
+                        <button class="icon-btn" onclick="deleteHistoryItem(${idx})" title="Delete" style="background: var(--error);">🗑️</button>
                     </div>
                 </div>
             `).join('');
         }
 
+        function copyUrl(url) {
+            navigator.clipboard.writeText(url);
+            showStatus('generateStatus', 'URL copied!', 'success');
+        }
+
         function addToQueueFromHistory(idx) {
             const item = state.history[idx];
             addToQueue({ url: item.url, name: item.prompt?.substring(0,50) || 'Video' });
-            showToast('Added to combine queue');
+            showStatus('generateStatus', 'Added to combine queue', 'success');
         }
 
         function deleteHistoryItem(idx) {
-            if (!confirm('Delete this item?')) return;
+            if (!confirm('Delete this item from history?')) return;
             state.history.splice(idx, 1);
             localStorage.setItem('video_history', JSON.stringify(state.history));
             renderHistory();
         }
 
         function clearHistory() {
-            if (!confirm('Clear all history?')) return;
+            if (!confirm('Clear all history? This cannot be undone.')) return;
             state.history = [];
             localStorage.setItem('video_history', '[]');
             renderHistory();
         }
 
         function exportHistory() {
-            const data = { version: 1, exported: Date.now(), history: state.history };
+            const data = {
+                version: 1,
+                exported: Date.now(),
+                history: state.history
+            };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `workflow-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `video-workflow-backup-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
-            showToast('History exported');
+            showStatus('generateStatus', 'History exported', 'success');
         }
 
         function importHistory(e) {
             const file = e.target.files[0];
             if (!file) return;
+            
             const reader = new FileReader();
-            reader.onload = (ev) => {
+            reader.onload = (event) => {
                 try {
-                    const data = JSON.parse(ev.target.result);
-                    if (!confirm(`Import ${data.history?.length||0} items?`)) return;
-                    state.history = [...data.history, ...state.history].filter((v,i,a) => a.findIndex(t => t.url===v.url)===i);
-                    localStorage.setItem('video_history', JSON.stringify(state.history));
+                    const data = JSON.parse(event.target.result);
+                    if (!data.history || !Array.isArray(data.history)) {
+                        throw new Error('Invalid backup file format');
+                    }
+                    
+                    if (!confirm(`Import ${data.history.length} items? This will merge with existing history.`)) {
+                        return;
+                    }
+                    
+                    // Merge and deduplicate by URL
+                    const combined = [...data.history, ...state.history];
+                    state.history = combined.filter((item, index, self) => 
+                        index === self.findIndex(t => t.url === item.url)
+                    );
+                    
+                    localStorage.setItem('video_history', JSON.stringify(state.history.slice(0, 100)));
                     renderHistory();
-                    showToast('History imported', 'success');
+                    showStatus('generateStatus', `Imported successfully! Total: ${state.history.length} items`, 'success');
                 } catch (err) {
-                    showToast('Invalid file', 'error');
+                    alert('Failed to import: ' + err.message);
                 }
             };
             reader.readAsText(file);
@@ -1314,23 +1376,15 @@
             state.apiKey = key;
             localStorage.setItem('airforce_api_key', key);
             hideApiKeyModal();
-            showToast('API key saved');
+            showStatus('generateStatus', 'API key saved', 'success');
         }
 
         // --- Init ---
         document.addEventListener('DOMContentLoaded', () => {
             initTheme();
             changeExtractSource();
-            setTimeout(initFFmpeg, 1000); // Preload FFmpeg
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                if (e.code === 'Space' && state.currentTab === 'extract' && state.extractVideo) {
-                    e.preventDefault();
-                    state.extractVideo.paused ? state.extractVideo.play() : state.extractVideo.pause();
-                }
-                if (e.key === 'Escape') hideApiKeyModal();
-            });
+            // Pre-init FFmpeg
+            setTimeout(() => initFFmpeg(), 1000);
         });
     </script>
 </body>
