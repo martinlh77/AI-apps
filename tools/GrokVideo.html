@@ -309,6 +309,34 @@
             border-radius: 8px;
             margin-top: 10px;
             display: none;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .error-msg span {
+            flex: 1;
+            word-break: break-word;
+        }
+        
+        .error-close {
+            background: transparent;
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .error-close:hover {
+            background: #ff6b6b30;
         }
         
         .info-badge {
@@ -418,10 +446,13 @@
 
                     <div class="checkbox-group">
                         <input type="checkbox" id="safe">
-                        <label for="enhance">Safety Filter</label>
+                        <label for="safe">Safety Filter</label>
                     </div>
 
-                    <div class="error-msg" id="errorMsg"></div>
+                    <div class="error-msg" id="errorMsg" style="display: none;">
+                        <span id="errorText"></span>
+                        <button class="error-close" onclick="hideError()" title="Dismiss">×</button>
+                    </div>
 
                     <button class="generate-btn" onclick="generateVideo()" id="genBtn">
                         Generate Video
@@ -564,9 +595,14 @@
 
         const showError = (msg) => {
             const el = document.getElementById('errorMsg');
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 5000);
+            const text = document.getElementById('errorText');
+            text.textContent = msg;
+            el.style.display = 'flex';
+            // Removed auto-hide timeout - errors now persist until manually closed or new generation starts
+        };
+
+        const hideError = () => {
+            document.getElementById('errorMsg').style.display = 'none';
         };
 
         const setLoading = (loading) => {
@@ -577,6 +613,11 @@
             spinner.style.display = loading ? 'block' : 'none';
             badge.textContent = loading ? 'Generating...' : 'Ready';
             badge.style.color = loading ? '#ff6b6b' : '#808090';
+            
+            // Clear errors when starting a new generation
+            if (loading) {
+                hideError();
+            }
         };
 
         const generateVideo = async () => {
