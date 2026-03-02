@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Graph Plotter</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        #mainContainer {
+            display: flex;
+            gap: 20px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        #sidebar {
+            width: 380px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 700px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        #sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #sidebar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        #sidebar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        #canvasArea {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            overflow: auto;
+        }
+        
+        h1 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 22px;
+            text-align: center;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        canvas {
+            border: 3px solid #333;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: crosshair;
+            display: block;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .input-row label {
+            min-width: 80px;
+            font-weight: 600;
+            color: #555;
+            font-size: 13px;
+        }
+        
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            flex: 1;
+        }
+        
+        input[type="number"] {
+            width: 70px;
+            min-width: 70px;
+            text-align: center;
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+        
+        .range-inputs {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+        
+        .range-inputs label {
+            font-size: 12px;
+            color: #666;
+            min-width: auto;
+            font-weight: 600;
+        }
+        
+        .range-inputs input[type="number"] {
+            flex: 1;
+            min-width: 60px;
+        }
+        
+        button {
+            padding: 10px 16px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background: #1976D2;
+        }
+        
+        button.secondary-btn {
+            background: #95a5a6;
+        }
+        
+        button.secondary-btn:hover {
+            background: #7f8c8d;
+        }
+        
+        button.success-btn {
+            background: #27ae60;
+        }
+        
+        button.success-btn:hover {
+            background: #229954;
+        }
+        
+        button.danger-btn {
+            background: #e74c3c;
+        }
+        
+        button.danger-btn:hover {
+            background: #c0392b;
+        }
+        
+        button.small-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        
+        .points-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        
+        .points-table th {
+            background: #34495e;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .points-table td {
+            padding: 6px;
+            border-bottom: 1px solid #ddd;
+            background: white;
+        }
+        
+        .points-table input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            text-align: center;
+        }
+        
+        .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+            line-height: 1.3;
+        }
+        
+        .feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .feedback.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .button-group button {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        @media (max-width: 900px) {
+            #mainContainer {
+                flex-direction: column;
+                max-width: 600px;
+            }
+            
+            #sidebar {
+                width: 100%;
+                max-height: none;
+                order: 2;
+            }
+            
+            #canvasArea {
+                order: 1;
+                min-height: 400px;
+            }
+            
+            canvas {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="mainContainer">
+        <!-- Sidebar with Controls -->
+        <div id="sidebar">
+            <h1>📈 Line Graph Plotter</h1>
+            
+            <!-- Graph Settings -->
+            <div class="section">
+                <div class="section-title">Graph Settings</div>
+                
+                <div class="input-group">
+                    <label>Graph Title:</label>
+                    <input type="text" id="graphTitle" value="Amount Earned vs. Time Worked" placeholder="Enter title...">
+                    
+                    <label>X-Axis Label:</label>
+                    <input type="text" id="xAxisLabel" value="Time (h)" placeholder="e.g., Time (hours)">
+                    
+                    <label>Y-Axis Label:</label>
+                    <input type="text" id="yAxisLabel" value="Earnings ($)" placeholder="e.g., Amount ($)">
+                </div>
+                
+                <div class="input-group">
+                    <label>X-Axis Range & Step:</label>
+                    <div class="range-inputs">
+                        <label>Min:</label>
+                        <input type="number" id="xMin" value="0" step="any">
+                        <label>Max:</label>
+                        <input type="number" id="xMax" value="15" step="any">
+                        <label>Step:</label>
+                        <input type="number" id="xStep" value="1" min="0.1" step="any">
+                    </div>
+                    
+                    <label>Y-Axis Range & Step:</label>
+                    <div class="range-inputs">
+                        <label>Min:</label>
+                        <input type="number" id="yMin" value="0" step="any">
+                        <label>Max:</label>
+                        <input type="number" id="yMax" value="90" step="any">
+                        <label>Step:</label>
+                        <input type="number" id="yStep" value="5" min="0.1" step="any">
+                    </div>
+                </div>
+                
+                <button class="secondary-btn" onclick="applySettings()">Apply Settings & Draw Grid</button>
+                <div class="hint">Grid cells will always be square, regardless of axis ranges</div>
+            </div>
+            
+            <!-- Data Points -->
+            <div class="section">
+                <div class="section-title">Data Points</div>
+                <div class="hint">Click on the grid to add points, or enter coordinates below:</div>
+                
+                <table class="points-table" id="pointsTable">
+                    <thead>
+                        <tr>
+                            <th>X Value</th>
+                            <th>Y Value</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pointsBody">
+                        <!-- Points added dynamically -->
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 10px;">
+                    <button class="small-btn" onclick="addPointRow()">+ Add Point</button>
+                    <button class="small-btn secondary-btn" onclick="clearAllPoints()">Clear All</button>
+                </div>
+                
+                <div class="button-group" style="margin-top: 10px;">
+                    <button class="success-btn" onclick="plotGraph()">Plot Line Graph</button>
+                    <button class="secondary-btn" onclick="sortPointsByX()">Sort by X</button>
+                </div>
+            </div>
+            
+            <!-- Instructions -->
+            <div class="section">
+                <div class="section-title">How to Use</div>
+                <div class="hint">
+                    1. Set your axis labels and ranges<br>
+                    2. Click "Apply Settings"<br>
+                    3. Click on the grid to plot points, or type them in<br>
+                    4. Click "Plot Line Graph" to connect the dots<br>
+                    5. Grid cells are always square!
+                </div>
+            </div>
+        </div>
+        
+        <!-- Canvas Area -->
+        <div id="canvasArea">
+            <canvas id="graphCanvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Graph configuration
+        let config = {
+            title: "Amount Earned vs. Time Worked",
+            xLabel: "Time (h)",
+            yLabel: "Earnings ($)",
+            xMin: 0,
+            xMax: 15,
+            yMin: 0,
+            yMax: 90,
+            xStep: 1,
+            yStep: 5,
+            margin: 60
+        };
+        
+        // Scaling factors - pixels per data unit
+        let scaleX = 1;
+        let scaleY = 1;
+        
+        // Data points
+        let points = [
+            {x: 0, y: 0},
+            {x: 3, y: 36},
+            {x: 5, y: 60},
+            {x: 6, y: 72},
+            {x: 7, y: 84}
+        ];
+        
+        // Fixed canvas size for internal drawing (CSS will scale it responsively)
+        const CANVAS_SIZE = 600;
+        
+        function updateConfig() {
+            config.title = document.getElementById('graphTitle').value || "Line Graph";
+            config.xLabel = document.getElementById('xAxisLabel').value || "X";
+            config.yLabel = document.getElementById('yAxisLabel').value || "Y";
+            config.xMin = parseFloat(document.getElementById('xMin').value) || 0;
+            config.xMax = parseFloat(document.getElementById('xMax').value) || 10;
+            config.yMin = parseFloat(document.getElementById('yMin').value) || 0;
+            config.yMax = parseFloat(document.getElementById('yMax').value) || 10;
+            config.xStep = parseFloat(document.getElementById('xStep').value) || 1;
+            config.yStep = parseFloat(document.getElementById('yStep').value) || 1;
+            
+            // Validation
+            if (config.xMax <= config.xMin) config.xMax = config.xMin + 10;
+            if (config.yMax <= config.yMin) config.yMax = config.yMin + 10;
+            if (config.xStep <= 0) config.xStep = 1;
+            if (config.yStep <= 0) config.yStep = 1;
+        }
+        
+        function calculateScales() {
+            // Calculate number of grid cells in each direction
+            const xCells = (config.xMax - config.xMin) / config.xStep;
+            const yCells = (config.yMax - config.yMin) / config.yStep;
+            
+            // Calculate available space
+            const availableWidth = CANVAS_SIZE - 2 * config.margin;
+            const availableHeight = CANVAS_SIZE - 2 * config.margin;
+            
+            // Calculate size of each square cell
+            const cellSize = Math.min(availableWidth / xCells, availableHeight / yCells);
+            
+            // Calculate pixels per unit for each axis to ensure grid squares
+            scaleX = cellSize / config.xStep;
+            scaleY = cellSize / config.yStep;
+            
+            // Calculate actual graph dimensions
+            const graphWidth = cellSize * xCells;
+            const graphHeight = cellSize * yCells;
+            
+            // Center the graph in the canvas
+            config.offsetX = (CANVAS_SIZE - graphWidth) / 2;
+            config.offsetY = (CANVAS_SIZE - graphHeight) / 2;
+        }
+        
+        function toCanvas(x, y) {
+            // Convert data coordinates to canvas coordinates
+            const xCanvas = config.offsetX + (x - config.xMin) * scaleX;
+            const yCanvas = CANVAS_SIZE - config.offsetY - (y - config.yMin) * scaleY;
+            return {x: xCanvas, y: yCanvas};
+        }
+        
+        function toData(xCanvas, yCanvas) {
+            // Convert canvas coordinates to data coordinates
+            const x = config.xMin + (xCanvas - config.offsetX) / scaleX;
+            const y = config.yMin + (CANVAS_SIZE - config.offsetY - yCanvas) / scaleY;
+            return {x: x, y: y};
+        }
+        
+        function snapToGrid(val, step) {
+            // Snap to nearest step
+            return Math.round(val / step) * step;
+        }
+        
+        function drawArrowhead(x, y, angle, size = 10, color = '#000') {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(
+                x - size * Math.cos(angle - Math.PI / 6),
+                y - size * Math.sin(angle - Math.PI / 6)
+            );
+            ctx.lineTo(
+                x - size * Math.cos(angle + Math.PI / 6),
+                y - size * Math.sin(angle + Math.PI / 6)
+            );
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        function drawGrid() {
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            
+            // Calculate scales first
+            calculateScales();
+            
+            // Draw grid lines
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            
+            // Vertical grid lines (X)
+            for (let x = config.xMin; x <= config.xMax + 0.000001; x += config.xStep) {
+                // Round to avoid floating point errors
+                x = Math.round(x / config.xStep) * config.xStep;
+                if (x > config.xMax) break;
+                
+                const bottom = toCanvas(x, config.yMin);
+                const top = toCanvas(x, config.yMax);
+                
+                ctx.beginPath();
+                ctx.moveTo(bottom.x, bottom.y);
+                ctx.lineTo(top.x, top.y);
+                ctx.stroke();
+            }
+            
+            // Horizontal grid lines (Y)
+            for (let y = config.yMin; y <= config.yMax + 0.000001; y += config.yStep) {
+                y = Math.round(y / config.yStep) * config.yStep;
+                if (y > config.yMax) break;
+                
+                const left = toCanvas(config.xMin, y);
+                const right = toCanvas(config.xMax, y);
+                
+                ctx.beginPath();
+                ctx.moveTo(left.x, left.y);
+                ctx.lineTo(right.x, right.y);
+                ctx.stroke();
+            }
+            
+            // Draw axes with arrows
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            
+            // X-axis
+            const xLeft = toCanvas(config.xMin, config.yMin);
+            const xRight = toCanvas(config.xMax, config.yMin);
+            
+            ctx.beginPath();
+            ctx.moveTo(xLeft.x, xLeft.y);
+            ctx.lineTo(xRight.x - 15, xRight.y);
+            ctx.stroke();
+            
+            // X-axis arrow
+            drawArrowhead(xRight.x, xRight.y, 0, 12, '#2c3e50');
+            
+            // Y-axis
+            const yBottom = toCanvas(config.xMin, config.yMin);
+            const yTop = toCanvas(config.xMin, config.yMax);
+            
+            ctx.beginPath();
+            ctx.moveTo(yBottom.x, yBottom.y);
+            ctx.lineTo(yTop.x, yTop.y + 15);
+            ctx.stroke();
+            
+            // Y-axis arrow
+            drawArrowhead(yTop.x, yTop.y, -Math.PI / 2, 12, '#2c3e50');
+            
+            // Draw labels
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            
+            // X-axis labels
+            for (let x = config.xMin; x <= config.xMax + 0.000001; x += config.xStep) {
+                x = Math.round(x / config.xStep) * config.xStep;
+                if (x > config.xMax) break;
+                
+                const pos = toCanvas(x, config.yMin);
+                // Format number to avoid long decimals
+                const label = Number.isInteger(x) ? x.toString() : x.toFixed(1);
+                ctx.fillText(label, pos.x, pos.y + 8);
+            }
+            
+            // Y-axis labels
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let y = config.yMin; y <= config.yMax + 0.000001; y += config.yStep) {
+                y = Math.round(y / config.yStep) * config.yStep;
+                if (y > config.yMax) break;
+                
+                const pos = toCanvas(config.xMin, y);
+                const label = Number.isInteger(y) ? y.toString() : y.toFixed(1);
+                ctx.fillText(label, pos.x - 8, pos.y);
+            }
+            
+            // Axis titles
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            
+            // X-axis title
+            const xTitlePos = toCanvas((config.xMin + config.xMax) / 2, config.yMin);
+            ctx.fillText(config.xLabel, xTitlePos.x, xTitlePos.y + 35);
+            
+            // Y-axis title (rotated)
+            ctx.save();
+            ctx.translate(20, toCanvas(config.xMin, (config.yMin + config.yMax) / 2).y);
+            ctx.rotate(-Math.PI / 2);
+            ctx.textAlign = 'center';
+            ctx.fillText(config.yLabel, 0, 0);
+            ctx.restore();
+            
+            // X and Y indicators near arrows
+            ctx.font = 'bold 14px Arial';
+            const xArrowPos = toCanvas(config.xMax, config.yMin);
+            ctx.fillText('x', xArrowPos.x - 10, xArrowPos.y - 25);
+            
+            const yArrowPos = toCanvas(config.xMin, config.yMax);
+            ctx.fillText('y', yArrowPos.x + 20, yArrowPos.y + 10);
+            
+            // Graph title
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText(config.title, CANVAS_SIZE / 2, 15);
+        }
+        
+        function drawLine() {
+            if (points.length < 2) return;
+            
+            ctx.strokeStyle = '#2c3e50';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            ctx.beginPath();
+            const start = toCanvas(points[0].x, points[0].y);
+            ctx.moveTo(start.x, start.y);
+            
+            for (let i = 1; i < points.length; i++) {
+                const pos = toCanvas(points[i].x, points[i].y);
+                ctx.lineTo(pos.x, pos.y);
+            }
+            ctx.stroke();
+        }
+        
+        function drawPoints() {
+            points.forEach((point, index) => {
+                // Check if point is within bounds
+                if (point.x < config.xMin || point.x > config.xMax || 
+                    point.y < config.yMin || point.y > config.yMax) {
+                    return;
+                }
+                
+                const pos = toCanvas(point.x, point.y);
+                
+                // Draw point
+                ctx.fillStyle = '#2c3e50';
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 7, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // White outline
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Black outer ring
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                
+                // Label with coordinates
+                ctx.fillStyle = '#2c3e50';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                
+                // Format coordinates
+                const xStr = Number.isInteger(point.x) ? point.x : point.x.toFixed(1);
+                const yStr = Number.isInteger(point.y) ? point.y : point.y.toFixed(1);
+                ctx.fillText(`(${xStr}, ${yStr})`, pos.x + 10, pos.y - 10);
+            });
+        }
+        
+        function draw() {
+            drawGrid();
+            drawLine();
+            drawPoints();
+        }
+        
+        function addPointRow(x = '', y = '') {
+            const tbody = document.getElementById('pointsBody');
+            const row = document.createElement('tr');
+            
+            row.innerHTML = `
+                <td><input type="number" class="point-x" value="${x}" step="any" placeholder="x"></td>
+                <td><input type="number" class="point-y" value="${y}" step="any" placeholder="y"></td>
+                <td><button class="small-btn danger-btn" onclick="removePointRow(this)">Delete</button></td>
+            `;
+            
+            tbody.appendChild(row);
+        }
+        
+        function removePointRow(btn) {
+            const row = btn.closest('tr');
+            row.remove();
+        }
+        
+        function clearAllPoints() {
+            document.getElementById('pointsBody').innerHTML = '';
+            points = [];
+            draw();
+        }
+        
+        function collectPointsFromTable() {
+            const rows = document.querySelectorAll('#pointsBody tr');
+            points = [];
+            
+            rows.forEach(row => {
+                const xInput = row.querySelector('.point-x');
+                const yInput = row.querySelector('.point-y');
+                
+                const x = parseFloat(xInput.value);
+                const y = parseFloat(yInput.value);
+                
+                if (!isNaN(x) && !isNaN(y)) {
+                    points.push({x, y});
+                }
+            });
+        }
+        
+        function updateTableFromPoints() {
+            document.getElementById('pointsBody').innerHTML = '';
+            points.forEach(p => {
+                addPointRow(p.x, p.y);
+            });
+        }
+        
+        function sortPointsByX() {
+            collectPointsFromTable();
+            points.sort((a, b) => a.x - b.x);
+            updateTableFromPoints();
+            draw();
+        }
+        
+        function plotGraph() {
+            collectPointsFromTable();
+            draw();
+        }
+        
+        function applySettings() {
+            updateConfig();
+            // Set canvas size
+            canvas.width = CANVAS_SIZE;
+            canvas.height = CANVAS_SIZE;
+            draw();
+        }
+        
+        // Canvas click handler
+        canvas.addEventListener('click', function(e) {
+            const rect = canvas.getBoundingClientRect();
+            // Calculate scale factors if canvas is displayed at different size
+            const scaleX_display = canvas.width / rect.width;
+            const scaleY_display = canvas.height / rect.height;
+            
+            const xCanvas = (e.clientX - rect.left) * scaleX_display;
+            const yCanvas = (e.clientY - rect.top) * scaleY_display;
+            
+            const data = toData(xCanvas, yCanvas);
+            
+            // Snap to step intervals
+            data.x = snapToGrid(data.x, config.xStep);
+            data.y = snapToGrid(data.y, config.yStep);
+            
+            // Round to avoid floating point mess
+            data.x = Math.round(data.x * 100) / 100;
+            data.y = Math.round(data.y * 100) / 100;
+            
+            // Check bounds
+            if (data.x < config.xMin || data.x > config.xMax || 
+                data.y < config.yMin || data.y > config.yMax) {
+                return; // Clicked outside valid area
+            }
+            
+            // Add point
+            points.push({x: data.x, y: data.y});
+            addPointRow(data.x, data.y);
+            draw();
+        });
+        
+        // Initialize
+        window.onload = function() {
+            updateTableFromPoints();
+            applySettings();
+        };
+    </script>
+</body>
+</html>
