@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pollinations Studio (Image & Video) v13.0</title>
+  <title>Pollinations Studio (Image & Video) v13.2</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -294,7 +294,7 @@
 <body class="p-4 md:p-8">
 
   <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor) v13.0</h1>
+      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor) v13.2</h1>
 
       <div id="message-area" class="mb-4"></div>
 
@@ -334,6 +334,7 @@
                   <select id="modelSelect" class="w-full">
                       <optgroup label="Image Generators & Editors">
                           <option value="flux">Flux (Generator)</option>
+                          <option value="flux-2-dev">Flux 2 Dev 👁️ (Editor/Generator)</option>
                           <option value="zimage" selected>Zimage (Generator)</option>
                           <option value="imagen-4">Imagen 4 (Generator)</option>
                           <option value="grok-imagine">Grok Imagine (Image)</option>
@@ -343,6 +344,7 @@
                           <option value="nanobanana">💎 Nano Banana 👁️ (Editor/Generator)</option>
                           <option value="nanobanana-pro">💎 Nano Banana Pro 👁️ (Editor/Generator)</option>
                           <option value="seedream">💎 Seedream 👁️ (Editor/Generator)</option>
+                          <option value="seedream5">💎 Seedream 5.0 Lite 👁️ (Editor/Generator)</option>
                           <option value="seedream-pro">💎 Seedream-Pro 👁️ (Editor/Generator)</option>
                           <option value="kontext">💎 Kontext 👁️ (Editor/Generator)</option>
                           <option value="gptimage-large">💎 GPT-Image Large 👁️ (Editor/Generator)</option>
@@ -350,8 +352,8 @@
                       <optgroup label="Video Models">
                           <option value="grok-video">🎬 Grok Video (Pollinations Native)</option>
                           <option value="grok-video-airforce">🎬 Grok Video (Airforce API - 6s)</option>
-                          <option value="seedance">Seedance (Video - T2V & I2V)</option>
-                          <option value="wan">Wan (Video - T2V & I2V with Audio)</option>
+                          <option value="seedance">💎 Seedance (Video - T2V & I2V)</option>
+                          <option value="wan">💎 Wan (Video - T2V & I2V with Audio)</option>
                           <option value="seedance-pro">💎 Seedance-Pro (Video - T2V & I2V)</option>
                           <option value="veo">💎 Veo (Video - T2V & First/Last Frame)</option>
                           <option value="ltx-2">💎 LTX-2 (Video - T2V with Audio)</option>
@@ -679,13 +681,13 @@
       const GROK_VIDEO_POLLINATIONS = 'grok-video';
       
       // Models that support image input (Editors + Video I2V models)
-      const IMAGE_INPUT_MODELS = ['klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', GROK_VIDEO_AIRFORCE, GROK_VIDEO_POLLINATIONS, 'seedance', 'seedance-pro', 'wan', 'veo', 'ltx-2'];
+      const IMAGE_INPUT_MODELS = ['klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'seedream5', 'flux-2-dev', 'kontext', 'gptimage', 'gptimage-large', GROK_VIDEO_AIRFORCE, GROK_VIDEO_POLLINATIONS, 'seedance', 'seedance-pro', 'wan', 'veo', 'ltx-2'];
       
       // Models that support guidance scale (Standard diffusion-based image models)
-      const GUIDANCE_SCALE_MODELS = ['flux', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'imagen-4'];
+      const GUIDANCE_SCALE_MODELS = ['flux', 'flux-2-dev', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'seedream5', 'kontext', 'imagen-4'];
       
       // Models that support negative prompts (All except Veo and Grok variants)
-      const NEGATIVE_PROMPT_MODELS = ['flux', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'kontext', 'gptimage', 'gptimage-large', 'imagen-4', 'grok-imagine', 'seedance', 'seedance-pro', 'wan', 'ltx-2'];
+      const NEGATIVE_PROMPT_MODELS = ['flux', 'flux-2-dev', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'seedream5', 'kontext', 'gptimage', 'gptimage-large', 'imagen-4', 'grok-imagine', 'seedance', 'seedance-pro', 'wan', 'ltx-2'];
       
       // Models that support transparency (GPT-Image only)
       const TRANSPARENT_MODELS = ['gptimage', 'gptimage-large'];
@@ -694,7 +696,7 @@
       const AUDIO_MODELS = ['veo', 'wan', 'ltx-2'];
       
       // Paid models requiring API key
-      const PAID_MODELS = ['kontext', 'seedream', 'seedream-pro', 'gptimage-large', 'nanobanana', 'nanobanana-pro', 'seedance-pro', 'veo', 'ltx-2', 'wan'];
+      const PAID_MODELS = ['kontext', 'seedream', 'seedream-pro', 'seedream5', 'gptimage-large', 'nanobanana', 'nanobanana-pro', 'seedance', 'seedance-pro', 'veo', 'ltx-2', 'wan'];
       
       const apiKey = "plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL";
       const promptEnhancementModel = 'nova-fast';
@@ -1472,7 +1474,6 @@
                   n: 1,
                   size: size,
                   response_format: grokResponseFormat.value,
-                  sse: true,
                   mode: grokModeSelect.value,
                   aspectRatio: aspectRatio
               };
@@ -1497,82 +1498,27 @@
                   throw new Error(`API Error ${response.status}: ${errorText}`);
               }
 
-              const contentType = response.headers.get('content-type') || '';
+              const data = await response.json();
               let finalUrl = null;
-              let finalBase64 = null;
-              let lastReceivedData = null;
-
-              if (contentType.includes('application/json')) {
-                  const data = await response.json();
-                  lastReceivedData = data;
-                  
-                  const findUrl = (obj, path = '') => {
-                      if (!obj || typeof obj !== 'object') return null;
-                      for (const [key, val] of Object.entries(obj)) {
-                          if (typeof val === 'string' && (val.startsWith('http') || val.includes('.mp4'))) {
-                              return val;
-                          }
-                          if (typeof val === 'object') {
-                              const found = findUrl(val, path);
-                              if (found) return found;
-                          }
+              
+              const findUrl = (obj, path = '') => {
+                  if (!obj || typeof obj !== 'object') return null;
+                  for (const [key, val] of Object.entries(obj)) {
+                      if (typeof val === 'string' && (val.startsWith('http') || val.includes('.mp4'))) {
+                          return val;
                       }
-                      return null;
-                  };
-                  finalUrl = findUrl(data);
-              } else {
-                  const reader = response.body.getReader();
-                  const decoder = new TextDecoder();
-                  let buffer = '';
-
-                  while (true) {
-                      const { done, value } = await reader.read();
-                      if (done) break;
-                      buffer += decoder.decode(value, { stream: true });
-                      const lines = buffer.split('\n');
-                      buffer = lines.pop();
-                      
-                      for (const line of lines) {
-                          const trimmed = line.trim();
-                          if (!trimmed || !trimmed.startsWith('data: ')) continue;
-                          const dataStr = trimmed.slice(6);
-                          if (dataStr === '[DONE]' || dataStr === ': keepalive') continue;
-                          
-                          try {
-                              const data = JSON.parse(dataStr);
-                              lastReceivedData = data;
-                              if (data.progress !== undefined) {
-                                  placeholderText.innerHTML = `Generating... ${Math.round(data.progress)}%`;
-                              }
-                              if (data.status === 'error') {
-                                  throw new Error(data.message || 'API returned error status');
-                              }
-                              if (data.url) finalUrl = data.url;
-                              if (data.base64 || data.b64_json) finalBase64 = data.base64 || data.b64_json;
-                          } catch (e) {
-                              if (e.message.includes('API returned error')) throw e;
-                          }
+                      if (typeof val === 'object') {
+                          const found = findUrl(val, path);
+                          if (found) return found;
                       }
                   }
-              }
-
-              if (!finalUrl && finalBase64) {
-                  try {
-                      const byteCharacters = atob(finalBase64);
-                      const byteNumbers = new Array(byteCharacters.length);
-                      for (let i = 0; i < byteCharacters.length; i++) {
-                          byteNumbers[i] = byteCharacters.charCodeAt(i);
-                      }
-                      const byteArray = new Uint8Array(byteNumbers);
-                      const blob = new Blob([byteArray], { type: 'video/mp4' });
-                      finalUrl = URL.createObjectURL(blob);
-                  } catch (e) {
-                      console.error('Base64 conversion failed:', e);
-                  }
-              }
+                  return null;
+              };
+              
+              finalUrl = findUrl(data);
 
               if (!finalUrl) {
-                  throw new Error(`No video URL found. Last data: ${JSON.stringify(lastReceivedData).substring(0, 200)}`);
+                  throw new Error('No video URL found in response');
               }
 
               generatedImageUrl = finalUrl;
@@ -1586,7 +1532,7 @@
               toggleLoading(false);
               viewBtn.disabled = downloadBtn.disabled = false;
               
-              addToHistory(finalUrl.startsWith('blob:') ? `generated_${Date.now()}.mp4` : finalUrl, true, prompt);
+              addToHistory(finalUrl, true, prompt);
               displayMessage('Video generated successfully via Airforce!', 'success');
 
           } catch (error) {
@@ -1726,67 +1672,26 @@
           displayMessage(`Sending generation request for model: **${model}**...`, 'info');
 
           if (isVideoModel) {
-              const modelsWithReliableSSE = ['grok-video', 'veo'];
-              const useSSE = modelsWithReliableSSE.includes(model);
-              
-              if (useSSE) {
-                  try {
-                      await new Promise((resolve, reject) => {
-                          const sseUrl = `${fullUrl}&key=${getActiveApiKey()}`;
-                          const evtSource = new EventSource(sseUrl);
-                          
-                          evtSource.onmessage = (event) => {
-                              try {
-                                  const data = JSON.parse(event.data);
-                                  if (data.progress !== undefined) {
-                                      placeholderText.innerHTML = `Generating video... ${Math.round(data.progress)}%`;
-                                      placeholderText.style.display = 'block';
-                                  }
-                                  if (data.url) {
-                                      generatedImageUrl = data.url;
-                                      evtSource.close();
-                                      resolve();
-                                  }
-                                  if (data.error) {
-                                      evtSource.close();
-                                      reject(new Error(data.error));
-                                  }
-                              } catch (e) {}
-                          };
-                          
-                          evtSource.onerror = (e) => {
-                              evtSource.close();
-                              reject(new Error('SSE connection failed'));
-                          };
-                      });
-                  } catch (error) {
-                      displayMessage(`Generation failed: ${error.message}`, 'error');
-                      toggleLoading(false);
-                      return;
-                  }
-              } else {
-                  // Single fetch for models with unreliable SSE (seedance, wan, etc.)
-                  try {
-                      placeholderText.innerHTML = 'Generating video... (this may take a moment)';
-                      placeholderText.style.display = 'block';
-                      
-                      const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
-                      if (!response.ok) throw new Error(await response.text());
+              try {
+                  placeholderText.innerHTML = 'Generating video... (this may take a moment)';
+                  placeholderText.style.display = 'block';
+                  
+                  const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
+                  if (!response.ok) throw new Error(await response.text());
 
-                      const contentType = response.headers.get("content-type");
-                      if (contentType && contentType.includes("application/json")) {
-                          const responseData = await response.json();
-                          generatedImageUrl = responseData.url;
-                      } else if (contentType && contentType.includes("video/")) {
-                          generatedImageUrl = URL.createObjectURL(await response.blob());
-                      } else {
-                           generatedImageUrl = response.url;
-                      }
-                  } catch (error) {
-                      displayMessage(`Generation failed: ${error.message}`, 'error');
-                      toggleLoading(false);
-                      return;
+                  const contentType = response.headers.get("content-type");
+                  if (contentType && contentType.includes("application/json")) {
+                      const responseData = await response.json();
+                      generatedImageUrl = responseData.url;
+                  } else if (contentType && contentType.includes("video/")) {
+                      generatedImageUrl = URL.createObjectURL(await response.blob());
+                  } else {
+                       generatedImageUrl = response.url;
                   }
+              } catch (error) {
+                  displayMessage(`Generation failed: ${error.message}`, 'error');
+                  toggleLoading(false);
+                  return;
               }
           } else {
               const maxRetries = 5;
