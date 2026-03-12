@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pollinations Studio (Image & Video) v13.2</title>
+  <title>Pollinations Studio (Image & Video) v13.3</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -294,7 +294,7 @@
 <body class="p-4 md:p-8">
 
   <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor) v13.2</h1>
+      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor) v13.3</h1>
 
       <div id="message-area" class="mb-4"></div>
 
@@ -338,6 +338,7 @@
                           <option value="zimage" selected>Zimage (Generator)</option>
                           <option value="imagen-4">Imagen 4 (Generator)</option>
                           <option value="grok-imagine">Grok Imagine (Image)</option>
+			  <option value="dirtberry">Dirtberry (Generator)</option>
                           <option value="klein">Flux.2 Klein 4B 👁️ (Editor/Generator)</option>
                           <option value="klein-large">Flux.2 Klein 9B 👁️ (Editor/Generator)</option>
                           <option value="gptimage">GPT-Image 👁️ (Editor/Generator)</option>
@@ -684,10 +685,10 @@
       const IMAGE_INPUT_MODELS = ['klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'seedream5', 'flux-2-dev', 'kontext', 'gptimage', 'gptimage-large', GROK_VIDEO_AIRFORCE, GROK_VIDEO_POLLINATIONS, 'seedance', 'seedance-pro', 'wan', 'veo', 'ltx-2'];
       
       // Models that support guidance scale (Standard diffusion-based image models)
-      const GUIDANCE_SCALE_MODELS = ['flux', 'flux-2-dev', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'seedream5', 'kontext', 'imagen-4'];
+      const GUIDANCE_SCALE_MODELS = ['flux', 'flux-2-dev', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'seedream5', 'kontext', 'imagen-4', 'dirtberry'];
       
       // Models that support negative prompts (All except Veo and Grok variants)
-      const NEGATIVE_PROMPT_MODELS = ['flux', 'flux-2-dev', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'seedream5', 'kontext', 'gptimage', 'gptimage-large', 'imagen-4', 'grok-imagine', 'seedance', 'seedance-pro', 'wan', 'ltx-2'];
+      const NEGATIVE_PROMPT_MODELS = ['flux', 'flux-2-dev', 'zimage', 'klein', 'klein-large', 'nanobanana', 'nanobanana-pro', 'seedream', 'seedream-pro', 'seedream5', 'kontext', 'gptimage', 'gptimage-large', 'imagen-4', 'grok-imagine', 'seedance', 'seedance-pro', 'wan', 'ltx-2', 'dirtberry'];
       
       // Models that support transparency (GPT-Image only)
       const TRANSPARENT_MODELS = ['gptimage', 'gptimage-large'];
