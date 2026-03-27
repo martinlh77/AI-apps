@@ -828,7 +828,7 @@
           
           const seed = getRandomInt(1000000);
           // Updated prompt to be lighter and brighter
-          const prompt = `${style.name} style artwork depicting ${currentNoun}, bright and cheerful, light atmosphere, vibrant colors, positive mood, detailed, high quality`;
+          const prompt = `${style.name} style artwork depicting ${currentNoun}, high quality`;
           
           try {
               const url = `https://gen.pollinations.ai/image/${encodeURIComponent(prompt)}?model=${settings.imageModel}&seed=${seed}&quality=high&height=1024&width=1024&key=${settings.apiKey}`;
