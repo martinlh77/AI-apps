@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V3.4</title>
+    <title>Pollinations AI Chat (Media Enabled) V3.5</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -885,7 +885,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V3.4</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V3.5</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -1029,7 +1029,7 @@
                 <option value="openai-large">Openai-Large👁️💻</option>
                 <option value="claude-fast">Claude-Fast👁️</option>
                 <option value="nomnom">NomNom by Itachi🔍</option>
-                <option value="polly-ai">Polly by Itachi 🤖</option>
+                <option value="polly">Polly by Itachi 🤖</option>
                 <option value="gemini" class="paid-model-option" style="display: none;">Gemini🎙️👁️👂🔍💻 🔒</option>
                 <option value="claude" class="paid-model-option" style="display: none;">Claude👁️ 🔒</option>
                 <option value="grok" class="paid-model-option" style="display: none;">Grok 🔒</option>
@@ -2426,7 +2426,7 @@ const systemMsg = {
     }
     
     // CRITICAL: qwen-character does not support streaming or array content format
-const isBedrockModel = model === 'qwen-character' || model === 'qwen-safety';
+const isBedrockModel = model === 'qwen-character' || model === 'qwen-safety' || model === 'polly';
 const useStreaming = !isBedrockModel;
     
 // Convert messages to Bedrock-compatible format for Bedrock models
@@ -2453,16 +2453,16 @@ if (isBedrockModel) {
     
     const seed = regenerateSeed !== null ? regenerateSeed : Math.floor(Math.random() * 10000);
 
-    const requestBody = {
-        messages: finalMessages,
-        model: model,
-        stream: useStreaming,
-        seed: seed,
-        temperature: 1
-    };
+const requestBody = {
+    messages: finalMessages,
+    model: model,
+    stream: useStreaming,
+    seed: seed,
+    ...(model !== 'polly' ? { temperature: 1 } : {})
+};
     
 // Only add max_tokens for models that need it, and NOT for Bedrock models
-if (!isBedrockModel) {
+if (!isBedrockModel && model !== 'polly') {
         requestBody.max_tokens = ['mistral', 'nova-fast'].includes(model) ? 4096 : 64000;
     }
 
@@ -3766,4 +3766,3 @@ if (isBedrockModel) {
 </body>
 
 </html>
-
