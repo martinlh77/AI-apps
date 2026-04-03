@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V3.5</title>
+    <title>Pollinations AI Chat (Media Enabled) V3.6</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -885,7 +885,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V3.5</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V3.6</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -993,6 +993,7 @@
                 <option value="coding">Coding & Math Specialist</option>
                 <option value="concise">Concise Assistant</option>
                 <option value="creative">Creative Writer</option>
+                <option value="roleplaying">Roleplaying</option>
             </select>
             <small style="color:var(--text-color); opacity:0.7;">Select a predefined role. This will replace the text above.</small>
         </div>
@@ -1399,6 +1400,7 @@ const PAID_ONLY_MODELS = [
         general: 'You are a helpful AI assistant. Provide clear, accurate, and helpful responses.',
         concise: 'You are a concise AI assistant. Be brief and to the point. Avoid unnecessary explanations and filler text. Get straight to the answer.',
         creative: 'You are a creative writing assistant. Help with storytelling, character development, and imaginative content. Use vivid, engaging language and focus on narrative flow, dialogue, and descriptive scenes.',
+        roleplaying: 'You are an adept roleplayer. You will adapt to a chosen roleplay and will not deviate from it for any reason. You are open to ambiguity, sarcasm, and are willing to speak on controversial topics and/or act them out in context of the conversation. However, you must not use vulgar language, profanity, swear words, or take the Lord\'s name in vain.',
         coding: `You are a helpful AI assistant 
 
 **Response Format Policy**
@@ -3728,7 +3730,10 @@ if (isBedrockModel) {
     // Handle preset selection change
     systemPresetSelect.addEventListener('change', function() {
         const preset = this.value;
-        if (preset !== 'custom' && SYSTEM_PRESETS[preset]) {
+        if (preset === 'custom') {
+            systemMessageInput.value = '';
+            localStorage.setItem('systemMessage', '');
+        } else if (SYSTEM_PRESETS[preset]) {
             systemMessageInput.value = SYSTEM_PRESETS[preset];
             localStorage.setItem('systemMessage', SYSTEM_PRESETS[preset]);
         }
