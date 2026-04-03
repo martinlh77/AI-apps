@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V3.6</title>
+    <title>Pollinations AI Chat (Media Enabled) V3.7</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -35,8 +35,6 @@
             --session-active: #007bff;
             --session-hover: #e9ecef;
             --preview-bg: #ffffff;
-            --media-studio-bg: #1e293b;
-            --media-card-bg: #334155;
             --byop-bg: #fff3cd;
             --byop-border: #ffc107;
             --byop-text: #856404;
@@ -61,8 +59,6 @@
             --session-active: #007bff;
             --session-hover: #444;
             --preview-bg: #1e1e1e;
-            --media-studio-bg: #0f172a;
-            --media-card-bg: #1e293b;
             --byop-bg: #2d2818;
             --byop-border: #ffc107;
             --byop-text: #ffc107;
@@ -400,7 +396,7 @@
             color: var(--byop-text);
             text-decoration: underline;
             font-weight: bold;
-        }}
+        }
 
         /* Audio Controls */
         .audio-controls { 
@@ -608,257 +604,6 @@
             display: block;
         }
 
-        /* Media Studio Modal */
-        #media-studio-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: 3000;
-            justify-content: center;
-            align-items: center;
-            overflow-y: auto;
-        }
-
-        #media-studio-modal.open {
-            display: flex;
-        }
-
-        .media-studio-content {
-            background-color: var(--media-studio-bg);
-            padding: 25px;
-            border-radius: 12px;
-            width: 95%;
-            max-width: 1200px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Force dark theme for media studio */
-        #media-studio-modal .media-studio-content,
-        #media-studio-modal .media-card,
-        #media-studio-modal .media-form-group label,
-        #media-studio-modal .media-studio-header h3,
-        #media-studio-modal .checkbox-group label {
-            color: #f1f5f9 !important;
-        }
-
-        #media-studio-modal .media-form-group input,
-        #media-studio-modal .media-form-group select,
-        #media-studio-modal .media-form-group textarea {
-            background: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: #475569 !important;
-        }
-
-        .media-studio-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .media-studio-header h3 {
-            margin: 0;
-            color: var(--text-color);
-        }
-
-        .close-media-studio {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-color);
-        }
-
-        .media-studio-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .media-card {
-            background: var(--media-card-bg);
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid var(--border-color);
-        }
-
-        .media-card h4 {
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: var(--text-color);
-            font-size: 1.1rem;
-        }
-
-        .media-form-group {
-            margin-bottom: 15px;
-        }
-
-        .media-form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-            color: var(--text-color);
-        }
-
-        .media-form-group input,
-        .media-form-group select,
-        .media-form-group textarea {
-            width: 100%;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-            background: var(--input-bg);
-            color: var(--text-color);
-        }
-
-        .media-form-group textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-
-        .media-result-preview {
-            width: 100%;
-            min-height: 300px;
-            background: var(--bg-color);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 15px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .media-result-preview img,
-        .media-result-preview video {
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 8px;
-        }
-
-        .media-placeholder {
-            color: var(--text-color);
-            opacity: 0.5;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .media-loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .spinner {
-            border: 4px solid rgba(255,255,255,0.1);
-            border-top: 4px solid var(--user-msg-bg);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .media-btn {
-            background-color: var(--user-msg-bg);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .media-btn:hover {
-            opacity: 0.9;
-        }
-
-        .media-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .media-btn.secondary {
-            background-color: var(--full-reset-btn-bg);
-        }
-
-        .media-btn.danger {
-            background-color: var(--reset-btn-bg);
-        }
-
-        .media-action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .reference-images-area {
-            margin-top: 10px;
-            padding: 10px;
-            background: var(--bg-color);
-            border-radius: 6px;
-            min-height: 100px;
-        }
-
-        .ref-image-card {
-            display: inline-block;
-            position: relative;
-            margin: 5px;
-            width: 80px;
-            height: 80px;
-        }
-
-        .ref-image-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 4px;
-            border: 2px solid var(--border-color);
-        }
-
-        .ref-remove-btn {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: var(--reset-btn-bg);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-        }
-
         /* Paid model indicator in selects */
         option.paid-model-option {
             color: #ffc107;
@@ -868,9 +613,6 @@
         @media (max-width: 768px) {
             #preview-panel { width: 100%; right: -100%; }
             .message-wrapper { max-width: 95%; }
-            .media-studio-grid {
-                grid-template-columns: 1fr;
-            }
             .drag-overlay-content {
                 padding: 30px 40px;
             }
@@ -885,7 +627,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V3.6</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V3.7</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -920,10 +662,6 @@
         
         <button id="tts-popup-btn" class="file-upload-label" style="border: none; background: none;" title="Text-to-Speech">
             <i class="fas fa-volume-up"></i>
-        </button>
-        
-        <button id="media-studio-btn" class="file-upload-label" style="border: none; background: none;" title="Image & Video Studio">
-            <i class="fas fa-camera"></i>
         </button>
         
         <textarea id="user-input" placeholder="Type a message... (Enter to send, Shift+Enter for new line)"></textarea>
@@ -1105,43 +843,6 @@
                 Uploads audio for permanent hosting. Uncheck for local playback only.
             </small>
         </div>
-
-        <hr>
-        <h4>Image & Video Settings</h4>
-
-        <div class="settings-group">
-            <label>Default Image Model</label>
-            <select id="default-image-model">
-                <option value="zimage" selected>ZImage</option>
-                <option value="flux">Flux</option>
-                <option value="turbo">Turbo</option>
-                <option value="kontext" class="paid-model-option" style="display: none;">Kontext 🔒</option>
-                <option value="seedream" class="paid-model-option" style="display: none;">SeeDream 🔒</option>
-                <option value="seedream-pro" class="paid-model-option" style="display: none;">SeeDream Pro 🔒</option>
-                <option value="nanobanana">NanoBanana</option>
-                <option value="nanobanana-pro" class="paid-model-option" style="display: none;">NanoBanana Pro 🔒</option>
-                <option value="gptimage-large" class="paid-model-option" style="display: none;">GPTImage Large 🔒</option>
-            </select>
-        </div>
-
-        <div class="settings-group">
-            <label>Default Video Model</label>
-            <select id="default-video-model">
-                <option value="seedance" selected>Seedance</option>
-<option value="seedance-pro" class="paid-model-option" style="display: none;">Seedance Pro 🔒</option>
-                <option value="veo" class="paid-model-option" style="display: none;">Veo 🔒</option>
-            </select>
-        </div>
-
-        <div class="settings-group">
-            <label>Default Image Size</label>
-            <select id="default-image-size">
-                <option value="512">512x512</option>
-                <option value="768">768x768</option>
-                <option value="1024" selected>1024x1024</option>
-                <option value="1920">1920x1920</option>
-            </select>
-        </div>
     </div>
 
     <!-- TTS Modal -->
@@ -1162,184 +863,6 @@
         </div>
     </div>
 
-    <!-- Media Studio Modal -->
-    <div id="media-studio-modal">
-        <div class="media-studio-content">
-            <div class="media-studio-header">
-                <h3><i class="fas fa-camera"></i> Image & Video Studio</h3>
-                <button class="close-media-studio" id="close-media-studio">&times;</button>
-            </div>
-
-            <div class="media-studio-grid">
-                <!-- Left Panel: Controls -->
-                <div class="media-card">
-                    <h4>Generation Controls</h4>
-
-                    <div class="media-form-group">
-                        <label>Mode</label>
-                        <select id="media-mode-select">
-                            <option value="image">Image Generation</option>
-                            <option value="image-edit">Image Editing</option>
-                            <option value="video">Video Generation</option>
-                        </select>
-                    </div>
-
-                    <div class="media-form-group">
-                        <label>Model</label>
-                        <select id="media-model-select">
-                            <optgroup label="Image Models">
-                                <option value="zimage" selected>ZImage</option>
-                                <option value="flux">Flux</option>
-                                <option value="turbo">Turbo</option>
-                                <option value="gptimage">GPTImage</option>
-                                <option value="gptimage-large" class="paid-model-option" style="display: none;">GPTImage Large 🔒</option>
-                            </optgroup>
-                            <optgroup label="Editor Models">
-                                <option value="kontext" class="paid-model-option" style="display: none;">Kontext 🔒</option>
-                            <option value="seedream" class="paid-model-option" style="display: none;">SeeDream 🔒</option>
-                                <option value="seedream-pro" class="paid-model-option" style="display: none;">SeeDream Pro 🔒</option>
-                                <option value="nanobanana">NanoBanana</option>
-                                <option value="nanobanana-pro" class="paid-model-option" style="display: none;">NanoBanana Pro 🔒</option>
-                            </optgroup>
-                            <optgroup label="Video Models">
-                                <option value="seedance">Seedance</option>
-                                <option value="seedance-pro" class="paid-model-option" style="display: none;">Seedance Pro 🔒</option>
-                                <option value="veo" class="paid-model-option" style="display: none;">Veo 🔒</option>
-                            </optgroup>
-                        </select>
-                    </div>
-
-                    <div class="media-form-group">
-                        <label>Prompt</label>
-                        <textarea id="media-prompt" placeholder="Describe what you want to create..."></textarea>
-                    </div>
-
-                    <div class="media-form-group" id="media-negative-prompt-group" style="display: none;">
-                        <label>Negative Prompt</label>
-                        <textarea id="media-negative-prompt" placeholder="What to avoid..."></textarea>
-                    </div>
-
-                    <div class="media-form-group" id="media-reference-group" style="display: none;">
-                        <label>Reference Images</label>
-                        <input type="file" id="media-ref-upload" accept="image/*" multiple>
-                        <input type="text" id="media-ref-url" placeholder="Or paste image URL..." style="margin-top: 5px;">
-                        <button class="media-btn secondary" id="media-add-ref-url" style="margin-top: 5px;">Add URL</button>
-                        <div class="reference-images-area" id="media-ref-images"></div>
-                    </div>
-
-                    <div class="media-form-group" id="media-size-group">
-                        <label>Size</label>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="number" id="media-width" value="1024" min="128" max="2048" placeholder="Width">
-                            <input type="number" id="media-height" value="1024" min="128" max="2048" placeholder="Height">
-                        </div>
-                    </div>
-
-                    <div class="media-form-group" id="media-video-settings" style="display: none;">
-                        <label>Video Settings</label>
-                        <select id="media-aspect-ratio">
-                            <option value="16:9">16:9 (Landscape)</option>
-                            <option value="9:16">9:16 (Portrait)</option>
-                            <option value="1:1">1:1 (Square)</option>
-                        </select>
-                        <select id="media-duration" style="margin-top: 5px;">
-                            <option value="2">2 seconds</option>
-                            <option value="3">3 seconds</option>
-                            <option value="4" selected>4 seconds</option>
-                            <option value="5">5 seconds</option>
-                            <option value="6">6 seconds</option>
-                            <option value="7">7 seconds</option>
-                            <option value="8">8 seconds</option>
-                            <option value="9">9 seconds</option>
-                            <option value="10">10 seconds</option>
-                        </select>
-                    </div>
-
-                    <div class="media-form-group">
-                        <label>Seed</label>
-                        <input type="number" id="media-seed" value="42">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="media-random-seed" checked>
-                            <label>Randomize</label>
-                        </div>
-                    </div>
-
-                    <div class="media-form-group">
-                        <label>Guidance Scale</label>
-                        <input type="range" id="media-guidance" min="1" max="20" value="7" step="0.5">
-                        <span id="media-guidance-value">7.0</span>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="media-enhance" checked>
-                        <label>Enhance Prompt</label>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="media-nologo" checked>
-                        <label>No Logo</label>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="media-private" checked>
-                        <label>Private</label>
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="media-safe" checked>
-                        <label>Safe Mode</label>
-                    </div>
-
-                    <div class="checkbox-group" id="media-transparent-group" style="display: none;">
-                        <input type="checkbox" id="media-transparent">
-                        <label>Transparent Background</label>
-                    </div>
-
-                    <button class="media-btn" id="media-generate-btn">
-                        <i class="fas fa-magic"></i> Generate
-                    </button>
-                </div>
-
-                <!-- Right Panel: Preview & Actions -->
-                <div class="media-card">
-                    <h4>Preview</h4>
-                    <div class="media-result-preview" id="media-preview">
-                        <div class="media-placeholder">Your generated media will appear here</div>
-                    </div>
-
-                    <div class="media-action-buttons" id="media-actions" style="display: none;">
-                        <button class="media-btn secondary" id="media-download-btn">
-                            <i class="fas fa-download"></i> Download
-                        </button>
-                        <button class="media-btn secondary" id="media-view-url-btn">
-                            <i class="fas fa-external-link-alt"></i> View URL
-                        </button>
-                    </div>
-
-                    <div class="media-action-buttons" id="media-edit-actions" style="display: none;">
-                        <button class="media-btn" id="media-edit-btn">
-                            <i class="fas fa-edit"></i> Edit This Image
-                        </button>
-                        <button class="media-btn" id="media-animate-btn">
-                            <i class="fas fa-video"></i> Animate
-                        </button>
-                        <button class="media-btn" id="media-regenerate-btn">
-                            <i class="fas fa-sync-alt"></i> Regenerate
-                        </button>
-                    </div>
-
-                    <button class="media-btn secondary" id="media-insert-chat-btn" style="display: none; margin-top: 10px;">
-                        <i class="fas fa-comment"></i> Insert into Chat
-                    </button>
-
-                    <button class="media-btn danger" id="media-clear-btn" style="margin-top: 10px;">
-                        <i class="fas fa-trash"></i> Clear
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div id="notification" class="notification"></div>
 
     <!-- Drag and Drop Overlay -->
@@ -1355,19 +878,11 @@
     // --- Configuration ---
     const USER_API_TOKEN = "pk_OIQlw5rh71ylmlqV";
     const API_URL = "https://gen.pollinations.ai/v1/chat/completions";
-    const IMAGE_API_URL = "https://gen.pollinations.ai/image";
     
     // --- BYOP Policy: Paid-only models ---
 const PAID_ONLY_MODELS = [
     "claude",
     "grok",
-    "kontext",
-    "seedream",
-    "seedream-pro",
-    "seedance-pro",
-    "gptimage-large",
-    "nanobanana-pro",
-    "veo",
     "gemini-large",
     "gemini-legacy",
     "claude-large"
@@ -1385,14 +900,6 @@ const PAID_ONLY_MODELS = [
     let dragCounter = 0;
     let pyodide = null;
     let pyodideReady = false;
-
-    // Media Studio State
-    let mediaState = {
-        referenceImages: [],
-        currentResult: null,
-        currentApiUrl: null,
-        isGenerating: false
-    };
 
     // System Prompt Presets
     const SYSTEM_PRESETS = {
@@ -1471,48 +978,6 @@ When generating Python (which is rare):
     const refreshPreview = document.getElementById('refresh-preview');
     const openNewTab = document.getElementById('open-new-tab');
     const dragOverlay = document.getElementById('drag-overlay');
-    
-    // Media Studio Elements
-    const mediaStudioBtn = document.getElementById('media-studio-btn');
-    const mediaStudioModal = document.getElementById('media-studio-modal');
-    const closeMediaStudio = document.getElementById('close-media-studio');
-    const mediaModeSelect = document.getElementById('media-mode-select');
-    const mediaModelSelect = document.getElementById('media-model-select');
-    const mediaPrompt = document.getElementById('media-prompt');
-    const mediaNegativePrompt = document.getElementById('media-negative-prompt');
-    const mediaNegativePromptGroup = document.getElementById('media-negative-prompt-group');
-    const mediaReferenceGroup = document.getElementById('media-reference-group');
-    const mediaRefUpload = document.getElementById('media-ref-upload');
-    const mediaRefUrl = document.getElementById('media-ref-url');
-    const mediaAddRefUrl = document.getElementById('media-add-ref-url');
-    const mediaRefImages = document.getElementById('media-ref-images');
-    const mediaWidth = document.getElementById('media-width');
-    const mediaHeight = document.getElementById('media-height');
-    const mediaSizeGroup = document.getElementById('media-size-group');
-    const mediaVideoSettings = document.getElementById('media-video-settings');
-    const mediaAspectRatio = document.getElementById('media-aspect-ratio');
-    const mediaDuration = document.getElementById('media-duration');
-    const mediaSeed = document.getElementById('media-seed');
-    const mediaRandomSeed = document.getElementById('media-random-seed');
-    const mediaGuidance = document.getElementById('media-guidance');
-    const mediaGuidanceValue = document.getElementById('media-guidance-value');
-    const mediaEnhance = document.getElementById('media-enhance');
-    const mediaNologo = document.getElementById('media-nologo');
-    const mediaPrivate = document.getElementById('media-private');
-    const mediaSafe = document.getElementById('media-safe');
-    const mediaTransparent = document.getElementById('media-transparent');
-    const mediaTransparentGroup = document.getElementById('media-transparent-group');
-    const mediaGenerateBtn = document.getElementById('media-generate-btn');
-    const mediaPreview = document.getElementById('media-preview');
-    const mediaActions = document.getElementById('media-actions');
-    const mediaEditActions = document.getElementById('media-edit-actions');
-    const mediaDownloadBtn = document.getElementById('media-download-btn');
-    const mediaViewUrlBtn = document.getElementById('media-view-url-btn');
-    const mediaEditBtn = document.getElementById('media-edit-btn');
-    const mediaAnimateBtn = document.getElementById('media-animate-btn');
-    const mediaRegenerateBtn = document.getElementById('media-regenerate-btn');
-    const mediaInsertChatBtn = document.getElementById('media-insert-chat-btn');
-    const mediaClearBtn = document.getElementById('media-clear-btn');
 
     // --- BYOP Policy Functions ---
     function hasUserProvidedOwnKey() {
@@ -1531,10 +996,7 @@ When generating Python (which is rare):
         
         // If currently selected model is paid and user removed key, switch to default
         const selects = [
-            document.getElementById('model-select'), 
-            document.getElementById('media-model-select'), 
-            document.getElementById('default-image-model'), 
-            document.getElementById('default-video-model')
+            document.getElementById('model-select')
         ];
         
         selects.forEach(select => {
@@ -1852,7 +1314,7 @@ marked.use({
                 
                 let imagesHtml = '';
                 filesForUI.forEach(f => {
-                    imagesHtml += `<img src="${f.content}" class="chat-image" alt="Python output" onclick="openImageInStudio('${f.content}')" style="max-width: 400px;">`;
+                    imagesHtml += `<img src="${f.content}" class="chat-image" alt="Python output" style="max-width: 400px;">`;
                 });
                 
                 userWrapper.innerHTML = `
@@ -2649,7 +2111,7 @@ if (isBedrockModel) {
         if(files.length > 0) {
             files.forEach(f => {
                 if(f.type === 'image') {
-                    fileHtml += `<img src="${f.content}" class="chat-image" alt="${f.name}" onclick="openImageInStudio('${f.content}')">`;
+                    fileHtml += `<img src="${f.content}" class="chat-image" alt="${f.name}" onclick="window.open('${f.content}', '_blank')">`;
                 } else {
                     fileHtml += `<div class="code-container"><div class="code-header">File: ${f.name}</div><pre>${f.type === 'text' ? escapeHtml(f.content.substring(0, 100)) + '...' : '[Binary Data]'}</pre></div>`;
                 }
@@ -2670,7 +2132,7 @@ if (isBedrockModel) {
                 audioButtonHtml = `
                     <button id="audio-btn-${msgId}" class="audio-btn" 
                             onclick="generateAudioForMessage('${msgId}', \`${(text || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)"
-                            style="margin-top:8px;">
+                            style="margin-top:8px; display:none;">
                         <i class="fas fa-volume-up"></i> Generate Audio
                     </button>
                     <div id="audio-container-${msgId}"></div>
@@ -3144,532 +2606,6 @@ if (isBedrockModel) {
         showNotification('Audio generated successfully!');
     }
 
-    // ==========================================
-    // === MEDIA STUDIO FUNCTIONS START HERE ===
-    // ==========================================
-
-    // --- Media Studio Modal Controls ---
-    mediaStudioBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        openMediaStudio();
-    });
-
-    closeMediaStudio.addEventListener('click', function() {
-        mediaStudioModal.classList.remove('open');
-    });
-
-    mediaStudioModal.addEventListener('click', function(e) {
-        if (e.target === mediaStudioModal) {
-            mediaStudioModal.classList.remove('open');
-        }
-    });
-
-    function openMediaStudio() {
-        mediaStudioModal.classList.add('open');
-        updateMediaStudioUI();
-        
-        // Set defaults from settings
-        const defaultImageModel = document.getElementById('default-image-model').value;
-        const defaultSize = document.getElementById('default-image-size').value;
-        
-        mediaModelSelect.value = defaultImageModel;
-        mediaWidth.value = defaultSize;
-        mediaHeight.value = defaultSize;
-        
-        // Check if selected model is paid and user doesn't have key
-        if (PAID_ONLY_MODELS.includes(mediaModelSelect.value) && !hasUserProvidedOwnKey()) {
-            showNotification('Please enter your own API key to use premium models');
-            // Reset to first free option
-            for (let i = 0; i < mediaModelSelect.options.length; i++) {
-                if (!PAID_ONLY_MODELS.includes(mediaModelSelect.options[i].value)) {
-                    mediaModelSelect.selectedIndex = i;
-                    break;
-                }
-            }
-        }
-    }
-
-    // --- Media Studio UI Updates ---
-    mediaModeSelect.addEventListener('change', updateMediaStudioUI);
-    mediaModelSelect.addEventListener('change', function() {
-        // Check if user selected a paid model without having their own key
-        if (PAID_ONLY_MODELS.includes(this.value) && !hasUserProvidedOwnKey()) {
-            showNotification('🔒 This model requires your own API key. Please add your key in Settings.');
-            // Revert to first free option
-            for (let i = 0; i < this.options.length; i++) {
-                if (!PAID_ONLY_MODELS.includes(this.options[i].value)) {
-                    this.selectedIndex = i;
-                    break;
-                }
-            }
-        }
-        updateMediaStudioUI();
-    });
-
-    function updateMediaStudioUI() {
-        const mode = mediaModeSelect.value;
-        const model = mediaModelSelect.value;
-        
-        const isVideoModel = ['seedance', 'seedance-pro', 'veo'].includes(model);
-        const isEditorModel = ['kontext', 'seedream', 'seedream-pro', 'nanobanana', 'nanobanana-pro'].includes(model);
-        const isSeedream = ['seedream', 'seedream-pro'].includes(model);
-        
-        // Show/hide controls based on mode and model
-        if (mode === 'video' || isVideoModel) {
-            mediaSizeGroup.style.display = 'none';
-            mediaVideoSettings.style.display = 'block';
-            mediaReferenceGroup.style.display = isEditorModel && model !== 'veo' ? 'block' : 'none';
-            mediaTransparentGroup.style.display = 'none';
-            
-            // Update duration options based on model
-            const currentDuration = mediaDuration.value;
-            mediaDuration.innerHTML = '';
-            
-            if (model === 'veo') {
-                // Veo only supports 4, 6, 8 seconds
-                [4, 6, 8].forEach(val => {
-                    const opt = document.createElement('option');
-                    opt.value = val;
-                    opt.text = `${val} seconds`;
-                    if (val === 4 || val === parseInt(currentDuration)) opt.selected = true;
-                    mediaDuration.appendChild(opt);
-                });
-            } else {
-                // Seedance supports 2-10 seconds
-                for (let i = 2; i <= 10; i++) {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    opt.text = `${i} seconds`;
-                    if (i === 4 || i === parseInt(currentDuration)) opt.selected = true;
-                    mediaDuration.appendChild(opt);
-                }
-            }
-        } else if (mode === 'image-edit') {
-            mediaSizeGroup.style.display = 'block';
-            mediaVideoSettings.style.display = 'none';
-            mediaReferenceGroup.style.display = 'block';
-            mediaTransparentGroup.style.display = 'block';
-        } else {
-            mediaSizeGroup.style.display = 'block';
-            mediaVideoSettings.style.display = 'none';
-            mediaReferenceGroup.style.display = 'none';
-            mediaTransparentGroup.style.display = 'block';
-        }
-        
-        mediaNegativePromptGroup.style.display = isSeedream ? 'block' : 'none';
-        
-        // Update model select based on mode
-        if (mode === 'video') {
-            // Filter to show only video models
-            Array.from(mediaModelSelect.options).forEach(opt => {
-                const isVideo = ['seedance', 'seedance-pro', 'veo'].includes(opt.value);
-                opt.style.display = isVideo ? 'block' : 'none';
-            });
-            if (!isVideoModel) {
-                mediaModelSelect.value = 'seedance';
-            }
-        } else {
-            // Show all models (respecting paid-only visibility)
-            updatePaidModelOptions();
-        }
-    }
-
-    // --- Guidance Scale Sync ---
-    mediaGuidance.addEventListener('input', function() {
-        mediaGuidanceValue.textContent = parseFloat(this.value).toFixed(1);
-    });
-
-    // --- Reference Image Management ---
-    mediaRefUpload.addEventListener('change', function(e) {
-        const files = Array.from(e.target.files);
-        files.forEach(file => {
-            if (file.type.startsWith('image/')) {
-                addMediaReferenceImage(file, 'file');
-            }
-        });
-        this.value = '';
-    });
-
-    mediaAddRefUrl.addEventListener('click', function() {
-        const url = mediaRefUrl.value.trim();
-        if (url) {
-            addMediaReferenceImage(url, 'url');
-            mediaRefUrl.value = '';
-        }
-    });
-
-    function addMediaReferenceImage(source, type) {
-        const img = new Image();
-        img.crossOrigin = "Anonymous";
-        
-        const tempUrl = type === 'file' ? URL.createObjectURL(source) : source;
-        img.src = tempUrl;
-        
-        img.onload = function() {
-            const imageData = {
-                type: type,
-                source: source,
-                previewUrl: tempUrl,
-                width: this.naturalWidth,
-                height: this.naturalHeight
-            };
-            
-            mediaState.referenceImages.push(imageData);
-            renderMediaReferenceImages();
-            showNotification('Reference image added');
-        };
-        
-        img.onerror = function() {
-            if (type === 'file') URL.revokeObjectURL(tempUrl);
-            showNotification('Failed to load image');
-        };
-    }
-
-    function renderMediaReferenceImages() {
-        mediaRefImages.innerHTML = '';
-        
-        if (mediaState.referenceImages.length === 0) {
-            mediaRefImages.innerHTML = '<div class="media-placeholder" style="padding: 20px;">No reference images added</div>';
-            return;
-        }
-        
-        mediaState.referenceImages.forEach((img, index) => {
-            const card = document.createElement('div');
-            card.className = 'ref-image-card';
-            
-            card.innerHTML = `
-                <img src="${img.previewUrl}" alt="Reference ${index + 1}">
-                <button class="ref-remove-btn" onclick="removeMediaReferenceImage(${index})">&times;</button>
-            `;
-            
-            mediaRefImages.appendChild(card);
-        });
-    }
-
-    window.removeMediaReferenceImage = function(index) {
-        const img = mediaState.referenceImages[index];
-        if (img.type === 'file') {
-            URL.revokeObjectURL(img.previewUrl);
-        }
-        mediaState.referenceImages.splice(index, 1);
-        renderMediaReferenceImages();
-    };
-
-    // --- Main Media Generation Function ---
-    mediaGenerateBtn.addEventListener('click', async function() {
-        const prompt = mediaPrompt.value.trim();
-        
-        if (!prompt) {
-            showNotification('Please enter a prompt');
-            return;
-        }
-        
-        // Check if trying to use paid model without own key
-        const selectedModel = mediaModelSelect.value;
-        if (PAID_ONLY_MODELS.includes(selectedModel) && !hasUserProvidedOwnKey()) {
-            showNotification('🔒 This premium model requires your own API key. Please add your key in Settings.');
-            return;
-        }
-        
-        mediaState.isGenerating = true;
-        mediaGenerateBtn.disabled = true;
-        mediaGenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-        
-        mediaPreview.innerHTML = '<div class="media-loading"><div class="spinner"></div></div>';
-        mediaActions.style.display = 'none';
-        mediaEditActions.style.display = 'none';
-        mediaInsertChatBtn.style.display = 'none';
-        
-        try {
-            const result = await generateMedia();
-            displayMediaResult(result);
-        } catch (error) {
-            showNotification('Generation failed: ' + error.message);
-            mediaPreview.innerHTML = `<div class="media-placeholder" style="color: red;">Generation failed: ${error.message}</div>`;
-        } finally {
-            mediaState.isGenerating = false;
-            mediaGenerateBtn.disabled = false;
-            mediaGenerateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate';
-        }
-    });
-
-    async function generateMedia() {
-        const token = tokenInput.value || USER_API_TOKEN;
-        const model = mediaModelSelect.value;
-        const prompt = mediaPrompt.value.trim();
-        const seed = mediaRandomSeed.checked ? Math.floor(Math.random() * 1000000) : parseInt(mediaSeed.value);
-        
-        if (mediaRandomSeed.checked) {
-            mediaSeed.value = seed;
-        }
-        
-        const isVideoModel = ['seedance', 'seedance-pro', 'veo'].includes(model);
-        
-        const params = new URLSearchParams({
-            model: model,
-            seed: seed,
-            enhance: mediaEnhance.checked ? 'true' : 'false',
-            nologo: mediaNologo.checked ? 'true' : 'false',
-            private: mediaPrivate.checked ? 'true' : 'false',
-            safe: mediaSafe.checked ? 'true' : 'false',
-            guidance_scale: mediaGuidance.value
-        });
-        
-        if (isVideoModel) {
-            params.append('aspectRatio', mediaAspectRatio.value);
-            params.append('duration', mediaDuration.value);
-        } else {
-            params.append('width', mediaWidth.value);
-            params.append('height', mediaHeight.value);
-            params.append('transparent', mediaTransparent.checked ? 'true' : 'false');
-        }
-        
-        // Handle reference images
-        if (mediaState.referenceImages.length > 0) {
-            const imageUrls = [];
-            
-            for (const refImg of mediaState.referenceImages) {
-                if (refImg.type === 'url') {
-                    imageUrls.push(refImg.source);
-                } else if (refImg.type === 'file') {
-                    // Upload file to catbox
-                    try {
-                        const uploadedUrl = await uploadImageToCatbox(refImg.source);
-                        imageUrls.push(uploadedUrl);
-                    } catch (e) {
-                        console.error('Failed to upload reference image:', e);
-                    }
-                }
-            }
-            
-            if (imageUrls.length > 0) {
-                params.append('image', imageUrls.join(','));
-            }
-        }
-        
-        // Negative prompt for seedream
-        if (['seedream', 'seedream-pro'].includes(model) && mediaNegativePrompt.value.trim()) {
-            params.append('negative_prompt', mediaNegativePrompt.value.trim());
-        }
-        
-        const fullUrl = `${IMAGE_API_URL}/${encodeURIComponent(prompt)}?${params.toString()}`;
-        mediaState.currentApiUrl = fullUrl;
-        
-        const response = await fetch(`${fullUrl}&key=${token}`);
-        
-        if (!response.ok) {
-            throw new Error(await response.text());
-        }
-        
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        
-        return {
-            type: isVideoModel ? 'video' : 'image',
-            url: blobUrl,
-            apiUrl: fullUrl
-        };
-    }
-
-    async function uploadImageToCatbox(file) {
-        const formData = new FormData();
-        formData.append('reqtype', 'fileupload');
-        formData.append('fileToUpload', file);
-        
-        const response = await fetch(
-            'https://corsproxy.io/?' + encodeURIComponent('https://litterbox.catbox.moe/resources/internals/api.php'),
-            {
-                method: 'POST',
-                body: formData
-            }
-        );
-        
-        if (!response.ok) {
-            throw new Error('Upload failed');
-        }
-        
-        const url = await response.text();
-        if (!url.startsWith('http')) {
-            throw new Error('Invalid upload response');
-        }
-        
-        return url.trim();
-    }
-
-    function displayMediaResult(result) {
-        mediaState.currentResult = result;
-        
-        if (result.type === 'video') {
-            mediaPreview.innerHTML = `<video controls autoplay loop muted playsinline src="${result.url}"></video>`;
-        } else {
-            mediaPreview.innerHTML = `<img src="${result.url}" alt="Generated Image">`;
-        }
-        
-        mediaActions.style.display = 'flex';
-        mediaInsertChatBtn.style.display = 'block';
-        
-        if (result.type === 'image') {
-            mediaEditActions.style.display = 'flex';
-        } else {
-            mediaEditActions.style.display = 'none';
-        }
-        
-        showNotification('Media generated successfully!');
-    }
-
-    // --- Media Action Buttons ---
-    mediaDownloadBtn.addEventListener('click', function() {
-        if (mediaState.currentResult) {
-            const a = document.createElement('a');
-            a.href = mediaState.currentResult.url;
-            const ext = mediaState.currentResult.type === 'video' ? 'mp4' : 'png';
-            a.download = `pollinations_${Date.now()}.${ext}`;
-            a.click();
-        }
-    });
-
-    mediaViewUrlBtn.addEventListener('click', function() {
-        if (mediaState.currentApiUrl) {
-            const urlObj = new URL(mediaState.currentApiUrl);
-            urlObj.searchParams.delete('key');
-            window.open(urlObj.toString(), '_blank');
-        }
-    });
-
-    mediaEditBtn.addEventListener('click', function() {
-        if (mediaState.currentResult && mediaState.currentResult.type === 'image') {
-            // Switch to edit mode and use current image as reference
-            mediaModeSelect.value = 'image-edit';
-            
-            // Clear existing references and add current image
-            mediaState.referenceImages.forEach(img => {
-                if (img.type === 'file') URL.revokeObjectURL(img.previewUrl);
-            });
-            mediaState.referenceImages = [];
-            
-            addMediaReferenceImage(mediaState.currentResult.apiUrl, 'url');
-            updateMediaStudioUI();
-            showNotification('Ready to edit image');
-        }
-    });
-
-    mediaAnimateBtn.addEventListener('click', function() {
-        if (mediaState.currentResult && mediaState.currentResult.type === 'image') {
-            // Switch to video mode
-            mediaModeSelect.value = 'video';
-            const defaultVideoModel = document.getElementById('default-video-model').value;
-            mediaModelSelect.value = defaultVideoModel;
-            
-            // Clear existing references and add current image
-            mediaState.referenceImages.forEach(img => {
-                if (img.type === 'file') URL.revokeObjectURL(img.previewUrl);
-            });
-            mediaState.referenceImages = [];
-            
-            addMediaReferenceImage(mediaState.currentResult.apiUrl, 'url');
-            updateMediaStudioUI();
-            showNotification('Ready to animate image');
-        }
-    });
-
-    mediaRegenerateBtn.addEventListener('click', function() {
-        if (mediaPrompt.value.trim()) {
-            mediaGenerateBtn.click();
-        }
-    });
-
-    mediaInsertChatBtn.addEventListener('click', function() {
-        if (mediaState.currentResult) {
-            insertMediaIntoChat(mediaState.currentResult);
-            mediaStudioModal.classList.remove('open');
-        }
-    });
-
-    mediaClearBtn.addEventListener('click', function() {
-        // Clear all state
-        mediaState.referenceImages.forEach(img => {
-            if (img.type === 'file') URL.revokeObjectURL(img.previewUrl);
-        });
-        mediaState.referenceImages = [];
-        mediaState.currentResult = null;
-        mediaState.currentApiUrl = null;
-        
-        // Reset form
-        mediaPrompt.value = '';
-        mediaNegativePrompt.value = '';
-        mediaRefUrl.value = '';
-        mediaSeed.value = '42';
-        mediaRandomSeed.checked = true;
-        mediaGuidance.value = '7';
-        mediaGuidanceValue.textContent = '7.0';
-        
-        // Reset preview
-        mediaPreview.innerHTML = '<div class="media-placeholder">Your generated media will appear here</div>';
-        mediaActions.style.display = 'none';
-        mediaEditActions.style.display = 'none';
-        mediaInsertChatBtn.style.display = 'none';
-        
-        renderMediaReferenceImages();
-        showNotification('Cleared');
-    });
-
-    function insertMediaIntoChat(result) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'message-wrapper user';
-        
-        const msgId = 'msg-' + Date.now();
-        
-        let mediaHtml = '';
-        if (result.type === 'video') {
-            mediaHtml = `<video class="chat-video" controls loop muted playsinline src="${result.url}"></video>`;
-        } else {
-            mediaHtml = `<img class="chat-image" src="${result.url}" alt="Generated Image" onclick="openImageInStudio('${result.url}')">`;
-        }
-        
-        const urlObj = new URL(result.apiUrl);
-        urlObj.searchParams.delete('key');
-        const cleanUrl = urlObj.toString();
-        
-        wrapper.innerHTML = `
-            <div class="message-sender">
-                You 
-                <span class="copy-msg-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
-            </div>
-            <div class="message-bubble">
-                <div id="${msgId}">Generated ${result.type}</div>
-                ${mediaHtml}
-                <div style="margin-top: 8px; font-size: 0.8em;">
-                    <a href="${cleanUrl}" target="_blank" style="color: var(--user-msg-text); opacity: 0.8;">View Original</a>
-                </div>
-            </div>
-        `;
-        
-        chatContainer.appendChild(wrapper);
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        
-        showNotification(`${result.type === 'video' ? 'Video' : 'Image'} inserted into chat`);
-    }
-
-    // Function to open an image directly in the studio
-    window.openImageInStudio = function(imageUrl) {
-        openMediaStudio();
-        
-        // Clear existing references
-        mediaState.referenceImages.forEach(img => {
-            if (img.type === 'file') URL.revokeObjectURL(img.previewUrl);
-        });
-        mediaState.referenceImages = [];
-        
-        // Add the clicked image as reference
-        addMediaReferenceImage(imageUrl, 'url');
-        
-        // Set to edit mode
-        mediaModeSelect.value = 'image-edit';
-        updateMediaStudioUI();
-        
-        showNotification('Image loaded into studio');
-    };
-
     // --- BYOP Collapse Functionality ---
     const byopSection = document.getElementById('byop-section');
     const byopToggle = document.getElementById('byop-toggle');
@@ -3698,14 +2634,6 @@ if (isBedrockModel) {
             }
         });
     }
-
-    // ==========================================
-    // === MEDIA STUDIO FUNCTIONS START HERE ===
-    // ==========================================
-
-    // ==========================================
-    // === MEDIA STUDIO FUNCTIONS END HERE ===
-    // ==========================================
 
     // --- System Preset Initialization ---
     const systemMessageInput = document.getElementById('system-message');
@@ -3764,7 +2692,6 @@ if (isBedrockModel) {
 
     console.log("Chat application with BYOP policy and drag-drop support initialized successfully!");
     console.log("Press Ctrl+Shift+P to toggle code preview");
-    console.log("Click the camera icon to open the Media Studio");
     console.log("Premium models (🔒) require your own API key from enter.pollinations.ai");
 
 </script>
