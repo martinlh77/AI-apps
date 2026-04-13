@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box-and-Whisker Plot Activity</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .instructions {
+            background: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        
+        .note {
+            font-size: 13px;
+            color: #666;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 16px;
+        }
+        
+        .tiles-area {
+            background: #f8f9fa;
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 80px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: relative;
+            align-items: flex-start;
+        }
+        
+        .number-tile {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            user-select: none;
+            touch-action: none;
+            transition: transform 0.1s, box-shadow 0.1s;
+            z-index: 1;
+        }
+        
+        .number-tile.dragging {
+            opacity: 0.9;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+        
+        .number-tile.drag-over {
+            border-color: #e67e22;
+            border-style: dashed;
+            transform: translateY(-3px);
+        }
+        
+        .plot-wrapper {
+            position: relative;
+            margin-top: 20px;
+            padding: 60px 20px 100px 20px;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            overflow: hidden;
+        }
+        
+        .number-line-container {
+            position: relative;
+            height: 60px;
+            margin: 40px 20px 20px 20px;
+        }
+        
+        .number-line {
+            position: absolute;
+            top: 30px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #34495e;
+        }
+        
+        .tick {
+            position: absolute;
+            top: 26px;
+            width: 2px;
+            height: 10px;
+            background: #34495e;
+            transform: translateX(-50%);
+        }
+        
+        .tick-label {
+            position: absolute;
+            top: 42px;
+            transform: translateX(-50%);
+            font-size: 13px;
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        /* Draggable Plot Elements */
+        .plot-element {
+            position: absolute;
+            top: 20px;
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transform: translateX(-50%);
+        }
+        
+        .plot-element:active {
+            cursor: grabbing;
+        }
+        
+        .dot-element {
+            width: 18px;
+            height: 18px;
+            background: #3498db;
+            border: 3px solid #2980b9;
+            border-radius: 50%;
+            position: relative;
+            margin: 0 auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .dot-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #7f8c8d;
+            white-space: nowrap;
+        }
+        
+        .value-tag {
+            position: absolute;
+            top: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #2c3e50;
+            background: white;
+            border: 1px solid #ddd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            min-width: 35px;
+            text-align: center;
+        }
+        
+        .box-element {
+            height: 40px;
+            background: rgba(230, 126, 34, 0.15);
+            border: 3px solid #e67e22;
+            position: absolute;
+            top: 10px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateX(0);
+        }
+        
+        .box-label {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #7f8c8d;
+            white-space: nowrap;
+            background: rgba(255,255,255,0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .edge-value {
+            position: absolute;
+            top: 48px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #e67e22;
+            background: white;
+            border: 1px solid #e67e22;
+            padding: 2px 6px;
+            border-radius: 4px;
+            min-width: 35px;
+            text-align: center;
+        }
+        
+        .edge-value.left {
+            left: 0;
+            transform: translateX(-50%);
+        }
+        
+        .edge-value.right {
+            right: 0;
+            transform: translateX(50%);
+        }
+        
+        .resize-handle {
+            position: absolute;
+            width: 16px;
+            height: 100%;
+            cursor: ew-resize;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .resize-handle.left {
+            left: -8px;
+        }
+        
+        .resize-handle.right {
+            right: -8px;
+        }
+        
+        .resize-handle:hover {
+            background: rgba(230, 126, 34, 0.3);
+        }
+        
+        .median-line {
+            width: 4px;
+            height: 50px;
+            background: #e67e22;
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: grab;
+        }
+        
+        .median-label {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #7f8c8d;
+            white-space: nowrap;
+            background: rgba(255,255,255,0.9);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .whisker-connector {
+            position: absolute;
+            height: 3px;
+            background: #3498db;
+            top: 30px;
+            pointer-events: none;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-check {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-new {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-hint {
+            background: #f39c12;
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .feedback {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: none;
+        }
+        
+        .feedback.correct {
+            background: #d5f4e6;
+            color: #27ae60;
+            border: 2px solid #27ae60;
+            display: block;
+        }
+        
+        .feedback.incorrect {
+            background: #fadbd8;
+            color: #e74c3c;
+            border: 2px solid #e74c3c;
+            display: block;
+        }
+        
+        .stats {
+            margin-top: 15px;
+            padding: 12px;
+            background: #ecf0f1;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Box-and-Whisker Plot Practice</h1>
+        
+        <div class="instructions">
+            <strong>Instructions:</strong> Drag the number tiles to put them in order (this helps you see the data). Then drag the blue dots and orange box to create the box plot. Drag the edges of the orange box to set Q1 (left) and Q3 (right).
+            <div class="note">
+                Hint: First sort the numbers. The Median splits the data in half. Q1 is the median of the lower half, Q3 is the median of the upper half (excluding the overall median).
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Data Set (drag to sort):</div>
+            <div class="tiles-area" id="tileContainer">
+                <!-- Tiles inserted here -->
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Construct Your Box Plot:</div>
+            <div class="plot-wrapper" id="plotArea">
+                <div class="number-line-container" id="numberLine">
+                    <!-- Ticks inserted here -->
+                </div>
+                
+                <!-- Min -->
+                <div class="plot-element" id="minEl" style="left: 10%;">
+                    <div class="dot-label">Min</div>
+                    <div class="dot-element"></div>
+                    <div class="value-tag" id="minVal">?</div>
+                </div>
+                
+                <!-- Max -->
+                <div class="plot-element" id="maxEl" style="left: 90%;">
+                    <div class="dot-label">Max</div>
+                    <div class="dot-element"></div>
+                    <div class="value-tag" id="maxVal">?</div>
+                </div>
+                
+                <!-- Box (Q1 to Q3) -->
+                <div class="box-element" id="boxEl" style="left: 30%; width: 40%;">
+                    <div class="resize-handle left" id="q1Handle"></div>
+                    <div class="resize-handle right" id="q3Handle"></div>
+                    <div class="box-label">Box (Q1 → Q3)</div>
+                    <div class="edge-value left" id="q1Val">?</div>
+                    <div class="edge-value right" id="q3Val">?</div>
+                </div>
+                
+                <!-- Median -->
+                <div class="plot-element" id="medianEl" style="left: 50%;">
+                    <div class="median-label">Median</div>
+                    <div class="median-line"></div>
+                    <div class="value-tag" id="medianVal" style="top: 60px;">?</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn-check" onclick="checkAnswer()">✓ Check Answer</button>
+            <button class="btn-new" onclick="newProblem()">↻ New Problem</button>
+            <button class="btn-hint" onclick="showSolution()">💡 Show Answer</button>
+        </div>
+        
+        <div id="feedback" class="feedback"></div>
+        <div id="stats" class="stats"></div>
+    </div>
+
+    <script>
+        let currentData = [];
+        let correctVals = {};
+        let scaleMin = 0;
+        let scaleMax = 20;
+        let containerWidth = 0;
+        let lineMargin = 30;
+        
+        // Initialize
+        window.onload = function() {
+            newProblem();
+            setupInteractions();
+        };
+        
+        function newProblem() {
+            // Generate data (7-11 numbers, 1-20 range)
+            const count = Math.floor(Math.random() * 5) + 7;
+            currentData = [];
+            for (let i = 0; i < count; i++) {
+                currentData.push(Math.floor(Math.random() * 20) + 1);
+            }
+            
+            // Calculate correct answers
+            const sorted = [...currentData].sort((a,b) => a-b);
+            correctVals.min = sorted[0];
+            correctVals.max = sorted[sorted.length-1];
+            correctVals.median = calculateMedian(sorted);
+            
+            // Split for quartiles (exclude median)
+            let lower, upper;
+            if (sorted.length % 2 === 0) {
+                lower = sorted.slice(0, sorted.length/2);
+                upper = sorted.slice(sorted.length/2);
+            } else {
+                lower = sorted.slice(0, Math.floor(sorted.length/2));
+                upper = sorted.slice(Math.floor(sorted.length/2)+1);
+            }
+            correctVals.q1 = calculateMedian(lower);
+            correctVals.q3 = calculateMedian(upper);
+            
+            // Set scale
+            scaleMin = 0;
+            scaleMax = Math.max(...currentData) + 2;
+            if (scaleMax < 15) scaleMax = 15;
+            if (scaleMax > 25) scaleMax = 25; // Cap it
+            
+            // Update layout
+            updateNumberLine();
+            renderTiles();
+            resetPositions();
+            hideFeedback();
+        }
+        
+        function calculateMedian(arr) {
+            if (arr.length === 0) return 0;
+            if (arr.length % 2 === 0) {
+                return (arr[arr.length/2 - 1] + arr[arr.length/2]) / 2;
+            } else {
+                return arr[Math.floor(arr.length/2)];
+            }
+        }
+        
+        function updateNumberLine() {
+            const container = document.getElementById('numberLine');
+            container.innerHTML = '';
+            const wrapper = document.getElementById('plotArea');
+            containerWidth = wrapper.offsetWidth - 40;
+            
+            // Main line
+            const line = document.createElement('div');
+            line.className = 'number-line';
+            container.appendChild(line);
+            
+            // Add ticks
+            for (let i = scaleMin; i <= scaleMax; i++) {
+                const pct = (i - scaleMin) / (scaleMax - scaleMin);
+                const left = pct * containerWidth;
+                
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                tick.style.left = left + 'px';
+                container.appendChild(tick);
+                
+                const label = document.createElement('div');
+                label.className = 'tick-label';
+                label.style.left = left + 'px';
+                label.textContent = i;
+                container.appendChild(label);
+            }
+        }
+        
+        function renderTiles() {
+            const container = document.getElementById('tileContainer');
+            container.innerHTML = '';
+            
+            // Shuffle for display
+            const shuffled = [...currentData].sort(() => Math.random() - 0.5);
+            
+            shuffled.forEach((num, idx) => {
+                const tile = document.createElement('div');
+                tile.className = 'number-tile';
+                tile.textContent = num;
+                tile.dataset.value = num;
+                tile.dataset.idx = idx;
+                
+                // Mouse events for dragging
+                tile.addEventListener('mousedown', startTileDrag);
+                tile.addEventListener('touchstart', startTileDrag, {passive: false});
+                
+                container.appendChild(tile);
+            });
+        }
+        
+        let draggedTile = null;
+        let tileDragOffset = {x: 0, y: 0};
+        let tileStartRect = null;
+        let dragPlaceholder = null;
+        
+        function startTileDrag(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            draggedTile = e.currentTarget;
+            draggedTile.classList.add('dragging');
+            
+            const rect = draggedTile.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            tileDragOffset.x = clientX - rect.left;
+            tileDragOffset.y = clientY - rect.top;
+            tileStartRect = rect;
+            
+            // Create placeholder
+            dragPlaceholder = document.createElement('div');
+            dragPlaceholder.style.width = rect.width + 'px';
+            dragPlaceholder.style.height = rect.height + 'px';
+            dragPlaceholder.style.margin = '0';
+            dragPlaceholder.style.flexShrink = '0';
+            dragPlaceholder.style.border = '2px dashed #bdc3c7';
+            dragPlaceholder.style.borderRadius = '8px';
+            dragPlaceholder.style.background = 'rgba(189, 195, 199, 0.2)';
+            
+            // Insert placeholder and position dragged tile absolutely
+            draggedTile.parentNode.insertBefore(dragPlaceholder, draggedTile);
+            draggedTile.style.position = 'fixed';
+            draggedTile.style.left = rect.left + 'px';
+            draggedTile.style.top = rect.top + 'px';
+            draggedTile.style.width = rect.width + 'px';
+            draggedTile.style.height = rect.height + 'px';
+            draggedTile.style.zIndex = '1000';
+            
+            document.addEventListener('mousemove', dragTile);
+            document.addEventListener('mouseup', stopTileDrag);
+            document.addEventListener('touchmove', dragTile, {passive: false});
+            document.addEventListener('touchend', stopTileDrag);
+        }
+        
+        function dragTile(e) {
+            if (!draggedTile) return;
+            e.preventDefault();
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const x = clientX - tileDragOffset.x;
+            const y = clientY - tileDragOffset.y;
+            
+            draggedTile.style.left = x + 'px';
+            draggedTile.style.top = y + 'px';
+            
+            // Find insertion point
+            const container = document.getElementById('tileContainer');
+            const tiles = Array.from(container.children).filter(el => el !== draggedTile && el !== dragPlaceholder);
+            
+            // Remove previous drag-over classes
+            tiles.forEach(t => t.classList.remove('drag-over'));
+            
+            // Find which tile we're hovering over
+            const dragCenterX = clientX;
+            let closestTile = null;
+            let closestDist = Infinity;
+            
+            tiles.forEach(tile => {
+                const rect = tile.getBoundingClientRect();
+                const centerX = rect.left + rect.width/2;
+                const dist = Math.abs(dragCenterX - centerX);
+                
+                if (dist < closestDist && dragCenterX > rect.left - 20 && dragCenterX < rect.right + 20) {
+                    closestDist = dist;
+                    closestTile = tile;
+                }
+            });
+            
+            if (closestTile) {
+                closestTile.classList.add('drag-over');
+                const rect = closestTile.getBoundingClientRect();
+                const centerX = rect.left + rect.width/2;
+                
+                if (dragCenterX < centerX) {
+                    container.insertBefore(dragPlaceholder, closestTile);
+                } else {
+                    container.insertBefore(dragPlaceholder, closestTile.nextSibling);
+                }
+            }
+        }
+        
+        function stopTileDrag(e) {
+            if (!draggedTile) return;
+            
+            // Move dragged tile to placeholder position
+            dragPlaceholder.parentNode.insertBefore(draggedTile, dragPlaceholder);
+            
+            // Reset styles
+            draggedTile.classList.remove('dragging');
+            draggedTile.style.position = '';
+            draggedTile.style.left = '';
+            draggedTile.style.top = '';
+            draggedTile.style.width = '';
+            draggedTile.style.height = '';
+            draggedTile.style.zIndex = '';
+            
+            // Remove drag-over classes
+            document.querySelectorAll('.number-tile').forEach(t => t.classList.remove('drag-over'));
+            
+            // Remove placeholder
+            dragPlaceholder.remove();
+            dragPlaceholder = null;
+            draggedTile = null;
+            
+            document.removeEventListener('mousemove', dragTile);
+            document.removeEventListener('mouseup', stopTileDrag);
+            document.removeEventListener('touchmove', dragTile);
+            document.removeEventListener('touchend', stopTileDrag);
+        }
+        
+        function resetPositions() {
+            const padding = 30;
+            const usableWidth = containerWidth - (padding * 2);
+            
+            // Set initial positions spread out
+            document.getElementById('minEl').style.left = (padding + usableWidth * 0.1) + 'px';
+            document.getElementById('maxEl').style.left = (padding + usableWidth * 0.9) + 'px';
+            
+            const box = document.getElementById('boxEl');
+            box.style.left = (padding + usableWidth * 0.3) + 'px';
+            box.style.width = (usableWidth * 0.4) + 'px';
+            
+            document.getElementById('medianEl').style.left = (padding + usableWidth * 0.5) + 'px';
+            
+            updateConnectors();
+            updateValueDisplays();
+        }
+        
+        // Plot Element Dragging
+        let draggedEl = null;
+        let dragStartX = 0;
+        let dragStartLeft = 0;
+        let dragMode = 'move';
+        let initialBoxWidth = 0;
+        let initialBoxLeft = 0;
+        
+        function setupInteractions() {
+            // Min dot
+            document.getElementById('minEl').addEventListener('mousedown', startPlotDrag);
+            document.getElementById('minEl').addEventListener('touchstart', startPlotDrag, {passive: false});
+            
+            // Max dot
+            document.getElementById('maxEl').addEventListener('mousedown', startPlotDrag);
+            document.getElementById('maxEl').addEventListener('touchstart', startPlotDrag, {passive: false});
+            
+            // Median
+            document.getElementById('medianEl').addEventListener('mousedown', startPlotDrag);
+            document.getElementById('medianEl').addEventListener('touchstart', startPlotDrag, {passive: false});
+            
+            // Box body (move whole box)
+            document.getElementById('boxEl').addEventListener('mousedown', startBoxDrag);
+            document.getElementById('boxEl').addEventListener('touchstart', startBoxDrag, {passive: false});
+            
+            // Resize handles
+            document.getElementById('q1Handle').addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                startResize(e, 'left');
+            });
+            document.getElementById('q1Handle').addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                startResize(e, 'left');
+            }, {passive: false});
+            
+            document.getElementById('q3Handle').addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                startResize(e, 'right');
+            });
+            document.getElementById('q3Handle').addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                startResize(e, 'right');
+            }, {passive: false});
+        }
+        
+        function startPlotDrag(e) {
+            e.preventDefault();
+            draggedEl = e.currentTarget;
+            dragMode = 'move';
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            dragStartX = clientX;
+            dragStartLeft = draggedEl.offsetLeft;
+            
+            document.addEventListener('mousemove', dragPlot);
+            document.addEventListener('mouseup', stopPlotDrag);
+            document.addEventListener('touchmove', dragPlot, {passive: false});
+            document.addEventListener('touchend', stopPlotDrag);
+        }
+        
+        function startBoxDrag(e) {
+            if (e.target.classList.contains('resize-handle')) return;
+            e.preventDefault();
+            draggedEl = document.getElementById('boxEl');
+            dragMode = 'move';
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            dragStartX = clientX;
+            dragStartLeft = draggedEl.offsetLeft;
+            
+            document.addEventListener('mousemove', dragPlot);
+            document.addEventListener('mouseup', stopPlotDrag);
+            document.addEventListener('touchmove', dragPlot, {passive: false});
+            document.addEventListener('touchend', stopPlotDrag);
+        }
+        
+        function startResize(e, side) {
+            e.preventDefault();
+            draggedEl = document.getElementById('boxEl');
+            dragMode = side === 'left' ? 'resize-left' : 'resize-right';
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            dragStartX = clientX;
+            initialBoxLeft = draggedEl.offsetLeft;
+            initialBoxWidth = draggedEl.offsetWidth;
+            
+            document.addEventListener('mousemove', dragPlot);
+            document.addEventListener('mouseup', stopPlotDrag);
+            document.addEventListener('touchmove', dragPlot, {passive: false});
+            document.addEventListener('touchend', stopPlotDrag);
+        }
+        
+        function dragPlot(e) {
+            if (!draggedEl) return;
+            e.preventDefault();
+            
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const delta = clientX - dragStartX;
+            
+            const padding = 30;
+            const maxPos = containerWidth - padding;
+            const minPos = padding;
+            
+            if (dragMode === 'move') {
+                let newLeft = dragStartLeft + delta;
+                if (newLeft < minPos) newLeft = minPos;
+                if (newLeft > maxPos) newLeft = maxPos;
+                draggedEl.style.left = newLeft + 'px';
+                
+                // If moving box, ensure median moves with it proportionally? No, keep separate
+            } else if (dragMode === 'resize-left') {
+                const box = document.getElementById('boxEl');
+                let newLeft = initialBoxLeft + delta;
+                let newWidth = initialBoxWidth - delta;
+                
+                // Constrain
+                const rightEdge = initialBoxLeft + initialBoxWidth;
+                if (newLeft < minPos) {
+                    newLeft = minPos;
+                    newWidth = rightEdge - minPos;
+                }
+                if (newWidth < 20) {
+                    newWidth = 20;
+                    newLeft = rightEdge - 20;
+                }
+                if (newLeft > rightEdge - 20) {
+                    newLeft = rightEdge - 20;
+                    newWidth = 20;
+                }
+                
+                box.style.left = newLeft + 'px';
+                box.style.width = newWidth + 'px';
+            } else if (dragMode === 'resize-right') {
+                const box = document.getElementById('boxEl');
+                let newWidth = initialBoxWidth + delta;
+                
+                // Constrain
+                if (newWidth < 20) newWidth = 20;
+                if (initialBoxLeft + newWidth > maxPos) {
+                    newWidth = maxPos - initialBoxLeft;
+                }
+                
+                box.style.width = newWidth + 'px';
+            }
+            
+            updateConnectors();
+            updateValueDisplays();
+        }
+        
+        function stopPlotDrag(e) {
+            draggedEl = null;
+            dragMode = 'move';
+            document.removeEventListener('mousemove', dragPlot);
+            document.removeEventListener('mouseup', stopPlotDrag);
+            document.removeEventListener('touchmove', dragPlot);
+            document.removeEventListener('touchend', stopPlotDrag);
+            
+            snapToGrid();
+        }
+        
+        function snapToGrid() {
+            const padding = 30;
+            const usableWidth = containerWidth - (padding * 2);
+            
+            // Helper to snap a value
+            const snap = (val) => Math.round(val * 2) / 2;
+            
+            // Min
+            const minEl = document.getElementById('minEl');
+            let minVal = snap(getValueFromPosition(minEl.offsetLeft));
+            minEl.style.left = getPositionFromValue(minVal) + 'px';
+            
+            // Max
+            const maxEl = document.getElementById('maxEl');
+            let maxVal = snap(getValueFromPosition(maxEl.offsetLeft));
+            maxEl.style.left = getPositionFromValue(maxVal) + 'px';
+            
+            // Box
+            const box = document.getElementById('boxEl');
+            let q1Val = snap(getValueFromPosition(box.offsetLeft));
+            let q3Val = snap(getValueFromPosition(box.offsetLeft + box.offsetWidth));
+            
+            // Ensure valid box (Q1 < Q3)
+            if (q1Val >= q3Val) {
+                q3Val = q1Val + 0.5;
+            }
+            
+            const q1Pos = getPositionFromValue(q1Val);
+            const q3Pos = getPositionFromValue(q3Val);
+            box.style.left = q1Pos + 'px';
+            box.style.width = (q3Pos - q1Pos) + 'px';
+            
+            // Median
+            const medEl = document.getElementById('medianEl');
+            let medVal = snap(getValueFromPosition(medEl.offsetLeft));
+            medEl.style.left = getPositionFromValue(medVal) + 'px';
+            
+            updateConnectors();
+            updateValueDisplays();
+        }
+        
+        function getValueFromPosition(px) {
+            const padding = 30;
+            const usableWidth = containerWidth - (padding * 2);
+            const relative = px - padding;
+            const pct = relative / usableWidth;
+            return scaleMin + pct * (scaleMax - scaleMin);
+        }
+        
+        function getPositionFromValue(val) {
+            const padding = 30;
+            const usableWidth = containerWidth - (padding * 2);
+            const pct = (val - scaleMin) / (scaleMax - scaleMin);
+            return padding + pct * usableWidth;
+        }
+        
+        function updateValueDisplays() {
+            const min = Math.round(getValueFromPosition(document.getElementById('minEl').offsetLeft) * 2) / 2;
+            const max = Math.round(getValueFromPosition(document.getElementById('maxEl').offsetLeft) * 2) / 2;
+            const q1 = Math.round(getValueFromPosition(document.getElementById('boxEl').offsetLeft) * 2) / 2;
+            const q3 = Math.round(getValueFromPosition(document.getElementById('boxEl').offsetLeft + document.getElementById('boxEl').offsetWidth) * 2) / 2;
+            const med = Math.round(getValueFromPosition(document.getElementById('medianEl').offsetLeft) * 2) / 2;
+            
+            document.getElementById('minVal').textContent = min;
+            document.getElementById('maxVal').textContent = max;
+            document.getElementById('q1Val').textContent = q1;
+            document.getElementById('q3Val').textContent = q3;
+            document.getElementById('medianVal').textContent = med;
+        }
+        
+        function updateConnectors() {
+            // Remove old connectors
+            document.querySelectorAll('.whisker-connector').forEach(e => e.remove());
+            
+            const plotArea = document.getElementById('plotArea');
+            const minX = document.getElementById('minEl').offsetLeft;
+            const maxX = document.getElementById('maxEl').offsetLeft;
+            const box = document.getElementById('boxEl');
+            const boxLeft = box.offsetLeft;
+            const boxRight = boxLeft + box.offsetWidth;
+            
+            // Left whisker
+            if (boxLeft > minX) {
+                const leftLine = document.createElement('div');
+                leftLine.className = 'whisker-connector';
+                leftLine.style.left = minX + 'px';
+                leftLine.style.width = (boxLeft - minX) + 'px';
+                leftLine.style.top = '29px';
+                plotArea.appendChild(leftLine);
+            }
+            
+            // Right whisker
+            if (maxX > boxRight) {
+                const rightLine = document.createElement('div');
+                rightLine.className = 'whisker-connector';
+                rightLine.style.left = boxRight + 'px';
+                rightLine.style.width = (maxX - boxRight) + 'px';
+                rightLine.style.top = '29px';
+                plotArea.appendChild(rightLine);
+            }
+        }
+        
+        function checkAnswer() {
+            const min = Math.round(getValueFromPosition(document.getElementById('minEl').offsetLeft) * 2) / 2;
+            const max = Math.round(getValueFromPosition(document.getElementById('maxEl').offsetLeft) * 2) / 2;
+            const q1 = Math.round(getValueFromPosition(document.getElementById('boxEl').offsetLeft) * 2) / 2;
+            const q3 = Math.round(getValueFromPosition(document.getElementById('boxEl').offsetLeft + document.getElementById('boxEl').offsetWidth) * 2) / 2;
+            const med = Math.round(getValueFromPosition(document.getElementById('medianEl').offsetLeft) * 2) / 2;
+            
+            const tolerance = 0.5;
+            const correct = Math.abs(min - correctVals.min) <= tolerance &&
+                           Math.abs(max - correctVals.max) <= tolerance &&
+                           Math.abs(q1 - correctVals.q1) <= tolerance &&
+                           Math.abs(q3 - correctVals.q3) <= tolerance &&
+                           Math.abs(med - correctVals.median) <= tolerance;
+            
+            const fb = document.getElementById('feedback');
+            if (correct) {
+                fb.className = 'feedback correct';
+                fb.textContent = '✅ Perfect! Your box-and-whisker plot is correct!';
+            } else {
+                fb.className = 'feedback incorrect';
+                fb.innerHTML = '❌ Not quite right.<br>• Min should be ' + correctVals.min + ', Max should be ' + correctVals.max + '<br>• Check your Median, Q1, and Q3 values<br>• Remember to exclude the median when finding Q1 and Q3';
+            }
+            fb.style.display = 'block';
+            
+            const stats = document.getElementById('stats');
+            stats.innerHTML = `Your plot: Min=${min}, Q1=${q1}, Median=${med}, Q3=${q3}, Max=${max}<br>` +
+                             `Correct: Min=${correctVals.min}, Q1=${correctVals.q1}, Median=${correctVals.median}, Q3=${correctVals.q3}, Max=${correctVals.max}<br>` +
+                             `Sorted data: [${[...currentData].sort((a,b)=>a-b).join(', ')}]`;
+            stats.style.display = 'block';
+        }
+        
+        function showSolution() {
+            const padding = 30;
+            const els = {
+                min: document.getElementById('minEl'),
+                max: document.getElementById('maxEl'),
+                box: document.getElementById('boxEl'),
+                med: document.getElementById('medianEl')
+            };
+            
+            // Add transitions
+            Object.values(els).forEach(el => {
+                el.style.transition = 'all 0.5s ease';
+            });
+            
+            const minPos = getPositionFromValue(correctVals.min);
+            const maxPos = getPositionFromValue(correctVals.max);
+            const q1Pos = getPositionFromValue(correctVals.q1);
+            const q3Pos = getPositionFromValue(correctVals.q3);
+            const medPos = getPositionFromValue(correctVals.median);
+            
+            els.min.style.left = minPos + 'px';
+            els.max.style.left = maxPos + 'px';
+            els.box.style.left = q1Pos + 'px';
+            els.box.style.width = (q3Pos - q1Pos) + 'px';
+            els.med.style.left = medPos + 'px';
+            
+            setTimeout(() => {
+                Object.values(els).forEach(el => el.style.transition = '');
+                updateConnectors();
+                updateValueDisplays();
+            }, 500);
+            
+            const fb = document.getElementById('feedback');
+            fb.className = 'feedback correct';
+            fb.textContent = '💡 Solution shown! Now try a new problem.';
+            fb.style.display = 'block';
+        }
+        
+        function hideFeedback() {
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('stats').style.display = 'none';
+        }
+        
+        window.addEventListener('resize', () => {
+            updateNumberLine();
+            snapToGrid();
+        });
+    </script>
+</body>
+</html>
