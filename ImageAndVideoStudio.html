@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pollinations Studio (Image & Video) v13.4</title>
+  <title>Pollinations Studio (Image & Video) v13.6</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -294,7 +294,7 @@
 <body class="p-4 md:p-8">
 
   <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor) v13.4</h1>
+      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor) v13.6</h1>
 
       <div id="message-area" class="mb-4"></div>
 
@@ -314,12 +314,6 @@
                   </div>
               </div>
 
-              <div id="airforceKeyGroup" class="hidden">
-                  <label for="airforceApiKeyInput" class="block text-sm font-medium mb-1 text-pink-400">Airforce API Key (Required for Grok Video via Airforce)</label>
-                  <input type="password" id="airforceApiKeyInput" class="w-full border-pink-500/50" placeholder="Enter Airforce API key...">
-                  <p class="text-xs text-pink-300/70 mt-1">Required only for Airforce Grok Video endpoint</p>
-              </div>
-
               <div>
                   <label for="uploadServiceSelect" class="block text-sm font-medium mb-1">Image Upload Service</label>
                   <select id="uploadServiceSelect" class="w-full text-sm">
@@ -333,34 +327,41 @@
                   <label for="modelSelect" class="block text-sm font-medium mb-1">Model Selection</label>
                   <select id="modelSelect" class="w-full">
                       <optgroup label="Image Generators & Editors">
+                          <!-- Free Image Models -->
                           <option value="flux">Flux (Generator)</option>
                           <option value="zimage" selected>Zimage (Generator)</option>
                           <option value="klein">Flux.2 Klein 4B 👁️ (Editor/Generator)</option>
                           <option value="gptimage">GPT-Image 👁️ (Editor/Generator)</option>
                           <option value="qwen-image">Qwen Image 👁️ (Editor/Generator)</option>
-                          <option value="grok-imagine">Grok Imagine (Generator)</option>
-                          <option value="kontext">💎 Kontext 👁️ (Editor/Generator)</option>
+                          <option value="kontext">Kontext 👁️ (Editor/Generator)</option>
+                          <option value="wan-image">Wan 2.7 Image 👁️ (Editor/Generator)</option>
+                          
+                          <!-- Paid Image Models -->
                           <option value="nanobanana">💎 Nano Banana 👁️ (Editor/Generator)</option>
                           <option value="nanobanana-2">💎 Nano Banana 2 👁️ (Editor/Generator)</option>
                           <option value="nanobanana-pro">💎 Nano Banana Pro 👁️ (Editor/Generator)</option>
                           <option value="seedream5">💎 Seedream 5.0 Lite 👁️ (Editor/Generator)</option>
-                          <option value="gptimage-large">💎 GPT-Image Large 👁️ (Editor/Generator)</option>
+                          <option value="gptimage-large">💎 GPT-Image 1.5 👁️ (Editor/Generator)</option>
+                          <option value="wan-image-pro">💎 Wan 2.7 Image Pro 👁️ (Editor/Generator)</option>
+                          <option value="grok-imagine">💎 Grok Imagine (Generator)</option>
                           <option value="grok-imagine-pro">💎 Grok Imagine Pro (Generator)</option>
                           <option value="p-image">💎 P-Image (Generator)</option>
                           <option value="p-image-edit">💎 P-Image Edit 👁️ (Editor/Generator)</option>
                           <option value="nova-canvas">💎 Nova Canvas 👁️ (Editor/Generator)</option>
                       </optgroup>
                       <optgroup label="Video Models">
-                          <option value="grok-video-pro">💎 Grok Video Pro (Pollinations Native)</option>
-                          <option value="grok-video-airforce">🎬 Grok Video (Airforce API - 6s)</option>
+                          <!-- Free Video Models -->
+                          <option value="ltx-2">LTX-2 (Video - T2V with Audio)</option>
+                          <option value="nova-reel">Nova Reel (Video - T2V & I2V)</option>
+                          
+                          <!-- Paid Video Models -->
+                          <option value="grok-video-pro">💎 Grok Video Pro (Video - T2V & I2V)</option>
                           <option value="seedance">💎 Seedance (Video - T2V & I2V)</option>
                           <option value="seedance-pro">💎 Seedance-Pro (Video - T2V & I2V)</option>
                           <option value="wan">💎 Wan (Video - T2V & I2V with Audio)</option>
-                          <option value="wan-fast">Wan Fast (Video - T2V & I2V)</option>
+                          <option value="wan-fast">💎 Wan Fast (Video - T2V & I2V)</option>
                           <option value="veo">💎 Veo (Video - T2V & First/Last Frame)</option>
-                          <option value="ltx-2">LTX-2 (Video - T2V with Audio)</option>
                           <option value="p-video">💎 P-Video (Video - T2V & I2V)</option>
-                          <option value="nova-reel">Nova Reel (Video - T2V & I2V)</option>
                       </optgroup>
                   </select>
               </div>
@@ -368,7 +369,6 @@
               <div>
                   <label for="promptInput" class="block text-sm font-medium mb-1">Prompt</label>
                   <textarea id="promptInput" rows="3" class="w-full" placeholder="Describe your image or video..."></textarea>
-                  <div id="promptCharCounter" class="char-counter hidden">0 / 500</div>
                   
                   <div class="mt-2 flex space-x-2" id="prompt-enhance-controls">
                       <button id="enhancePromptBtn" type="button" class="flex-1 py-2 bg-enhance text-white font-semibold rounded-lg hover:bg-enhance-hover text-sm">
@@ -383,7 +383,7 @@
               </div>
 
               <div id="imageInputGroup" class="hidden p-3 border border-indigo-400 rounded-lg bg-indigo-900/20 space-y-3">
-                  <label class="block text-sm font-medium mb-1">Reference Images (Max 14 for Editors, 2 for Grok Video variants, 2 for First/Last Frame Video)</label>
+                  <label class="block text-sm font-medium mb-1">Reference Images (Max 14 for Editors, 2 for Grok Video Pro)</label>
                   
                   <div class="ref-controls">
                       <div class="url-group">
@@ -465,7 +465,6 @@
                   <div id="video-controls-group" class="hidden p-3 border border-pink-400 rounded-lg bg-pink-900/20 space-y-3">
                       <label class="block text-sm font-medium mb-1 text-pink-300">Video Settings</label>
                       
-                      <!-- Standard Video Controls (Pollinations) -->
                       <div id="standard-video-controls" class="grid grid-cols-2 gap-4">
                           <div>
                               <label class="block text-xs text-subtle mb-1">Aspect Ratio</label>
@@ -479,38 +478,6 @@
                               <label class="block text-xs text-subtle mb-1">Duration (Sec)</label>
                               <select id="durationSelect" class="w-full">
                               </select>
-                          </div>
-                      </div>
-
-                      <!-- Grok Video Specific Controls (Airforce) -->
-                      <div id="grok-video-controls" class="hidden space-y-3">
-                          <div class="grid grid-cols-2 gap-4">
-                              <div>
-                                  <label class="block text-xs text-subtle mb-1">Mode</label>
-                                  <select id="grokModeSelect" class="w-full">
-                                      <option value="normal">Normal</option>
-                                      <option value="spicy">Spicy</option>
-                                      <option value="fun">Fun</option>
-                                  </select>
-                              </div>
-                              <div>
-                                  <label class="block text-xs text-subtle mb-1">Aspect Ratio</label>
-                                  <select id="grokAspectRatioSelect" class="w-full">
-                                      <option value="3:2">3:2 (Landscape)</option>
-                                      <option value="2:3">2:3 (Portrait)</option>
-                                      <option value="1:1">1:1 (Square)</option>
-                                  </select>
-                              </div>
-                          </div>
-                          <div>
-                              <label class="block text-xs text-subtle mb-1">Response Format</label>
-                              <select id="grokResponseFormat" class="w-full">
-                                  <option value="url">URL (Recommended)</option>
-                                  <option value="base64">Base64</option>
-                              </select>
-                          </div>
-                          <div class="text-xs text-pink-300/70 bg-pink-900/30 p-2 rounded">
-                              ℹ️ Airforce Grok outputs are always 6 seconds. Max 2 image inputs allowed.
                           </div>
                       </div>
 
@@ -587,13 +554,10 @@
   <script type="module">
       // --- DOM Elements ---
       const apiKeyInput = document.getElementById('apiKeyInput');
-      const airforceApiKeyInput = document.getElementById('airforceApiKeyInput');
-      const airforceKeyGroup = document.getElementById('airforceKeyGroup');
       const uploadServiceSelect = document.getElementById('uploadServiceSelect');
       const byopBtn = document.getElementById('byopBtn');
       const modelSelect = document.getElementById('modelSelect');
       const promptInput = document.getElementById('promptInput');
-      const promptCharCounter = document.getElementById('promptCharCounter');
       const seedInput = document.getElementById('seedInput');
       const randomizeSeedCheckbox = document.getElementById('randomizeSeedCheckbox');
       const widthInput = document.getElementById('widthInput');
@@ -620,7 +584,6 @@
       const negativePromptInput = document.getElementById('negativePromptInput');
       const videoControlsGroup = document.getElementById('video-controls-group');
       const standardVideoControls = document.getElementById('standard-video-controls');
-      const grokVideoControls = document.getElementById('grok-video-controls');
       const imageDimensionsGroup = document.getElementById('image-dimensions-group');
       const promptEnhanceControls = document.getElementById('prompt-enhance-controls');
       const guidanceScaleContainer = document.getElementById('guidanceScaleContainer');
@@ -647,11 +610,6 @@
       const audioControlContainer = document.getElementById('audio-control-container');
       const audioCheckbox = document.getElementById('audioCheckbox');
 
-      // Grok Video Specific (Airforce)
-      const grokModeSelect = document.getElementById('grokModeSelect');
-      const grokAspectRatioSelect = document.getElementById('grokAspectRatioSelect');
-      const grokResponseFormat = document.getElementById('grokResponseFormat');
-
       // Single Image Elements
       const refUrlInput = document.getElementById('ref-url-input');
       const addUrlBtn = document.getElementById('add-url-btn');
@@ -669,23 +627,20 @@
       const HISTORY_KEY = 'pollinations_generation_history';
       const MAX_HISTORY = 1000;
       const API_KEY_STORAGE = 'pollinations_studio_api_key';
-      const AIRFORCE_KEY_STORAGE = 'airforce_studio_api_key';
       const UPLOAD_SERVICE_KEY = 'pollinations_upload_service';
 
       // --- Constants ---
       const IMAGE_API_BASE_URL = 'https://gen.pollinations.ai/image';
       const VIDEO_API_BASE_URL = 'https://gen.pollinations.ai/video';
       const TEXT_API_BASE_URL = 'https://gen.pollinations.ai/text';
-      const AIRFORCE_API_URL = 'https://api.airforce/v1/images/generations';
       const DEFAULT_DIMENSION = 1024;
       
       // UPDATED Model Classifications based on current API
-      const VIDEO_MODELS = ['grok-video-pro', 'grok-video-airforce', 'seedance', 'seedance-pro', 'wan', 'wan-fast', 'veo', 'ltx-2', 'p-video', 'nova-reel'];
-      const GROK_VIDEO_AIRFORCE = 'grok-video-airforce';
+      const VIDEO_MODELS = ['veo', 'seedance', 'seedance-pro', 'wan', 'wan-fast', 'grok-video-pro', 'ltx-2', 'p-video', 'nova-reel'];
       const GROK_VIDEO_POLLINATIONS = 'grok-video-pro';
       
       // Models that support image input (Editors + Video I2V models) - UPDATED
-      const IMAGE_INPUT_MODELS = ['klein', 'nanobanana', 'nanobanana-2', 'nanobanana-pro', 'seedream5', 'flux', 'kontext', 'gptimage', 'gptimage-large', 'qwen-image', 'p-image-edit', 'nova-canvas', GROK_VIDEO_AIRFORCE, GROK_VIDEO_POLLINATIONS, 'seedance', 'seedance-pro', 'wan', 'wan-fast', 'veo', 'ltx-2', 'p-video', 'nova-reel'];
+      const IMAGE_INPUT_MODELS = ['kontext', 'nanobanana', 'nanobanana-2', 'nanobanana-pro', 'seedream5', 'gptimage', 'gptimage-large', 'veo', 'seedance', 'seedance-pro', 'wan', 'wan-fast', 'wan-image', 'wan-image-pro', 'qwen-image', 'grok-video-pro', 'klein', 'p-image-edit', 'p-video', 'nova-canvas', 'nova-reel'];
       
       // Models that support guidance scale (Standard diffusion-based image models only)
       const GUIDANCE_SCALE_MODELS = ['flux', 'zimage', 'klein'];
@@ -700,7 +655,7 @@
       const AUDIO_MODELS = ['veo', 'wan', 'wan-fast', 'ltx-2'];
       
       // UPDATED Paid models requiring API key (paid_only: true in API)
-      const PAID_MODELS = ['kontext', 'nanobanana', 'nanobanana-2', 'nanobanana-pro', 'seedream5', 'gptimage-large', 'seedance', 'seedance-pro', 'veo', 'wan', 'grok-imagine-pro', 'grok-video-pro', 'p-image', 'p-image-edit', 'p-video', 'nova-canvas'];
+      const PAID_MODELS = ['nanobanana', 'nanobanana-2', 'nanobanana-pro', 'seedream5', 'veo', 'seedance', 'seedance-pro', 'wan', 'wan-fast', 'grok-imagine', 'grok-imagine-pro', 'grok-video-pro', 'p-image', 'p-image-edit', 'p-video', 'wan-image-pro', 'nova-canvas'];
       
       const apiKey = "plln_pk_EkZu7wQbWUw3wgymmnYCE2H82ipNioP5LePrDPZbUVqoyQA4uXWcbIva7vqtxPhL";
       const promptEnhancementModel = 'nova-fast';
@@ -708,10 +663,6 @@
       // Helper to get active key
       function getActiveApiKey() {
           return apiKeyInput.value.trim() || apiKey;
-      }
-
-      function getAirforceApiKey() {
-          return airforceApiKeyInput.value.trim();
       }
 
       function getUploadService() {
@@ -765,7 +716,6 @@
           
           const cleanUrl = url.split('&key=')[0].split('?key=')[0];
           const history = loadHistory();
-          const isGrokAirforce = modelSelect.value === GROK_VIDEO_AIRFORCE;
           const isGrokNative = modelSelect.value === GROK_VIDEO_POLLINATIONS;
           
           const newItem = {
@@ -780,11 +730,9 @@
               height: heightInput.value,
               quality: qualitySelect.value,
               transparent: transparentCheckbox.checked,
-              aspectRatio: isGrokAirforce ? grokAspectRatioSelect.value : aspectRatioSelect.value,
+              aspectRatio: aspectRatioSelect.value,
               duration: durationSelect.value,
               audio: audioCheckbox.checked,
-              grokMode: isGrokAirforce ? grokModeSelect.value : null,
-              grokResponseFormat: isGrokAirforce ? grokResponseFormat.value : null,
               private: privateCheckbox.checked,
               noFeed: noFeedCheckbox.checked,
               noLogo: noLogoCheckbox.checked,
@@ -908,17 +856,9 @@
           if (item.height !== undefined) heightInput.value = item.height;
           if (item.quality !== undefined) qualitySelect.value = item.quality;
           if (item.transparent !== undefined) transparentCheckbox.checked = item.transparent;
-          if (item.aspectRatio !== undefined) {
-              if (item.model === GROK_VIDEO_AIRFORCE) {
-                  grokAspectRatioSelect.value = item.aspectRatio;
-              } else {
-                  aspectRatioSelect.value = item.aspectRatio;
-              }
-          }
+          if (item.aspectRatio !== undefined) aspectRatioSelect.value = item.aspectRatio;
           if (item.duration !== undefined) durationSelect.value = item.duration;
           if (item.audio !== undefined) audioCheckbox.checked = item.audio;
-          if (item.grokMode !== undefined && item.grokMode !== null) grokModeSelect.value = item.grokMode;
-          if (item.grokResponseFormat !== undefined && item.grokResponseFormat !== null) grokResponseFormat.value = item.grokResponseFormat;
           if (item.private !== undefined) privateCheckbox.checked = item.private;
           if (item.noFeed !== undefined) noFeedCheckbox.checked = item.noFeed;
           if (item.noLogo !== undefined) noLogoCheckbox.checked = item.noLogo;
@@ -1274,7 +1214,6 @@
               if (enhancedPrompt.trim()) {
                   promptInput.value = enhancedPrompt.trim();
                   updatePromptControls(true);
-                  updatePromptCharCounter();
                   displayMessage('Prompt successfully enhanced!', 'success');
               } else {
                   throw new Error('Enhancement returned an empty result.');
@@ -1299,43 +1238,17 @@
               promptInput.value = originalPrompt;
               originalPrompt = ''; 
               updatePromptControls(false);
-              updatePromptCharCounter();
               displayMessage('Prompt reverted to original.', 'info');
           }
       }
 
-      function updatePromptCharCounter() {
-          const isGrok = modelSelect.value === GROK_VIDEO_AIRFORCE;
-          if (isGrok) {
-              const len = promptInput.value.length;
-              promptCharCounter.textContent = `${len} / 500`;
-              promptCharCounter.classList.remove('hidden');
-              if (len > 500) {
-                  promptCharCounter.classList.add('error');
-                  promptCharCounter.classList.remove('warning');
-              } else if (len > 450) {
-                  promptCharCounter.classList.add('warning');
-                  promptCharCounter.classList.remove('error');
-              } else {
-                  promptCharCounter.classList.remove('warning', 'error');
-              }
-          } else {
-              promptCharCounter.classList.add('hidden');
-          }
-      }
-
-      promptInput.addEventListener('input', updatePromptCharCounter);
-      
       // --- Main Application Logic ---
 
       function updateUIForModel() {
           const model = modelSelect.value;
           const isVideoModel = VIDEO_MODELS.includes(model);
-          const isGrokAirforce = model === GROK_VIDEO_AIRFORCE;
           const isGrokNative = model === GROK_VIDEO_POLLINATIONS;
           const hasCustomKey = apiKeyInput.value.trim().length > 0;
-
-          airforceKeyGroup.classList.toggle('hidden', !isGrokAirforce);
 
           if (guidanceScaleContainer) {
               guidanceScaleContainer.style.display = GUIDANCE_SCALE_MODELS.includes(model) ? 'block' : 'none';
@@ -1369,17 +1282,7 @@
           }
 
           if (isVideoModel) {
-              if (isGrokAirforce) {
-                  standardVideoControls.classList.add('hidden');
-                  grokVideoControls.classList.remove('hidden');
-                  MAX_IMAGES = 2;
-                  updatePromptCharCounter();
-              } else {
-                  standardVideoControls.classList.remove('hidden');
-                  grokVideoControls.classList.add('hidden');
-                  MAX_IMAGES = isGrokNative ? 2 : 14;
-                  promptCharCounter.classList.add('hidden');
-              }
+              MAX_IMAGES = isGrokNative ? 2 : 14;
           }
           
           if (durationSelect) {
@@ -1410,14 +1313,12 @@
                       durationSelect.appendChild(opt);
                   }
               } else if (model === 'wan-fast') {
-                  // Wan Fast is typically 5s fixed or limited
                   const opt = document.createElement('option');
                   opt.value = 5;
                   opt.text = '5 seconds (Fixed)';
                   opt.selected = true;
                   durationSelect.appendChild(opt);
               } else if (model === 'nova-reel') {
-                  // Nova Reel: 6-30s, multiples of 6
                   for(let i=6; i<=30; i+=6) {
                       const opt = document.createElement('option');
                       opt.value = i;
@@ -1426,7 +1327,6 @@
                       durationSelect.appendChild(opt);
                   }
               } else if (model === 'p-video') {
-                  // P-Video: up to 1080p, duration not specified in JSON, using generic 2-10s
                   for(let i=2; i<=10; i++) {
                       const opt = document.createElement('option');
                       opt.value = i;
@@ -1445,8 +1345,8 @@
                   }
               }
               updateGalleryUI();
-              if (isGrokAirforce || isGrokNative) {
-                  displayMessage('Grok Video supports max 2 images. Excess images removed.', 'info');
+              if (isGrokNative) {
+                  displayMessage('Grok Video Pro supports max 2 images. Excess images removed.', 'info');
               }
           } else {
               updateGalleryUI();
@@ -1455,135 +1355,13 @@
           generateBtn.innerText = isVideoModel ? 'Generate Video' : 'Generate / Edit Image';
       }
 
-      async function generateGrokVideoAirforce() {
-          const airforceKey = getAirforceApiKey();
-          if (!airforceKey) {
-              displayMessage('Airforce API key is required for this model variant.', 'error');
-              return;
-          }
-
-          const prompt = promptInput.value.trim();
-          if (!prompt) {
-              displayMessage('Please enter a prompt.', 'error');
-              return;
-          }
-
-          if (prompt.length > 500) {
-              displayMessage(`Prompt too long (${prompt.length}/500 chars).`, 'error');
-              return;
-          }
-
-          toggleLoading(true);
-          messageArea.innerHTML = '';
-          resultImage.style.display = 'none';
-          resultVideo.style.display = 'none';
-          resultVideo.src = '';
-          viewBtn.disabled = downloadBtn.disabled = true;
-
-          try {
-              const imageUrls = [];
-              for (const refImage of referenceImages) {
-                  if (refImage.type === 'url') {
-                      imageUrls.push(refImage.source);
-                  } else if (refImage.type === 'file') {
-                      displayMessage('Uploading image...', 'info');
-                      const uploadedUrl = await uploadFile(refImage.source);
-                      imageUrls.push(uploadedUrl);
-                  }
-              }
-
-              const aspectRatio = grokAspectRatioSelect.value;
-              let size = '1024x1024';
-              if (aspectRatio === '3:2') size = '1536x1024';
-              else if (aspectRatio === '2:3') size = '1024x1536';
-
-              const requestBody = {
-                  model: 'grok-imagine-video',
-                  prompt: prompt,
-                  n: 1,
-                  size: size,
-                  response_format: grokResponseFormat.value,
-                  mode: grokModeSelect.value,
-                  aspectRatio: aspectRatio
-              };
-
-              if (imageUrls.length > 0) {
-                  requestBody.image = imageUrls.length === 1 ? imageUrls[0] : imageUrls;
-              }
-
-              displayMessage('Generating video via Airforce...', 'info');
-
-              const response = await fetch(AIRFORCE_API_URL, {
-                  method: 'POST',
-                  headers: {
-                      'Authorization': airforceKey,
-                      'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify(requestBody)
-              });
-
-              if (!response.ok) {
-                  const errorText = await response.text();
-                  throw new Error(`API Error ${response.status}: ${errorText}`);
-              }
-
-              const data = await response.json();
-              let finalUrl = null;
-              
-              const findUrl = (obj, path = '') => {
-                  if (!obj || typeof obj !== 'object') return null;
-                  for (const [key, val] of Object.entries(obj)) {
-                      if (typeof val === 'string' && (val.startsWith('http') || val.includes('.mp4'))) {
-                          return val;
-                      }
-                      if (typeof val === 'object') {
-                          const found = findUrl(val, path);
-                          if (found) return found;
-                      }
-                  }
-                  return null;
-              };
-              
-              finalUrl = findUrl(data);
-
-              if (!finalUrl) {
-                  throw new Error('No video URL found in response');
-              }
-
-              generatedImageUrl = finalUrl;
-              generatedApiUrl = finalUrl;
-
-              resultVideo.src = finalUrl;
-              resultVideo.style.display = 'block';
-              resultVideo.load();
-              resultVideo.play().catch(e => console.log("Autoplay prevented"));
-
-              toggleLoading(false);
-              viewBtn.disabled = downloadBtn.disabled = false;
-              
-              addToHistory(finalUrl, true, prompt);
-              displayMessage('Video generated successfully via Airforce!', 'success');
-
-          } catch (error) {
-              toggleLoading(false);
-              displayMessage(`Failed: ${error.message}`, 'error');
-              console.error('Full error:', error);
-          }
-      }
-
       async function generateImage() {
-          const model = modelSelect.value;
-          
-          if (model === GROK_VIDEO_AIRFORCE) {
-              await generateGrokVideoAirforce();
-              return;
-          }
-
           if (!promptInput.value.trim()) {
               displayMessage('Please enter a prompt.', 'error');
               return;
           }
 
+          const model = modelSelect.value;
           const hasCustomKey = apiKeyInput.value.trim().length > 0;
           
           if (PAID_MODELS.includes(model) && !hasCustomKey) {
@@ -1783,9 +1561,7 @@
 
       function resetForm() {
           apiKeyInput.value = '';
-          airforceApiKeyInput.value = '';
           localStorage.setItem(API_KEY_STORAGE, '');
-          localStorage.setItem(AIRFORCE_KEY_STORAGE, '');
           promptInput.value = '';
           seedInput.value = '42';
           widthInput.value = DEFAULT_DIMENSION;  
@@ -1804,15 +1580,11 @@
           qualitySelect.value = 'medium';
           audioCheckbox.checked = false;
           aspectRatioSelect.selectedIndex = 0;
-          grokModeSelect.value = 'normal';
-          grokAspectRatioSelect.value = '2:3';
-          grokResponseFormat.value = 'url';
           uploadServiceSelect.value = 'catbox';
           localStorage.setItem(UPLOAD_SERVICE_KEY, 'catbox');
           
           originalPrompt = '';
           updatePromptControls(false);
-          updatePromptCharCounter();
           
           referenceImages.forEach(img => {
               if (img.type === 'file' && img.previewUrl) {
@@ -1851,10 +1623,6 @@
       apiKeyInput.addEventListener('input', () => {
           localStorage.setItem(API_KEY_STORAGE, apiKeyInput.value);
           updateModelAvailability();
-      });
-
-      airforceApiKeyInput.addEventListener('input', () => {
-          localStorage.setItem(AIRFORCE_KEY_STORAGE, airforceApiKeyInput.value);
       });
 
       uploadServiceSelect.addEventListener('change', (e) => {
@@ -1899,9 +1667,6 @@
       document.addEventListener('DOMContentLoaded', () => {
           const savedKey = localStorage.getItem(API_KEY_STORAGE);
           if (savedKey !== null) apiKeyInput.value = savedKey;
-          
-          const savedAirforceKey = localStorage.getItem(AIRFORCE_KEY_STORAGE);
-          if (savedAirforceKey !== null) airforceApiKeyInput.value = savedAirforceKey;
           
           const savedUploadService = localStorage.getItem(UPLOAD_SERVICE_KEY);
           if (savedUploadService) uploadServiceSelect.value = savedUploadService;
