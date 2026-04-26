@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V3.7</title>
+    <title>Pollinations AI Chat (Media Enabled) V3.8</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -627,7 +627,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V3.7</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V3.8</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -756,7 +756,7 @@
                 <option value="mistral">Mistral</option>
                 <option value="openai">Openai👁️</option>
                 <option value="openai-fast">Openai-Fast👁️</option>
-                <option value="deepseek">Deepseek🧠</option>
+                <option value="deepseek" class="paid-model-option" style="display: none;">Deepseek🧠 🔒</option>
                 <option value="perplexity-fast">Perplexity-Fast🔍</option>
                 <option value="gemini-search">Gemini-Search👁️🔍</option>
                 <option value="minimax">MiniMax M2.1💻</option>
@@ -772,9 +772,21 @@
                 <option value="gemini" class="paid-model-option" style="display: none;">Gemini🎙️👁️👂🔍💻 🔒</option>
                 <option value="claude" class="paid-model-option" style="display: none;">Claude👁️ 🔒</option>
                 <option value="grok" class="paid-model-option" style="display: none;">Grok 🔒</option>
-                <option value="gemini-legacy" class="paid-model-option" style="display: none;">Gemini-Legacy 2.5 Pro🎙️👁️🔍🧠💻 🔒</option>
                 <option value="gemini-large" class="paid-model-option" style="display: none;">Gemini-Large🎙️👁️👂🧠💻🔍 🔒</option>
                 <option value="claude-large" class="paid-model-option" style="display: none;">Claude-Large👁️💻 🔒</option>
+<option value="claude-opus-4.7" class="paid-model-option" style="display: none;">Claude Opus 4.7👁️💻 🔒</option>
+<option value="deepseek-pro" class="paid-model-option" style="display: none;">DeepSeek V4 Pro🧠💻 🔒</option>
+<option value="gemini-flash-lite-3.1" class="paid-model-option" style="display: none;">Gemini 3.1 Flash Lite👁️🔍 🔒</option>
+<option value="grok-large" class="paid-model-option" style="display: none;">Grok 4.20 Reasoning🧠 🔒</option>
+<option value="midijourney-large" class="paid-model-option" style="display: none;">MIDIjourney Large🎵 🔒</option>
+<option value="kimi-k2.6">Moonshot Kimi K2.6👁️🧠</option>
+<option value="midijourney">MIDIjourney🎵</option>
+<option value="mistral-large">Mistral Large 3👁️</option>
+<option value="nova">Nova 2 Lite🧠</option>
+<option value="openai-audio-large">OpenAI Audio Large🎙️👁️👂🗣️</option>
+<option value="qwen-coder-large">Qwen3 Coder Next💻</option>
+<option value="qwen-large">Qwen3.6 Plus👁️🧠</option>
+<option value="qwen-vision">Qwen3 VL 30B Thinking👁️🧠</option>
             </select>
         </div>
 
@@ -885,7 +897,12 @@ const PAID_ONLY_MODELS = [
     "grok",
     "gemini-large",
     "gemini-legacy",
-    "claude-large"
+    "claude-large",
+    "deepseek",
+    "deepseek-pro",
+    "claude-opus-4.7",
+    "gemini-flash-lite-3.1",
+    "midijourney-large"
 ];
     
     // --- State ---
