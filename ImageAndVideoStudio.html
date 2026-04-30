@@ -1201,14 +1201,13 @@
       }
 
       async function uploadToPollinations(file) {
+async function uploadToPollinations(file) {
           const formData = new FormData();
           formData.append('file', file);
+          const activeKey = apiKeyInput.value.trim() || apiKey;
           
-          const response = await fetch(`${MEDIA_API_BASE_URL}/upload`, {
+          const response = await fetch(`${MEDIA_API_BASE_URL}/upload?key=${encodeURIComponent(activeKey)}`, {
               method: 'POST',
-              headers: {
-                  'Authorization': `Bearer ${getActiveApiKey()}`
-              },
               body: formData
           });
           
