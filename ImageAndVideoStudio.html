@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pollinations Studio (Image & Video) v13.6</title>
+  <title>Pollinations Studio (Image & Video) v14.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -185,6 +185,25 @@
           z-index: 10;
       }
       
+      .ref-url-copy {
+          margin-top: 4px;
+          font-size: 9px;
+          padding: 2px 6px;
+          background: rgba(99, 102, 241, 0.3);
+          border: 1px solid var(--primary);
+          border-radius: 4px;
+          cursor: pointer;
+          color: var(--text);
+          width: 100%;
+          text-align: center;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+      }
+      .ref-url-copy:hover {
+          background: var(--primary);
+      }
+      
       video {
           max-width: 100%;
           max-height: 100%;
@@ -294,7 +313,7 @@
 <body class="p-4 md:p-8">
 
   <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor) v13.6</h1>
+      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor) v14.0</h1>
 
       <div id="message-area" class="mb-4"></div>
 
@@ -317,10 +336,11 @@
               <div>
                   <label for="uploadServiceSelect" class="block text-sm font-medium mb-1">Image Upload Service</label>
                   <select id="uploadServiceSelect" class="w-full text-sm">
+                      <option value="pollinations" selected>Pollinations Media Storage</option>
                       <option value="catbox">Catbox (Litterbox) - 24h temporary</option>
                       <option value="anondrop">AnonDrop - Anonymous permanent</option>
                   </select>
-                  <p class="text-xs text-subtle mt-1">Used for uploading reference images before generation</p>
+                  <p class="text-xs text-subtle mt-1">Used for uploading reference images before generation. Pollinations uploads are saved to your account and appear in Upload History below.</p>
               </div>
 
               <div id="model-select-group">
@@ -537,7 +557,7 @@
                   <button id="refreshBtn" class="py-2 px-4 bg-red-500 text-white font-semibold rounded-lg">Reset</button>
               </div>
 
-              <!-- History Section -->
+              <!-- Generation History Section -->
               <div class="history-section">
                   <div class="flex justify-between items-center mb-2">
                       <h3 class="text-lg font-semibold">Generation History (1000 max)</h3>
@@ -545,6 +565,21 @@
                   </div>
                   <div id="historyGrid" class="history-grid">
                       <div class="history-empty">No history yet. Generate something!</div>
+                  </div>
+              </div>
+
+              <!-- Upload History Section -->
+              <div class="history-section mt-6">
+                  <div class="flex justify-between items-center mb-2">
+                      <h3 class="text-lg font-semibold">Upload History</h3>
+                      <div class="flex gap-2">
+                          <button id="exportUploadHistoryJsonBtn" class="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Export JSON</button>
+                          <button id="exportUploadHistoryTxtBtn" class="text-xs px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">Export TXT</button>
+                          <button id="clearUploadHistoryBtn" class="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">Clear All</button>
+                      </div>
+                  </div>
+                  <div id="uploadHistoryGrid" class="history-grid">
+                      <div class="history-empty">No uploads yet. Upload reference images to see them here!</div>
                   </div>
               </div>
           </div>
@@ -617,6 +652,12 @@
       const refCardContainer = document.getElementById('ref-card-container');
       const galleryPlaceholder = document.getElementById('gallery-placeholder');
 
+      // Upload History Elements
+      const uploadHistoryGrid = document.getElementById('uploadHistoryGrid');
+      const clearUploadHistoryBtn = document.getElementById('clearUploadHistoryBtn');
+      const exportUploadHistoryJsonBtn = document.getElementById('exportUploadHistoryJsonBtn');
+      const exportUploadHistoryTxtBtn = document.getElementById('exportUploadHistoryTxtBtn');
+
 
       // --- State ---
       let generatedImageUrl = null;
@@ -625,6 +666,7 @@
       let referenceImages = []; 
       let MAX_IMAGES = 14;
       const HISTORY_KEY = 'pollinations_generation_history';
+      const UPLOAD_HISTORY_KEY = 'pollinations_upload_history';
       const MAX_HISTORY = 1000;
       const API_KEY_STORAGE = 'pollinations_studio_api_key';
       const UPLOAD_SERVICE_KEY = 'pollinations_upload_service';
@@ -633,6 +675,7 @@
       const IMAGE_API_BASE_URL = 'https://gen.pollinations.ai/image';
       const VIDEO_API_BASE_URL = 'https://gen.pollinations.ai/video';
       const TEXT_API_BASE_URL = 'https://gen.pollinations.ai/text';
+      const MEDIA_API_BASE_URL = 'https://media.pollinations.ai';
       const DEFAULT_DIMENSION = 1024;
       
       // UPDATED Model Classifications based on current API
@@ -666,7 +709,7 @@
       }
 
       function getUploadService() {
-          return localStorage.getItem(UPLOAD_SERVICE_KEY) || 'catbox';
+          return localStorage.getItem(UPLOAD_SERVICE_KEY) || 'pollinations';
       }
 
       // --- BYOP Handling ---
@@ -690,7 +733,169 @@
           window.open(authUrl, 'pollinations_byop', 'width=600,height=700,top=100,left=100');
       });
 
-      // --- HISTORY MANAGEMENT ---
+      // --- UPLOAD HISTORY MANAGEMENT ---
+      function loadUploadHistory() {
+          try {
+              const stored = localStorage.getItem(UPLOAD_HISTORY_KEY);
+              return stored ? JSON.parse(stored) : [];
+          } catch (e) {
+              console.error('Failed to load upload history:', e);
+              return [];
+          }
+      }
+
+      function saveUploadHistory(history) {
+          try {
+              localStorage.setItem(UPLOAD_HISTORY_KEY, JSON.stringify(history));
+          } catch (e) {
+              console.error('Failed to save upload history:', e);
+          }
+      }
+
+      function addToUploadHistory(item) {
+          const history = loadUploadHistory();
+          // Avoid duplicates
+          if (!history.find(h => h.url === item.url)) {
+              history.unshift(item);
+              saveUploadHistory(history);
+              renderUploadHistory();
+          }
+      }
+
+      async function deleteFromPollinations(hash) {
+          try {
+              const response = await fetch(`${MEDIA_API_BASE_URL}/${hash}`, {
+                  method: 'DELETE',
+                  headers: {
+                      'Authorization': `Bearer ${getActiveApiKey()}`
+                  }
+              });
+              
+              if (!response.ok && response.status !== 404) {
+                  console.error('Failed to delete from Pollinations:', response.statusText);
+                  throw new Error(`Delete failed: ${response.statusText}`);
+              }
+          } catch (error) {
+              console.error('Error deleting from Pollinations:', error);
+              throw error;
+          }
+      }
+
+      function removeFromUploadHistory(index) {
+          const history = loadUploadHistory();
+          const item = history[index];
+          if (!item) return;
+          
+          if (confirm('Delete this file from Pollinations media storage? This cannot be undone.')) {
+              // Delete from Pollinations if it's a pollinations URL
+              if (item.url && item.url.includes('media.pollinations.ai') && item.hash) {
+                  deleteFromPollinations(item.hash).catch(err => {
+                      displayMessage(`Failed to delete from server: ${err.message}`, 'error');
+                      // Still remove from local history even if server delete fails
+                  });
+              }
+              
+              // Remove from referenceImages if currently being used
+              const refIndex = referenceImages.findIndex(ref => 
+                  (ref.source === item.url) || (ref.previewUrl === item.url)
+              );
+              if (refIndex > -1) {
+                  const ref = referenceImages[refIndex];
+                  if (ref.type === 'file' && ref.previewUrl && ref.previewUrl.startsWith('blob:')) {
+                      URL.revokeObjectURL(ref.previewUrl);
+                  }
+                  referenceImages.splice(refIndex, 1);
+                  updateGalleryUI();
+              }
+              
+              history.splice(index, 1);
+              saveUploadHistory(history);
+              renderUploadHistory();
+              displayMessage('Upload deleted from history.', 'success');
+          }
+      }
+
+      function clearUploadHistory() {
+          if (confirm('Clear all upload history? This will NOT delete files from Pollinations storage, only remove the local history records. Use individual delete buttons to remove files from storage.')) {
+              localStorage.removeItem(UPLOAD_HISTORY_KEY);
+              renderUploadHistory();
+              displayMessage('Upload history cleared.', 'success');
+          }
+      }
+
+      function exportUploadHistoryAsJson() {
+          const history = loadUploadHistory();
+          const dataStr = JSON.stringify(history, null, 2);
+          const blob = new Blob([dataStr], {type: 'application/json'});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `pollinations-upload-history-${new Date().toISOString().slice(0,10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+      }
+
+      function exportUploadHistoryAsTxt() {
+          const history = loadUploadHistory();
+          const dataStr = history.map(h => h.url).join('\n');
+          const blob = new Blob([dataStr], {type: 'text/plain'});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `pollinations-upload-history-${new Date().toISOString().slice(0,10)}.txt`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+      }
+
+      function renderUploadHistory() {
+          const history = loadUploadHistory();
+          
+          if (history.length === 0) {
+              uploadHistoryGrid.innerHTML = '<div class="history-empty">No uploads yet. Upload reference images to see them here!</div>';
+              return;
+          }
+          
+          uploadHistoryGrid.innerHTML = '';
+          
+          history.forEach((item, index) => {
+              const historyItem = document.createElement('div');
+              historyItem.className = 'history-item';
+              historyItem.title = `Click to copy URL\n${item.filename || 'Unknown'}\n${item.url}`;
+              
+              const imgEl = document.createElement('img');
+              imgEl.src = item.url;
+              imgEl.alt = item.filename || 'Upload';
+              
+              const timestamp = document.createElement('div');
+              timestamp.className = 'history-timestamp';
+              timestamp.textContent = formatTimestamp(item.timestamp);
+              
+              const removeBtn = document.createElement('div');
+              removeBtn.className = 'history-remove';
+              removeBtn.innerHTML = '&times;';
+              removeBtn.title = 'Delete from Pollinations storage';
+              removeBtn.onclick = (e) => {
+                  e.stopPropagation();
+                  removeFromUploadHistory(index);
+              };
+              
+              historyItem.onclick = () => {
+                  navigator.clipboard.writeText(item.url);
+                  displayMessage('URL copied to clipboard!', 'success');
+              };
+              
+              historyItem.appendChild(imgEl);
+              historyItem.appendChild(timestamp);
+              historyItem.appendChild(removeBtn);
+              uploadHistoryGrid.appendChild(historyItem);
+          });
+      }
+
+      // --- GENERATION HISTORY MANAGEMENT ---
       function loadHistory() {
           try {
               const stored = localStorage.getItem(HISTORY_KEY);
@@ -893,7 +1098,7 @@
               resultImage.style.display = 'block';
               resultVideo.style.display = 'none';
           }
-          
+
           placeholderText.style.display = 'none';
           viewBtn.disabled = downloadBtn.disabled = false;
           
@@ -995,10 +1200,51 @@
           return directUrl;
       }
 
+      async function uploadToPollinations(file) {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          const response = await fetch(`${MEDIA_API_BASE_URL}/upload`, {
+              method: 'POST',
+              headers: {
+                  'Authorization': `Bearer ${getActiveApiKey()}`
+              },
+              body: formData
+          });
+          
+          if (!response.ok) {
+              if (response.status === 401) throw new Error('Authentication required for Pollinations upload. Please provide an API key.');
+              if (response.status === 413) throw new Error('File too large (max 10MB for Pollinations)');
+              throw new Error(`Pollinations upload failed: ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          // Returns: {id, url, contentType, size, duplicate}
+          return {
+              url: data.url,
+              hash: data.id,
+              contentType: data.contentType,
+              size: data.size,
+              duplicate: data.duplicate
+          };
+      }
+
       async function uploadFile(file) {
           const service = getUploadService();
           if (service === 'anondrop') {
               return await uploadToAnonDrop(file);
+          } else if (service === 'pollinations') {
+              const result = await uploadToPollinations(file);
+              // Add to upload history
+              addToUploadHistory({
+                  url: result.url,
+                  hash: result.hash,
+                  filename: file.name,
+                  contentType: result.contentType || file.type,
+                  size: result.size || file.size,
+                  timestamp: Date.now()
+              });
+              return result.url;
           } else {
               return await uploadToCatbox(file);
           }
@@ -1057,7 +1303,7 @@
               removeBtn.className = 'ref-remove';
               removeBtn.innerHTML = '&times;';
               removeBtn.onclick = function() {
-                  if (imgObj.type === 'file' && imgObj.previewUrl) {
+                  if (imgObj.type === 'file' && imgObj.previewUrl && imgObj.previewUrl.startsWith('blob:')) {
                       URL.revokeObjectURL(imgObj.previewUrl);
                   }
                   referenceImages.splice(index, 1); 
@@ -1067,6 +1313,20 @@
               card.appendChild(removeBtn);
               card.appendChild(imgEl);
               card.appendChild(metaEl);
+              
+              // If it's a Pollinations upload (not a blob URL), show copy URL button
+              if (imgObj.previewUrl && imgObj.previewUrl.includes('media.pollinations.ai')) {
+                  const copyBtn = document.createElement('button');
+                  copyBtn.className = 'ref-url-copy';
+                  copyBtn.innerText = 'Copy URL';
+                  copyBtn.onclick = (e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(imgObj.previewUrl);
+                      displayMessage('URL copied to clipboard!', 'success');
+                  };
+                  card.appendChild(copyBtn);
+              }
+              
               refCardContainer.appendChild(card);
           });
           
@@ -1109,12 +1369,12 @@
               referenceImages.push(newImage);
               updateGalleryUI();
               if (type === 'file') {
-                  displayMessage(`Image uploaded and added to list. Total: ${referenceImages.length}`, 'success');
+                  displayMessage(`Image added. Total: ${referenceImages.length}`, 'success');
               }
           };
 
           tempImg.onerror = function() {
-              if (type === 'file' && srcUrl) URL.revokeObjectURL(srcUrl); 
+              if (type === 'file' && srcUrl && srcUrl.startsWith('blob:')) URL.revokeObjectURL(srcUrl); 
               displayMessage('Failed to load image. Please check the URL or file.', 'error');
           };
       }
@@ -1127,556 +1387,612 @@
           }
       });
 
-      refFileInput.addEventListener('change', (e) => {
+      refFileInput.addEventListener('change', async (e) => {
           const files = Array.from(e.target.files);
-          
-          if (files.length + referenceImages.length > MAX_IMAGES) {
-              displayMessage(`Can only add ${MAX_IMAGES - referenceImages.length} more image(s).`, 'error');
-              files.slice(0, MAX_IMAGES - referenceImages.length).forEach(file => {
-                  if (file && file.type.startsWith('image/')) {
-                      setReferenceImage(file, 'file');
-                  }
-              });
-          } else {
-              files.forEach(file => {
-                  if (file && file.type.startsWith('image/')) {
-                      setReferenceImage(file, 'file');
-                  }
-              });
-          }
-          refFileInput.value = ''; 
-      });
+               const maxToAdd = Math.min(files.length, MAX_IMAGES - referenceImages.length);
+      if (files.length > maxToAdd) {
+          displayMessage(`Only adding ${maxToAdd} of ${files.length} image(s) due to limit.`, 'info');
+      }
       
-      // --- Prompt Enhancement Logic ---
-      function updatePromptControls(isEnhanced) {
-          promptEnhanceControls.innerHTML = '';
-          if (!isEnhanced) {
-              const enhanceBtn = document.createElement('button');
-              enhanceBtn.id = 'enhancePromptBtn';
-              enhanceBtn.type = 'button';
-              enhanceBtn.className = 'flex-1 py-2 bg-enhance text-white font-semibold rounded-lg hover:bg-enhance-hover text-sm';
-              enhanceBtn.innerHTML = '✨ Prompt Enhance';
-              enhanceBtn.addEventListener('click', handlePromptEnhancement);
-              promptEnhanceControls.appendChild(enhanceBtn);
-          } else {
-              const revertBtn = document.createElement('button');
-              revertBtn.id = 'revertPromptBtn';
-              revertBtn.type = 'button';
-              revertBtn.className = 'w-1/3 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 text-sm';
-              revertBtn.textContent = 'Revert';
-              revertBtn.addEventListener('click', revertPrompt);
-              
-              const retryBtn = document.createElement('button');
-              retryBtn.id = 'retryEnhanceBtn';
-              retryBtn.type = 'button';
-              retryBtn.className = 'w-2/3 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 text-sm';
-              retryBtn.textContent = 'Re-try Enhance';
-              retryBtn.addEventListener('click', handlePromptEnhancement);
+      for (const file of files.slice(0, maxToAdd)) {
+          if (file && file.type.startsWith('image/')) {
+              // For file uploads, we need to upload to get a permanent URL if using Pollinations
+              if (getUploadService() === 'pollinations') {
+                  try {
+                      displayMessage(`Uploading ${file.name} to Pollinations...`, 'info');
+                      const result = await uploadToPollinations(file);
+                      // Create a blob URL for preview while using the permanent URL for generation
+                      const blobUrl = URL.createObjectURL(file);
+                      const newImage = {
+                          type: 'url', // Treat as URL since we have the permanent URL
+                          source: result.url, 
+                          previewUrl: blobUrl,
+                          width: 0, // Will be set on load
+                          height: 0,
+                          pollinationsHash: result.hash
+                      };
+                      // Get dimensions from the file
+                      const tempImg = new Image();
+                      tempImg.onload = function() {
+                          newImage.width = this.naturalWidth;
+                          newImage.height = this.naturalHeight;
+                          referenceImages.push(newImage);
+                          updateGalleryUI();
+                      };
+                      tempImg.src = blobUrl;
+                      
+                      // Add to upload history
+                      addToUploadHistory({
+                          url: result.url,
+                          hash: result.hash,
+                          filename: file.name,
+                          contentType: file.type,
+                          size: file.size,
+                          timestamp: Date.now()
+                      });
+                      
+                      displayMessage(`Uploaded ${file.name} to Pollinations: ${result.url.substring(0, 50)}...`, 'success');
+                  } catch (err) {
+                      displayMessage(`Upload failed for ${file.name}: ${err.message}`, 'error');
+                  }
+              } else {
+                  // For other services, upload to get URL first
+                  try {
+                      const service = getUploadService();
+                      displayMessage(`Uploading ${file.name} to ${service}...`, 'info');
+                      const uploadedUrl = await uploadFile(file);
+                      
+                      const tempImg = new Image();
+                      tempImg.onload = function() {
+                          const newImage = {
+                              type: 'url',
+                              source: uploadedUrl, 
+                              previewUrl: uploadedUrl,
+                              width: this.naturalWidth,
+                              height: this.naturalHeight
+                          };
+                          referenceImages.push(newImage);
+                          updateGalleryUI();
+                          displayMessage(`Added ${file.name} from ${service}`, 'success');
+                      };
+                      tempImg.src = uploadedUrl;
+                  } catch (err) {
+                      displayMessage(`Failed to upload ${file.name}: ${err.message}`, 'error');
+                  }
+              }
+          }
+      }
+      refFileInput.value = ''; 
+  });
 
-              promptEnhanceControls.appendChild(revertBtn);
-              promptEnhanceControls.appendChild(retryBtn);
+  // --- Prompt Enhancement Logic ---
+  function updatePromptControls(isEnhanced) {
+      promptEnhanceControls.innerHTML = '';
+      if (!isEnhanced) {
+          const enhanceBtn = document.createElement('button');
+          enhanceBtn.id = 'enhancePromptBtn';
+          enhanceBtn.type = 'button';
+          enhanceBtn.className = 'flex-1 py-2 bg-enhance text-white font-semibold rounded-lg hover:bg-enhance-hover text-sm';
+          enhanceBtn.innerHTML = '✨ Prompt Enhance';
+          enhanceBtn.addEventListener('click', handlePromptEnhancement);
+          promptEnhanceControls.appendChild(enhanceBtn);
+      } else {
+          const revertBtn = document.createElement('button');
+          revertBtn.id = 'revertPromptBtn';
+          revertBtn.type = 'button';
+          revertBtn.className = 'w-1/3 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 text-sm';
+          revertBtn.textContent = 'Revert';
+          revertBtn.addEventListener('click', revertPrompt);
+          
+          const retryBtn = document.createElement('button');
+          retryBtn.id = 'retryEnhanceBtn';
+          retryBtn.type = 'button';
+          retryBtn.className = 'w-2/3 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700 text-sm';
+          retryBtn.textContent = 'Re-try Enhance';
+          retryBtn.addEventListener('click', handlePromptEnhancement);
+
+          promptEnhanceControls.appendChild(revertBtn);
+          promptEnhanceControls.appendChild(retryBtn);
+      }
+  }
+  
+  async function handlePromptEnhancement(event) {
+      const currentElement = event.target;
+      const isRetry = currentElement.id === 'retryEnhanceBtn';
+      let currentPrompt = promptInput.value.trim();
+
+      if (!isRetry) {
+          if (!currentPrompt) {
+              displayMessage('Please enter a prompt to enhance.', 'error');
+              return;
+          }
+          originalPrompt = currentPrompt; 
+      } else {
+          currentPrompt = originalPrompt; 
+      }
+      
+      toggleLoading(true, currentElement); 
+      
+      const fullTextPrompt = `Re-write the following prompt to be more detailed and vivid for an image generator. The output must ONLY contain the re-written prompt with no other commentary or niceties. Original prompt: "${currentPrompt}"`;
+      const enhancementSeed = getRandomSeed();
+      
+      const textParams = new URLSearchParams({
+          model: promptEnhancementModel,
+          seed: enhancementSeed,
+      });
+
+      const fullUrl = `${TEXT_API_BASE_URL}/${encodeURIComponent(fullTextPrompt)}?${textParams.toString()}`;
+
+      try {
+          const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
+          if (!response.ok) throw new Error(await response.text());
+
+          const enhancedPrompt = await response.text();
+          
+          if (enhancedPrompt.trim()) {
+              promptInput.value = enhancedPrompt.trim();
+              updatePromptControls(true);
+              displayMessage('Prompt successfully enhanced!', 'success');
+          } else {
+              throw new Error('Enhancement returned an empty result.');
+          }
+      } catch (error) {
+          let reason = error.message;
+          try {
+              const errorObj = JSON.parse(error.message);
+              if (errorObj && errorObj.error && errorObj.error.message) {
+                  const nestedMatch = errorObj.error.message.match(/reason: (.*)/);
+                  reason = nestedMatch ? `API Connection Error. Reason: ${nestedMatch[1]}` : `API Error: ${errorObj.error.message}`;
+              }
+          } catch (e) {}
+          displayMessage(`Prompt enhancement failed. Detail: ${reason}`, 'error');
+      } finally {
+          toggleLoading(false, currentElement);
+      }
+  }
+  
+  function revertPrompt() {
+      if (originalPrompt) {
+          promptInput.value = originalPrompt;
+          originalPrompt = ''; 
+          updatePromptControls(false);
+          displayMessage('Prompt reverted to original.', 'info');
+      }
+  }
+
+  // --- Main Application Logic ---
+
+  function updateUIForModel() {
+      const model = modelSelect.value;
+      const isVideoModel = VIDEO_MODELS.includes(model);
+      const isGrokNative = model === GROK_VIDEO_POLLINATIONS;
+      const hasCustomKey = apiKeyInput.value.trim().length > 0;
+
+      if (guidanceScaleContainer) {
+          guidanceScaleContainer.style.display = GUIDANCE_SCALE_MODELS.includes(model) ? 'block' : 'none';
+      }
+      
+      if (negativePromptGroup) {
+          negativePromptGroup.style.display = NEGATIVE_PROMPT_MODELS.includes(model) ? 'block' : 'none';
+      }
+      
+      if (qualityContainer) {
+          const isGptImage = model.startsWith('gptimage');
+          qualityContainer.style.display = isGptImage ? 'flex' : 'none';
+      }
+      
+      if (transparentGroup) {
+          const showTransparent = TRANSPARENT_MODELS.includes(model);
+          transparentGroup.classList.toggle('hidden', !showTransparent);
+      }
+      
+      if (imageInputGroup) {
+          imageInputGroup.style.display = IMAGE_INPUT_MODELS.includes(model) ? 'block' : 'none';
+      }
+      
+      if (audioControlContainer) {
+          const showAudio = AUDIO_MODELS.includes(model);
+          audioControlContainer.classList.toggle('hidden', !showAudio);
+      }
+      
+      if (videoControlsGroup) {
+          videoControlsGroup.style.display = isVideoModel ? 'block' : 'none';
+      }
+
+      if (isVideoModel) {
+          MAX_IMAGES = isGrokNative ? 2 : 14;
+      }
+      
+      if (durationSelect) {
+          durationSelect.innerHTML = '';
+          
+          if (model === 'veo') {
+              [4, 6, 8].forEach(val => {
+                  const opt = document.createElement('option');
+                  opt.value = val;
+                  opt.text = `${val} seconds`;
+                  durationSelect.appendChild(opt);
+              });
+          } else if (model === 'seedance' || model === 'seedance-pro') {
+              for(let i=2; i<=10; i++) {
+                  const opt = document.createElement('option');
+                  opt.value = i;
+                  opt.text = `${i} seconds${(i > 4 && !hasCustomKey) ? ' (Requires API Key)' : ''}`;
+                  if (i===4) opt.selected = true;
+                  if (i > 4 && !hasCustomKey) opt.disabled = true;
+                  durationSelect.appendChild(opt);
+              }
+          } else if (model === 'wan' || model === 'ltx-2' || model === 'grok-video-pro') {
+              for(let i=2; i<=10; i++) {
+                  const opt = document.createElement('option');
+                  opt.value = i;
+                  opt.text = `${i} seconds`;
+                  if(i===5) opt.selected = true;
+                  durationSelect.appendChild(opt);
+              }
+          } else if (model === 'wan-fast') {
+              const opt = document.createElement('option');
+              opt.value = 5;
+              opt.text = '5 seconds (Fixed)';
+              opt.selected = true;
+              durationSelect.appendChild(opt);
+          } else if (model === 'nova-reel') {
+              for(let i=6; i<=30; i+=6) {
+                  const opt = document.createElement('option');
+                  opt.value = i;
+                  opt.text = `${i} seconds`;
+                  if(i===6) opt.selected = true;
+                  durationSelect.appendChild(opt);
+              }
+          } else if (model === 'p-video') {
+              for(let i=2; i<=10; i++) {
+                  const opt = document.createElement('option');
+                  opt.value = i;
+                  opt.text = `${i} seconds`;
+                  if(i===5) opt.selected = true;
+                  durationSelect.appendChild(opt);
+              }
           }
       }
       
-      async function handlePromptEnhancement(event) {
-          const currentElement = event.target;
-          const isRetry = currentElement.id === 'retryEnhanceBtn';
-          let currentPrompt = promptInput.value.trim();
-
-          if (!isRetry) {
-              if (!currentPrompt) {
-                  displayMessage('Please enter a prompt to enhance.', 'error');
-                  return;
+      if (referenceImages.length > MAX_IMAGES) {
+          while (referenceImages.length > MAX_IMAGES) {
+              const img = referenceImages.pop();
+              if (img.type === 'file' && img.previewUrl && img.previewUrl.startsWith('blob:')) {
+                  URL.revokeObjectURL(img.previewUrl);
               }
-              originalPrompt = currentPrompt; 
-          } else {
-              currentPrompt = originalPrompt; 
+          }
+          updateGalleryUI();
+          if (isGrokNative) {
+              displayMessage('Grok Video Pro supports max 2 images. Excess images removed.', 'info');
+          }
+      } else {
+          updateGalleryUI();
+      }
+      
+      generateBtn.innerText = isVideoModel ? 'Generate Video' : 'Generate / Edit Image';
+  }
+
+  async function generateImage() {
+      if (!promptInput.value.trim()) {
+          displayMessage('Please enter a prompt.', 'error');
+          return;
+      }
+
+      const model = modelSelect.value;
+      const hasCustomKey = apiKeyInput.value.trim().length > 0;
+      
+      if (PAID_MODELS.includes(model) && !hasCustomKey) {
+          displayMessage(`The ${model} model requires a custom API key.`, 'error');
+          return;
+      }
+      
+      if ((model === 'seedance' || model === 'seedance-pro') && VIDEO_MODELS.includes(model)) {
+          const selectedDuration = parseInt(durationSelect.value);
+          if (selectedDuration > 4 && !hasCustomKey) {
+              displayMessage('Durations longer than 4 seconds require a custom API key for Seedance models.', 'error');
+              return;
+          }
+      }
+
+      toggleLoading(true);
+      messageArea.innerHTML = '';
+      resultImage.style.display = 'none';
+      resultVideo.style.display = 'none';
+      resultVideo.src = '';
+      viewBtn.disabled = downloadBtn.disabled = true;
+
+      const prompt = promptInput.value;
+      let seed = randomizeSeedCheckbox.checked ? getRandomSeed() : seedInput.value;
+      if (randomizeSeedCheckbox.checked) seedInput.value = seed;
+
+      const isVideoModel = VIDEO_MODELS.includes(model);
+      const supportsImageInput = IMAGE_INPUT_MODELS.includes(model);
+      const isGrokNative = model === GROK_VIDEO_POLLINATIONS;
+
+      const params = new URLSearchParams({
+          model: model,
+          seed: seed,
+          private: privateCheckbox.checked ? 'true' : 'false', 
+          nologo: noLogoCheckbox.checked ? 'true' : 'false',
+          enhance: enhanceCheckbox.checked ? 'true' : 'false',
+          safe: safeCheckbox.checked ? 'true' : 'false',
+          nofeed: noFeedCheckbox.checked ? 'true' : 'false'
+      });
+
+      if (GUIDANCE_SCALE_MODELS.includes(model)) {
+          params.append('guidance_scale', guidanceScaleInput.value);
+      }
+
+      if (NEGATIVE_PROMPT_MODELS.includes(model) && negativePromptInput.value.trim()) {
+          params.append('negative_prompt', negativePromptInput.value.trim());
+      }
+
+      if (isVideoModel) {
+          params.append('aspectRatio', aspectRatioSelect.value);
+          params.append('duration', durationSelect.value);
+          if (AUDIO_MODELS.includes(model)) {
+              params.append('audio', audioCheckbox.checked ? 'true' : 'false');
+          }
+      } else {
+          const width = parseInt(widthInput.value) || DEFAULT_DIMENSION;
+          const height = parseInt(heightInput.value) || DEFAULT_DIMENSION;               
+          params.append('width', width);
+          params.append('height', height);
+          
+          if (model.startsWith('gptimage')) {
+              params.append('quality', qualitySelect.value);
+              params.append('transparent', transparentCheckbox.checked ? 'true' : 'false');
+          }
+      }
+
+      if (supportsImageInput && referenceImages.length > 0) {
+          const imageUsageMode = document.querySelector('input[name="imageUsage"]:checked').value;
+          if (imageUsageMode === 'reference') params.append('control', 'reference');
+
+          const finalUrls = [];
+          
+          // Collect URLs from reference images (already uploaded or from URLs)
+          for (const refImage of referenceImages) {
+              if (refImage.type === 'url') {
+                  finalUrls.push(refImage.source);
+              } else if (refImage.type === 'file') {
+                  // Should not happen with new logic, but just in case
+                  finalUrls.push(refImage.source);
+              }
           }
           
-          toggleLoading(true, currentElement); 
-          
-          const fullTextPrompt = `Re-write the following prompt to be more detailed and vivid for an image generator. The output must ONLY contain the re-written prompt with no other commentary or niceties. Original prompt: "${currentPrompt}"`;
-          const enhancementSeed = getRandomSeed();
-          
-          const textParams = new URLSearchParams({
-              model: promptEnhancementModel,
-              seed: enhancementSeed,
-          });
+          if (finalUrls.length > 0) {
+              if (model === 'veo' && finalUrls.length >= 2) {
+                  params.append('image[0]', finalUrls[0]);
+                  params.append('image[1]', finalUrls[1]);
+                  if (finalUrls.length > 2) {
+                      displayMessage('Note: Only first 2 images used for first/last frame interpolation.', 'info');
+                  }
+              } else {
+                  const imageParamValue = finalUrls.join(',');
+                  params.append('image', imageParamValue);
+              }
+          }
+      }
 
-          const fullUrl = `${TEXT_API_BASE_URL}/${encodeURIComponent(fullTextPrompt)}?${textParams.toString()}`;
+      const endpointBase = isVideoModel ? VIDEO_API_BASE_URL : IMAGE_API_BASE_URL;
+      const fullUrl = `${endpointBase}/${encodeURIComponent(prompt)}?${params.toString()}`;
+      generatedApiUrl = fullUrl;
+      
+      displayMessage(`Sending generation request for model: **${model}**...`, 'info');
 
+      if (isVideoModel) {
           try {
+              placeholderText.innerHTML = 'Generating video... (this may take a moment)';
+              placeholderText.style.display = 'block';
+              
               const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
               if (!response.ok) throw new Error(await response.text());
 
-              const enhancedPrompt = await response.text();
-              
-              if (enhancedPrompt.trim()) {
-                  promptInput.value = enhancedPrompt.trim();
-                  updatePromptControls(true);
-                  displayMessage('Prompt successfully enhanced!', 'success');
+              const contentType = response.headers.get("content-type");
+              if (contentType && contentType.includes("application/json")) {
+                  const responseData = await response.json();
+                  generatedImageUrl = responseData.url;
+              } else if (contentType && contentType.includes("video/")) {
+                  generatedImageUrl = URL.createObjectURL(await response.blob());
               } else {
-                  throw new Error('Enhancement returned an empty result.');
+                   generatedImageUrl = response.url;
               }
           } catch (error) {
-              let reason = error.message;
-              try {
-                  const errorObj = JSON.parse(error.message);
-                  if (errorObj && errorObj.error && errorObj.error.message) {
-                      const nestedMatch = errorObj.error.message.match(/reason: (.*)/);
-                      reason = nestedMatch ? `API Connection Error. Reason: ${nestedMatch[1]}` : `API Error: ${errorObj.error.message}`;
-                  }
-              } catch (e) {}
-              displayMessage(`Prompt enhancement failed. Detail: ${reason}`, 'error');
-          } finally {
-              toggleLoading(false, currentElement);
-          }
-      }
-      
-      function revertPrompt() {
-          if (originalPrompt) {
-              promptInput.value = originalPrompt;
-              originalPrompt = ''; 
-              updatePromptControls(false);
-              displayMessage('Prompt reverted to original.', 'info');
-          }
-      }
-
-      // --- Main Application Logic ---
-
-      function updateUIForModel() {
-          const model = modelSelect.value;
-          const isVideoModel = VIDEO_MODELS.includes(model);
-          const isGrokNative = model === GROK_VIDEO_POLLINATIONS;
-          const hasCustomKey = apiKeyInput.value.trim().length > 0;
-
-          if (guidanceScaleContainer) {
-              guidanceScaleContainer.style.display = GUIDANCE_SCALE_MODELS.includes(model) ? 'block' : 'none';
-          }
-          
-          if (negativePromptGroup) {
-              negativePromptGroup.style.display = NEGATIVE_PROMPT_MODELS.includes(model) ? 'block' : 'none';
-          }
-          
-          if (qualityContainer) {
-              const isGptImage = model.startsWith('gptimage');
-              qualityContainer.style.display = isGptImage ? 'flex' : 'none';
-          }
-          
-          if (transparentGroup) {
-              const showTransparent = TRANSPARENT_MODELS.includes(model);
-              transparentGroup.classList.toggle('hidden', !showTransparent);
-          }
-          
-          if (imageInputGroup) {
-              imageInputGroup.style.display = IMAGE_INPUT_MODELS.includes(model) ? 'block' : 'none';
-          }
-          
-          if (audioControlContainer) {
-              const showAudio = AUDIO_MODELS.includes(model);
-              audioControlContainer.classList.toggle('hidden', !showAudio);
-          }
-          
-          if (videoControlsGroup) {
-              videoControlsGroup.style.display = isVideoModel ? 'block' : 'none';
-          }
-
-          if (isVideoModel) {
-              MAX_IMAGES = isGrokNative ? 2 : 14;
-          }
-          
-          if (durationSelect) {
-              durationSelect.innerHTML = '';
-              
-              if (model === 'veo') {
-                  [4, 6, 8].forEach(val => {
-                      const opt = document.createElement('option');
-                      opt.value = val;
-                      opt.text = `${val} seconds`;
-                      durationSelect.appendChild(opt);
-                  });
-              } else if (model === 'seedance' || model === 'seedance-pro') {
-                  for(let i=2; i<=10; i++) {
-                      const opt = document.createElement('option');
-                      opt.value = i;
-                      opt.text = `${i} seconds${(i > 4 && !hasCustomKey) ? ' (Requires API Key)' : ''}`;
-                      if (i===4) opt.selected = true;
-                      if (i > 4 && !hasCustomKey) opt.disabled = true;
-                      durationSelect.appendChild(opt);
-                  }
-              } else if (model === 'wan' || model === 'ltx-2' || model === 'grok-video-pro') {
-                  for(let i=2; i<=10; i++) {
-                      const opt = document.createElement('option');
-                      opt.value = i;
-                      opt.text = `${i} seconds`;
-                      if(i===5) opt.selected = true;
-                      durationSelect.appendChild(opt);
-                  }
-              } else if (model === 'wan-fast') {
-                  const opt = document.createElement('option');
-                  opt.value = 5;
-                  opt.text = '5 seconds (Fixed)';
-                  opt.selected = true;
-                  durationSelect.appendChild(opt);
-              } else if (model === 'nova-reel') {
-                  for(let i=6; i<=30; i+=6) {
-                      const opt = document.createElement('option');
-                      opt.value = i;
-                      opt.text = `${i} seconds`;
-                      if(i===6) opt.selected = true;
-                      durationSelect.appendChild(opt);
-                  }
-              } else if (model === 'p-video') {
-                  for(let i=2; i<=10; i++) {
-                      const opt = document.createElement('option');
-                      opt.value = i;
-                      opt.text = `${i} seconds`;
-                      if(i===5) opt.selected = true;
-                      durationSelect.appendChild(opt);
-                  }
-              }
-          }
-          
-          if (referenceImages.length > MAX_IMAGES) {
-              while (referenceImages.length > MAX_IMAGES) {
-                  const img = referenceImages.pop();
-                  if (img.type === 'file' && img.previewUrl) {
-                      URL.revokeObjectURL(img.previewUrl);
-                  }
-              }
-              updateGalleryUI();
-              if (isGrokNative) {
-                  displayMessage('Grok Video Pro supports max 2 images. Excess images removed.', 'info');
-              }
-          } else {
-              updateGalleryUI();
-          }
-          
-          generateBtn.innerText = isVideoModel ? 'Generate Video' : 'Generate / Edit Image';
-      }
-
-      async function generateImage() {
-          if (!promptInput.value.trim()) {
-              displayMessage('Please enter a prompt.', 'error');
+              displayMessage(`Generation failed: ${error.message}`, 'error');
+              toggleLoading(false);
               return;
           }
+      } else {
+          const maxRetries = 5;
+          let delay = 2000; 
+          let responseData = null;
 
-          const model = modelSelect.value;
-          const hasCustomKey = apiKeyInput.value.trim().length > 0;
-          
-          if (PAID_MODELS.includes(model) && !hasCustomKey) {
-              displayMessage(`The ${model} model requires a custom API key.`, 'error');
-              return;
-          }
-          
-          if ((model === 'seedance' || model === 'seedance-pro') && VIDEO_MODELS.includes(model)) {
-              const selectedDuration = parseInt(durationSelect.value);
-              if (selectedDuration > 4 && !hasCustomKey) {
-                  displayMessage('Durations longer than 4 seconds require a custom API key for Seedance models.', 'error');
-                  return;
-              }
-          }
-
-          toggleLoading(true);
-          messageArea.innerHTML = '';
-          resultImage.style.display = 'none';
-          resultVideo.style.display = 'none';
-          resultVideo.src = '';
-          viewBtn.disabled = downloadBtn.disabled = true;
-
-          const prompt = promptInput.value;
-          let seed = randomizeSeedCheckbox.checked ? getRandomSeed() : seedInput.value;
-          if (randomizeSeedCheckbox.checked) seedInput.value = seed;
-
-          const isVideoModel = VIDEO_MODELS.includes(model);
-          const supportsImageInput = IMAGE_INPUT_MODELS.includes(model);
-          const isGrokNative = model === GROK_VIDEO_POLLINATIONS;
-
-          const params = new URLSearchParams({
-              model: model,
-              seed: seed,
-              private: privateCheckbox.checked ? 'true' : 'false', 
-              nologo: noLogoCheckbox.checked ? 'true' : 'false',
-              enhance: enhanceCheckbox.checked ? 'true' : 'false',
-              safe: safeCheckbox.checked ? 'true' : 'false',
-              nofeed: noFeedCheckbox.checked ? 'true' : 'false'
-          });
-
-          if (GUIDANCE_SCALE_MODELS.includes(model)) {
-              params.append('guidance_scale', guidanceScaleInput.value);
-          }
-
-          if (NEGATIVE_PROMPT_MODELS.includes(model) && negativePromptInput.value.trim()) {
-              params.append('negative_prompt', negativePromptInput.value.trim());
-          }
-
-          if (isVideoModel) {
-              params.append('aspectRatio', aspectRatioSelect.value);
-              params.append('duration', durationSelect.value);
-              if (AUDIO_MODELS.includes(model)) {
-                  params.append('audio', audioCheckbox.checked ? 'true' : 'false');
-              }
-          } else {
-              const width = parseInt(widthInput.value) || DEFAULT_DIMENSION;
-              const height = parseInt(heightInput.value) || DEFAULT_DIMENSION;               
-              params.append('width', width);
-              params.append('height', height);
-              
-              if (model.startsWith('gptimage')) {
-                  params.append('quality', qualitySelect.value);
-                  params.append('transparent', transparentCheckbox.checked ? 'true' : 'false');
-              }
-          }
-
-          if (supportsImageInput && referenceImages.length > 0) {
-              const imageUsageMode = document.querySelector('input[name="imageUsage"]:checked').value;
-              if (imageUsageMode === 'reference') params.append('control', 'reference');
-
-              const finalUrls = [];
-              let uploadCount = 0;
-              let uploadFailed = false;
-
-              for (const refImage of referenceImages) {
-                  if (refImage.type === 'url') {
-                      finalUrls.push(refImage.source);
-                  } else if (refImage.type === 'file') {
-                      try {
-                          uploadCount++;
-                          displayMessage(`Uploading image ${uploadCount} of ${referenceImages.length} via ${getUploadService()}...`, 'info');
-                          const uploadedUrl = await uploadFile(refImage.source);
-                          finalUrls.push(uploadedUrl);
-                      } catch (e) {
-                          displayMessage(`Upload failed for image ${uploadCount}: ${e.message}`, 'error');
-                          uploadFailed = true;
-                          break; 
-                      }
-                  }
-              }
-              
-              if (uploadFailed) {
-                  toggleLoading(false);
-                  return;
-              }
-
-              if (finalUrls.length > 0) {
-                  if (model === 'veo' && finalUrls.length >= 2) {
-                      params.append('image[0]', finalUrls[0]);
-                      params.append('image[1]', finalUrls[1]);
-                      if (finalUrls.length > 2) {
-                          displayMessage('Note: Only first 2 images used for first/last frame interpolation.', 'info');
-                      }
-                  } else {
-                      const imageParamValue = finalUrls.join(',');
-                      params.append('image', imageParamValue);
-                  }
-              }
-          }
-
-          const endpointBase = isVideoModel ? VIDEO_API_BASE_URL : IMAGE_API_BASE_URL;
-          const fullUrl = `${endpointBase}/${encodeURIComponent(prompt)}?${params.toString()}`;
-          generatedApiUrl = fullUrl;
-          
-          displayMessage(`Sending generation request for model: **${model}**...`, 'info');
-
-          if (isVideoModel) {
+          for (let i = 0; i < maxRetries; i++) {
               try {
-                  placeholderText.innerHTML = 'Generating video... (this may take a moment)';
-                  placeholderText.style.display = 'block';
-                  
                   const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
                   if (!response.ok) throw new Error(await response.text());
 
                   const contentType = response.headers.get("content-type");
                   if (contentType && contentType.includes("application/json")) {
-                      const responseData = await response.json();
+                      responseData = await response.json();
                       generatedImageUrl = responseData.url;
-                  } else if (contentType && contentType.includes("video/")) {
+                  } else if (contentType && contentType.includes("image/") || contentType.includes("video/")) {
                       generatedImageUrl = URL.createObjectURL(await response.blob());
                   } else {
                        generatedImageUrl = response.url;
                   }
+                  break;
               } catch (error) {
-                  displayMessage(`Generation failed: ${error.message}`, 'error');
-                  toggleLoading(false);
-                  return;
-              }
-          } else {
-              const maxRetries = 5;
-              let delay = 2000; 
-              let responseData = null;
-
-              for (let i = 0; i < maxRetries; i++) {
-                  try {
-                      const response = await fetch(`${fullUrl}&key=${getActiveApiKey()}`, { method: 'GET' });
-                      if (!response.ok) throw new Error(await response.text());
-
-                      const contentType = response.headers.get("content-type");
-                      if (contentType && contentType.includes("application/json")) {
-                          responseData = await response.json();
-                          generatedImageUrl = responseData.url;
-                      } else if (contentType && contentType.includes("image/") || contentType.includes("video/")) {
-                          generatedImageUrl = URL.createObjectURL(await response.blob());
-                      } else {
-                           generatedImageUrl = response.url;
-                      }
-                      break;
-                  } catch (error) {
-                      if (i === maxRetries - 1) {
-                          displayMessage(`Generation failed: ${error.message}`, 'error');
-                          toggleLoading(false);
-                          return;
-                      }
-                      await new Promise(r => setTimeout(r, delay));
-                      delay *= 1.5;
+                  if (i === maxRetries - 1) {
+                      displayMessage(`Generation failed: ${error.message}`, 'error');
+                      toggleLoading(false);
+                      return;
                   }
+                  await new Promise(r => setTimeout(r, delay));
+                  delay *= 1.5;
               }
-          }
-
-          if (generatedImageUrl) {
-              const isVideoResult = isVideoModel || generatedImageUrl.endsWith('.mp4');
-
-              if (isVideoResult) {
-                  resultVideo.src = generatedImageUrl;
-                  resultVideo.style.display = 'block';
-                  resultImage.style.display = 'none';
-                  resultVideo.load();
-                  resultVideo.play().catch(e => console.log("Auto-play prevented"));
-              } else {
-                  resultImage.src = generatedImageUrl;
-                  resultImage.style.display = 'block';
-                  resultVideo.style.display = 'none';
-              }
-
-              toggleLoading(false);
-              viewBtn.disabled = downloadBtn.disabled = false;
-              
-              const urlToStore = generatedImageUrl.startsWith('blob:') ? generatedApiUrl : generatedImageUrl;
-              setTimeout(() => {
-                  addToHistory(urlToStore, isVideoResult, prompt);
-              }, 1000);
-              
-              displayMessage(isVideoResult ? 'Video successfully generated!' : 'Image successfully generated!', 'success');
           }
       }
 
-      function resetForm() {
-          apiKeyInput.value = '';
-          localStorage.setItem(API_KEY_STORAGE, '');
-          promptInput.value = '';
-          seedInput.value = '42';
-          widthInput.value = DEFAULT_DIMENSION;  
-          heightInput.value = DEFAULT_DIMENSION; 
-          negativePromptInput.value = '';
-          randomizeSeedCheckbox.checked = true;
-          privateCheckbox.checked = true; 
-          noLogoCheckbox.checked = true; 
-          enhanceCheckbox.checked = true; 
-          askDimensionsCheckbox.checked = false;
-          safeCheckbox.checked = true;
-          noFeedCheckbox.checked = true;
-          transparentCheckbox.checked = false;
-          guidanceScaleSlider.value = 7;
-          guidanceScaleInput.value = 7;
-          qualitySelect.value = 'medium';
-          audioCheckbox.checked = false;
-          aspectRatioSelect.selectedIndex = 0;
-          uploadServiceSelect.value = 'catbox';
-          localStorage.setItem(UPLOAD_SERVICE_KEY, 'catbox');
-          
-          originalPrompt = '';
-          updatePromptControls(false);
-          
-          referenceImages.forEach(img => {
-              if (img.type === 'file' && img.previewUrl) {
-                  URL.revokeObjectURL(img.previewUrl);
-              }
-          });
-          referenceImages = []; 
-          updateGalleryUI();
-          refUrlInput.value = '';
-          refFileInput.value = '';
-          generatedImageUrl = null;
-          resultImage.style.display = 'none';
-          resultVideo.style.display = 'none';
-          resultVideo.pause();
-          resultVideo.src = '';
-          resultImage.src = '';
-          placeholderText.style.display = 'block';
-          viewBtn.disabled = downloadBtn.disabled = true;
-          messageArea.innerHTML = '';
+      if (generatedImageUrl) {
+          const isVideoResult = isVideoModel || generatedImageUrl.endsWith('.mp4');
+
+          if (isVideoResult) {
+              resultVideo.src = generatedImageUrl;
+              resultVideo.style.display = 'block';
+              resultImage.style.display = 'none';
+              resultVideo.load();
+              resultVideo.play().catch(e => console.log("Auto-play prevented"));
+          } else {
+              resultImage.src = generatedImageUrl;
+              resultImage.style.display = 'block';
+              resultVideo.style.display = 'none';
+          }
+
           toggleLoading(false);
-          updateUIForModel();
+          viewBtn.disabled = downloadBtn.disabled = false;
+          
+          const urlToStore = generatedImageUrl.startsWith('blob:') ? generatedApiUrl : generatedImageUrl;
+          setTimeout(() => {
+              addToHistory(urlToStore, isVideoResult, prompt);
+          }, 1000);
+          
+          displayMessage(isVideoResult ? 'Video successfully generated!' : 'Image successfully generated!', 'success');
       }
+  }
 
-      // --- Event Listeners ---
-      modelSelect.addEventListener('change', updateUIForModel);
+  function resetForm() {
+      apiKeyInput.value = '';
+      localStorage.setItem(API_KEY_STORAGE, '');
+      promptInput.value = '';
+      seedInput.value = '42';
+      widthInput.value = DEFAULT_DIMENSION;  
+      heightInput.value = DEFAULT_DIMENSION; 
+      negativePromptInput.value = '';
+      randomizeSeedCheckbox.checked = true;
+      privateCheckbox.checked = true; 
+      noLogoCheckbox.checked = true; 
+      enhanceCheckbox.checked = true; 
+      askDimensionsCheckbox.checked = false;
+      safeCheckbox.checked = true;
+      noFeedCheckbox.checked = true;
+      transparentCheckbox.checked = false;
+      guidanceScaleSlider.value = 7;
+      guidanceScaleInput.value = 7;
+      qualitySelect.value = 'medium';
+      audioCheckbox.checked = false;
+      aspectRatioSelect.selectedIndex = 0;
+      uploadServiceSelect.value = 'pollinations';
+      localStorage.setItem(UPLOAD_SERVICE_KEY, 'pollinations');
       
-      askDimensionsCheckbox.addEventListener('change', () => {
-          if (askDimensionsCheckbox.checked && referenceImages.length > 0) {
-              widthInput.value = referenceImages[0].width;
-              heightInput.value = referenceImages[0].height;
-          } else if (askDimensionsCheckbox.checked) {
-              displayMessage('Add an image first to use its dimensions.', 'info');
-          }
-      });
-
-      apiKeyInput.addEventListener('input', () => {
-          localStorage.setItem(API_KEY_STORAGE, apiKeyInput.value);
-          updateModelAvailability();
-      });
-
-      uploadServiceSelect.addEventListener('change', (e) => {
-          localStorage.setItem(UPLOAD_SERVICE_KEY, e.target.value);
-          displayMessage(`Upload service switched to: ${e.target.value === 'anondrop' ? 'AnonDrop (anonymous)' : 'Catbox (24h temp)'}`, 'info');
-      });
-
-      generateBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          generateImage();
-      });
-
-      viewBtn.addEventListener('click', function() {
-          if (generatedApiUrl) {
-              const urlObj = new URL(generatedApiUrl);
-              urlObj.searchParams.delete('token'); 
-              urlObj.searchParams.delete('key');
-              window.open(urlObj.toString(), '_blank');
-          } else if (generatedImageUrl) {
-              window.open(generatedImageUrl, '_blank');
-          }
-      });
-
-      downloadBtn.addEventListener('click', function() {
-          if (generatedImageUrl) {
-              const a = document.createElement('a');
-              a.href = generatedImageUrl;
-              const isVideo = resultVideo.style.display === 'block';
-              const ext = isVideo ? 'mp4' : 'png';
-              a.download = `${modelSelect.value}_generated.${ext}`;
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-          }
-      });
-
-      refreshBtn.addEventListener('click', resetForm);
+      originalPrompt = '';
+      updatePromptControls(false);
       
-      clearHistoryBtn.addEventListener('click', clearAllHistory);
-
-      // Initialize on page load
-      document.addEventListener('DOMContentLoaded', () => {
-          const savedKey = localStorage.getItem(API_KEY_STORAGE);
-          if (savedKey !== null) apiKeyInput.value = savedKey;
-          
-          const savedUploadService = localStorage.getItem(UPLOAD_SERVICE_KEY);
-          if (savedUploadService) uploadServiceSelect.value = savedUploadService;
-          
-          checkBYOPCallback();
-          updateUIForModel();
-          updatePromptControls(false);
-          updateModelAvailability();
-          renderHistory();
+      referenceImages.forEach(img => {
+          if (img.type === 'file' && img.previewUrl && img.previewUrl.startsWith('blob:')) {
+              URL.revokeObjectURL(img.previewUrl);
+          }
       });
+      referenceImages = []; 
+      updateGalleryUI();
+      refUrlInput.value = '';
+      refFileInput.value = '';
+      generatedImageUrl = null;
+      resultImage.style.display = 'none';
+      resultVideo.style.display = 'none';
+      resultVideo.pause();
+      resultVideo.src = '';
+      resultImage.src = '';
+      placeholderText.style.display = 'block';
+      viewBtn.disabled = downloadBtn.disabled = true;
+      messageArea.innerHTML = '';
+      toggleLoading(false);
+      updateUIForModel();
+  }
+
+  // --- Event Listeners ---
+  modelSelect.addEventListener('change', updateUIForModel);
+  
+  askDimensionsCheckbox.addEventListener('change', () => {
+      if (askDimensionsCheckbox.checked && referenceImages.length > 0) {
+          widthInput.value = referenceImages[0].width;
+          heightInput.value = referenceImages[0].height;
+      } else if (askDimensionsCheckbox.checked) {
+          displayMessage('Add an image first to use its dimensions.', 'info');
+      }
+  });
+
+  apiKeyInput.addEventListener('input', () => {
+      localStorage.setItem(API_KEY_STORAGE, apiKeyInput.value);
+      updateModelAvailability();
+  });
+
+  uploadServiceSelect.addEventListener('change', (e) => {
+      localStorage.setItem(UPLOAD_SERVICE_KEY, e.target.value);
+      const serviceNames = {
+          'pollinations': 'Pollinations Media Storage',
+          'catbox': 'Catbox (24h temp)',
+          'anondrop': 'AnonDrop (anonymous)'
+      };
+      displayMessage(`Upload service switched to: ${serviceNames[e.target.value]}`, 'info');
+  });
+
+  generateBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      generateImage();
+  });
+
+  viewBtn.addEventListener('click', function() {
+      if (generatedApiUrl) {
+          const urlObj = new URL(generatedApiUrl);
+          urlObj.searchParams.delete('token'); 
+          urlObj.searchParams.delete('key');
+          window.open(urlObj.toString(), '_blank');
+      } else if (generatedImageUrl) {
+          window.open(generatedImageUrl, '_blank');
+      }
+  });
+
+  downloadBtn.addEventListener('click', function() {
+      if (generatedImageUrl) {
+          const a = document.createElement('a');
+          a.href = generatedImageUrl;
+          const isVideo = resultVideo.style.display === 'block';
+          const ext = isVideo ? 'mp4' : 'png';
+          a.download = `${modelSelect.value}_generated.${ext}`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+      }
+  });
+
+  refreshBtn.addEventListener('click', resetForm);
+  
+  clearHistoryBtn.addEventListener('click', clearAllHistory);
+  
+  clearUploadHistoryBtn.addEventListener('click', clearUploadHistory);
+  
+  exportUploadHistoryJsonBtn.addEventListener('click', exportUploadHistoryAsJson);
+  
+  exportUploadHistoryTxtBtn.addEventListener('click', exportUploadHistoryAsTxt);
+
+  // Initialize on page load
+  document.addEventListener('DOMContentLoaded', () => {
+      const savedKey = localStorage.getItem(API_KEY_STORAGE);
+      if (savedKey !== null) apiKeyInput.value = savedKey;
+      
+      const savedUploadService = localStorage.getItem(UPLOAD_SERVICE_KEY);
+      if (savedUploadService) uploadServiceSelect.value = savedUploadService;
+      
+      checkBYOPCallback();
+      updateUIForModel();
+      updatePromptControls(false);
+      updateModelAvailability();
+      renderHistory();
+      renderUploadHistory();
+  });
   </script>
 </body>
 </html>
