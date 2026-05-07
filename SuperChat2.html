@@ -1551,15 +1551,19 @@ marked.use({
         }
     });
 
-    // Reset buttons
+    // Reset buttons with confirmation
     resetChatBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        resetChat();
+        if (confirm('Are you sure you want to reset the chat? This will clear the current conversation history.')) {
+            resetChat();
+        }
     });
     
     fullResetBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        fullReset();
+        if (confirm('Are you sure you want to perform a full reset? This will clear all chats, sessions, and reset everything to default.')) {
+            fullReset();
+        }
     });
     
     // Session panel
