@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phantom Fleet: Battleship Command</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Roboto+Mono:wght@400;700&display=swap');
+
+        body {
+            background-color: #020617;
+            color: #e2e8f0;
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .font-header { font-family: 'Black Ops One', cursive; }
+
+        .cell {
+            aspect-ratio: 1 / 1;
+            min-width: 32px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            position: relative;
+            transition: background-color 0.15s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .cell:hover { background-color: #334155; }
+
+        .ship-body {
+            position: absolute;
+            inset: 4px;
+            background: linear-gradient(135deg, #64748b, #475569);
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .cell.hit .ship-body {
+            background: #ef4444;
+            border-color: #fca5a5;
+        }
+
+        .cell.sunk .ship-body {
+            background: #7f1d1d;
+            border-color: #450a0a;
+            opacity: 0.6;
+        }
+
+        .hit-marker {
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 0 0 8px #ef4444;
+            z-index: 20;
+            position: relative;
+        }
+
+        .miss-marker {
+            width: 10px;
+            height: 10px;
+            background: #38bdf8;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #38bdf8;
+            z-index: 20;
+        }
+
+        .miss-fade {
+            animation: fadeOut 4s ease-in forwards;
+        }
+
+        @keyframes fadeOut {
+            0%   { opacity: 1; transform: scale(1); }
+            70%  { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0); }
+        }
+
+        .coord-label {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 0.55rem;
+            color: #475569;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 5;
+            line-height: 1;
+        }
+
+        .board-container {
+            display: grid;
+            gap: 2px;
+            width: 100%;
+        }
+
+        .btn-action {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            transition: all 0.15s;
+        }
+        .btn-action:active { transform: scale(0.95); }
+
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(14, 165, 233, 0.3);
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: scan 2.5s linear infinite;
+            pointer-events: none;
+            z-index: 30;
+        }
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 gap-4">
+
+    <!-- Sound Toggle -->
+    <button id="sound-toggle" class="fixed top-4 right-4 z-50 bg-slate-900 border border-slate-600 px-4 py-2 rounded text-xs font-bold tracking-wider hover:bg-slate-800 transition shadow-lg">
+        SOUND: ON
+    </button>
+
+    <!-- SETUP PHASE -->
+    <div id="setup" class="w-full max-w-xl flex flex-col gap-6 mt-6">
+        <header class="text-center space-y-2">
+            <h1 class="text-5xl md:text-6xl font-header text-transparent bg-clip-text bg-gradient-to-b from-cyan-300 to-blue-600 drop-shadow-lg">BATTLESHIP</h1>
+            <p class="text-blue-300 text-lg tracking-widest">TACTICAL COMMAND INTERFACE</p>
+        </header>
+
+        <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 shadow-2xl flex flex-col gap-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-cyan-400 font-bold mb-2 text-sm tracking-wider">SECTOR SIZE</label>
+                    <select id="sel-size" class="w-full bg-slate-950 border border-slate-600 text-white p-3 rounded focus:border-cyan-400 outline-none cursor-pointer hover:bg-slate-900 transition">
+                        <option value="8">8 x 8</option>
+                        <option value="10" selected>10 x 10</option>
+                        <option value="12">12 x 12</option>
+                        <option value="15">15 x 15</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-cyan-400 font-bold mb-2 text-sm tracking-wider">FLEET SIZE</label>
+                    <select id="sel-fleet" class="w-full bg-slate-950 border border-slate-600 text-white p-3 rounded focus:border-cyan-400 outline-none cursor-pointer hover:bg-slate-900 transition">
+                        <option value="standard" selected>Standard Fleet</option>
+                        <option value="massive">Massive Fleet</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between bg-slate-950 p-4 rounded border border-slate-800">
+                <div>
+                    <div class="font-bold text-red-400 text-sm tracking-wider">PHANTOM PROTOCOL (ADVANCED)</div>
+                    <div class="text-xs text-slate-400 mt-1">Intact enemy vessels may relocate. Miss markers fade over time.</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="adv-mode" class="sr-only peer">
+                    <div class="w-14 h-7 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-600"></div>
+                </label>
+            </div>
+
+            <button id="btn-start-deploy" class="btn-action w-full bg-blue-600 hover:bg-blue-500 text-white text-lg shadow-[0_0_20px_rgba(37,99,235,0.4)] mt-2">
+                INITIALIZE BATTLE
+            </button>
+        </div>
+    </div>
+
+    <!-- DEPLOYMENT PHASE -->
+    <div id="deploy" class="hidden w-full max-w-6xl flex-col lg:flex-row gap-6 items-start">
+        <!-- Ship Tray -->
+        <div class="w-full lg:w-80 flex flex-col gap-4 bg-slate-900 border border-slate-700 rounded-xl p-6 h-fit shrink-0">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-header text-cyan-300">FLEET DOCK</h2>
+                <button onclick="resetGame()" class="text-xs font-bold text-red-400 hover:text-red-300 border border-red-900 px-2 py-1 rounded uppercase">Exit</button>
+            </div>
+            
+            <div id="ship-list" class="flex flex-col gap-3"></div>
+            
+            <div class="mt-2 grid grid-cols-2 gap-3">
+                <button id="btn-rotate" class="btn-action bg-slate-700 hover:bg-slate-600 text-sm">
+                    ROTATE (<span id="orient-label">HORIZONTAL →</span>)
+                </button>
+                <button id="btn-auto" class="btn-action bg-emerald-700 hover:bg-emerald-600 text-sm">
+                    AUTO-DEPLOY
+                </button>
+                <button id="btn-clear" class="btn-action bg-red-900/50 hover:bg-red-800 text-red-200 text-sm border border-red-800">
+                    CLEAR BOARD
+                </button>
+                <button id="btn-start-battle" class="col-span-2 btn-action bg-slate-700 text-slate-500 cursor-not-allowed border-2 border-slate-700" disabled>
+                    DEPLOY ALL SHIPS
+                </button>
+            </div>
+            
+            <div class="text-xs text-slate-500 mt-2 leading-relaxed space-y-1">
+                <p>1. Select a ship from the list.</p>
+                <p>2. Hover grid to preview, click to place.</p>
+                <p>3. Press <span class="text-cyan-300 font-bold">R</span> to rotate.</p>
+            </div>
+        </div>
+
+        <!-- Deploy Grid -->
+        <div class="flex-1 bg-slate-950 border border-slate-700 rounded-xl p-4 md:p-6 flex items-center justify-center overflow-x-auto">
+            <div id="deploy-grid" class="board-container"></div>
+        </div>
+    </div>
+
+    <!-- BATTLE PHASE -->
+    <div id="battle" class="hidden w-full max-w-7xl flex-col gap-4">
+        
+        <!-- Battle Header -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-900/50 p-4 rounded-lg border border-slate-800">
+            <div class="text-center md:text-left">
+                <div class="text-xs text-cyan-400 tracking-wider">YOUR FLEET</div>
+                <div id="p-stats" class="text-xl font-bold">SHIPS: 0/0</div>
+            </div>
+            
+            <div id="turn-display" class="text-2xl font-header text-center px-6 py-2 bg-slate-900 border border-cyan-500/30 text-cyan-100 rounded shadow-lg min-w-[240px]">
+                BATTLE STATIONS
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="text-center md:text-right">
+                    <div class="text-xs text-red-400 tracking-wider">ENEMY SECTOR</div>
+                    <div id="e-stats" class="text-xl font-bold">SHIPS: 0/0</div>
+                </div>
+                <button onclick="resetGame()" class="text-xs font-bold text-red-400 hover:text-red-300 border border-red-900 px-2 py-1 rounded uppercase">Exit</button>
+            </div>
+        </div>
+
+        <!-- Boards -->
+        <div class="flex flex-col lg:flex-row gap-6 justify-center items-start">
+            <!-- Player Board -->
+            <div class="flex-1 w-full">
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-4 md:p-5 relative">
+                    <div class="scanline"></div>
+                    <div id="p-grid" class="board-container"></div>
+                </div>
+            </div>
+
+            <!-- Battle Log -->
+            <div class="w-full lg:w-64 flex flex-col gap-4 order-first lg:order-none shrink-0">
+                <div class="bg-black border border-slate-800 rounded-lg h-56 overflow-hidden flex flex-col shadow-inner">
+                    <div class="bg-slate-800 px-3 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Combat Log</div>
+                    <div id="log" class="flex-1 overflow-y-auto p-3 space-y-1 text-sm font-mono text-slate-300">
+                        <div class="text-emerald-500"> > Systems Online...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enemy Board -->
+            <div class="flex-1 w-full">
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-4 md:p-5 shadow-[0_0_30px_rgba(220,38,38,0.1)] relative">
+                    <div class="scanline" style="animation-duration: 3s;"></div>
+                    <div id="e-grid" class="board-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- AUDIO ---
+        let toneReady = false;
+        async function initAudio() {
+            if(toneReady) return;
+            try { await Tone.start(); toneReady = true; } catch(e){}
+        }
+        function sfx(type) {
+            if(!GAME.sound) return;
+            try {
+                switch(type) {
+                    case 'hit': new Tone.PolySynth(Tone.Synth).toDestination().triggerAttackRelease(["C2","F2"], "8n"); break;
+                    case 'sunk': new Tone.NoiseSynth().toDestination().triggerAttackRelease("4n"); new Tone.PolySynth(Tone.Synth).toDestination().triggerAttackRelease(["A1","C1"], "2n", Tone.now()+0.1); break;
+                    case 'miss': new Tone.MembraneSynth().toDestination().triggerAttackRelease("C1","8n"); break;
+                    case 'place': new Tone.Synth({oscillator:{type:'triangle'}}).toDestination().triggerAttackRelease("G4","32n", undefined, 0.3); break;
+                    case 'move': new Tone.Synth({oscillator:{type:'sine'}}).toDestination().triggerAttackRelease("B5","16n", undefined, 0.1); break;
+                    case 'win': new Tone.PolySynth(Tone.Synth).toDestination().triggerAttackRelease(["C4","E4","G4","C5"], ["8n","8n","8n","2n"], Tone.now()); break;
+                    case 'lose': new Tone.PolySynth(Tone.Synth).toDestination().triggerAttackRelease(["C3","G2","C2"], ["4n","4n","2n"], Tone.now()); break;
+                }
+            } catch(e){}
+        }
+
+        // --- STATE ---
+        const GAME = {
+            size: 10, advanced: false, massive: false,
+            phase: 'setup', turn: 'player', sound: true,
+            pBoard: [], eBoard: [],
+            pShips: [], eShips: [],
+            pShots: new Map(), // player shots at enemy
+            eShots: new Map(), // enemy shots at player
+            selectedShipId: null, orient: 'H', aiStack: []
+        };
+
+        document.getElementById('sound-toggle').addEventListener('click', () => {
+            GAME.sound = !GAME.sound;
+            document.getElementById('sound-toggle').innerText = GAME.sound ? "SOUND: ON" : "SOUND: OFF";
+            if(GAME.sound) initAudio();
+        });
+
+        function resetGame() {
+            GAME.phase = 'setup'; GAME.pShots.clear(); GAME.eShots.clear(); GAME.aiStack = [];
+            document.getElementById('setup').classList.remove('hidden');
+            document.getElementById('deploy').classList.add('hidden'); document.getElementById('deploy').classList.remove('flex');
+            document.getElementById('battle').classList.add('hidden'); document.getElementById('battle').classList.remove('flex');
+            document.getElementById('log').innerHTML = '<div class="text-emerald-500"> > Systems Online...</div>';
+        }
+
+        function getFleet(size, massive) {
+            if(!massive){
+                if(size<=8) return [4,3,3,2,2];
+                if(size<=10) return [5,4,3,3,2,2];
+                return [5,4,4,3,3,2,2,2];
+            } else {
+                if(size<=8) return [4,3,3,2,2,2,2,2,1,1];
+                if(size<=10) return [5,4,4,3,3,3,2,2,2,2,2,2,1,1];
+                return [5,5,4,4,4,3,3,3,2,2,2,2,2,2,2,1,1,1,1];
+            }
+        }
+
+        function createBoard(size){ return Array.from({length:size},()=>Array(size).fill(0)); }
+        function getCell(id,x,y){ return document.querySelector(`#${id} [data-x="${x}"][data-y="${y}"]`); }
+
+        // --- SETUP ---
+        document.getElementById('btn-start-deploy').addEventListener('click', async () => {
+            if(GAME.sound) await initAudio();
+            GAME.size = parseInt(document.getElementById('sel-size').value);
+            GAME.advanced = document.getElementById('adv-mode').checked;
+            GAME.massive = document.getElementById('sel-fleet').value === 'massive';
+            const lengths = getFleet(GAME.size, GAME.massive);
+            GAME.pShips = lengths.map((len,i)=>({id:i+1,size:len,hits:0,sunk:false,placed:false,coords:[]}));
+            GAME.eShips = lengths.map((len,i)=>({id:i+1,size:len,hits:0,sunk:false,placed:false,coords:[]}));
+            GAME.pBoard = createBoard(GAME.size); GAME.eBoard = createBoard(GAME.size);
+            GAME.pShots.clear(); GAME.eShots.clear(); GAME.aiStack = [];
+            autoPlace(GAME.eBoard, GAME.eShips);
+            document.getElementById('setup').classList.add('hidden');
+            const d = document.getElementById('deploy'); d.classList.remove('hidden'); d.classList.add('flex');
+            renderDeployGrid();
+            GAME.selectedShipId = GAME.pShips.find(s=>!s.placed)?.id || null;
+            renderShipTray();
+        });
+
+        // --- DEPLOYMENT ---
+        function renderDeployGrid(){
+            const g=document.getElementById('deploy-grid'); g.innerHTML='';
+            g.style.gridTemplateColumns=`repeat(${GAME.size}, minmax(32px, 1fr))`;
+            for(let y=0;y<GAME.size;y++)for(let x=0;x<GAME.size;x++){
+                const c=document.createElement('div'); c.className='cell'; c.dataset.x=x; c.dataset.y=y;
+                const lbl=document.createElement('span'); lbl.className='coord-label'; lbl.innerText=`${String.fromCharCode(65+y)}${x+1}`; c.appendChild(lbl);
+                c.addEventListener('mouseenter',()=>previewDeploy(x,y)); c.addEventListener('mouseleave',clearDeployPreview); c.addEventListener('click',()=>clickDeploy(x,y));
+                g.appendChild(c);
+            }
+            drawPlacedShips();
+        }
+        function drawPlacedShips(){
+            document.querySelectorAll('#deploy-grid .ship-body').forEach(e=>e.remove());
+            GAME.pShips.forEach(ship=>{ if(!ship.placed) return; ship.coords.forEach(c=>{
+                const cell=getCell('deploy-grid',c.x,c.y); if(cell){ const b=document.createElement('div'); b.className='ship-body'; cell.appendChild(b); }
+            });});
+        }
+        function renderShipTray(){
+            const list=document.getElementById('ship-list'); list.innerHTML='';
+            const unplaced=GAME.pShips.filter(s=>!s.placed);
+            unplaced.forEach(ship=>{
+                const btn=document.createElement('button');
+                const sel=GAME.selectedShipId===ship.id;
+                let cls="w-full flex items-center justify-between p-3 rounded-lg border-2 transition text-left ";
+                cls+=sel?"bg-cyan-900/40 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.2)]":"bg-slate-800 border-slate-600 hover:border-cyan-300 hover:bg-slate-700";
+                btn.className=cls; btn.onclick=()=>{GAME.selectedShipId=ship.id;renderShipTray();};
+                const info=document.createElement('div'); info.className="flex flex-col items-start"; info.innerHTML=`<span class="font-bold text-lg">SHIP ${ship.id}</span><span class="text-sm text-slate-400">${ship.size} UNITS</span>`;
+                const blocks=document.createElement('div'); blocks.className="flex gap-1";
+                for(let i=0;i<ship.size;i++){ const b=document.createElement('div'); b.className="w-5 h-5 rounded-sm bg-slate-300 shadow"; blocks.appendChild(b); }
+                btn.appendChild(info); btn.appendChild(blocks); list.appendChild(btn);
+            });
+            const ready=unplaced.length===0;
+            const sb=document.getElementById('btn-start-battle');
+            sb.disabled=!ready;
+            sb.className=ready?"col-span-2 btn-action bg-emerald-600 hover:bg-emerald-500 text-white border-2 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer":"col-span-2 btn-action bg-slate-800 text-slate-500 border-2 border-slate-700 cursor-not-allowed";
+            sb.innerText=ready?"START BATTLE":`DEPLOY ALL SHIPS (${GAME.pShips.filter(s=>s.placed).length}/${GAME.pShips.length})`;
+        }
+        function previewDeploy(x,y){
+            clearDeployPreview(); if(!GAME.selectedShipId) return;
+            const ship=GAME.pShips.find(s=>s.id===GAME.selectedShipId); if(!ship||ship.placed) return;
+            const h=GAME.orient==='H'; const dx=h?1:0, dy=h?0:1; let ok=true;
+            for(let i=0;i<ship.size;i++){ const nx=x+dx*i,ny=y+dy*i; if(nx>=GAME.size||ny>=GAME.size||nx<0||ny<0||GAME.pBoard[ny][nx]!==0){ok=false;break;} }
+            for(let i=0;i<ship.size;i++){ const nx=x+dx*i,ny=y+dy*i; const c=document.querySelector(`#deploy-grid [data-x="${nx}"][data-y="${ny}"]`); if(c) c.classList.add(ok?'bg-cyan-500/50':'bg-red-500/50'); }
+        }
+        function clearDeployPreview(){ document.querySelectorAll('#deploy-grid .cell').forEach(c=>c.classList.remove('bg-cyan-500/50','bg-red-500/50')); }
+        function clickDeploy(x,y){
+            if(!GAME.selectedShipId) return; const ship=GAME.pShips.find(s=>s.id===GAME.selectedShipId); if(!ship||ship.placed) return;
+            const h=GAME.orient==='H'; const dx=h?1:0, dy=h?0:1; let ok=true, coords=[];
+            for(let i=0;i<ship.size;i++){ const nx=x+dx*i,ny=y+dy*i; if(nx>=GAME.size||ny>=GAME.size||nx<0||ny<0||GAME.pBoard[ny][nx]!==0){ok=false;break;} coords.push({x:nx,y:ny}); }
+            if(ok){ ship.placed=true; ship.coords=coords; coords.forEach(c=>GAME.pBoard[c.y][c.x]=ship.id); sfx('place'); drawPlacedShips(); GAME.selectedShipId=GAME.pShips.find(s=>!s.placed)?.id||null; renderShipTray(); }
+        }
+        document.getElementById('btn-rotate').addEventListener('click',()=>{
+            GAME.orient=GAME.orient==='H'?'V':'H'; document.getElementById('orient-label').innerText=GAME.orient==='H'?'HORIZONTAL →':'VERTICAL ↓'; clearDeployPreview();
+        });
+        document.addEventListener('keydown',e=>{ if(e.key.toLowerCase()==='r' && GAME.phase==='deploy') document.getElementById('btn-rotate').click(); });
+        document.getElementById('btn-clear').addEventListener('click',()=>{
+            GAME.pBoard=createBoard(GAME.size); GAME.pShips.forEach(s=>{s.placed=false;s.coords=[];});
+            renderDeployGrid(); GAME.selectedShipId=GAME.pShips.find(s=>!s.placed)?.id||null; renderShipTray();
+        });
+        document.getElementById('btn-auto').addEventListener('click',()=>{
+            GAME.pBoard=createBoard(GAME.size); GAME.pShips.forEach(s=>{s.placed=false;s.coords=[];});
+            autoPlace(GAME.pBoard,GAME.pShips); drawPlacedShips(); GAME.selectedShipId=null; renderShipTray();
+        });
+        document.getElementById('btn-start-battle').addEventListener('click',()=>{ if(GAME.pShips.every(s=>s.placed)) startBattle(); });
+
+        function autoPlace(board,ships){
+            ships.forEach(ship=>{ if(ship.placed) return; let placed=false, tries=0; while(!placed&&tries<5000){ tries++;
+                const h=Math.random()<0.5; const x=Math.floor(Math.random()*GAME.size); const y=Math.floor(Math.random()*GAME.size);
+                const dx=h?1:0, dy=h?0:1; let ok=true, coords=[];
+                for(let i=0;i<ship.size;i++){ const nx=x+dx*i, ny=y+dy*i; if(nx>=GAME.size||ny>=GAME.size||nx<0||ny<0||board[ny][nx]!==0){ok=false;break;} coords.push({x:nx,y:ny}); }
+                if(ok){ placed=true; ship.placed=true; ship.coords=coords; coords.forEach(c=>board[c.y][c.x]=ship.id); }
+            }});
+        }
+
+        // --- BATTLE ---
+        function startBattle(){
+            GAME.phase='battle'; GAME.turn='player';
+            document.getElementById('deploy').classList.add('hidden'); document.getElementById('deploy').classList.remove('flex');
+            const b=document.getElementById('battle'); b.classList.remove('hidden'); b.classList.add('flex');
+            initBattleGrid('p-grid', true); initBattleGrid('e-grid', false);
+            updateStats(); updateTurnUI(); log("Battle initialized. Weapons free.");
+        }
+
+        function initBattleGrid(id, isPlayer){
+            const grid=document.getElementById(id); grid.innerHTML='';
+            grid.style.gridTemplateColumns=`repeat(${GAME.size}, minmax(32px, 1fr))`;
+            for(let y=0;y<GAME.size;y++)for(let x=0;x<GAME.size;x++){
+                const c=document.createElement('div'); c.className='cell'; c.dataset.x=x; c.dataset.y=y;
+                const lbl=document.createElement('span'); lbl.className='coord-label'; lbl.innerText=`${String.fromCharCode(65+y)}${x+1}`; c.appendChild(lbl);
+                if(!isPlayer) c.addEventListener('click',()=>playerAttack(x,y));
+                grid.appendChild(c);
+            }
+            // Initial draw
+            for(let y=0;y<GAME.size;y++)for(let x=0;x<GAME.size;x++) updateCell(id, x, y);
+        }
+
+        function updateCell(id, x, y){
+            const cell=getCell(id,x,y); if(!cell) return;
+            const isPlayer=id==='p-grid';
+            const board=isPlayer?GAME.pBoard:GAME.eBoard;
+            const ships=isPlayer?GAME.pShips:GAME.eShips;
+            const shots=isPlayer?GAME.eShots:GAME.pShots;
+            const val=board[y][x]; const key=`${x},${y}`; const shot=shots.get(key);
+
+            // Preserve label
+            const lbl=cell.querySelector('.coord-label');
+            cell.innerHTML=''; if(lbl) cell.appendChild(lbl);
+            cell.className='cell';
+
+            // Draw ship body if applicable (player board always, enemy only if sunk)
+            if(val!==0){
+                const ship=ships.find(s=>s.id===val);
+                if(isPlayer || (ship&&ship.sunk)){
+                    const body=document.createElement('div'); body.className='ship-body'; if(ship&&ship.sunk) cell.classList.add('sunk'); cell.appendChild(body);
+                }
+            }
+
+            // Draw shot markers
+            if(shot){
+                if(shot.hit){
+                    cell.classList.add('hit');
+                    const mk=document.createElement('div'); mk.className='hit-marker'; mk.innerText='X'; cell.appendChild(mk);
+                } else {
+                    cell.classList.add('miss');
+                    const mk=document.createElement('div'); mk.className='miss-marker';
+                    if(!isPlayer && GAME.advanced) mk.classList.add('miss-fade'); // Player misses on enemy board fade
+                    cell.appendChild(mk);
+                }
+            }
+        }
+
+        function playerAttack(x,y){
+            if(GAME.phase!=='battle'||GAME.turn!=='player') return;
+            const key=`${x},${y}`; if(GAME.pShots.has(key)) return;
+            const val=GAME.eBoard[y][x]; let hit=false;
+            if(val!==0){
+                hit=true; const ship=GAME.eShips.find(s=>s.id===val);
+                ship.hits++; GAME.pShots.set(key,{hit:true,shipId:val});
+                log(`Direct Hit! Enemy Ship ${ship.id} taking damage.`);
+                sfx('hit');
+                if(ship.hits>=ship.size){
+                    ship.sunk=true; log(`Enemy Ship ${ship.id} DESTROYED!`); sfx('sunk');
+                    // Reveal full ship
+                    ship.coords.forEach(c=>updateCell('e-grid',c.x,c.y));
+                } else {
+                    updateCell('e-grid',x,y);
+                }
+} else {
+    GAME.pShots.set(key,{hit:false}); log("Shot missed. No contact.");
+    sfx('miss'); updateCell('e-grid',x,y);
+    
+    // ADVANCED MODE: Clear miss record after fade so cell becomes targetable again
+    if(GAME.advanced) {
+        setTimeout(() => {
+            GAME.pShots.delete(key);
+            updateCell('e-grid', x, y);
+        }, 4000); // 4000ms matches the CSS fadeOut animation duration
+    }
+}
+            updateStats(); checkWin();
+            if(GAME.phase!=='end'){
+                GAME.turn='ai'; updateTurnUI();
+                if(GAME.advanced){
+                    setTimeout(()=>{
+                        const moved=processPhantomMoves();
+                        if(moved){ log("ALERT: Sensor ghosts detected. Contacts shifted.", "text-red-400"); sfx('move'); }
+                        setTimeout(aiTurn, moved?1200:800);
+                    }, 600);
+                } else { setTimeout(aiTurn, 800); }
+            }
+        }
+
+        function processPhantomMoves(){
+            if(!GAME.advanced) return false;
+            let movedAny=false;
+            GAME.eShips.forEach(ship=>{
+                if(ship.sunk||ship.hits>0) return; // ONLY intact ships move
+                const dirs=[[0,1],[0,-1],[1,0],[-1,0]];
+                dirs.sort(()=>Math.random()-0.5);
+                for(let d of dirs){
+                    const dx=d[0], dy=d[1];
+                    let ok=true; const newCoords=ship.coords.map(c=>({x:c.x+dx,y:c.y+dy}));
+                    for(let c of newCoords){
+                        if(c.x<0||c.x>=GAME.size||c.y<0||c.y>=GAME.size){ok=false;break;}
+                        const cellVal=GAME.eBoard[c.y][c.x];
+                        if(cellVal!==0 && cellVal!==ship.id){ok=false;break;}
+                    }
+                    if(ok){
+                        // Execute move
+                        ship.coords.forEach(c=>GAME.eBoard[c.y][c.x]=0); // clear old
+                        ship.coords=newCoords;
+                        ship.coords.forEach(c=>GAME.eBoard[c.y][c.x]=ship.id); // write new
+                        // Update visuals for old and new coordinates
+                        // We need to update all cells that changed: old coords and new coords, plus any misses that might be on old coords (they stay)
+                        // To be safe, update bounding box of old+new coords, or just update all changed cells individually
+                        // But the old coords might overlap with new coords (shift by 1). Let's just update old and new sets.
+                        const oldSet=new Set(ship.coords.map(c=>`${c.x},${c.y}`)); // actually new coords
+                        // Hmm we need the old coords. We don't have them stored separately. Let's derive: current coords minus delta = old.
+                        const oldCoords=ship.coords.map(c=>({x:c.x-dx,y:c.y-dy}));
+                        oldCoords.forEach(c=>updateCell('e-grid',c.x,c.y));
+                        ship.coords.forEach(c=>updateCell('e-grid',c.x,c.y));
+                        movedAny=true; break;
+                    }
+                }
+            });
+            return movedAny;
+        }
+
+        function aiTurn(){
+            if(GAME.phase==='end') return;
+            let tx, ty, found=false;
+            // Target mode
+            while(GAME.aiStack.length>0 && !found){
+                const last=GAME.aiStack[GAME.aiStack.length-1];
+                const cand=[[0,1],[0,-1],[1,0],[-1,0]].map(d=>({x:last.x+d[0],y:last.y+d[1]}))
+                    .filter(p=>p.x>=0&&p.x<GAME.size&&p.y>=0&&p.y<GAME.size&&!GAME.eShots.has(`${p.x},${p.y}`));
+                if(cand.length>0){ const pick=cand[Math.floor(Math.random()*cand.length)]; tx=pick.x; ty=pick.y; found=true; }
+                else { GAME.aiStack.pop(); }
+            }
+            // Hunt mode
+            if(!found){
+                const avail=[]; for(let y=0;y<GAME.size;y++)for(let x=0;x<GAME.size;x++)if(!GAME.eShots.has(`${x},${y}`)) avail.push({x,y});
+                if(avail.length>0){ const pick=avail[Math.floor(Math.random()*avail.length)]; tx=pick.x; ty=pick.y; found=true; }
+            }
+            if(!found) return;
+
+            const val=GAME.pBoard[ty][tx]; const key=`${tx},${ty}`; let hit=false;
+            if(val!==0){
+                hit=true; const ship=GAME.pShips.find(s=>s.id===val);
+                ship.hits++; GAME.eShots.set(key,{hit:true,shipId:val});
+                log(`WARNING: Hull Breach at ${String.fromCharCode(65+ty)}${tx+1}!`);
+                sfx('hit'); GAME.aiStack.push({x:tx,y:ty});
+                if(ship.hits>=ship.size){
+                    ship.sunk=true; log(`CRITICAL: Our Ship ${ship.id} destroyed!`); sfx('sunk');
+                    // Remove this ship's coords from aiStack so AI doesn't keep hunting it
+                    const shipCoordSet=new Set(ship.coords.map(c=>`${c.x},${c.y}`));
+                    GAME.aiStack=GAME.aiStack.filter(p=>!shipCoordSet.has(`${p.x},${p.y}`));
+                    ship.coords.forEach(c=>updateCell('p-grid',c.x,c.y));
+                } else { updateCell('p-grid',tx,ty); }
+            } else {
+                GAME.eShots.set(key,{hit:false}); log(`Enemy fire at ${String.fromCharCode(65+ty)}${tx+1}: Ineffective.`);
+                sfx('miss'); updateCell('p-grid',tx,ty);
+            }
+            updateStats(); checkWin();
+            if(GAME.phase!=='end'){ GAME.turn='player'; updateTurnUI(); }
+        }
+
+        function checkWin(){
+            const pAlive=GAME.pShips.some(s=>!s.sunk);
+            const eAlive=GAME.eShips.some(s=>!s.sunk);
+            if(!eAlive){
+                GAME.phase='end';
+                document.getElementById('turn-display').innerText="VICTORY";
+                document.getElementById('turn-display').className="text-3xl font-header text-center py-4 bg-emerald-950 border-2 border-emerald-500 text-emerald-100 rounded shadow-[0_0_30px_rgba(16,185,129,0.4)]";
+                log("MISSION ACCOMPLISHED. ENEMY FLEET NEUTRALIZED.","text-emerald-400 font-bold");
+                sfx('win');
+            } else if(!pAlive){
+                GAME.phase='end';
+                document.getElementById('turn-display').innerText="DEFEAT";
+                document.getElementById('turn-display').className="text-3xl font-header text-center py-4 bg-red-950 border-2 border-red-500 text-red-100 rounded shadow-[0_0_30px_rgba(239,68,68,0.4)]";
+                log("MISSION FAILED. FLEET DESTROYED.","text-red-400 font-bold");
+                sfx('lose');
+            }
+        }
+
+        function updateStats(){
+            const pa=GAME.pShips.filter(s=>!s.sunk).length, pt=GAME.pShips.length;
+            const ea=GAME.eShips.filter(s=>!s.sunk).length, et=GAME.eShips.length;
+            document.getElementById('p-stats').innerText=`SHIPS: ${pa}/${pt}`;
+            document.getElementById('e-stats').innerText=`SHIPS: ${ea}/${et}`;
+        }
+
+        function updateTurnUI(){
+            const td=document.getElementById('turn-display');
+            if(GAME.turn==='player'){
+                td.innerText="YOUR TURN — FIRE";
+                td.className="text-2xl font-header text-center px-6 py-2 bg-slate-900 border border-cyan-500/50 text-cyan-100 rounded shadow-[0_0_15px_rgba(6,182,212,0.2)] min-w-[260px]";
+            } else {
+                td.innerText="ENEMY INCOMING";
+                td.className="text-2xl font-header text-center px-6 py-2 bg-slate-900 border border-red-500/50 text-red-100 rounded shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse min-w-[260px]";
+            }
+        }
+
+        function log(msg, extraClass=""){
+            const d=document.createElement('div'); if(extraClass) d.className=extraClass;
+            d.innerHTML=`> ${msg}`; document.getElementById('log').prepend(d);
+        }
+    </script>
+</body>
+</html>
