@@ -220,8 +220,10 @@
     <div id="extraChecks"></div>
 
     <div class="math-box" style="background:#e8f5e9; border-color:#4caf50;">
-      <strong>Answer Key — Theoretical Probabilities</strong>
-      <div id="theoryDisplay" style="margin-top:6px; font-size:14px; line-height:1.5;"></div>
+      <details id="answerKeyDetails">
+        <summary style="cursor:pointer; font-weight:bold; color:#1b5e20;">Answer Key — Theoretical Probabilities (click to reveal)</summary>
+        <div id="theoryDisplay" style="margin-top:6px; font-size:14px; line-height:1.5;"></div>
+      </details>
     </div>
 
     <div style="margin-top:15px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
@@ -643,6 +645,7 @@ function newGame() {
   document.getElementById('ansHit').value = '';
   document.getElementById('feedbackHit').textContent = '';
   document.getElementById('checkHitBox').className = 'math-box';
+  document.getElementById('answerKeyDetails').open = false;
   initGame();
 }
 
