@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Battleship Geometric Probability</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #e3f2fd;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  h1 { color: #0d47a1; margin-bottom: 4px; }
+  .subtitle { color: #444; margin-bottom: 18px; text-align: center; }
+
+  .main {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1100px;
+    width: 100%;
+  }
+
+  .panel {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  }
+  .left { flex: 1; min-width: 320px; max-width: 440px; }
+  .right { flex: 1; min-width: 360px; }
+
+  /* Math worksheet styles */
+  .math-box {
+    background: #fff8e1;
+    border-left: 5px solid #ffc107;
+    padding: 12px;
+    margin: 12px 0;
+    border-radius: 4px;
+  }
+  .math-box.correct { background: #e8f5e9; border-left-color: #4caf50; }
+  .math-box.wrong { background: #ffebee; border-left-color: #f44336; }
+  .math-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    flex-wrap: wrap;
+  }
+  .math-row input {
+    width: 90px;
+    padding: 5px;
+    font-size: 14px;
+  }
+  button {
+    background: #1565c0;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button:hover { background: #0d47a1; }
+  button.small { padding: 5px 10px; font-size: 12px; background: #00897b; }
+  button.small:hover { background: #00695c; }
+
+  /* Grid styles */
+  .grid-wrap {
+    display: inline-block;
+    background: #0277bd;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  .grid {
+    display: grid;
+    gap: 2px;
+  }
+  .cell {
+    width: 36px;
+    height: 36px;
+    background: #4fc3f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 2px;
+    transition: background 0.15s;
+    color: #01579b;
+  }
+  .cell:hover { background: #81d4fa; }
+  .cell.miss {
+    background: #eceff1;
+    color: #546e7a;
+    cursor: default;
+  }
+  .cell.hit {
+    background: #ef5350;
+    color: white;
+    cursor: default;
+  }
+  .cell.sunk {
+    background: #b71c1c;
+    color: white;
+    cursor: default;
+    text-decoration: line-through;
+  }
+
+  /* Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+  }
+  .stat {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    border: 2px solid #ddd;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .stat-value { font-size: 18px; font-weight: bold; color: #333; }
+
+  .legend {
+    display: flex;
+    gap: 14px;
+    font-size: 12px;
+    margin: 10px 0;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-box { width: 16px; height: 16px; border: 1px solid #333; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    font-size: 14px;
+  }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+  th { background: #1565c0; color: white; }
+  tr:nth-child(even) { background: #f5f5f5; }
+
+  .message {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 6px;
+    font-weight: bold;
+    text-align: center;
+    font-size: 16px;
+  }
+  .message.win { background: #e8f5e9; color: #2e7d32; border: 2px solid #4caf50; }
+  .message.lose { background: #ffebee; color: #c62828; border: 2px solid #f44336; }
+
+  .teacher-bar {
+    margin-top: 10px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>⚓ Battleship & Geometric Probability</h1>
+<div class="subtitle">
+  <strong>Lesson connection:</strong> probability = (area of target region) ÷ (area of entire region)<br>
+  Each grid cell = 1 square unit
+</div>
+
+<div class="main">
+
+  <!-- LEFT: Probability Worksheet -->
+  <div class="panel left">
+    <h3>📐 Probability Worksheet</h3>
+
+    <div class="math-box">
+      <strong>Grid Area</strong> = rows × columns
+      = <span id="dispRows">8</span> × <span id="dispCols">8</span>
+      = <span id="gridArea">64</span> square units
+    </div>
+
+    <div id="shipList"></div>
+
+    <div class="math-box">
+      <strong>Total Ship Area</strong> = sum of all ships
+      = <span id="totalShipArea">0</span> square units
+    </div>
+
+    <div class="math-box" id="checkHitBox">
+      <strong>1. What is P(Hit)?</strong><br>
+      If you fire at a random square, what is the probability you hit <em>any</em> ship?<br>
+      <div class="math-row">
+        P(Hit) = Total Ship Area ÷ Grid Area =
+        <input type="text" id="ansHit" placeholder="e.g. 16/64 or 0.25">
+        <button class="small" onclick="checkHit()">Check</button>
+      </div>
+      <div id="feedbackHit" style="font-size:13px; margin-top:4px;"></div>
+    </div>
+
+    <div id="extraChecks"></div>
+
+    <div class="math-box" style="background:#e8f5e9; border-color:#4caf50;">
+      <strong>Answer Key — Theoretical Probabilities</strong>
+      <div id="theoryDisplay" style="margin-top:6px; font-size:14px; line-height:1.5;"></div>
+    </div>
+
+    <div style="margin-top:15px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <label>Grid:</label>
+      <select id="gridSize" onchange="changeSize()">
+        <option value="8">8 × 8 (64 cells)</option>
+        <option value="10">10 × 10 (100 cells)</option>
+      </select>
+      <button onclick="newGame()">New Game / Reset</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: Battle Grid -->
+  <div class="panel right">
+    <h3>🎮 Combat Grid</h3>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box" style="background:#4fc3f7;"></div> Ocean</div>
+      <div class="legend-item"><div class="legend-box" style="background:#eceff1;"></div> Miss</div>
+      <div class="legend-item"><div class="legend-box" style="background:#ef5350;"></div> Hit</div>
+      <div class="legend-item"><div class="legend-box" style="background:#b71c1c;"></div> Sunk</div>
+    </div>
+
+    <div style="text-align:center;">
+      <div class="grid-wrap">
+        <div id="grid" class="grid"></div>
+      </div>
+      <div class="teacher-bar">
+        <input type="checkbox" id="showShips" onchange="toggleShips()">
+        <label for="showShips" style="cursor:pointer;">Teacher Mode: Show Ship Locations</label>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Shots Fired</div>
+        <div class="stat-value" id="sShots">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Hits</div>
+        <div class="stat-value" id="sHits" style="color:#d32f2f;">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Misses</div>
+        <div class="stat-value" id="sMisses" style="color:#546e7a;">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Ships Sunk</div>
+        <div class="stat-value" id="sSunk">0</div>
+      </div>
+      <div class="stat" style="grid-column: 1 / -1;">
+        <div class="stat-label">Experimental P(Hit)</div>
+        <div class="stat-value" id="sExp">0%</div>
+      </div>
+    </div>
+
+    <table>
+      <tr style="background:#1565c0; color:white;">
+        <th>Metric</th>
+        <th>Theoretical</th>
+        <th>Experimental</th>
+        <th>Difference</th>
+      </tr>
+      <tr>
+        <td>P(Hit)</td>
+        <td id="tHit">--</td>
+        <td id="eHit">--</td>
+        <td id="dHit">--</td>
+      </tr>
+      <tr style="background:#f5f5f5;">
+        <td>P(Miss)</td>
+        <td id="tMiss">--</td>
+        <td id="eMiss">--</td>
+        <td id="dMiss">--</td>
+      </tr>
+    </table>
+
+    <div id="gameMessage"></div>
+  </div>
+
+</div>
+
+<script>
+// === CONFIGURATION ===
+const SHIPS_CONFIG = [
+  { name: 'Carrier', length: 5, code: 'C' },
+  { name: 'Battleship', length: 4, code: 'B' },
+  { name: 'Destroyer', length: 3, code: 'D' },
+  { name: 'Submarine', length: 2, code: 'S' },
+  { name: 'Patrol', length: 2, code: 'P' }
+];
+
+let ROWS = 8;
+let COLS = 8;
+let grid = [];     // 2D array: null or ship id
+let ships = [];    // ship objects
+let shots = 0;
+let hits = 0;
+let gameOver = false;
+
+// === MATH HELPERS ===
+function gcd(a, b) {
+  return b ? gcd(b, a % b) : a;
+}
+
+function simplify(n, d) {
+  const g = gcd(n, d);
+  return (n / g) + '/' + (d / g);
+}
+
+function normalizeFraction(str) {
+  str = str.replace(/\s/g, '').toLowerCase();
+  if (str.includes('/')) {
+    const [n, d] = str.split('/');
+    const num = parseFloat(n);
+    const den = parseFloat(d);
+    if (!isNaN(num) && !isNaN(den) && den !== 0) return num / den;
+  }
+  const val = parseFloat(str);
+  return isNaN(val) ? null : val;
+}
+
+// === GAME SETUP ===
+function totalShipArea() {
+  return ships.reduce((sum, s) => sum + s.length, 0);
+}
+
+function initGame() {
+  gameOver = false;
+  shots = 0;
+  hits = 0;
+  grid = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
+  ships = [];
+
+  SHIPS_CONFIG.forEach((cfg, idx) => {
+    ships.push({ id: idx, ...cfg, hits: 0, sunk: false, cells: [] });
+  });
+
+  if (!placeAllShips()) {
+    alert('Could not place ships on this grid. Try a larger grid or fewer ships.');
+    return;
+  }
+
+  renderGrid();
+  updateStats();
+  updateMathPanel();
+  document.getElementById('gameMessage').innerHTML = '';
+
+  if (document.getElementById('showShips').checked) toggleShips();
+}
+
+function placeAllShips() {
+  const MAX_TRIES = 3000;
+  for (let attempt = 0; attempt < MAX_TRIES; attempt++) {
+    // clear grid
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) grid[r][c] = null;
+
+    let allPlaced = true;
+    for (let ship of ships) {
+      let placed = false;
+      let local = 0;
+      while (!placed && local < 100) {
+        local++;
+        const horiz = Math.random() < 0.5;
+        const maxR = horiz ? ROWS : ROWS - ship.length + 1;
+        const maxC = horiz ? COLS - ship.length + 1 : COLS;
+        const r = Math.floor(Math.random() * maxR);
+        const c = Math.floor(Math.random() * maxC);
+
+        let ok = true;
+        let cells = [];
+        for (let i = 0; i < ship.length; i++) {
+          const rr = horiz ? r : r + i;
+          const cc = horiz ? c + i : c;
+          if (rr < 0 || rr >= ROWS || cc < 0 || cc >= COLS || grid[rr][cc] !== null) {
+            ok = false; break;
+          }
+          cells.push({ r: rr, c: cc });
+        }
+
+        if (ok) {
+          ship.cells = cells;
+          ship.horiz = horiz;
+          cells.forEach(cell => grid[cell.r][cell.c] = ship.id);
+          placed = true;
+        }
+      }
+      if (!placed) { allPlaced = false; break; }
+    }
+    if (allPlaced) return true;
+  }
+  return false;
+}
+
+// === RENDERING ===
+function renderGrid() {
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  g.style.gridTemplateColumns = `repeat(${COLS}, 36px)`;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      cell.onclick = () => fire(r, c, cell);
+      g.appendChild(cell);
+    }
+  }
+}
+
+function toggleShips() {
+  const show = document.getElementById('showShips').checked;
+  const g = document.getElementById('grid');
+  ships.forEach(s => {
+    s.cells.forEach(sc => {
+      const idx = sc.r * COLS + sc.c;
+      const el = g.children[idx];
+      if (el.classList.contains('hit') || el.classList.contains('sunk') || el.classList.contains('miss')) return;
+      if (show) {
+        el.style.background = '#a5d6a7';
+        el.style.color = '#1b5e20';
+        el.textContent = s.code;
+      } else {
+        el.style.background = '';
+        el.style.color = '';
+        el.textContent = '';
+      }
+    });
+  });
+}
+
+// === GAMEPLAY ===
+function fire(r, c, cell) {
+  if (gameOver) return;
+  if (cell.classList.contains('hit') || cell.classList.contains('miss') || cell.classList.contains('sunk')) return;
+
+  shots++;
+  const shipId = grid[r][c];
+
+  if (shipId !== null) {
+    hits++;
+    cell.classList.add('hit');
+    const ship = ships[shipId];
+    ship.hits++;
+    cell.textContent = ship.code;
+
+    if (ship.hits === ship.length && !ship.sunk) {
+      ship.sunk = true;
+      // reveal whole ship as sunk
+      ship.cells.forEach(sc => {
+        const idx = sc.r * COLS + sc.c;
+        const el = document.getElementById('grid').children[idx];
+        el.classList.remove('hit');
+        el.classList.add('sunk');
+        el.textContent = ship.code;
+      });
+      checkWin();
+    }
+  } else {
+    cell.classList.add('miss');
+    cell.textContent = '•';
+  }
+
+  // if teacher mode is on, styles may linger; reset ocean look for missed cells
+  if (shipId === null) {
+    cell.style.background = ''; // let class handle it
+  }
+
+  updateStats();
+}
+
+function checkWin() {
+  const sunkCount = ships.filter(s => s.sunk).length;
+  if (sunkCount === ships.length) {
+    gameOver = true;
+    const msg = document.getElementById('gameMessage');
+    const extra = shots - totalShipArea();
+    const rating = extra <= 5 ? '⭐⭐⭐ Perfect!' : extra <= 12 ? '⭐⭐ Great!' : '⭐ Good effort!';
+    msg.innerHTML = `
+      <div class="message win">
+        MISSION ACCOMPLISHED!<br>
+        ${rating}<br>
+        All ships sunk in ${shots} shots.
+      </div>`;
+    return true;
+  }
+  return false;
+}
+
+// === STATS & DISPLAY ===
+function updateStats() {
+  const tArea = totalShipArea();
+  const gArea = ROWS * COLS;
+  const misses = shots - hits;
+
+  document.getElementById('sShots').textContent = shots;
+  document.getElementById('sHits').textContent = hits;
+  document.getElementById('sMisses').textContent = misses;
+  document.getElementById('sSunk').textContent = ships.filter(s => s.sunk).length;
+
+  const expPct = shots > 0 ? (hits / shots * 100) : 0;
+  document.getElementById('sExp').textContent = expPct.toFixed(2) + '%';
+
+  const theoHit = (tArea / gArea * 100).toFixed(2);
+  const theoMiss = ((gArea - tArea) / gArea * 100).toFixed(2);
+
+  document.getElementById('tHit').textContent = theoHit + '%';
+  document.getElementById('tMiss').textContent = theoMiss + '%';
+  document.getElementById('eHit').textContent = expPct.toFixed(2) + '%';
+  document.getElementById('eMiss').textContent = (shots > 0 ? (misses / shots * 100) : 0).toFixed(2) + '%';
+
+  const diff = shots > 0 ? Math.abs(parseFloat(theoHit) - expPct).toFixed(2) : '--';
+  document.getElementById('dHit').textContent = diff === '--' ? '--' : diff + '%';
+  document.getElementById('dMiss').textContent = diff === '--' ? '--' : diff + '%';
+}
+
+function updateMathPanel() {
+  const gArea = ROWS * COLS;
+  const tArea = totalShipArea();
+
+  document.getElementById('dispRows').textContent = ROWS;
+  document.getElementById('dispCols').textContent = COLS;
+  document.getElementById('gridArea').textContent = gArea;
+  document.getElementById('totalShipArea').textContent = tArea;
+
+  // Ship list
+  const list = document.getElementById('shipList');
+  list.innerHTML = '';
+  ships.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'math-box';
+    div.innerHTML = `<strong>${s.name}</strong> Area = ${s.length} square units`;
+    list.appendChild(div);
+  });
+
+  // Individual ship probability questions
+  const extra = document.getElementById('extraChecks');
+  extra.innerHTML = '';
+  ships.forEach((s, idx) => {
+    const box = document.createElement('div');
+    box.className = 'math-box';
+    box.innerHTML = `
+      <strong>${idx + 2}. What is P(${s.name})?</strong><br>
+      Probability of hitting the ${s.name} = ${s.length} ÷ ${gArea}<br>
+      <div class="math-row">
+        <input type="text" id="shipAns${idx}" placeholder="e.g. ${s.length}/${gArea}">
+        <button class="small" onclick="checkShip(${idx}, ${s.length}, ${gArea})">Check</button>
+      </div>
+      <div id="shipFeed${idx}" style="font-size:13px; margin-top:4px;"></div>
+    `;
+    extra.appendChild(box);
+  });
+
+  // Answer key display
+  let th = `P(Hit) = ${tArea}/${gArea} = ${simplify(tArea, gArea)} ≈ ${(tArea / gArea).toFixed(4)}<br>`;
+  ships.forEach(s => {
+    const simp = simplify(s.length, gArea);
+    th += `P(${s.name}) = ${s.length}/${gArea} = ${simp} ≈ ${(s.length / gArea).toFixed(4)}<br>`;
+  });
+  document.getElementById('theoryDisplay').innerHTML = th;
+}
+
+// === ANSWER CHECKING ===
+function checkHit() {
+  const gArea = ROWS * COLS;
+  const tArea = totalShipArea();
+  const input = document.getElementById('ansHit').value;
+  const box = document.getElementById('checkHitBox');
+  const feed = document.getElementById('feedbackHit');
+
+  const userVal = normalizeFraction(input);
+  if (userVal === null) {
+    feed.innerHTML = '<span style="color:#c62828;">Enter a fraction (like 16/64) or a decimal.</span>';
+    box.className = 'math-box wrong';
+    return;
+  }
+
+  const correct = tArea / gArea;
+  if (Math.abs(userVal - correct) < 0.005) {
+    feed.innerHTML = '<span style="color:#2e7d32;"><strong>✅ Correct!</strong></span>';
+    box.className = 'math-box correct';
+  } else {
+    feed.innerHTML = '<span style="color:#c62828;"><strong>❌</strong> Try again. Hint: add all ship areas, then divide by grid area.</span>';
+    box.className = 'math-box wrong';
+  }
+}
+
+function checkShip(idx, length, gArea) {
+  const input = document.getElementById(`shipAns${idx}`).value;
+  const box = document.getElementById(`shipAns${idx}`).parentElement.parentElement;
+  const feed = document.getElementById(`shipFeed${idx}`);
+
+  const userVal = normalizeFraction(input);
+  if (userVal === null) {
+    feed.innerHTML = '<span style="color:#c62828;">Enter a fraction or decimal.</span>';
+    box.className = 'math-box wrong';
+    return;
+  }
+
+  const correct = length / gArea;
+  if (Math.abs(userVal - correct) < 0.005) {
+    feed.innerHTML = '<span style="color:#2e7d32;"><strong>✅ Correct!</strong></span>';
+    box.className = 'math-box correct';
+  } else {
+    feed.innerHTML = '<span style="color:#c62828;"><strong>❌</strong> Try again.</span>';
+    box.className = 'math-box wrong';
+  }
+}
+
+// === CONTROLS ===
+function changeSize() {
+  const v = parseInt(document.getElementById('gridSize').value);
+  ROWS = v; COLS = v;
+  newGame();
+}
+
+function newGame() {
+  document.getElementById('ansHit').value = '';
+  document.getElementById('feedbackHit').textContent = '';
+  document.getElementById('checkHitBox').className = 'math-box';
+  initGame();
+}
+
+// Start
+window.onload = initGame;
+</script>
+
+</body>
+</html>
