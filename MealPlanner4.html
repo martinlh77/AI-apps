@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hybrid Keto-Mounjaro Meal Calendar</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --panel: #ffffff;
+      --text: #1a202c;
+      --muted: #718096;
+      --border: #e2e8f0;
+      --accent: #2c7a7b;
+      --accent2: #805ad5;
+      --danger: #e53e3e;
+      --bfast: #fefcbf;
+      --bfastText: #744210;
+      --lunch: #bee3f8;
+      --lunchText: #2a4365;
+      --dinner: #fed7d7;
+      --dinnerText: #742a2a;
+      --snack: #c6f6d5;
+      --snackText: #22543d;
+      --dessert: #e9d8fd;
+      --dessertText: #553c9a;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: var(--bg); color: var(--text);
+    }
+
+    .toolbar {
+      position: sticky; top: 0; z-index: 30;
+      background: linear-gradient(180deg, #fff 0%, #f7fafc 100%);
+      border-bottom: 1px solid var(--border);
+      padding: .75rem 1rem;
+      display: flex; gap: .5rem; align-items: center; flex-wrap: wrap;
+    }
+    .toolbar h1 { font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: .5rem; }
+    .toolbar .spacer { flex: 1; }
+    .btn, .toolbar input, .toolbar select {
+      background: #fff; border: 1px solid var(--border); border-radius: .5rem;
+      padding: .45rem .6rem; font: inherit; color: var(--text);
+    }
+    .btn { cursor: pointer; background: #edf2f7; border-color: #cbd5e0; }
+    .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn:hover { filter: brightness(.97); }
+    .btn.primary:hover { filter: brightness(1.05); }
+
+    #calendarContainer { padding: 1rem; }
+
+    .view-month {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: .5rem;
+    }
+    .weekday-header {
+      text-align: center; font-size: .75rem; text-transform: uppercase; letter-spacing: .05em;
+      color: var(--muted); padding: .25rem;
+    }
+    .day-cell {
+      background: var(--panel); border: 1px solid var(--border); border-radius: .5rem;
+      padding: .5rem; min-height: 9.5rem; display: flex; flex-direction: column; gap: .35rem;
+      cursor: pointer; transition: box-shadow .15s ease, transform .05s ease;
+    }
+    .day-cell:hover { box-shadow: 0 4px 10px rgba(0,0,0,.08); transform: translateY(-1px); }
+    .day-cell.outside { opacity: .65; background: #f7fafc; }
+    .day-cell .dnum { font-weight: 700; font-size: .85rem; color: var(--muted); }
+    .day-cell .dnum.today { color: var(--accent); background: #e6fffa; border-radius: 999px; padding: .1rem .35rem; display: inline-block; }
+
+    .pill-stack {
+      display: flex; flex-direction: column; gap: .25rem;
+      flex: 1; overflow: hidden;
+    }
+
+    .meal-pill {
+      font-size: .72rem; line-height: 1.25; padding: .2rem .35rem; border-radius: .35rem;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .meal-pill.b { background: var(--bfast); color: var(--bfastText); }
+    .meal-pill.l { background: var(--lunch); color: var(--lunchText); }
+    .meal-pill.d { background: var(--dinner); color: var(--dinnerText); font-weight: 600; }
+    .meal-pill.s { background: var(--snack); color: var(--snackText); }
+    .meal-pill.de { background: var(--dessert); color: var(--dessertText); }
+
+    .view-week {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: .5rem;
+    }
+    .view-week .day-cell { min-height: 60vh; }
+
+    .view-day {
+      max-width: 900px; margin: 0 auto;
+    }
+    .day-card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: .75rem;
+      padding: 1rem; display: grid; gap: .75rem;
+    }
+    .meal-block { border-left: 4px solid var(--border); padding-left: .6rem; }
+    .meal-block.b { border-color: #d69e2e; }
+    .meal-block.l { border-color: #3182ce; }
+    .meal-block.d { border-color: #e53e3e; }
+    .meal-block.s { border-color: #38a169; }
+    .meal-block.de { border-color: #805ad5; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 50;
+      background: rgba(0,0,0,.45); backdrop-filter: blur(2px);
+      display: none; justify-content: center; align-items: center; padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--panel); border: 1px solid var(--border); border-radius: .75rem;
+      width: 100%; max-width: 720px; max-height: 92vh; overflow-y: auto;
+      padding: 1.25rem; display: flex; flex-direction: column; gap: .75rem;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+    }
+    .modal h2 { margin: 0 0 .25rem; font-size: 1.25rem; }
+    .field { display: flex; flex-direction: column; gap: .25rem; }
+    .field label { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+    .field input, .field textarea {
+      font: inherit; padding: .5rem .6rem; border: 1px solid var(--border); border-radius: .45rem; width: 100%;
+    }
+    .field textarea { min-height: 4.5rem; resize: vertical; }
+
+    .recipe-box {
+      background: #f7fafc; border: 1px solid var(--border); border-radius: .5rem;
+      padding: .75rem; white-space: pre-wrap; font-size: .95rem; line-height: 1.45;
+    }
+
+    #chatPanel {
+      position: fixed; bottom: 1rem; right: 1rem; width: 22rem; max-height: 28rem;
+      background: var(--panel); border: 1px solid var(--border); border-radius: .75rem;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,.1);
+      display: flex; flex-direction: column; z-index: 40; overflow: hidden;
+    }
+    #chatHeader {
+      padding: .6rem .75rem; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; font-weight: 700;
+    }
+    #chatMessages { flex: 1; overflow-y: auto; padding: .6rem .75rem; display: flex; flex-direction: column; gap: .5rem; font-size: .9rem; }
+    .chat-bubble { padding: .5rem .7rem; border-radius: .5rem; max-width: 92%; word-wrap: break-word; }
+    .chat-bubble.user { background: var(--accent); color: #fff; align-self: flex-end; }
+    .chat-bubble.ai { background: #edf2f7; align-self: flex-start; }
+    .chat-bubble.error { background: var(--dinner); color: var(--dinnerText); }
+    #chatInputWrap { display: flex; gap: .35rem; padding: .5rem .6rem; border-top: 1px solid var(--border); }
+    #chatInputWrap input { flex: 1; font: inherit; padding: .4rem .5rem; border: 1px solid var(--border); border-radius: .4rem; }
+    #chatMinBtn { cursor: pointer; background: transparent; border: none; font: inherit; color: var(--muted); }
+    .chat-hidden { display: none !important; }
+
+    #debugPanel {
+      position: fixed; bottom: 1rem; left: 1rem; width: 28rem; height: 16rem;
+      background: #1a202c; color: #a0aec0; border: 1px solid #2d3748; border-radius: .5rem;
+      display: none; flex-direction: column; z-index: 45; overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: .78rem;
+    }
+    #debugHeader { padding: .35rem .5rem; background: #2d3748; color: #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+    #debugContent { flex: 1; overflow-y: auto; padding: .5rem; white-space: pre-wrap; }
+    .debug-error { color: #fc8181; }
+    .debug-warn { color: #f6e05e; }
+    .debug-log { color: #68d391; }
+
+    .flex { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+    .small { font-size: .82rem; color: var(--muted); }
+    .loader { width: 1rem; height: 1rem; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ai-generate-row { display: flex; gap: .4rem; margin-top: .25rem; flex-wrap: wrap; }
+
+    @media (max-width: 768px) {
+      .toolbar { padding: .45rem; gap: .3rem; }
+      .toolbar h1 { font-size: .9rem; }
+      .btn, .toolbar input, .toolbar select { padding: .35rem .4rem; font-size: .85rem; }
+      #calendarContainer { padding: .3rem; }
+      .view-month, .view-week { gap: .25rem; }
+      .day-cell { padding: .3rem; gap: .25rem; border-radius: .35rem; min-height: 5rem; }
+      .day-cell .dnum { font-size: .75rem; }
+      .meal-pill { font-size: .62rem; padding: .12rem .2rem; line-height: 1.15; }
+      .weekday-header { font-size: .6rem; padding: .1rem; }
+      .modal { padding: .85rem; max-height: 95vh; }
+      #chatPanel { width: calc(100vw - 1.5rem); right: .75rem; left: .75rem; }
+      #debugPanel { width: calc(100vw - 1.5rem); left: .75rem; height: 14rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <h1>🍳 Hybrid Meal Calendar</h1>
+    <div class="small" id="statusText">May 14, 2026 — Nov 14, 2026</div>
+    <div class="spacer"></div>
+
+    <div class="flex">
+      <button class="btn" onclick="app.prev()">←</button>
+      <input type="date" id="navDate" onchange="app.jumpTo(this.value)">
+      <button class="btn" onclick="app.next()">→</button>
+    </div>
+
+    <div class="flex">
+      <button class="btn" onclick="app.setView('month')">Month</button>
+      <button class="btn" onclick="app.setView('week')">Week</button>
+      <button class="btn" onclick="app.setView('day')">Day</button>
+    </div>
+
+    <select id="modelSelect" title="AI Model">
+      <option value="gemini-search" selected>gemini-search</option>
+      <option value="nova-fast">nova-fast</option>
+      <option value="openai">openai</option>
+      <option value="gemini-fast">gemini-fast</option>
+      <option value="openai-fast">openai-fast</option>
+      <option value="llama">llama</option>
+      <option value="nova">nova</option>
+      <option value="kimi">kimi</option>
+    </select>
+
+    <input type="password" id="apiKeyInput" placeholder="Pollinations API key (pk_ or sk_)" style="min-width: 12rem;">
+    <button class="btn primary" onclick="app.saveKey()">Save Key</button>
+    <button class="btn" onclick="app.resetData()" title="Reset all saved meals">🗑️</button>
+    <button class="btn" onclick="app.toggleChat()" title="AI Chat">💬</button>
+    <button class="btn" onclick="app.toggleDebug()" title="Debug">🐞</button>
+  </div>
+
+  <div id="calendarContainer"></div>
+
+  <!-- Day Edit / Recipe Modal -->
+  <div id="dayModal" class="modal-overlay" onclick="if(event.target===this) app.closeModal()">
+    <div class="modal">
+      <h2 id="modalDateTitle">Date</h2>
+      <div class="field"><label>Breakfast</label><input id="inBreakfast"></div>
+      <div class="field"><label>Lunch</label><input id="inLunch"></div>
+      <div class="field"><label>Dinner</label><input id="inDinner"></div>
+      <div class="field"><label>Snack</label><input id="inSnack"></div>
+      <div class="field"><label>Dessert</label><input id="inDessert"></div>
+      <div class="field"><label>Notes / Prep</label><textarea id="inNotes"></textarea></div>
+
+      <div class="ai-generate-row">
+        <button class="btn primary" onclick="app.saveDay()">Save Changes</button>
+        <button class="btn" onclick="app.regenerateDayWithAI()">🔄 AI Regenerate This Day</button>
+        <button class="btn" onclick="app.closeModal()">Close</button>
+      </div>
+
+      <div style="margin-top:.25rem;">
+        <label class="small">Select a meal slot below, then click “Get Recipe”:</label>
+        <div class="flex" style="margin-top:.35rem;">
+          <select id="recipeMealSelect">
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+            <option value="snack">Snack</option>
+            <option value="dessert">Dessert</option>
+          </select>
+          <button class="btn" onclick="app.fetchRecipeForSelected()">Get Recipe from AI</button>
+        </div>
+        <div id="recipeOutput" class="recipe-box" style="margin-top:.5rem; display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div id="chatPanel">
+    <div id="chatHeader">
+      <span>AI Assistant</span>
+      <button id="chatMinBtn" onclick="app.toggleChat()">−</button>
+    </div>
+    <div id="chatMessages"></div>
+    <div id="chatInputWrap">
+      <input id="chatInput" placeholder="Ask about a meal, ingredient, or keto swap…" onkeydown="if(event.key==='Enter') app.sendChat()">
+      <button class="btn primary" onclick="app.sendChat()">Send</button>
+    </div>
+  </div>
+
+  <!-- Debug Console -->
+  <div id="debugPanel">
+    <div id="debugHeader">
+      <span>Debug Console</span>
+      <div class="flex">
+        <button class="btn" style="padding:.2rem .4rem; font-size:.75rem;" onclick="app.clearDebug()">Clear</button>
+        <button class="btn" style="padding:.2rem .4rem; font-size:.75rem;" onclick="app.toggleDebug()">Close</button>
+      </div>
+    </div>
+    <div id="debugContent"></div>
+  </div>
+
+<script>
+/* ==========================================================
+   HYBRID SYSTEM CONTEXT
+   ========================================================== */
+const SYSTEM_CONTEXT = `You are a creative but practical culinary assistant for a household on a mostly-keto plan who also use Mounjaro (tirzepatide). Their appetite is reduced; portions should be modest and nutrient-dense.
+
+COOKING STYLE BY DAY:
+- Monday, Tuesday, Thursday, Friday (weeknights): Simple comfort food. Familiar American and Mexican-inspired family meals preferred. Quick assembly, one-pot, sheet-pan, skillet, Crockpot, or InstaPot. 30–90 minutes active time. Budget-friendly. Examples: taco salad, grilled cheese & soup, burrito bowl, pasta salad, baked potato bar, breakfast-for-dinner, simple stir-fry, chili, pizza, quesadillas, casserole, soup & sandwich.
+- Wednesday: NO-COOK day. Leftovers, reheats, cold sandwiches/wraps, taco salad assembly from prep, or simple assembly only.
+- Saturday: Shopping day dinner. Prefer slow-cooker, InstaPot, grill, or make-ahead meals. Moderate creativity is welcome (fajitas, carnitas, pizza from scratch, simple curries, wok meals) but keep active cooking reasonable after a morning of shopping. Husband bakes sourdough/yeast breads, pizza crusts, and tortillas.
+- Sunday: Creative cuisine day. Use varied international flavors: American, Asian, Mexican, Indian, Middle Eastern, Ethiopian, European, Island. This is the day to use special tools (Donabe, wok, InstaPot, pressure cooker, bamboo steamer, outdoor Dutch oven/smoker, bread/pizza oven). Exotic pantry items are welcome: miso, coconut milk, curry spices, lotus root, bok choy, chana, mung beans, etc.
+
+TOOLS: Donabe, Rice Donabe, Bamboo Steamer, Crockpot, Pressure Cooker, InstaPot, Wok, Butane Tabletop Grill, Propane Grill, Bread/Pizza Oven (with wood-chip smoking), Large Kitchenaid Mixer, Smaller Mixer, Grain Mill (legumes ok), Spice Grinder, Waffle Makers, Electric Skillet, Canning supplies, Silicone molds, Springform pan, Casserole dishes, Nesting Bowls, Two ceramic-coated cast-iron Dutch Ovens, Plain cast-iron Dutch oven (outdoor), Large Food Dehydrator, Air Fryer (small, rotisserie), Mochi maker, Rice Cooker, Tortilla press, MioMat nut/soy milk maker (also soups).
+
+PANTRY: coconut milk, curry spices, pho mix, miso, vital wheat gluten, arrowroot, Maseca, cornmeal, sauces/mustards, Stevia, Xanthan gum, molasses, psyllium husk, wheat germ. Grains/beans: wheat, barley, rye, oats, amaranth, millet, groats, white rice, black rice, basmati, multi-grain, popcorn, lentils, pinto beans, chickpeas, black beans, navy beans, black chana, red chana, mung beans, quinoa, chia, flax.
+
+PROTEINS: chicken thighs, whole chicken, eggs (heavy use), ground beef, sausage, bacon, occasional ham. Canned tuna/salmon/sardines. Lamb is a rare monthly treat only; do not suggest often. No pork except bacon/ham. Fish: frozen, fresh, or canned.
+
+SKILLS: Wife makes excellent sauces. Husband is an advanced baker (sourdough, yeast breads, quick-rise, pizza, tortillas).
+
+LIKES: Nuts, small amounts of raisins, many cheeses, eggs in everything, all vegetables (broccoli, sweet potato small portions, peas, corn small, edamame, bok choy, lotus root, Brussels sprouts, cabbage, carrots, radishes, tomatoes, onions, garlic, squash, cucumber, peppers, olives, mushrooms). Fruits: grapes, apples, citrus, berries, stonefruit.
+
+RULES:
+- Mostly keto; minimal carbs/sugar acceptable because of Mounjaro. Pair carbs with protein/fat.
+- NO alcohol in any recipe. Deglaze with vinegar, citrus, broth, or water instead.
+- Wednesday is strict NO-COOK.
+- Weeknight active cooking must fit within 90 minutes active time, preferably 60.
+- Saturday is shopping + prep day. Sunday can be a project day.
+- Budget-conscious: favor chicken, eggs, ground beef, beans/lentils, canned fish. Lamb rarely.
+- Big-batch dinners should purposely create leftovers for breakfast/lunch later in the week.
+- Freeze/prep-friendly meals strongly preferred.
+- Not every item must be homemade; convenience is fine.`;
+
+/* ==========================================================
+   MEAL POOLS: COMFORT FOOD + CREATIVE CUISINE
+   ========================================================== */
+const WEEKDAY_BREAKFASTS = [
+  "Cereal w/ Unsweetened Almond Milk & Berries",
+  "Scrambled Eggs & Toast (Homemade Bread)",
+  "Yogurt w/ Nuts & Cinnamon",
+  "Oatmeal w/ Walnuts & Chia (Small Portion)",
+  "Breakfast Burrito (Eggs, Cheese, Salsa)",
+  "Bacon & Eggs",
+  "Peanut Butter Toast + Banana (Small)",
+  "Berry Smoothie (Almond Milk, Spinach)",
+  "Avocado Toast + Fried Egg",
+  "Cottage Cheese w/ Cucumber & Tomato",
+  "Ham & Cheese Omelet",
+  "Leftover Pancake/Waffle Reheat"
+];
+
+const WEEKEND_BREAKFASTS = [
+  "Miso Soup w/ Soft Tofu & Egg (Donabe)",
+  "Keto Coconut Crepes w/ Berries (Husband Bakes)",
+  "Ethiopian-Spiced Eggs w/ Niter Kibbeh & Greens",
+  "Waffled Hash: Lotus Root, Cheddar, Scallion",
+  "Overnight Chia-Flax Pudding (MioMat Almond Milk)",
+  "Smoked Salmon & Cream Cheese on Homemade Bread",
+  "Sausage & Gruyère Egg Bites (InstaPot batch)",
+  "Quinoa Porridge w/ Walnuts (Small ¼ cup dry)",
+  "Shakshuka w/ Feta & Roasted Peppers",
+  "Keto Blueberry Muffins + Fried Egg",
+  "Full English-ish: Eggs, Bacon, Tomato, Mushroom",
+  "Japanese Soufflé Pancakes (Small Portion)"
+];
+
+const WEEKDAY_LUNCHES = [
+  "Turkey & Cheese Sandwich on Homemade Bread",
+  "Leftover Taco Salad Bowl",
+  "Bean & Rice Burrito w/ Sour Cream",
+  "Tuna Salad Sandwich or Wrap",
+  "Pasta Salad (Leftover or Fresh)",
+  "Soup & Grilled Cheese (Half)",
+  "Cheese Quesadilla w/ Salsa",
+  "Simple Green Salad w/ Chicken or Egg",
+  "Beans & Rice Small Bowl w/ Cheese",
+  "Chili Cheese Nachos (Small Chip Portion)",
+  "PB&J on Homemade Bread (Small)",
+  "Ham & Cheese Roll-ups"
+];
+
+const WEEKEND_LUNCHES = [
+  "Mason Jar Shawarma Chicken Salad w/ Tahini",
+  "Cold Pho-Style Bowl (Prepped Broth) + Bok Choy",
+  "Keto Poke Bowl: Salmon or Canned Tuna, Avocado",
+  "Steamed Ginger-Scallion Fish (Bamboo Steamer)",
+  "Cobb Salad w/ Bacon, Blue Cheese, Egg",
+  "Egg Salad Lettuce Wraps w/ Olives & Radish",
+  "Chicken Fajita Bowl (No Tortilla) w/ Peppers",
+  "Cold Black Chana Chaat w/ Cucumber & Lemon",
+  "Tuna-Stuffed Avocado w/ Everything Bagel Seasoning",
+  "Leftover Creative Dinner Bowl + Fresh Greens",
+  "Burrito Bowl w/ Cauliflower Rice",
+  "Middle Eastern Mezze Plate: Hummus, Olives, Cheese, Veg"
+];
+
+const SNACKS = [
+  "Hard-Boiled Egg w/ Za'atar",
+  "Roasted Masala Black Chana (Air Fryer)",
+  "Manchego & Almonds",
+  "Celery & Almond Butter",
+  "Air-Fried Kale Chips w/ Nutritional Yeast",
+  "Pickled Daikon & Carrot",
+  "Cheese Waffle Quarter (Waffle Maker)",
+  "Quick Miso Soup",
+  "Olives & Feta Cubes",
+  "Cocoa–Chia Shot (silicone molds, prepped)",
+  "Apple Slices w/ Peanut Butter",
+  "Dark Chocolate Square & Walnuts"
+];
+
+const DESSERTS = [
+  "Keto Cardamom Cake (Springform, Coconut Flour, Stevia)",
+  "Almond-Milk Panna Cotta (Xanthan, Stevia)",
+  "Chia Cocoa Pudding w/ Raspberries",
+  "Dark Chocolate (80%+) & Macadamia Nuts",
+  "Baked Coconut Custard (silicone molds, Nutmeg)",
+  "Berries w/ Stevia-Whipped Cream",
+  "Keto Peanut Butter Cookie (Small)",
+  "Sugar-Free Jello w/ Heavy Cream",
+  "Baked Apple w/ Cinnamon (Small Portion)",
+  "Frozen Yogurt Bark w/ Nuts & Berries"
+];
+
+const WEEKNIGHT_DINNERS = [
+  {name:"Taco Salad Night (Ground Beef or Chicken)", batch:true},
+  {name:"Grilled Cheese & Tomato Soup", batch:false},
+  {name:"Burrito Bowls (Crockpot Chicken/Beef, Beans, Rice)", batch:true},
+  {name:"Loaded Baked Potato Bar w/ Chili & Toppings", batch:true},
+  {name:"Pasta Salad w/ Veggies, Cheese & Dressing", batch:true},
+  {name:"Breakfast-for-Dinner: Eggs, Bacon & Toast/Waffle", batch:false},
+  {name:"Slow-Cooker Chili Beans w/ Beef", batch:true},
+  {name:"Simple Roast Chicken + Broccoli (Sheet Pan)", batch:true},
+  {name:"Beef & Veggie Stir-Fry (Wok)", batch:false},
+  {name:"Chicken Noodle Soup + Homemade Bread", batch:true},
+  {name:"Bean & Cheese Quesadillas w/ Salsa & Salad", batch:false},
+  {name:"Baked Pasta Casserole w/ Meat Sauce", batch:true},
+  {name:"Sheet-Pan Sausage, Peppers & Onions", batch:true},
+  {name:"Pot Roast or Beef Stew (Slow Cooker)", batch:true},
+  {name:"Frittata using Leftovers (Skillet)", batch:false},
+  {name:"Chicken & Rice Skillet (Small Rice Portion)", batch:true},
+  {name:"Hamburgers & Garden Salad (Grill or Skillet)", batch:false},
+  {name:"Sloppy Joes on Homemade Buns", batch:true},
+  {name:"Fish Tacos w/ Cabbage Slaw (Small Tortilla)", batch:false},
+  {name:"Chicken Parmesan w/ Zucchini Noodles", batch:false},
+  {name:"Tuna Noodle Casserole (Keto Noodles or Small Pasta)", batch:true},
+  {name:"Egg Roll in a Bowl (Wok)", batch:true}
+];
+
+const SATURDAY_DINNERS = [
+  {name:"Pizza Night: Homemade Sourdough Crust", batch:false},
+  {name:"Crockpot Carnitas or Pulled Chicken", batch:true},
+  {name:"Grilled Fajitas (Chicken or Beef)", batch:true},
+  {name:"InstaPot Butter Chicken or Tikka Masala", batch:true},
+  {name:"Slow-Cooker Red Beans & Sausage", batch:true},
+  {name:"Wok-Fried Rice Noodles (Small Portion) w/ Veggies & Egg", batch:false},
+  {name:"Outdoor Grill: Kebabs or Beer Can Chicken", batch:true},
+  {name:"Miso Glazed Eggplant & Chicken (Sheet Pan)", batch:false},
+  {name:"Homemade Tacos w/ Fresh Tortillas", batch:true},
+  {name:"Loaded Nacho Bar w/ Beans & Cheese", batch:false},
+  {name:"Donabe Claypot Rice (Small Portion) w/ Chicken & Veg", batch:true},
+  {name:"InstaPot Pho (Prepped Broth) w/ Zoodles", batch:true}
+];
+
+const SUNDAY_CREATIVE_DINNERS = [
+  {name:"Donabe Chicken & Lotus Root Hot Pot", batch:true},
+  {name:"InstaPot Red Chana Curry w/ Collards & Tomato", batch:true},
+  {name:"Air-Fryer Chicken Kofta w/ Garlic Yogurt Sauce", batch:true},
+  {name:"Sichuan Wok-Charred Green Beans & Ground Chicken", batch:false},
+  {name:"Goan Coconut Fish Curry w/ Spinach", batch:true},
+  {name:"Ethiopian Chicken Tibs & Gomen (Collard Greens)", batch:false},
+  {name:"Crockpot Mung Dal w/ Cumin, Ghee & Tomato", batch:true},
+  {name:"Filipino Chicken Adobo w/ Cauliflower Rice", batch:true},
+  {name:"Hungarian Beef Goulash w/ Daikon (Dutch Oven)", batch:true},
+  {name:"InstaPot Beef Shank Stew w/ Korean Flavors & Radish", batch:true},
+  {name:"Thai Green Curry Coconut Chicken Thighs", batch:true},
+  {name:"Creole Sausage & Shrimp Gumbo (Xanthan Roux)", batch:true},
+  {name:"Italian Wedding Meatball & Escarole Soup", batch:true},
+  {name:"Indonesian Beef Rendang (Pressure Cooker)", batch:true},
+  {name:"Avgolemono Lemon Chicken Soup w/ Cauli Rice", batch:true},
+  {name:"Indian Butter Chicken w/ Keto Naan (VWG + Psyllium)", batch:true},
+  {name:"Smoked Beef Brisket (Outdoor Dutch Oven / Bread Oven)", batch:true},
+  {name:"Pinto Bean & Nopal Sausage Stew (Crockpot)", batch:true},
+  {name:"Black Chana Chaat Masala Bowl (InstaPot)", batch:true},
+  {name:"Mexican Albondigas Soup w/ Zucchini", batch:true},
+  {name:"Donabe Miso Salmon & Shiitake w/ Greens", batch:true},
+  {name:"Middle Eastern Chicken Musakhan (Sumac & Onions)", batch:true},
+  {name:"Air-Fryer Peruvian Chicken w/ Green Sauce", batch:true},
+  {name:"Tikka Masala Meatloaf (InstaPot) w/ Cucumber Raita", batch:true},
+  {name:"Bamboo Steamer Ginger-Scallion Whole Fish", batch:false},
+  {name:"Paella-Style Cauliflower Rice w/ Seafood & Chicken", batch:true}
+];
+
+function trunc(s,n){ if(!s) return s; return s.length<=n ? s : s.slice(0,n-1)+'…'; }
+
+/* ==========================================================
+   APP CLASS
+   ========================================================== */
+class MealCalendarApp {
+  constructor() {
+    this.currentDate = new Date(2026, 4, 14);
+    this.view = 'month';
+    this.data = {};
+    this.apiKey = localStorage.getItem('pollinationsApiKey') || '';
+    this.model = localStorage.getItem('pollinationsModel') || 'gemini-search';
+    this.openDate = null;
+    this.chatHistory = [];
+    this.storageKey = 'hybridMealData_v1';
+
+    const saved = localStorage.getItem(this.storageKey);
+    if (saved) {
+      try { this.data = JSON.parse(saved); } catch(e) { this.debug('Parse error loading saved data', e); this.initDefaultData(); }
+    } else {
+      this.initDefaultData();
+    }
+
+    this.applySettingsToUI();
+    this.render();
+    this.initDebugCapture();
+  }
+
+  applySettingsToUI() {
+    const elKey = document.getElementById('apiKeyInput');
+    const elModel = document.getElementById('modelSelect');
+    if (elKey) elKey.value = this.apiKey;
+    if (elModel) elModel.value = this.model;
+    const nd = document.getElementById('navDate');
+    if (nd) nd.value = this.dateStr(this.currentDate);
+  }
+
+  /* ---------- Date utilities ---------- */
+  dateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  parseDate(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); }
+  addDays(d, n) { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+  startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+  endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0); }
+  dayOfWeek(d){ return d.getDay(); }
+
+  /* ---------- Default 6-month planner ---------- */
+  initDefaultData() {
+    const start = new Date(2026, 4, 14);
+    const end = new Date(2026, 10, 14);
+    const data = {};
+
+    let wkDinnerCursor = 0, satDinnerCursor = 0, sunDinnerCursor = 0;
+    let bCursorWk = 0, bCursorWknd = 0;
+    let lCursorWk = 0, lCursorWknd = 0;
+    let sCursor = 0, deCursor = 0;
+    let dayCounter = 0;
+    let lastTuesdayDinner = '';
+
+    for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate()+1)) {
+      const ds = this.dateStr(cur);
+      const day = cur.getDay(); // 0 Sun, 1 Mon, ..., 6 Sat
+      if (!data[ds]) data[ds] = { breakfast:"", lunch:"", dinner:"", snack:"", dessert:"", notes:"" };
+
+      // Wednesday = no-cook / leftover assembly day
+      if (day === 3) {
+        const tues = this.dateStr(this.addDays(cur, -1));
+        const tuesDinner = data[tues]?.dinner || lastTuesdayDinner || 'Chicken Soup';
+        data[ds].dinner = "No-Cook: Leftover " + tuesDinner + " or Simple Assembly";
+        data[ds].notes = "Wednesday no-cook. Reheat, sandwich, or assemble only.";
+        data[ds].breakfast = "Cereal, Yogurt, or Hard-Boiled Eggs";
+        // Deliberately leave lunch empty here so Tuesday batch-routing can fill it
+      } else {
+        let pick = null;
+        let notes = [];
+
+        if (day === 0) {
+          // Sunday — creative global cuisine
+          pick = SUNDAY_CREATIVE_DINNERS[sunDinnerCursor % SUNDAY_CREATIVE_DINNERS.length];
+          sunDinnerCursor++;
+          notes.push("Sunday creative project meal. Use special tools (Donabe, wok, outdoor Dutch oven, InstaPot, smoker, steamer).");
+          notes.push("Room for longer cook or baking project.");
+        } else if (day === 6) {
+          // Saturday — post-shopping, moderate but batch-friendly
+          pick = SATURDAY_DINNERS[satDinnerCursor % SATURDAY_DINNERS.length];
+          satDinnerCursor++;
+          notes.push("Saturday shopping morning. Prep ahead, slow-cooker, InstaPot, or grill.");
+          if (pick.batch) notes.push("Make extra for leftovers this week.");
+        } else {
+          // Mon/Tue/Thu/Fri — weeknight comfort food
+          pick = WEEKNIGHT_DINNERS[wkDinnerCursor % WEEKNIGHT_DINNERS.length];
+          wkDinnerCursor++;
+          notes.push("Weeknight: quick comfort food, 30–90 min max.");
+          if (day === 2) {
+            notes.push("Tuesday: make extra tonight for Wednesday leftovers.");
+            lastTuesdayDinner = pick.name;
+          }
+        }
+
+        data[ds].dinner = pick.name;
+        data[ds].notes = notes.join(" ");
+
+        // Auto-leftover routing for batch meals
+        if (pick.batch) {
+          const next = this.addDays(cur, 1);
+          const next2 = this.addDays(cur, 2);
+          if (next <= end) {
+            const ns = this.dateStr(next);
+            if (!data[ns]) data[ns] = { breakfast:"", lunch:"", dinner:"", snack:"", dessert:"", notes:"" };
+            if (!data[ns].lunch) data[ns].lunch = "Leftover: " + pick.name;
+          }
+          if (next2 <= end) {
+            const ns2 = this.dateStr(next2);
+            if (!data[ns2]) data[ns2] = { breakfast:"", lunch:"", dinner:"", snack:"", dessert:"", notes:"" };
+            if (!data[ns2].lunch) data[ns2].lunch = "Leftover: " + pick.name + " (again)";
+            else if (!data[ns2].breakfast) data[ns2].breakfast = "Leftover " + pick.name.split(" ")[0] + " w/ Fried Egg";
+          }
+        }
+      }
+
+      // Breakfast
+      if (!data[ds].breakfast) {
+        if (day === 0 || day === 6) {
+          data[ds].breakfast = WEEKEND_BREAKFASTS[bCursorWknd % WEEKEND_BREAKFASTS.length];
+          bCursorWknd++;
+        } else {
+          data[ds].breakfast = WEEKDAY_BREAKFASTS[bCursorWk % WEEKDAY_BREAKFASTS.length];
+          bCursorWk++;
+        }
+      }
+
+      // Lunch (Wednesday fills with generic only if Tuesday didn't route a leftover)
+      if (!data[ds].lunch) {
+        if (day === 3) {
+          data[ds].lunch = "Leftover Bowl or Cold Bean Salad";
+        } else if (day === 0 || day === 6) {
+          data[ds].lunch = WEEKEND_LUNCHES[lCursorWknd % WEEKEND_LUNCHES.length];
+          lCursorWknd++;
+        } else {
+          data[ds].lunch = WEEKDAY_LUNCHES[lCursorWk % WEEKDAY_LUNCHES.length];
+          lCursorWk++;
+        }
+      }
+
+      // Snack
+      data[ds].snack = SNACKS[sCursor % SNACKS.length];
+      sCursor++;
+
+      // Dessert every 3rd day
+      if ((dayCounter % 3) === 0) {
+        data[ds].dessert = DESSERTS[deCursor % DESSERTS.length];
+        deCursor++;
+      } else {
+        data[ds].dessert = "—";
+      }
+
+      dayCounter++;
+    }
+
+    this.data = data;
+    this.persist();
+  }
+
+  persist() {
+    try { localStorage.setItem(this.storageKey, JSON.stringify(this.data)); } catch(e) { this.debug('localStorage write failed', e); }
+  }
+
+  resetData() {
+    if (confirm('Clear all saved meals and rebuild from default hybrid menu?')) {
+      localStorage.removeItem(this.storageKey);
+      this.data = {};
+      this.initDefaultData();
+      this.render();
+    }
+  }
+
+  saveKey() {
+    const k = document.getElementById('apiKeyInput').value.trim();
+    const m = document.getElementById('modelSelect').value;
+    this.apiKey = k; this.model = m;
+    localStorage.setItem('pollinationsApiKey', k);
+    localStorage.setItem('pollinationsModel', m);
+    alert('API key and model saved locally.');
+  }
+
+  /* ---------- Navigation ---------- */
+  setView(v){ this.view = v; this.render(); }
+  jumpTo(v){ if(!v) return; this.currentDate = this.parseDate(v); this.render(); }
+  prev(){
+    if (this.view==='month') this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth()-1, 1);
+    else if (this.view==='week') this.currentDate = this.addDays(this.currentDate, -7);
+    else this.currentDate = this.addDays(this.currentDate, -1);
+    this.render();
+  }
+  next(){
+    if (this.view==='month') this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth()+1, 1);
+    else if (this.view==='week') this.currentDate = this.addDays(this.currentDate, 7);
+    else this.currentDate = this.addDays(this.currentDate, 1);
+    this.render();
+  }
+
+  /* ---------- Rendering ---------- */
+  render() {
+    const c = document.getElementById('calendarContainer');
+    c.className = 'view-' + this.view;
+    c.innerHTML = '';
+    const nd = document.getElementById('navDate');
+    if (nd) nd.value = this.dateStr(this.currentDate);
+    const st = document.getElementById('statusText');
+    if (st) st.textContent = this.formatHeader();
+
+    if (this.view==='month') this.renderMonth(c);
+    else if (this.view==='week') this.renderWeek(c);
+    else this.renderDay(c);
+  }
+
+  formatHeader() {
+    const mo = this.currentDate.toLocaleString('default',{month:'long', year:'numeric'});
+    if (this.view==='day') {
+      return this.currentDate.toLocaleString('default',{weekday:'long', month:'long', day:'numeric', year:'numeric'});
+    }
+    if (this.view==='week') {
+      const sun = this.addDays(this.currentDate, -this.currentDate.getDay());
+      const sat = this.addDays(sun, 6);
+      return `Week of ${this.dateStr(sun)} — ${this.dateStr(sat)}`;
+    }
+    return mo;
+  }
+
+  dayCellHTML(ds, showFull) {
+    const d = this.parseDate(ds);
+    const rec = this.data[ds] || { breakfast:"", lunch:"", dinner:"", snack:"", dessert:"", notes:"" };
+    const isToday = ds === this.dateStr(new Date());
+    const pills = [];
+    if (rec.breakfast) pills.push(`<div class="meal-pill b" title="${this.esc(rec.breakfast)}">${showFull ? this.esc(rec.breakfast) : 'B: '+this.esc(trunc(rec.breakfast,22))}</div>`);
+    if (rec.lunch) pills.push(`<div class="meal-pill l" title="${this.esc(rec.lunch)}">${showFull ? this.esc(rec.lunch) : 'L: '+this.esc(trunc(rec.lunch,22))}</div>`);
+    if (rec.dinner) pills.push(`<div class="meal-pill d" title="${this.esc(rec.dinner)}">${showFull ? this.esc(rec.dinner) : 'D: '+this.esc(trunc(rec.dinner,22))}</div>`);
+    if (rec.snack) pills.push(`<div class="meal-pill s" title="${this.esc(rec.snack)}">${showFull ? this.esc(rec.snack) : 'S: '+this.esc(trunc(rec.snack,22))}</div>`);
+    if (rec.dessert && rec.dessert!=='—') pills.push(`<div class="meal-pill de" title="${this.esc(rec.dessert)}">${showFull ? this.esc(rec.dessert) : 'De: '+this.esc(trunc(rec.dessert,22))}</div>`);
+
+    return `
+      <div class="day-cell ${showFull?'':'outside'}" onclick="app.openModal('${ds}')">
+        <div class="dnum ${isToday?'today':''}">${d.getDate()}</div>
+        <div class="pill-stack">
+          ${pills.join('')}
+        </div>
+        ${showFull && rec.notes ? `<div class="small" style="margin-top:auto;">${this.esc(rec.notes)}</div>`:''}
+      </div>`;
+  }
+
+  renderMonth(container) {
+    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(w => {
+      container.insertAdjacentHTML('beforeend', `<div class="weekday-header">${w}</div>`);
+    });
+    const first = this.startOfMonth(this.currentDate);
+    let cur = new Date(first);
+    cur.setDate(cur.getDate() - this.dayOfWeek(first));
+    const last = this.endOfMonth(this.currentDate);
+    const endView = this.addDays(last, 6 - this.dayOfWeek(last));
+
+    while (cur <= endView) {
+      const ds = this.dateStr(cur);
+      const inMonth = cur.getMonth() === this.currentDate.getMonth();
+      container.insertAdjacentHTML('beforeend', this.dayCellHTML(ds, inMonth));
+      cur.setDate(cur.getDate()+1);
+    }
+  }
+
+  renderWeek(container) {
+    ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(w => {
+      container.insertAdjacentHTML('beforeend', `<div class="weekday-header">${w}</div>`);
+    });
+    let cur = this.addDays(this.currentDate, -this.currentDate.getDay());
+    for (let i=0;i<7;i++) {
+      const ds = this.dateStr(cur);
+      container.insertAdjacentHTML('beforeend', this.dayCellHTML(ds, true));
+      cur.setDate(cur.getDate()+1);
+    }
+  }
+
+  renderDay(container) {
+    const ds = this.dateStr(this.currentDate);
+    const rec = this.data[ds] || { breakfast:"", lunch:"", dinner:"", snack:"", dessert:"", notes:"" };
+    const mealBlocks = (label, key, cls) => `
+      <div class="meal-block ${cls}">
+        <div class="flex" style="justify-content:space-between;align-items:center;">
+          <strong>${label}</strong>
+          <button class="btn" style="font-size:.78rem;" onclick="app.getRecipe('${this.escJS(rec[key])}')">Get Recipe</button>
+        </div>
+        <div>${this.esc(rec[key] || '—')}</div>
+      </div>`;
+
+    container.insertAdjacentHTML('beforeend', `
+      <div class="day-card">
+        ${mealBlocks('Breakfast','breakfast','b')}
+        ${mealBlocks('Lunch','lunch','l')}
+        ${mealBlocks('Dinner','dinner','d')}
+        ${mealBlocks('Snack','snack','s')}
+        ${mealBlocks('Dessert','dessert','de')}
+        <div class="small">${this.esc(rec.notes || '')}</div>
+        <div class="flex" style="margin-top:.5rem;">
+          <button class="btn" onclick="app.openModal('${ds}')">Edit Day</button>
+          <button class="btn" onclick="app.regenerateDayWithAI('${ds}')">🔄 AI Regenerate This Day</button>
+        </div>
+      </div>
+    `);
+  }
+
+  esc(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  escJS(s){ return this.esc(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+  /* ---------- Modal / Editing ---------- */
+  openModal(ds) {
+    this.openDate = ds;
+    const rec = this.data[ds] || { breakfast:"", lunch:"", dinner:"", snack:"", dessert:"", notes:"" };
+    document.getElementById('modalDateTitle').textContent = ds + ' (' + this.parseDate(ds).toLocaleDateString('en-US',{weekday:'long'}) + ')';
+    document.getElementById('inBreakfast').value = rec.breakfast || '';
+    document.getElementById('inLunch').value = rec.lunch || '';
+    document.getElementById('inDinner').value = rec.dinner || '';
+    document.getElementById('inSnack').value = rec.snack || '';
+    document.getElementById('inDessert').value = rec.dessert || '';
+    document.getElementById('inNotes').value = rec.notes || '';
+    document.getElementById('recipeOutput').style.display = 'none';
+    document.getElementById('recipeOutput').textContent = '';
+    document.getElementById('dayModal').classList.add('open');
+  }
+  closeModal(){ document.getElementById('dayModal').classList.remove('open'); this.openDate=null; }
+  saveDay() {
+    if (!this.openDate) return;
+    const ds = this.openDate;
+    if (!this.data[ds]) this.data[ds] = {};
+    this.data[ds].breakfast = document.getElementById('inBreakfast').value.trim();
+    this.data[ds].lunch = document.getElementById('inLunch').value.trim();
+    this.data[ds].dinner = document.getElementById('inDinner').value.trim();
+    this.data[ds].snack = document.getElementById('inSnack').value.trim();
+    this.data[ds].dessert = document.getElementById('inDessert').value.trim();
+    this.data[ds].notes = document.getElementById('inNotes').value.trim();
+    this.persist(); this.render(); this.closeModal();
+  }
+
+  /* ---------- Pollinations API ---------- */
+  async callPollinations({messages, temperature=0.7, stream=false, onChunk}) {
+    const key = this.apiKey;
+    if (!key) { alert('Enter and save your Pollinations API key first.'); throw new Error('No API key'); }
+    const model = this.model || 'gemini-search';
+    const url = 'https://gen.pollinations.ai/v1/chat/completions';
+    const body = { model, messages, temperature, stream };
+    const headers = { 'Content-Type':'application/json', 'Authorization':`Bearer ${key}` };
+    const res = await fetch(url, { method:'POST', headers, body: JSON.stringify(body) });
+    if (!res.ok) {
+      const txt = await res.text().catch(()=>'');
+      throw new Error(`Pollinations error ${res.status}: ${txt}`);
+    }
+    if (!stream) {
+      const json = await res.json();
+      return json.choices?.[0]?.message?.content || '';
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream:true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        const payload = line.slice(5).trim();
+        if (payload === '[DONE]') return;
+        try {
+          const j = JSON.parse(payload);
+          const chunk = j.choices?.[0]?.delta?.content || '';
+          if (onChunk) onChunk(chunk);
+        } catch(e) { /* ignore parse noise */ }
+      }
+    }
+  }
+
+  /* ---------- AI: regenerate a single day ---------- */
+  async regenerateDayWithAI(ds) {
+    if (!ds && this.openDate) ds = this.openDate;
+    if (!ds) { alert('Select a day first.'); return; }
+    const target = ds;
+    const dateObj = this.parseDate(target);
+    const dayNum = dateObj.getDay();
+    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const dayName = dayNames[dayNum];
+
+    let dayRules = "";
+    if (dayNum === 3) {
+      dayRules = "It is WEDNESDAY. Rules: NO cooking. Leftovers, reheats, cold sandwiches/wraps, taco salad assembly from prep, pasta salad from fridge, cheese & crackers, or simple no-cook assembly only.";
+    } else if (dayNum === 0) {
+      dayRules = "It is SUNDAY. Rules: Creative cuisine day. Use international flavors (Asian, Indian, Mexican, Middle Eastern, Ethiopian, European, Island). You may suggest Donabe, wok, InstaPot, Dutch oven, smoker, bamboo steamer, or advanced baking. Use exotic pantry items if desired (miso, coconut milk, curry, lotus root, bok choy, chana, mung, etc.). This can be a longer project meal.";
+    } else if (dayNum === 6) {
+      dayRules = "It is SATURDAY. Rules: Shopping day dinner. Prefer slow-cooker, InstaPot, grill, or make-ahead meals. Moderate creativity is okay (fajitas, carnitas, pizza from scratch, simple curry, wok meal) but keep active cooking manageable after a morning of shopping. Batch cook if possible.";
+    } else {
+      dayRules = "It is a WEEKNIGHT (" + dayName + "). Rules: Simple comfort food, budget-friendly, familiar flavors. 30–90 minutes max active time. Prefer skillet, sheet pan, Crockpot, InstaPot, or oven. Examples: taco salad, grilled cheese & soup, burrito bowl, pasta salad, baked potato bar, breakfast-for-dinner, simple stir-fry, chili, pizza, quesadillas, casserole, soup & sandwich.";
+    }
+
+    const prompt = `Create one day of a meal plan for ${target} (${dayName}). Return ONLY valid JSON with keys: breakfast, lunch, dinner, snack, dessert, notes.
+
+${dayRules}
+- Mounjaro users: modest portions. Mostly keto; moderate carbs acceptable when paired with protein/fat. Avoid sugary drinks/desserts.
+- NO alcohol—use broth, vinegar, citrus, or water instead.
+- Favor chicken, eggs, ground beef, beans/lentils, canned fish. Lamb is a rare treat; do not use it here.
+- Include brief prep/reheat notes.`;
+    const out = document.getElementById('recipeOutput');
+    out.style.display = 'block';
+    out.textContent = 'Generating menu…';
+    try {
+      const text = await this.callPollinations({ messages:[
+        {role:'system', content: SYSTEM_CONTEXT},
+        {role:'user', content: prompt}
+      ], temperature: 0.9, stream: false });
+      let obj = null;
+      try { obj = JSON.parse(text); } catch(e) {}
+      if (!obj) {
+        const m = text.match(/```json\s*([\s\S]*?)\s*```/);
+        if (m) try { obj = JSON.parse(m[1]); } catch(e){}
+      }
+      if (obj) {
+        if (!this.data[target]) this.data[target] = {};
+        if (obj.breakfast) this.data[target].breakfast = obj.breakfast;
+        if (obj.lunch) this.data[target].lunch = obj.lunch;
+        if (obj.dinner) this.data[target].dinner = obj.dinner;
+        if (obj.snack) this.data[target].snack = obj.snack;
+        if (obj.dessert) this.data[target].dessert = obj.dessert;
+        if (obj.notes) this.data[target].notes = obj.notes;
+        this.persist(); this.render();
+        out.textContent = 'Menu updated! Close modal or edit above if needed.';
+        if (this.openDate === target) {
+          document.getElementById('inBreakfast').value = this.data[target].breakfast || '';
+          document.getElementById('inLunch').value = this.data[target].lunch || '';
+          document.getElementById('inDinner').value = this.data[target].dinner || '';
+          document.getElementById('inSnack').value = this.data[target].snack || '';
+          document.getElementById('inDessert').value = this.data[target].dessert || '';
+          document.getElementById('inNotes').value = this.data[target].notes || '';
+        }
+      } else {
+        out.textContent = 'Could not parse JSON. Raw response:\n\n' + text;
+      }
+    } catch(err) {
+      this.debug('regenerateDayWithAI error', err);
+      out.textContent = 'Error: ' + err.message;
+    }
+  }
+
+  /* ---------- AI: recipe fetch ---------- */
+  fetchRecipeForSelected() {
+    const which = document.getElementById('recipeMealSelect').value;
+    const name = document.getElementById('in'+this.cap(which)).value.trim();
+    if (!name) { alert('That meal slot is empty.'); return; }
+    this.getRecipe(name);
+  }
+  cap(s){ return s[0].toUpperCase()+s.slice(1); }
+
+  async getRecipe(mealName) {
+    if (!mealName || mealName === '—') { alert('Select a meal first.'); return; }
+    const out = document.getElementById('recipeOutput');
+    out.style.display = 'block';
+    out.innerHTML = '<span class="loader"></span> Fetching recipe from AI…';
+    const prompt = `Give a detailed but practical recipe for "${mealName}" optimized for this household. 
+
+If this is a weeknight meal: keep it simple, familiar, and under 60–90 minutes.
+If this is a Sunday creative meal: feel free to use international techniques and special tools (Donabe, wok, InstaPot, smoker, steamer, etc.).
+
+They have advanced tools and a deep pantry (miso, coconut milk, curry spices, vital wheat gluten, psyllium, xanthan, stevia, legumes, grains). Diet is mostly keto with moderate carbs acceptable due to Mounjaro. NO alcohol—use broth, vinegar, or citrus instead. Include concise ingredient list, step-by-step instructions, and one tip for modest portions. Use markdown headers.`;
+    try {
+      const text = await this.callPollinations({
+        messages:[
+          {role:'system', content: SYSTEM_CONTEXT},
+          {role:'user', content: prompt}
+        ],
+        temperature: 0.7,
+        stream: false
+      });
+      out.textContent = text;
+    } catch(err) {
+      this.debug('getRecipe error', err);
+      out.textContent = 'Error: ' + err.message;
+    }
+  }
+
+  /* ---------- Chat ---------- */
+  toggleChat() {
+    const el = document.getElementById('chatPanel');
+    el.classList.toggle('chat-hidden');
+  }
+  addChatBubble(text, sender) {
+    const box = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'chat-bubble ' + (sender==='user'?'user': sender==='error'?'error':'ai');
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+  async sendChat() {
+    const input = document.getElementById('chatInput');
+    const q = input.value.trim();
+    if (!q) return;
+    input.value = '';
+    this.addChatBubble(q, 'user');
+    this.chatHistory.push({role:'user', content: q});
+    if (this.chatHistory.length > 20) this.chatHistory = this.chatHistory.slice(-20);
+
+    try {
+      const text = await this.callPollinations({
+        messages:[
+          {role:'system', content: SYSTEM_CONTEXT + ' Be concise but creative. You are a helpful kitchen assistant inside a meal calendar app.'},
+          ...this.chatHistory.map(m => ({role:m.role, content:m.content}))
+        ],
+        temperature: 0.8,
+        stream: false
+      });
+      this.addChatBubble(text, 'ai');
+      this.chatHistory.push({role:'assistant', content: text});
+    } catch(err) {
+      this.debug('sendChat error', err);
+      this.addChatBubble('Error: ' + err.message, 'error');
+    }
+  }
+
+  /* ---------- Debug ---------- */
+  toggleDebug() {
+    const el = document.getElementById('debugPanel');
+    el.style.display = (el.style.display === 'flex') ? 'none' : 'flex';
+  }
+  clearDebug() {
+    document.getElementById('debugContent').textContent = '';
+  }
+  debug(label, err) {
+    const panel = document.getElementById('debugContent');
+    const time = new Date().toLocaleTimeString();
+    const line = document.createElement('div');
+    if (err instanceof Error) {
+      line.className = 'debug-error';
+      line.textContent = `[${time}] ${label}: ${err.message}\n${err.stack || ''}`;
+    } else if (typeof err === 'string') {
+      line.className = 'debug-warn';
+      line.textContent = `[${time}] ${label}: ${err}`;
+    } else {
+      line.className = 'debug-log';
+      line.textContent = `[${time}] ${label}: ${JSON.stringify(err)}`;
+    }
+    if (panel) { panel.appendChild(line); panel.scrollTop = panel.scrollHeight; }
+  }
+  initDebugCapture() {
+    const self = this;
+    const origLog = console.log;
+    const origErr = console.error;
+    const origWarn = console.warn;
+    console.log = function(...args){ origLog.apply(console, args); self.debug('log', args.map(a=>typeof a==='object'?JSON.stringify(a):String(a)).join(' ')); };
+    console.error = function(...args){ origErr.apply(console, args); self.debug('error', args.map(a=> a instanceof Error ? a : String(a)).join(' ')); };
+    console.warn = function(...args){ origWarn.apply(console, args); self.debug('warn', args.map(a=>typeof a==='object'?JSON.stringify(a):String(a)).join(' ')); };
+    window.onerror = (msg, url, line, col, err) => { self.debug('window.onerror', `${msg} at ${url}:${line}:${col}`); };
+    window.addEventListener('unhandledrejection', ev => { self.debug('unhandledrejection', ev.reason); });
+  }
+}
+
+const app = new MealCalendarApp();
+</script>
+</body>
+</html>
