@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angles Practice</title>
+  <style>
+    :root{
+      --blue:#3f72c5;
+      --blue-dark:#2e5ba1;
+      --green:#b8d89d;
+      --text:#1d2430;
+      --accent:#c000a0;
+      --good:#1f8f45;
+      --bad:#c0392b;
+      --card:#ffffff;
+      --shadow:0 6px 18px rgba(0,0,0,.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      color:var(--text);
+      background:linear-gradient(to bottom, #dce7f6 0%, #cfe0d6 45%, var(--green) 100%);
+      min-height:100vh;
+    }
+    .topbar{
+      background:linear-gradient(rgba(63,114,197,.95), rgba(63,114,197,.95));
+      color:white;
+      padding:16px 20px;
+      box-shadow:var(--shadow);
+    }
+    .topbar h1{margin:0;font-size:28px}
+    .wrap{max-width:1200px;margin:18px auto;padding:0 16px 20px}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+    button, select, input[type="text"]{font:inherit}
+    .btn{
+      background:var(--blue);color:white;border:none;border-radius:10px;
+      padding:10px 14px;cursor:pointer;box-shadow:var(--shadow);
+    }
+    .btn:hover{background:var(--blue-dark)}
+    .btn.secondary{
+      background:white;color:var(--blue-dark);border:2px solid var(--blue);box-shadow:none;
+    }
+    .btn.good{background:var(--good)}
+    .pill{
+      background:white;border-radius:999px;padding:8px 12px;box-shadow:var(--shadow);
+    }
+    .main{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+    .card{
+      background:rgba(255,255,255,.78);
+      border-radius:18px;box-shadow:var(--shadow);padding:18px;
+    }
+    .question{font-size:28px;line-height:1.25;margin:0 0 14px 0}
+    .small{font-size:14px;color:#4e5d73}
+    canvas{
+      width:100%;display:block;background:#f7f7f7;border:1px solid #d0d7e2;border-radius:12px;
+    }
+    .right-panel{display:flex;flex-direction:column;gap:14px}
+    .answer-box{
+      background:var(--card);border-radius:14px;padding:16px;border:1px solid #dbe2ec;
+    }
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .input-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+    .text-answer{
+      min-width:220px;padding:10px 12px;border:2px solid #c9d4e3;border-radius:10px;font-size:20px;
+    }
+    .choices{display:grid;gap:10px;margin-top:8px}
+    .choice{
+      border:2px solid #d5dfed;background:#fff;border-radius:12px;padding:12px 14px;cursor:pointer;
+    }
+    .choice.selected{border-color:var(--blue);background:#ebf2ff}
+    .choice.correct{border-color:var(--good);background:#eaf8ef}
+    .choice.incorrect{border-color:var(--bad);background:#fdecea}
+    .check-grid{display:grid;gap:10px;margin-top:10px}
+    .check-item{
+      display:flex;align-items:center;gap:10px;padding:10px 12px;background:white;
+      border:1px solid #dde5f0;border-radius:12px;
+    }
+    .feedback{
+      margin-top:12px;font-size:22px;font-weight:700;min-height:28px;
+    }
+    .feedback.good{color:var(--good)}
+    .feedback.bad{color:var(--accent)}
+    .keyboard{
+      display:grid;grid-template-columns:repeat(6, minmax(44px, 1fr));gap:8px;margin-top:10px;
+    }
+    .key{
+      border:none;border-radius:10px;padding:10px 0;background:#eef4ff;cursor:pointer;
+      font-size:18px;font-weight:700;
+    }
+    .legend{font-size:15px;color:#4b5a6c;margin-top:6px}
+    .footer-note{margin-top:18px;font-size:14px;color:#556273}
+    @media (max-width: 960px){
+      .main{grid-template-columns:1fr}
+      .question{font-size:24px}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <h1>Angles Practice</h1>
+  </div>
+
+  <div class="wrap">
+    <div class="controls">
+      <button class="btn" id="newProblemBtn">New Problem</button>
+      <button class="btn secondary" id="showAnswerBtn">Show Answer</button>
+      <button class="btn secondary" id="resetScoreBtn">Reset Score</button>
+
+      <label class="pill">
+        Problem Type:
+        <select id="problemTypeSelect">
+          <option value="mixed">Mixed</option>
+          <option value="name-marked-angle">Name the Marked Angle</option>
+          <option value="relationships">Angle Relationships</option>
+          <option value="find-adjacent">Name Adjacent Angles</option>
+          <option value="find-vertical">Name Vertical Angles</option>
+          <option value="missing-right">Missing from 90°</option>
+          <option value="missing-straight">Missing from 180°</option>
+          <option value="missing-vertical">Missing Vertical Angle</option>
+          <option value="find-measure">Find the Measure of the Angle</option>
+        </select>
+      </label>
+
+      <div class="pill" id="scoreBox">Score: 0 / 0</div>
+    </div>
+
+    <div class="main">
+      <div class="card">
+        <p class="question" id="questionText">Press “New Problem” to begin.</p>
+        <canvas id="diagram" width="760" height="520"></canvas>
+        <div class="footer-note">
+          This version is simplified to focus on correct, answerable problems.
+        </div>
+      </div>
+
+      <div class="right-panel">
+        <div class="answer-box">
+          <div class="small"><strong>Your Answer</strong></div>
+          <div id="answerArea"></div>
+          <div class="feedback" id="feedback"></div>
+          <div class="toolbar">
+            <button class="btn good" id="checkBtn">Check Answer</button>
+            <button class="btn secondary" id="clearBtn">Clear</button>
+          </div>
+        </div>
+
+        <div class="answer-box">
+          <div class="small"><strong>Symbol Buttons</strong></div>
+          <div class="toolbar">
+            <button class="btn secondary symbol-btn" data-symbol="∠">Insert ∠</button>
+            <button class="btn secondary symbol-btn" data-symbol=",">Insert comma</button>
+            <button class="btn secondary symbol-btn" data-symbol=" ">Space</button>
+          </div>
+          <div class="legend">Students may type angle names with or without the ∠ symbol.</div>
+          <div class="keyboard">
+            <button class="key" data-k="1">1</button>
+            <button class="key" data-k="2">2</button>
+            <button class="key" data-k="3">3</button>
+            <button class="key" data-k="4">4</button>
+            <button class="key" data-k="5">5</button>
+            <button class="key" data-k="6">6</button>
+            <button class="key" data-k="7">7</button>
+            <button class="key" data-k="8">8</button>
+            <button class="key" data-k="9">9</button>
+            <button class="key" data-k="0">0</button>
+            <button class="key" data-k="⌫">⌫</button>
+            <button class="key" data-k="CLR">CLR</button>
+          </div>
+        </div>
+
+        <div class="answer-box">
+          <div class="small"><strong>Vocabulary</strong></div>
+          <ul style="margin:10px 0 0 18px; line-height:1.5;">
+            <li><strong>Adjacent angles</strong>: share a vertex and one side</li>
+            <li><strong>Vertical angles</strong>: opposite angles formed by two intersecting lines</li>
+            <li><strong>Linear pair</strong>: adjacent angles that form a straight line</li>
+            <li><strong>Complementary</strong>: sum is 90°</li>
+            <li><strong>Supplementary</strong>: sum is 180°</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('diagram');
+    const ctx = canvas.getContext('2d');
+    const questionText = document.getElementById('questionText');
+    const answerArea = document.getElementById('answerArea');
+    const feedback = document.getElementById('feedback');
+    const scoreBox = document.getElementById('scoreBox');
+    const problemTypeSelect = document.getElementById('problemTypeSelect');
+
+    let currentProblem = null;
+    let activeInput = null;
+    let score = 0;
+    let total = 0;
+
+    function randInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function shuffle(arr){
+      const a=[...arr];
+      for(let i=a.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
+      }
+      return a;
+    }
+    function updateScore(){ scoreBox.textContent = `Score: ${score} / ${total}`; }
+    function clearFeedback(){ feedback.textContent=''; feedback.className='feedback'; }
+    function setFeedback(msg, good){
+      feedback.textContent=msg;
+      feedback.className = good ? 'feedback good' : 'feedback bad';
+    }
+
+    function clearCanvas(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle='#f7f7f7';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+
+    function rad(d){ return d*Math.PI/180; }
+    function normalize(a){ a%=360; if(a<0)a+=360; return a; }
+    function ccwDelta(a,b){
+      a=normalize(a); b=normalize(b);
+      let d=b-a; if(d<0)d+=360;
+      return d;
+    }
+    function smallestDiff(a,b){
+      const d = ccwDelta(a,b);
+      return Math.min(d,360-d);
+    }
+
+    function drawPoint(x,y,label=null,lx=0,ly=0){
+      ctx.beginPath();
+      ctx.arc(x,y,5,0,Math.PI*2);
+      ctx.fillStyle='#111';
+      ctx.fill();
+      if(label){
+        ctx.font='italic 24px Arial';
+        ctx.fillStyle='#222';
+        ctx.fillText(label, x+lx, y+ly);
+      }
+    }
+
+    function arrowHead(x1,y1,x2,y2){
+      const ang=Math.atan2(y2-y1,x2-x1);
+      const size=12;
+      ctx.beginPath();
+      ctx.moveTo(x2,y2);
+      ctx.lineTo(x2-size*Math.cos(ang-Math.PI/7), y2-size*Math.sin(ang-Math.PI/7));
+      ctx.lineTo(x2-size*Math.cos(ang+Math.PI/7), y2-size*Math.sin(ang+Math.PI/7));
+      ctx.closePath();
+      ctx.fillStyle='#111';
+      ctx.fill();
+    }
+
+    function drawArrow(x1,y1,x2,y2,both=false){
+      ctx.strokeStyle='#111';
+      ctx.lineWidth=3;
+      ctx.beginPath();
+      ctx.moveTo(x1,y1);
+      ctx.lineTo(x2,y2);
+      ctx.stroke();
+      arrowHead(x1,y1,x2,y2);
+      if(both) arrowHead(x2,y2,x1,y1);
+    }
+
+    function drawRay(cx,cy,angleDeg,length=220){
+      const x2 = cx + Math.cos(rad(angleDeg))*length;
+      const y2 = cy - Math.sin(rad(angleDeg))*length;
+      drawArrow(cx,cy,x2,y2,false);
+      return {x:x2,y:y2};
+    }
+
+    function drawLineThrough(cx,cy,angleDeg,length=240){
+      const x1 = cx - Math.cos(rad(angleDeg))*length;
+      const y1 = cy + Math.sin(rad(angleDeg))*length;
+      const x2 = cx + Math.cos(rad(angleDeg))*length;
+      const y2 = cy - Math.sin(rad(angleDeg))*length;
+      drawArrow(x1,y1,x2,y2,true);
+    }
+
+    function drawAngleArc(cx,cy,startDeg,endDeg,radius=44,text='',textRadius=68){
+      let s = normalize(startDeg);
+      let e = normalize(endDeg);
+      let delta = ccwDelta(s,e);
+      ctx.beginPath();
+      ctx.strokeStyle='#555';
+      ctx.lineWidth=2;
+      ctx.arc(cx,cy,radius,-rad(s),-rad(s+delta), true);
+      ctx.stroke();
+
+      const mid = s + delta/2;
+      const tx = cx + Math.cos(rad(mid))*textRadius;
+      const ty = cy - Math.sin(rad(mid))*textRadius;
+      if(text){
+        ctx.font='24px Arial';
+        ctx.fillStyle='#111';
+        ctx.fillText(text, tx-8, ty+8);
+      }
+    }
+
+    function drawRightAngleMarker(cx, cy, size, dirA, dirB){
+      const ax = Math.cos(rad(dirA)), ay = -Math.sin(rad(dirA));
+      const bx = Math.cos(rad(dirB)), by = -Math.sin(rad(dirB));
+      const x1 = cx + ax * size;
+      const y1 = cy + ay * size;
+      const x2 = x1 + bx * size;
+      const y2 = y1 + by * size;
+      const x3 = cx + bx * size;
+      const y3 = cy + by * size;
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 2;
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.lineTo(x3, y3);
+      ctx.stroke();
+    }
+
+    function buildCrossGeometry(){
+      clearCanvas();
+      const cx = 360, cy = 280;
+      const vertex = 'P';
+      const names = shuffle(['A','B','C','D','E','F','G','H','J','K','L','M','N','Q','R','S','T','U']);
+      const base = pick([0,20,30]);
+
+      const rays = [
+        {angle:normalize(base), point:names[0]},
+        {angle:normalize(base+180), point:names[1]},
+        {angle:normalize(base+65), point:names[2]},
+        {angle:normalize(base+245), point:names[3]}
+      ];
+
+      for(const r of rays){
+        drawRay(cx,cy,r.angle,230);
+        const px = cx + Math.cos(rad(r.angle))*160;
+        const py = cy - Math.sin(rad(r.angle))*160;
+        let lx = Math.cos(rad(r.angle)) > 0.25 ? 10 : (Math.cos(rad(r.angle)) < -0.25 ? -24 : -10);
+        let ly = Math.sin(rad(r.angle)) > 0.25 ? -10 : (Math.sin(rad(r.angle)) < -0.25 ? 28 : 8);
+        drawPoint(px,py,r.point,lx,ly);
+      }
+      drawPoint(cx,cy,vertex,-22,-10);
+
+      rays.sort((a,b)=>a.angle-b.angle);
+      return {cx,cy,vertex,rays};
+    }
+
+    function buildFiveRayGeometry(){
+      clearCanvas();
+      const cx = 360, cy = 280;
+      const vertex = 'P';
+      const names = shuffle(['A','B','C','D','E','F','G','H','J','K','L','M','N','Q','R','S','T','U']);
+      const start = pick([10,20,30,40]);
+      const angles = [start, start+70, start+145, start+220, start+300].map(normalize);
+
+      const rays = angles.map((angle, i) => ({angle, point:names[i]}));
+
+      for(const r of rays){
+        drawRay(cx,cy,r.angle,230);
+        const px = cx + Math.cos(rad(r.angle))*160;
+        const py = cy - Math.sin(rad(r.angle))*160;
+        let lx = Math.cos(rad(r.angle)) > 0.25 ? 10 : (Math.cos(rad(r.angle)) < -0.25 ? -24 : -10);
+        let ly = Math.sin(rad(r.angle)) > 0.25 ? -10 : (Math.sin(rad(r.angle)) < -0.25 ? 28 : 8);
+        drawPoint(px,py,r.point,lx,ly);
+      }
+      drawPoint(cx,cy,vertex,-22,-10);
+
+      rays.sort((a,b)=>a.angle-b.angle);
+      return {cx,cy,vertex,rays};
+    }
+
+    function angleName(geom, a, b){
+      return `∠${a}${geom.vertex}${b}`;
+    }
+
+    function regionAngles(geom){
+      const out = [];
+      const rays = geom.rays;
+      for(let i=0;i<rays.length;i++){
+        const r1 = rays[i];
+        const r2 = rays[(i+1)%rays.length];
+        const measure = ccwDelta(r1.angle, r2.angle);
+        out.push({
+          left:r1,
+          right:r2,
+          measure,
+          canonical:`∠${r1.point}${geom.vertex}${r2.point}`,
+          reverse:`∠${r2.point}${geom.vertex}${r1.point}`
+        });
+      }
+      return out;
+    }
+
+    function oppositeRayPairs(geom){
+      const out = [];
+      for(let i=0;i<geom.rays.length;i++){
+        for(let j=i+1;j<geom.rays.length;j++){
+          if(smallestDiff(geom.rays[i].angle, geom.rays[j].angle) === 180){
+            out.push([geom.rays[i], geom.rays[j]]);
+          }
+        }
+      }
+      return out;
+    }
+
+    function verticalPairs(geom){
+      const opp = oppositeRayPairs(geom);
+      const out = [];
+      if(opp.length < 2) return out;
+      for(let i=0;i<opp.length;i++){
+        for(let j=i+1;j<opp.length;j++){
+          const [a,b] = opp[i];
+          const [c,d] = opp[j];
+          out.push([
+            [`∠${a.point}${geom.vertex}${c.point}`, `∠${c.point}${geom.vertex}${a.point}`],
+            [`∠${b.point}${geom.vertex}${d.point}`, `∠${d.point}${geom.vertex}${b.point}`]
+          ]);
+          out.push([
+            [`∠${a.point}${geom.vertex}${d.point}`, `∠${d.point}${geom.vertex}${a.point}`],
+            [`∠${b.point}${geom.vertex}${c.point}`, `∠${c.point}${geom.vertex}${b.point}`]
+          ]);
+        }
+      }
+      return out;
+    }
+
+    function adjacentPairs(geom){
+      const regs = regionAngles(geom).filter(r => r.measure < 180);
+      const out = [];
+      for(let i=0;i<regs.length;i++){
+        const a = regs[i];
+        const b = regs[(i+1)%regs.length];
+        out.push([
+          [a.canonical, a.reverse],
+          [b.canonical, b.reverse]
+        ]);
+      }
+      return out;
+    }
+
+    function normalizeAngleText(s){
+      return (s || '')
+        .toUpperCase()
+        .replace(/\s+/g,'')
+        .replace(/∠/g,'');
+    }
+
+    function parseAnglePairInput(s){
+      if(!s) return null;
+      const cleaned = s.toUpperCase().replace(/∠/g,'').trim();
+      const parts = cleaned.split(',').map(x => x.trim()).filter(Boolean);
+      if(parts.length !== 2) return null;
+      return parts.map(x => x.replace(/\s+/g,''));
+    }
+
+    function pairMatchesUserInput(userText, validPairSets){
+      const parsed = parseAnglePairInput(userText);
+      if(!parsed) return false;
+
+      const [u1,u2] = parsed.map(x => x.toUpperCase());
+
+      for(const pair of validPairSets){
+        const set1 = pair[0].map(normalizeAngleText);
+        const set2 = pair[1].map(normalizeAngleText);
+
+        const direct = set1.includes(u1) && set2.includes(u2);
+        const reverse = set1.includes(u2) && set2.includes(u1);
+
+        if(direct || reverse) return true;
+      }
+      return false;
+    }
+
+    function relationshipForPair(geom, aName, bName){
+      const regs = regionAngles(geom).filter(r => r.measure < 180);
+      const findReg = name => regs.find(r => r.canonical===name || r.reverse===name);
+      const a = findReg(aName);
+      const b = findReg(bName);
+      const rel = [];
+      if(!a || !b) return ['No Relationship'];
+
+      const adjacent = adjacentPairs(geom).some(pair => {
+        const s1 = pair[0].map(normalizeAngleText);
+        const s2 = pair[1].map(normalizeAngleText);
+        const aa = normalizeAngleText(aName);
+        const bb = normalizeAngleText(bName);
+        return (s1.includes(aa) && s2.includes(bb)) || (s1.includes(bb) && s2.includes(aa));
+      });
+
+      const vertical = verticalPairs(geom).some(pair => {
+        const s1 = pair[0].map(normalizeAngleText);
+        const s2 = pair[1].map(normalizeAngleText);
+        const aa = normalizeAngleText(aName);
+        const bb = normalizeAngleText(bName);
+        return (s1.includes(aa) && s2.includes(bb)) || (s1.includes(bb) && s2.includes(aa));
+      });
+
+      if(a.measure + b.measure === 90) rel.push('Complementary');
+      if(a.measure + b.measure === 180) rel.push('Supplementary');
+      if(adjacent) rel.push('Adjacent Pair');
+      if(vertical) rel.push('Vertical');
+      if(rel.length===0) rel.push('No Relationship');
+      return rel;
+    }
+
+    function buildAnswerUI(problem){
+      answerArea.innerHTML = '';
+      activeInput = null;
+      clearFeedback();
+
+      if(problem.ui === 'single-choice'){
+        const box = document.createElement('div');
+        box.className = 'choices';
+        problem.choices.forEach(choice => {
+          const div = document.createElement('div');
+          div.className = 'choice';
+          div.textContent = choice;
+          div.onclick = () => {
+            [...box.children].forEach(c => c.classList.remove('selected'));
+            div.classList.add('selected');
+            problem.userAnswer = choice;
+          };
+          box.appendChild(div);
+        });
+        answerArea.appendChild(box);
+      }
+
+      if(problem.ui === 'multi-check'){
+        const box = document.createElement('div');
+        box.className = 'check-grid';
+        problem.choices.forEach(choice => {
+          const row = document.createElement('label');
+          row.className = 'check-item';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.value = choice;
+          cb.onchange = () => {
+            problem.userAnswer = [...box.querySelectorAll('input:checked')].map(x => x.value);
+          };
+          const span = document.createElement('span');
+          span.textContent = choice;
+          row.appendChild(cb);
+          row.appendChild(span);
+          box.appendChild(row);
+        });
+        problem.userAnswer = [];
+        answerArea.appendChild(box);
+      }
+
+      if(problem.ui === 'text'){
+        const row = document.createElement('div');
+        row.className = 'input-row';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'text-answer';
+        input.placeholder = problem.placeholder || 'Type answer here';
+        input.addEventListener('focus', ()=> activeInput = input);
+        input.addEventListener('input', ()=> problem.userAnswer = input.value.trim());
+        activeInput = input;
+        row.appendChild(input);
+        answerArea.appendChild(row);
+      }
+
+      if(problem.ui === 'number'){
+        const row = document.createElement('div');
+        row.className = 'input-row';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.inputMode = 'numeric';
+        input.className = 'text-answer';
+        input.placeholder = 'Enter number only';
+        input.addEventListener('focus', ()=> activeInput = input);
+        input.addEventListener('input', ()=> problem.userAnswer = input.value.trim());
+        activeInput = input;
+        row.appendChild(input);
+
+        const deg = document.createElement('span');
+        deg.style.fontSize = '22px';
+        deg.textContent = '°';
+        row.appendChild(deg);
+
+        answerArea.appendChild(row);
+      }
+    }
+
+    function checkAnswer(){
+      if(!currentProblem) return;
+      let correct = false;
+
+      if(currentProblem.ui === 'single-choice'){
+        correct = currentProblem.userAnswer === currentProblem.correct;
+      } else if(currentProblem.ui === 'multi-check'){
+        correct = [...(currentProblem.userAnswer||[])].sort().join('|') === [...currentProblem.correct].sort().join('|');
+      } else if(currentProblem.ui === 'text'){
+        correct = currentProblem.check(currentProblem.userAnswer || '');
+      } else if(currentProblem.ui === 'number'){
+        correct = parseInt(currentProblem.userAnswer,10) === currentProblem.correct;
+      }
+
+      total++;
+      if(correct) score++;
+      updateScore();
+
+      if(correct) setFeedback('Correct!', true);
+      else setFeedback('Not quite. ' + currentProblem.explanation, false);
+
+      if(currentProblem.ui === 'single-choice'){
+        answerArea.querySelectorAll('.choice').forEach(n => {
+          if(n.textContent === currentProblem.correct) n.classList.add('correct');
+          else if(n.classList.contains('selected')) n.classList.add('incorrect');
+        });
+      }
+    }
+
+    function showAnswer(){
+      if(!currentProblem) return;
+      setFeedback('Answer: ' + currentProblem.answerText, false);
+    }
+
+    function clearAnswer(){
+      if(!currentProblem) return;
+      buildAnswerUI(currentProblem);
+    }
+
+    function insertAtCursor(text){
+      if(!activeInput) return;
+      const s = activeInput.selectionStart ?? activeInput.value.length;
+      const e = activeInput.selectionEnd ?? activeInput.value.length;
+      activeInput.value = activeInput.value.slice(0,s) + text + activeInput.value.slice(e);
+      activeInput.focus();
+      activeInput.selectionStart = activeInput.selectionEnd = s + text.length;
+      currentProblem.userAnswer = activeInput.value.trim();
+    }
+
+    function handlePad(k){
+      if(!activeInput) return;
+      if(k === 'CLR') activeInput.value = '';
+      else if(k === '⌫') activeInput.value = activeInput.value.slice(0,-1);
+      else activeInput.value += k;
+      activeInput.focus();
+      currentProblem.userAnswer = activeInput.value.trim();
+    }
+
+    function genNameMarkedAngle(){
+      const geom = buildFiveRayGeometry();
+      const regs = regionAngles(geom).filter(r => r.measure < 180);
+      const chosen = pick(regs);
+      drawAngleArc(geom.cx, geom.cy, chosen.left.angle, chosen.right.angle, 48, '?', 74);
+
+      const valid = [chosen.canonical, chosen.reverse].map(normalizeAngleText);
+
+      return {
+        question:'Name the angle marked with the question mark. Put the vertex letter in the middle.',
+        ui:'text',
+        placeholder:'Example: ∠ABC',
+        check: (user) => valid.includes(normalizeAngleText(user)),
+        explanation:`A correct name is ${chosen.canonical} or ${chosen.reverse}.`,
+        answerText:`${chosen.canonical} or ${chosen.reverse}`
+      };
+    }
+
+    function genRelationships(){
+      const geom = buildCrossGeometry();
+      const regs = regionAngles(geom).filter(r => r.measure < 180);
+
+      let a = pick(regs).canonical;
+      let b = pick(regs).canonical;
+      while(normalizeAngleText(a) === normalizeAngleText(b)){
+        b = pick(regs).canonical;
+      }
+
+      const rel = relationshipForPair(geom, a, b);
+
+      return {
+        question:`Name all the angle pair relationships that apply to ${a} and ${b}.`,
+        ui:'multi-check',
+        choices:['Complementary','Supplementary','Adjacent Pair','Vertical','No Relationship'],
+        correct:rel,
+        explanation:`The correct relationship(s) are: ${rel.join(', ')}.`,
+        answerText:rel.join(', ')
+      };
+    }
+
+    function genFindAdjacent(){
+      const geom = buildFiveRayGeometry();
+      const validPairs = adjacentPairs(geom);
+      const example = pick(validPairs);
+
+      return {
+        question:'Name one pair of adjacent angles in the diagram.',
+        ui:'text',
+        placeholder:'Example: ∠ABC, ∠CBD',
+        check: (user) => pairMatchesUserInput(user, validPairs),
+        explanation:`One correct pair is ${example[0][0]} and ${example[1][0]}.`,
+        answerText:`Examples include ${validPairs.map(p => `${p[0][0]} and ${p[1][0]}`).join('; ')}`
+      };
+    }
+
+    function genFindVertical(){
+      const geom = buildCrossGeometry();
+      const validPairs = verticalPairs(geom);
+      const example = pick(validPairs);
+
+      return {
+        question:'Name one pair of vertical angles in the diagram.',
+        ui:'text',
+        placeholder:'Example: ∠ABC, ∠DEF',
+        check: (user) => pairMatchesUserInput(user, validPairs),
+        explanation:`One correct pair is ${example[0][0]} and ${example[1][0]}.`,
+        answerText:`Examples include ${validPairs.map(p => `${p[0][0]} and ${p[1][0]}`).join('; ')}`
+      };
+    }
+
+    function genMissingRight(){
+      clearCanvas();
+      const cx=360, cy=280;
+      const a = randInt(20,70);
+      const x = 90-a;
+
+      drawRay(cx,cy,90,220);
+      drawRay(cx,cy,0,240);
+      drawRay(cx,cy,a,210);
+
+      drawPoint(cx,cy,'P',-22,-10);
+      drawPoint(cx + Math.cos(rad(90))*160, cy - Math.sin(rad(90))*160, 'L', -24,-6);
+      drawPoint(cx + Math.cos(rad(0))*160, cy - Math.sin(rad(0))*160, 'T', 8,8);
+      drawPoint(cx + Math.cos(rad(a))*150, cy - Math.sin(rad(a))*150, 'K', 10,0);
+
+      drawRightAngleMarker(cx, cy, 14, 90, 0);
+      drawAngleArc(cx,cy,a,90,44,`${a}°`,70);
+      drawAngleArc(cx,cy,0,a,56,'x°',84);
+
+      return {
+        question:'The two adjacent angles make a right angle. What is x?',
+        ui:'number',
+        correct:x,
+        explanation:`Complementary angles add to 90°, so x = ${x}.`,
+        answerText:`${x}°`
+      };
+    }
+
+    function genMissingStraight(){
+      clearCanvas();
+      const cx=360, cy=280;
+      const split = randInt(25,155);
+      const a = split;
+      const x = 180-a;
+
+      drawRay(cx,cy,0,240);
+      drawRay(cx,cy,180,240);
+      drawRay(cx,cy,split,220);
+
+      drawPoint(cx,cy,'P',-22,-10);
+      drawPoint(cx+160, cy, 'T', 8,8);
+      drawPoint(cx-160, cy, 'M', -24,-6);
+      drawPoint(cx + Math.cos(rad(split))*150, cy - Math.sin(rad(split))*150, 'K', 10,0);
+
+      drawAngleArc(cx,cy,0,split,44,`${a}°`,70);
+      drawAngleArc(cx,cy,split,180,56,'x°',84);
+
+      return {
+        question:'The two adjacent angles form a straight line. What is x?',
+        ui:'number',
+        correct:x,
+        explanation:`Supplementary angles add to 180°, so x = ${x}.`,
+        answerText:`${x}°`
+      };
+    }
+
+    function genMissingVertical(){
+      clearCanvas();
+      const cx=360, cy=280;
+      const base = pick([15,25,35]);
+      const m = randInt(25,155);
+
+      drawLineThrough(cx,cy,base,240);
+      drawLineThrough(cx,cy,base+65,220);
+
+      drawPoint(cx,cy,'P',-22,-10);
+      drawAngleArc(cx,cy,base,base+65,44,`${m}°`,72);
+      drawAngleArc(cx,cy,base+180,base+245,44,'x°',72);
+
+      return {
+        question:'If the angles shown are vertical angles, what is x?',
+        ui:'number',
+        correct:m,
+        explanation:`Vertical angles are equal, so x = ${m}.`,
+        answerText:`${m}°`
+      };
+    }
+
+    function genFindMeasure(){
+      const subtype = pick(['right-split','straight-split','vertical-equal']);
+      if(subtype === 'right-split') return genFindMeasureRightSplit();
+      if(subtype === 'straight-split') return genFindMeasureStraightSplit();
+      return genFindMeasureVerticalEqual();
+    }
+
+    function genFindMeasureRightSplit(){
+      clearCanvas();
+      const cx = 360, cy = 280;
+      const given = randInt(15,75);
+      const other = 90 - given;
+
+      const names = shuffle(['A','B','C','D','E','F','G','H']);
+      const left = names[0];
+      const up = names[1];
+      const slant = names[2];
+      const vertex = 'X';
+
+      drawRay(cx,cy,180,210);
+      drawRay(cx,cy,90,220);
+      drawRay(cx,cy,given,180);
+
+      drawPoint(cx,cy,vertex,-12,28);
+      drawPoint(cx - 145, cy, left, -18,-8);
+      drawPoint(cx, cy - 160, up, 10,4);
+      drawPoint(cx + Math.cos(rad(given))*120, cy - Math.sin(rad(given))*120, slant, 10,0);
+
+      drawRightAngleMarker(cx, cy, 14, 90, 180);
+      drawAngleArc(cx,cy,0,given,42,`${given}°`,68);
+
+      const ask = pick([
+        {name:`∠${up}${vertex}${slant}`, value:90-given},
+        {name:`∠${slant}${vertex}${up}`, value:90-given},
+        {name:`∠${left}${vertex}${up}`, value:90},
+        {name:`∠${up}${vertex}${left}`, value:90}
+      ]);
+
+      return {
+        question:`Find the measure of ${ask.name}.`,
+        ui:'number',
+        correct:ask.value,
+        explanation:`The vertical and horizontal rays form a right angle. The missing part is ${ask.value}°.`,
+        answerText:`${ask.value}°`
+      };
+    }
+
+    function genFindMeasureStraightSplit(){
+      clearCanvas();
+      const cx = 360, cy = 280;
+      const given = randInt(25,155);
+      const other = 180 - given;
+
+      const names = shuffle(['J','K','L','M','N','Q','R','S']);
+      const left = names[0];
+      const right = names[1];
+      const slant = names[2];
+      const vertex = 'Z';
+
+      drawRay(cx,cy,180,220);
+      drawRay(cx,cy,0,220);
+      drawRay(cx,cy,given,180);
+
+      drawPoint(cx,cy,vertex,-12,28);
+      drawPoint(cx - 150, cy, left, -20,-8);
+      drawPoint(cx + 150, cy, right, 10,4);
+      drawPoint(cx + Math.cos(rad(given))*120, cy - Math.sin(rad(given))*120, slant, 10,0);
+
+      drawAngleArc(cx,cy,0,given,42,`${given}°`,68);
+
+      const ask = pick([
+        {name:`∠${left}${vertex}${slant}`, value:other},
+        {name:`∠${slant}${vertex}${left}`, value:other},
+        {name:`∠${right}${vertex}${slant}`, value:given},
+        {name:`∠${slant}${vertex}${right}`, value:given},
+        {name:`∠${left}${vertex}${right}`, value:180}
+      ]);
+
+      return {
+        question:`Find the measure of ${ask.name}.`,
+        ui:'number',
+        correct:ask.value,
+        explanation:`A straight angle measures 180°. So the missing angle is ${ask.value}°.`,
+        answerText:`${ask.value}°`
+      };
+    }
+
+    function genFindMeasureVerticalEqual(){
+      clearCanvas();
+      const cx = 360, cy = 280;
+      const base = pick([10,20,30]);
+      const spread = pick([55,60,65,70]);
+      const given = randInt(25,155);
+
+      const names = shuffle(['A','B','C','D','E','F','G','H']);
+      const vertex = 'X';
+
+      const rayAngles = [
+        normalize(base),
+        normalize(base + 180),
+        normalize(base + spread),
+        normalize(base + spread + 180)
+      ];
+
+      const points = [
+        {angle:rayAngles[0], label:names[0]},
+        {angle:rayAngles[1], label:names[1]},
+        {angle:rayAngles[2], label:names[2]},
+        {angle:rayAngles[3], label:names[3]}
+      ];
+
+      drawLineThrough(cx,cy,base,230);
+      drawLineThrough(cx,cy,base+spread,220);
+
+      for(const p of points){
+        const px = cx + Math.cos(rad(p.angle))*150;
+        const py = cy - Math.sin(rad(p.angle))*150;
+        let lx = Math.cos(rad(p.angle)) > 0.25 ? 10 : (Math.cos(rad(p.angle)) < -0.25 ? -24 : -10);
+        let ly = Math.sin(rad(p.angle)) > 0.25 ? -10 : (Math.sin(rad(p.angle)) < -0.25 ? 28 : 8);
+        drawPoint(px,py,p.label,lx,ly);
+      }
+      drawPoint(cx,cy,vertex,-12,28);
+
+      drawAngleArc(cx,cy,base,base+spread,42,`${given}°`,68);
+      drawAngleArc(cx,cy,base+180,base+spread+180,52,'?',80);
+
+      const askName = `∠${points[1].label}${vertex}${points[3].label}`;
+      return {
+        question:`Find the measure of ${askName}.`,
+        ui:'number',
+        correct:given,
+        explanation:`Vertical angles are congruent, so ${askName} = ${given}°.`,
+        answerText:`${given}°`
+      };
+    }
+
+    function mixedType(){
+      return pick([
+        'name-marked-angle',
+        'relationships',
+        'find-adjacent',
+        'find-vertical',
+        'missing-right',
+        'missing-straight',
+        'missing-vertical',
+        'find-measure'
+      ]);
+    }
+
+    function generateProblem(){
+      const mode = problemTypeSelect.value;
+      const type = mode === 'mixed' ? mixedType() : mode;
+
+      if(type === 'name-marked-angle') currentProblem = genNameMarkedAngle();
+      else if(type === 'relationships') currentProblem = genRelationships();
+      else if(type === 'find-adjacent') currentProblem = genFindAdjacent();
+      else if(type === 'find-vertical') currentProblem = genFindVertical();
+      else if(type === 'missing-right') currentProblem = genMissingRight();
+      else if(type === 'missing-straight') currentProblem = genMissingStraight();
+      else if(type === 'missing-vertical') currentProblem = genMissingVertical();
+      else if(type === 'find-measure') currentProblem = genFindMeasure();
+
+      questionText.textContent = currentProblem.question;
+      buildAnswerUI(currentProblem);
+    }
+
+    document.getElementById('newProblemBtn').addEventListener('click', generateProblem);
+    document.getElementById('showAnswerBtn').addEventListener('click', showAnswer);
+    document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+    document.getElementById('clearBtn').addEventListener('click', clearAnswer);
+    document.getElementById('resetScoreBtn').addEventListener('click', ()=>{
+      score=0; total=0; updateScore(); clearFeedback();
+    });
+    document.querySelectorAll('.symbol-btn').forEach(btn => {
+      btn.addEventListener('click', ()=> insertAtCursor(btn.dataset.symbol));
+    });
+    document.querySelectorAll('.key').forEach(btn => {
+      btn.addEventListener('click', ()=> handlePad(btn.dataset.k));
+    });
+
+    updateScore();
+    generateProblem();
+  </script>
+</body>
+</html>
