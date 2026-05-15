@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hybrid Keto-Mounjaro Meal Calendar</title>
+  <title>Simple Family Meal Calendar</title>
   <style>
     :root {
       --bg: #f6f8fa;
@@ -33,6 +33,7 @@
       background: var(--bg); color: var(--text);
     }
 
+    /* Toolbar */
     .toolbar {
       position: sticky; top: 0; z-index: 30;
       background: linear-gradient(180deg, #fff 0%, #f7fafc 100%);
@@ -51,6 +52,7 @@
     .btn:hover { filter: brightness(.97); }
     .btn.primary:hover { filter: brightness(1.05); }
 
+    /* Calendar views */
     #calendarContainer { padding: 1rem; }
 
     .view-month {
@@ -104,6 +106,7 @@
     .meal-block.s { border-color: #38a169; }
     .meal-block.de { border-color: #805ad5; }
 
+    /* Modals / Drawers */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 50;
       background: rgba(0,0,0,.45); backdrop-filter: blur(2px);
@@ -129,6 +132,7 @@
       padding: .75rem; white-space: pre-wrap; font-size: .95rem; line-height: 1.45;
     }
 
+    /* Chat */
     #chatPanel {
       position: fixed; bottom: 1rem; right: 1rem; width: 22rem; max-height: 28rem;
       background: var(--panel); border: 1px solid var(--border); border-radius: .75rem;
@@ -149,6 +153,7 @@
     #chatMinBtn { cursor: pointer; background: transparent; border: none; font: inherit; color: var(--muted); }
     .chat-hidden { display: none !important; }
 
+    /* Debug */
     #debugPanel {
       position: fixed; bottom: 1rem; left: 1rem; width: 28rem; height: 16rem;
       background: #1a202c; color: #a0aec0; border: 1px solid #2d3748; border-radius: .5rem;
@@ -160,12 +165,14 @@
     .debug-warn { color: #f6e05e; }
     .debug-log { color: #68d391; }
 
+    /* Utilities */
     .flex { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
     .small { font-size: .82rem; color: var(--muted); }
     .loader { width: 1rem; height: 1rem; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .ai-generate-row { display: flex; gap: .4rem; margin-top: .25rem; flex-wrap: wrap; }
 
+    /* Phone adjustments */
     @media (max-width: 768px) {
       .toolbar { padding: .45rem; gap: .3rem; }
       .toolbar h1 { font-size: .9rem; }
@@ -185,7 +192,7 @@
 <body>
 
   <div class="toolbar">
-    <h1>🍳 Hybrid Meal Calendar</h1>
+    <h1>🍳 Simple Family Meal Calendar</h1>
     <div class="small" id="statusText">May 14, 2026 — Nov 14, 2026</div>
     <div class="spacer"></div>
 
@@ -214,7 +221,6 @@
 
     <input type="password" id="apiKeyInput" placeholder="Pollinations API key (pk_ or sk_)" style="min-width: 12rem;">
     <button class="btn primary" onclick="app.saveKey()">Save Key</button>
-    <button class="btn" onclick="app.resetData()" title="Reset all saved meals">🗑️</button>
     <button class="btn" onclick="app.toggleChat()" title="AI Chat">💬</button>
     <button class="btn" onclick="app.toggleDebug()" title="Debug">🐞</button>
   </div>
@@ -263,7 +269,7 @@
     </div>
     <div id="chatMessages"></div>
     <div id="chatInputWrap">
-      <input id="chatInput" placeholder="Ask about a meal, ingredient, or keto swap…" onkeydown="if(event.key==='Enter') app.sendChat()">
+      <input id="chatInput" placeholder="Ask for a simple recipe or meal idea…" onkeydown="if(event.key==='Enter') app.sendChat()">
       <button class="btn primary" onclick="app.sendChat()">Send</button>
     </div>
   </div>
@@ -282,71 +288,62 @@
 
 <script>
 /* ==========================================================
-   HYBRID SYSTEM CONTEXT
+   DATA: SIMPLE, BUDGET-FRIENDLY, MOUNJARO-SENSIBLE POOLS
    ========================================================== */
-const SYSTEM_CONTEXT = `You are a creative but practical culinary assistant for a household on a mostly-keto plan who also use Mounjaro (tirzepatide). Their appetite is reduced; portions should be modest and nutrient-dense.
+const SYSTEM_CONTEXT = `You are a practical, budget-minded kitchen assistant for a busy household. They cook 3–4 meals per week, rely on leftovers, and want simple comfort food. Both use Mounjaro, so appetites are reduced—keep portions modest. They are diabetic/pre-diabetic but can handle moderate carbs when paired with protein and fat. No strict keto required; just avoid sugary drinks and desserts.
 
-COOKING STYLE BY DAY:
-- Monday, Tuesday, Thursday, Friday (weeknights): Simple comfort food. Familiar American and Mexican-inspired family meals preferred. Quick assembly, one-pot, sheet-pan, skillet, Crockpot, or InstaPot. 30–90 minutes active time. Budget-friendly. Examples: taco salad, grilled cheese & soup, burrito bowl, pasta salad, baked potato bar, breakfast-for-dinner, simple stir-fry, chili, pizza, quesadillas, casserole, soup & sandwich.
-- Wednesday: NO-COOK day. Leftovers, reheats, cold sandwiches/wraps, taco salad assembly from prep, or simple assembly only.
-- Saturday: Shopping day dinner. Prefer slow-cooker, InstaPot, grill, or make-ahead meals. Moderate creativity is welcome (fajitas, carnitas, pizza from scratch, simple curries, wok meals) but keep active cooking reasonable after a morning of shopping. Husband bakes sourdough/yeast breads, pizza crusts, and tortillas.
-- Sunday: Creative cuisine day. Use varied international flavors: American, Asian, Mexican, Indian, Middle Eastern, Ethiopian, European, Island. This is the day to use special tools (Donabe, wok, InstaPot, pressure cooker, bamboo steamer, outdoor Dutch oven/smoker, bread/pizza oven). Exotic pantry items are welcome: miso, coconut milk, curry spices, lotus root, bok choy, chana, mung beans, etc.
+FAVORITE SIMPLE MEALS: grilled cheese sandwiches, burritos, taco salad, pasta salad, baked potatoes with toppings, chili beans, pizza, breakfast-for-dinner, soup + sandwich, quesadillas, stir-fry, roast chicken, pot roast.
 
-TOOLS: Donabe, Rice Donabe, Bamboo Steamer, Crockpot, Pressure Cooker, InstaPot, Wok, Butane Tabletop Grill, Propane Grill, Bread/Pizza Oven (with wood-chip smoking), Large Kitchenaid Mixer, Smaller Mixer, Grain Mill (legumes ok), Spice Grinder, Waffle Makers, Electric Skillet, Canning supplies, Silicone molds, Springform pan, Casserole dishes, Nesting Bowls, Two ceramic-coated cast-iron Dutch Ovens, Plain cast-iron Dutch oven (outdoor), Large Food Dehydrator, Air Fryer (small, rotisserie), Mochi maker, Rice Cooker, Tortilla press, MioMat nut/soy milk maker (also soups).
+COOKING STYLE: Emphasize quick assembly, one-pot meals, slow-cooker dumps, sheet-pan dinners, and sandwiches. Familiar American and Mexican-inspired family foods are preferred. Avoid exotic, fancy, or “personal chef” level recipes.
 
-PANTRY: coconut milk, curry spices, pho mix, miso, vital wheat gluten, arrowroot, Maseca, cornmeal, sauces/mustards, Stevia, Xanthan gum, molasses, psyllium husk, wheat germ. Grains/beans: wheat, barley, rye, oats, amaranth, millet, groats, white rice, black rice, basmati, multi-grain, popcorn, lentils, pinto beans, chickpeas, black beans, navy beans, black chana, red chana, mung beans, quinoa, chia, flax.
+TOOLS AVAILABLE: InstaPot, Crockpot, wok, air fryer, Dutch ovens, Kitchenaid mixer, bread/pizza oven, rice cooker, tortilla press, electric skillet, waffle maker, grain mill, food dehydrator, MioMat. But simple skillet/stovetop meals are preferred on weeknights.
 
-PROTEINS: chicken thighs, whole chicken, eggs (heavy use), ground beef, sausage, bacon, occasional ham. Canned tuna/salmon/sardines. Lamb is a rare monthly treat only; do not suggest often. No pork except bacon/ham. Fish: frozen, fresh, or canned.
+PANTRY INCLUDES: wheat, barley, oats, rice (small portions), pasta (moderate), quinoa, beans/lentils (pinto, black, navy, chana, mung), cornmeal, Maseca, chia, flax, wheat germ, vital wheat gluten, psyllium, xanthan, stevia, coconut milk, miso, canned tuna/salmon, eggs, chicken thighs, ground beef, sausage, bacon, cheeses.
 
-SKILLS: Wife makes excellent sauces. Husband is an advanced baker (sourdough, yeast breads, quick-rise, pizza, tortillas).
-
-LIKES: Nuts, small amounts of raisins, many cheeses, eggs in everything, all vegetables (broccoli, sweet potato small portions, peas, corn small, edamame, bok choy, lotus root, Brussels sprouts, cabbage, carrots, radishes, tomatoes, onions, garlic, squash, cucumber, peppers, olives, mushrooms). Fruits: grapes, apples, citrus, berries, stonefruit.
+SKILLS: Wife makes great sauces. Husband bakes sourdough/yeast breads, pizza dough, and tortillas.
 
 RULES:
-- Mostly keto; minimal carbs/sugar acceptable because of Mounjaro. Pair carbs with protein/fat.
-- NO alcohol in any recipe. Deglaze with vinegar, citrus, broth, or water instead.
-- Wednesday is strict NO-COOK.
-- Weeknight active cooking must fit within 90 minutes active time, preferably 60.
-- Saturday is shopping + prep day. Sunday can be a project day.
-- Budget-conscious: favor chicken, eggs, ground beef, beans/lentils, canned fish. Lamb rarely.
-- Big-batch dinners should purposely create leftovers for breakfast/lunch later in the week.
-- Freeze/prep-friendly meals strongly preferred.
-- Not every item must be homemade; convenience is fine.`;
+- NO alcohol in any recipe. Deglaze with broth, vinegar, citrus, or water.
+- Wednesday is a strict NO-COOK day: leftovers, reheats, or cold assembly only.
+- Favor chicken, eggs, ground beef, beans, cheese, and canned fish. Lamb rarely.
+- Plan leftovers intentionally. Big-batch meals should become lunches or Thursday/Sunday assemblies.
+- Keep recipes short, ingredient lists minimal, and techniques familiar.`;
 
-/* ==========================================================
-   MEAL POOLS: COMFORT FOOD + CREATIVE CUISINE
-   ========================================================== */
-const WEEKDAY_BREAKFASTS = [
+const DINNERS = [
+  {name:"Taco Salad Night (Ground Beef or Chicken)", batch:true},
+  {name:"Grilled Cheese & Tomato Soup", batch:false},
+  {name:"Burrito Bowls (Crockpot Chicken/Beef, Beans, Rice)", batch:true},
+  {name:"Loaded Baked Potato Bar w/ Chili & Toppings", batch:true},
+  {name:"Pasta Salad w/ Veggies, Cheese & Dressing", batch:true},
+  {name:"Breakfast-for-Dinner: Eggs, Bacon & Toast/Waffle", batch:false},
+  {name:"Slow-Cooker Chili Beans w/ Beef", batch:true},
+  {name:"Simple Roast Chicken + Broccoli (Sheet Pan)", batch:true},
+  {name:"Beef & Veggie Stir-Fry (Skillet)", batch:false},
+  {name:"Chicken Noodle Soup + Homemade Bread", batch:true},
+  {name:"Bean & Cheese Quesadillas w/ Salsa & Salad", batch:false},
+  {name:"Baked Pasta Casserole w/ Meat Sauce", batch:true},
+  {name:"Sheet-Pan Sausage, Peppers & Onions", batch:true},
+  {name:"Friday Pizza Night (Homemade Dough)", batch:false},
+  {name:"Pot Roast or Beef Stew (Slow Cooker)", batch:true},
+  {name:"Frittata using Leftovers (Skillet)", batch:false},
+  {name:"Hot Dogs or Sausage w/ Beans & Slaw", batch:false},
+  {name:"Leftover Buffet / Fend Night", batch:false}
+];
+
+const BREAKFASTS = [
   "Cereal w/ Unsweetened Almond Milk & Berries",
   "Scrambled Eggs & Toast (Homemade Bread)",
   "Yogurt w/ Nuts & Cinnamon",
   "Oatmeal w/ Walnuts & Chia (Small Portion)",
   "Breakfast Burrito (Eggs, Cheese, Salsa)",
   "Bacon & Eggs",
-  "Peanut Butter Toast + Banana (Small)",
+  "Leftover Waffle/Pancake + Peanut Butter",
   "Berry Smoothie (Almond Milk, Spinach)",
   "Avocado Toast + Fried Egg",
-  "Cottage Cheese w/ Cucumber & Tomato",
-  "Ham & Cheese Omelet",
-  "Leftover Pancake/Waffle Reheat"
+  "Cottage Cheese w/ Cucumber & Tomato"
 ];
 
-const WEEKEND_BREAKFASTS = [
-  "Miso Soup w/ Soft Tofu & Egg (Donabe)",
-  "Keto Coconut Crepes w/ Berries (Husband Bakes)",
-  "Ethiopian-Spiced Eggs w/ Niter Kibbeh & Greens",
-  "Waffled Hash: Lotus Root, Cheddar, Scallion",
-  "Overnight Chia-Flax Pudding (MioMat Almond Milk)",
-  "Smoked Salmon & Cream Cheese on Homemade Bread",
-  "Sausage & Gruyère Egg Bites (InstaPot batch)",
-  "Quinoa Porridge w/ Walnuts (Small ¼ cup dry)",
-  "Shakshuka w/ Feta & Roasted Peppers",
-  "Keto Blueberry Muffins + Fried Egg",
-  "Full English-ish: Eggs, Bacon, Tomato, Mushroom",
-  "Japanese Soufflé Pancakes (Small Portion)"
-];
-
-const WEEKDAY_LUNCHES = [
+const LUNCHES = [
   "Turkey & Cheese Sandwich on Homemade Bread",
   "Leftover Taco Salad Bowl",
   "Bean & Rice Burrito w/ Sour Cream",
@@ -356,121 +353,29 @@ const WEEKDAY_LUNCHES = [
   "Cheese Quesadilla w/ Salsa",
   "Simple Green Salad w/ Chicken or Egg",
   "Beans & Rice Small Bowl w/ Cheese",
-  "Chili Cheese Nachos (Small Chip Portion)",
-  "PB&J on Homemade Bread (Small)",
-  "Ham & Cheese Roll-ups"
-];
-
-const WEEKEND_LUNCHES = [
-  "Mason Jar Shawarma Chicken Salad w/ Tahini",
-  "Cold Pho-Style Bowl (Prepped Broth) + Bok Choy",
-  "Keto Poke Bowl: Salmon or Canned Tuna, Avocado",
-  "Steamed Ginger-Scallion Fish (Bamboo Steamer)",
-  "Cobb Salad w/ Bacon, Blue Cheese, Egg",
-  "Egg Salad Lettuce Wraps w/ Olives & Radish",
-  "Chicken Fajita Bowl (No Tortilla) w/ Peppers",
-  "Cold Black Chana Chaat w/ Cucumber & Lemon",
-  "Tuna-Stuffed Avocado w/ Everything Bagel Seasoning",
-  "Leftover Creative Dinner Bowl + Fresh Greens",
-  "Burrito Bowl w/ Cauliflower Rice",
-  "Middle Eastern Mezze Plate: Hummus, Olives, Cheese, Veg"
+  "Chili Cheese Nachos (Small Chip Portion)"
 ];
 
 const SNACKS = [
-  "Hard-Boiled Egg w/ Za'atar",
-  "Roasted Masala Black Chana (Air Fryer)",
-  "Manchego & Almonds",
-  "Celery & Almond Butter",
-  "Air-Fried Kale Chips w/ Nutritional Yeast",
-  "Pickled Daikon & Carrot",
-  "Cheese Waffle Quarter (Waffle Maker)",
-  "Quick Miso Soup",
-  "Olives & Feta Cubes",
-  "Cocoa–Chia Shot (silicone molds, prepped)",
+  "Cheese Stick or Sliced Cheddar",
+  "Handful of Almonds or Walnuts",
   "Apple Slices w/ Peanut Butter",
-  "Dark Chocolate Square & Walnuts"
+  "Hard-Boiled Egg",
+  "Berries w/ Heavy Cream",
+  "Air-Popped Popcorn (Small Bowl)",
+  "Veggies w/ Ranch or Hummus",
+  "Dark Chocolate Square",
+  "Beef Jerky",
+  "Rice Cake w/ Avocado"
 ];
 
 const DESSERTS = [
-  "Keto Cardamom Cake (Springform, Coconut Flour, Stevia)",
-  "Almond-Milk Panna Cotta (Xanthan, Stevia)",
-  "Chia Cocoa Pudding w/ Raspberries",
-  "Dark Chocolate (80%+) & Macadamia Nuts",
-  "Baked Coconut Custard (silicone molds, Nutmeg)",
-  "Berries w/ Stevia-Whipped Cream",
-  "Keto Peanut Butter Cookie (Small)",
-  "Sugar-Free Jello w/ Heavy Cream",
-  "Baked Apple w/ Cinnamon (Small Portion)",
-  "Frozen Yogurt Bark w/ Nuts & Berries"
-];
-
-const WEEKNIGHT_DINNERS = [
-  {name:"Taco Salad Night (Ground Beef or Chicken)", batch:true},
-  {name:"Grilled Cheese & Tomato Soup", batch:false},
-  {name:"Burrito Bowls (Crockpot Chicken/Beef, Beans, Rice)", batch:true},
-  {name:"Loaded Baked Potato Bar w/ Chili & Toppings", batch:true},
-  {name:"Pasta Salad w/ Veggies, Cheese & Dressing", batch:true},
-  {name:"Breakfast-for-Dinner: Eggs, Bacon & Toast/Waffle", batch:false},
-  {name:"Slow-Cooker Chili Beans w/ Beef", batch:true},
-  {name:"Simple Roast Chicken + Broccoli (Sheet Pan)", batch:true},
-  {name:"Beef & Veggie Stir-Fry (Wok)", batch:false},
-  {name:"Chicken Noodle Soup + Homemade Bread", batch:true},
-  {name:"Bean & Cheese Quesadillas w/ Salsa & Salad", batch:false},
-  {name:"Baked Pasta Casserole w/ Meat Sauce", batch:true},
-  {name:"Sheet-Pan Sausage, Peppers & Onions", batch:true},
-  {name:"Pot Roast or Beef Stew (Slow Cooker)", batch:true},
-  {name:"Frittata using Leftovers (Skillet)", batch:false},
-  {name:"Chicken & Rice Skillet (Small Rice Portion)", batch:true},
-  {name:"Hamburgers & Garden Salad (Grill or Skillet)", batch:false},
-  {name:"Sloppy Joes on Homemade Buns", batch:true},
-  {name:"Fish Tacos w/ Cabbage Slaw (Small Tortilla)", batch:false},
-  {name:"Chicken Parmesan w/ Zucchini Noodles", batch:false},
-  {name:"Tuna Noodle Casserole (Keto Noodles or Small Pasta)", batch:true},
-  {name:"Egg Roll in a Bowl (Wok)", batch:true}
-];
-
-const SATURDAY_DINNERS = [
-  {name:"Pizza Night: Homemade Sourdough Crust", batch:false},
-  {name:"Crockpot Carnitas or Pulled Chicken", batch:true},
-  {name:"Grilled Fajitas (Chicken or Beef)", batch:true},
-  {name:"InstaPot Butter Chicken or Tikka Masala", batch:true},
-  {name:"Slow-Cooker Red Beans & Sausage", batch:true},
-  {name:"Wok-Fried Rice Noodles (Small Portion) w/ Veggies & Egg", batch:false},
-  {name:"Outdoor Grill: Kebabs or Beer Can Chicken", batch:true},
-  {name:"Miso Glazed Eggplant & Chicken (Sheet Pan)", batch:false},
-  {name:"Homemade Tacos w/ Fresh Tortillas", batch:true},
-  {name:"Loaded Nacho Bar w/ Beans & Cheese", batch:false},
-  {name:"Donabe Claypot Rice (Small Portion) w/ Chicken & Veg", batch:true},
-  {name:"InstaPot Pho (Prepped Broth) w/ Zoodles", batch:true}
-];
-
-const SUNDAY_CREATIVE_DINNERS = [
-  {name:"Donabe Chicken & Lotus Root Hot Pot", batch:true},
-  {name:"InstaPot Red Chana Curry w/ Collards & Tomato", batch:true},
-  {name:"Air-Fryer Chicken Kofta w/ Garlic Yogurt Sauce", batch:true},
-  {name:"Sichuan Wok-Charred Green Beans & Ground Chicken", batch:false},
-  {name:"Goan Coconut Fish Curry w/ Spinach", batch:true},
-  {name:"Ethiopian Chicken Tibs & Gomen (Collard Greens)", batch:false},
-  {name:"Crockpot Mung Dal w/ Cumin, Ghee & Tomato", batch:true},
-  {name:"Filipino Chicken Adobo w/ Cauliflower Rice", batch:true},
-  {name:"Hungarian Beef Goulash w/ Daikon (Dutch Oven)", batch:true},
-  {name:"InstaPot Beef Shank Stew w/ Korean Flavors & Radish", batch:true},
-  {name:"Thai Green Curry Coconut Chicken Thighs", batch:true},
-  {name:"Creole Sausage & Shrimp Gumbo (Xanthan Roux)", batch:true},
-  {name:"Italian Wedding Meatball & Escarole Soup", batch:true},
-  {name:"Indonesian Beef Rendang (Pressure Cooker)", batch:true},
-  {name:"Avgolemono Lemon Chicken Soup w/ Cauli Rice", batch:true},
-  {name:"Indian Butter Chicken w/ Keto Naan (VWG + Psyllium)", batch:true},
-  {name:"Smoked Beef Brisket (Outdoor Dutch Oven / Bread Oven)", batch:true},
-  {name:"Pinto Bean & Nopal Sausage Stew (Crockpot)", batch:true},
-  {name:"Black Chana Chaat Masala Bowl (InstaPot)", batch:true},
-  {name:"Mexican Albondigas Soup w/ Zucchini", batch:true},
-  {name:"Donabe Miso Salmon & Shiitake w/ Greens", batch:true},
-  {name:"Middle Eastern Chicken Musakhan (Sumac & Onions)", batch:true},
-  {name:"Air-Fryer Peruvian Chicken w/ Green Sauce", batch:true},
-  {name:"Tikka Masala Meatloaf (InstaPot) w/ Cucumber Raita", batch:true},
-  {name:"Bamboo Steamer Ginger-Scallion Whole Fish", batch:false},
-  {name:"Paella-Style Cauliflower Rice w/ Seafood & Chicken", batch:true}
+  "Berries w/ Whipped Cream",
+  "Sugar-Free Pudding Cup",
+  "Dark Chocolate & Macadamia Nuts",
+  "Baked Apple w/ Cinnamon (Small)",
+  "Occasional Homemade Cookie (Small)",
+  "Chia Cocoa Pudding"
 ];
 
 function trunc(s,n){ if(!s) return s; return s.length<=n ? s : s.slice(0,n-1)+'…'; }
@@ -487,9 +392,8 @@ class MealCalendarApp {
     this.model = localStorage.getItem('pollinationsModel') || 'gemini-search';
     this.openDate = null;
     this.chatHistory = [];
-    this.storageKey = 'hybridMealData_v1';
 
-    const saved = localStorage.getItem(this.storageKey);
+    const saved = localStorage.getItem('mealCalData');
     if (saved) {
       try { this.data = JSON.parse(saved); } catch(e) { this.debug('Parse error loading saved data', e); this.initDefaultData(); }
     } else {
@@ -529,57 +433,48 @@ class MealCalendarApp {
     const end = new Date(2026, 10, 14);
     const data = {};
 
-    let wkDinnerCursor = 0, satDinnerCursor = 0, sunDinnerCursor = 0;
-    let bCursorWk = 0, bCursorWknd = 0;
-    let lCursorWk = 0, lCursorWknd = 0;
-    let sCursor = 0, deCursor = 0;
-    let dayCounter = 0;
+    let dIdx = 0, bCursor = 0, lCursor = 0, sCursor = 0, deCursor = 0;
     let lastTuesdayDinner = '';
 
     for (let cur = new Date(start); cur <= end; cur.setDate(cur.getDate()+1)) {
       const ds = this.dateStr(cur);
-      const day = cur.getDay(); // 0 Sun, 1 Mon, ..., 6 Sat
+      const day = cur.getDay(); // 0 Sun, 1 Mon, 2 Tue, 3 Wed, 4 Thu, 5 Fri, 6 Sat
       if (!data[ds]) data[ds] = { breakfast:"", lunch:"", dinner:"", snack:"", dessert:"", notes:"" };
 
-      // Wednesday = no-cook / leftover assembly day
+      // Wednesday = no-cook / leftover day
       if (day === 3) {
         const tues = this.dateStr(this.addDays(cur, -1));
         const tuesDinner = data[tues]?.dinner || lastTuesdayDinner || 'Chicken Soup';
         data[ds].dinner = "No-Cook: Leftover " + tuesDinner + " or Simple Assembly";
         data[ds].notes = "Wednesday no-cook. Reheat, sandwich, or assemble only.";
         data[ds].breakfast = "Cereal, Yogurt, or Hard-Boiled Eggs";
-        // Deliberately leave lunch empty here so Tuesday batch-routing can fill it
+        data[ds].lunch = "Leftover Bowl or Cold Bean Salad";
       } else {
+        // Pick dinner
         let pick = null;
-        let notes = [];
-
-        if (day === 0) {
-          // Sunday — creative global cuisine
-          pick = SUNDAY_CREATIVE_DINNERS[sunDinnerCursor % SUNDAY_CREATIVE_DINNERS.length];
-          sunDinnerCursor++;
-          notes.push("Sunday creative project meal. Use special tools (Donabe, wok, outdoor Dutch oven, InstaPot, smoker, steamer).");
-          notes.push("Room for longer cook or baking project.");
-        } else if (day === 6) {
-          // Saturday — post-shopping, moderate but batch-friendly
-          pick = SATURDAY_DINNERS[satDinnerCursor % SATURDAY_DINNERS.length];
-          satDinnerCursor++;
-          notes.push("Saturday shopping morning. Prep ahead, slow-cooker, InstaPot, or grill.");
-          if (pick.batch) notes.push("Make extra for leftovers this week.");
-        } else {
-          // Mon/Tue/Thu/Fri — weeknight comfort food
-          pick = WEEKNIGHT_DINNERS[wkDinnerCursor % WEEKNIGHT_DINNERS.length];
-          wkDinnerCursor++;
-          notes.push("Weeknight: quick comfort food, 30–90 min max.");
-          if (day === 2) {
-            notes.push("Tuesday: make extra tonight for Wednesday leftovers.");
-            lastTuesdayDinner = pick.name;
+        let guard = 0;
+        while (!pick && guard < 50) {
+          const cand = DINNERS[dIdx % DINNERS.length];
+          dIdx++;
+          if (cand.weekend && day !== 0 && day !== 6) {
+            continue;
           }
+          pick = cand;
+          guard++;
         }
+        if (!pick) pick = DINNERS[0];
 
         data[ds].dinner = pick.name;
+        if (day === 2) lastTuesdayDinner = pick.name;
+
+        let notes = [];
+        if (day === 6) notes.push("Saturday: prep day, baking, or a simple slow-cooker meal.");
+        if (day === 2) notes.push("Tuesday: make extra tonight for Wednesday leftovers.");
+        if ((day >= 1 && day <= 5) && day !== 2) notes.push("Weeknight: quick and easy, 30–60 min max.");
+        if (day === 0 || day === 6) notes.push("Weekend: room for pizza, baking, or a longer project.");
         data[ds].notes = notes.join(" ");
 
-        // Auto-leftover routing for batch meals
+        // Auto-leftover routing
         if (pick.batch) {
           const next = this.addDays(cur, 1);
           const next2 = this.addDays(cur, 2);
@@ -599,41 +494,27 @@ class MealCalendarApp {
 
       // Breakfast
       if (!data[ds].breakfast) {
-        if (day === 0 || day === 6) {
-          data[ds].breakfast = WEEKEND_BREAKFASTS[bCursorWknd % WEEKEND_BREAKFASTS.length];
-          bCursorWknd++;
-        } else {
-          data[ds].breakfast = WEEKDAY_BREAKFASTS[bCursorWk % WEEKDAY_BREAKFASTS.length];
-          bCursorWk++;
-        }
+        data[ds].breakfast = BREAKFASTS[bCursor % BREAKFASTS.length];
+        bCursor++;
       }
 
-      // Lunch (Wednesday fills with generic only if Tuesday didn't route a leftover)
+      // Lunch
       if (!data[ds].lunch) {
-        if (day === 3) {
-          data[ds].lunch = "Leftover Bowl or Cold Bean Salad";
-        } else if (day === 0 || day === 6) {
-          data[ds].lunch = WEEKEND_LUNCHES[lCursorWknd % WEEKEND_LUNCHES.length];
-          lCursorWknd++;
-        } else {
-          data[ds].lunch = WEEKDAY_LUNCHES[lCursorWk % WEEKDAY_LUNCHES.length];
-          lCursorWk++;
-        }
+        data[ds].lunch = LUNCHES[lCursor % LUNCHES.length];
+        lCursor++;
       }
 
       // Snack
       data[ds].snack = SNACKS[sCursor % SNACKS.length];
       sCursor++;
 
-      // Dessert every 3rd day
-      if ((dayCounter % 3) === 0) {
+      // Dessert every 3rd cooked day
+      if ((dIdx % 3) === 0) {
         data[ds].dessert = DESSERTS[deCursor % DESSERTS.length];
         deCursor++;
       } else {
         data[ds].dessert = "—";
       }
-
-      dayCounter++;
     }
 
     this.data = data;
@@ -641,16 +522,7 @@ class MealCalendarApp {
   }
 
   persist() {
-    try { localStorage.setItem(this.storageKey, JSON.stringify(this.data)); } catch(e) { this.debug('localStorage write failed', e); }
-  }
-
-  resetData() {
-    if (confirm('Clear all saved meals and rebuild from default hybrid menu?')) {
-      localStorage.removeItem(this.storageKey);
-      this.data = {};
-      this.initDefaultData();
-      this.render();
-    }
+    try { localStorage.setItem('mealCalData', JSON.stringify(this.data)); } catch(e) { this.debug('localStorage write failed', e); }
   }
 
   saveKey() {
@@ -861,28 +733,15 @@ class MealCalendarApp {
     if (!ds && this.openDate) ds = this.openDate;
     if (!ds) { alert('Select a day first.'); return; }
     const target = ds;
-    const dateObj = this.parseDate(target);
-    const dayNum = dateObj.getDay();
-    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const dayName = dayNames[dayNum];
+    const prompt = `Create one day of a simple, budget-friendly meal plan for ${target}. Return ONLY valid JSON with keys: breakfast, lunch, dinner, snack, dessert, notes.
 
-    let dayRules = "";
-    if (dayNum === 3) {
-      dayRules = "It is WEDNESDAY. Rules: NO cooking. Leftovers, reheats, cold sandwiches/wraps, taco salad assembly from prep, pasta salad from fridge, cheese & crackers, or simple no-cook assembly only.";
-    } else if (dayNum === 0) {
-      dayRules = "It is SUNDAY. Rules: Creative cuisine day. Use international flavors (Asian, Indian, Mexican, Middle Eastern, Ethiopian, European, Island). You may suggest Donabe, wok, InstaPot, Dutch oven, smoker, bamboo steamer, or advanced baking. Use exotic pantry items if desired (miso, coconut milk, curry, lotus root, bok choy, chana, mung, etc.). This can be a longer project meal.";
-    } else if (dayNum === 6) {
-      dayRules = "It is SATURDAY. Rules: Shopping day dinner. Prefer slow-cooker, InstaPot, grill, or make-ahead meals. Moderate creativity is okay (fajitas, carnitas, pizza from scratch, simple curry, wok meal) but keep active cooking manageable after a morning of shopping. Batch cook if possible.";
-    } else {
-      dayRules = "It is a WEEKNIGHT (" + dayName + "). Rules: Simple comfort food, budget-friendly, familiar flavors. 30–90 minutes max active time. Prefer skillet, sheet pan, Crockpot, InstaPot, or oven. Examples: taco salad, grilled cheese & soup, burrito bowl, pasta salad, baked potato bar, breakfast-for-dinner, simple stir-fry, chili, pizza, quesadillas, casserole, soup & sandwich.";
-    }
-
-    const prompt = `Create one day of a meal plan for ${target} (${dayName}). Return ONLY valid JSON with keys: breakfast, lunch, dinner, snack, dessert, notes.
-
-${dayRules}
-- Mounjaro users: modest portions. Mostly keto; moderate carbs acceptable when paired with protein/fat. Avoid sugary drinks/desserts.
-- NO alcohol—use broth, vinegar, citrus, or water instead.
-- Favor chicken, eggs, ground beef, beans/lentils, canned fish. Lamb is a rare treat; do not use it here.
+Rules:
+- FAMILIAR COMFORT FOODS: grilled cheese, burritos, taco salad, pasta salad, baked potatoes, chili, pizza, soup, eggs, beans, rice bowls.
+- Keep it simple: 30–60 minutes active time max. Prefer one-pot, sheet-pan, slow-cooker, skillet, or no-cook assembly.
+- NO alcohol. Use broth, vinegar, or citrus instead.
+- Wednesday must be no-cook (leftovers, reheats, sandwiches, or cold assembly).
+- Mounjaro users: modest portions. Moderate carbs are fine; pair with protein/fat. Avoid sugary desserts.
+- Use basic tools (skillet, oven, InstaPot, Crockpot). No exotic ingredients.
 - Include brief prep/reheat notes.`;
     const out = document.getElementById('recipeOutput');
     out.style.display = 'block';
@@ -939,12 +798,9 @@ ${dayRules}
     const out = document.getElementById('recipeOutput');
     out.style.display = 'block';
     out.innerHTML = '<span class="loader"></span> Fetching recipe from AI…';
-    const prompt = `Give a detailed but practical recipe for "${mealName}" optimized for this household. 
+    const prompt = `Give a detailed but SIMPLE recipe for "${mealName}" optimized for this household. They want comfort food, not fancy cuisine. They have basic tools (skillet, oven, InstaPot, Crockpot, mixer, pizza oven, air fryer, wok). Pantry includes standard beans, rice, pasta, eggs, cheese, ground beef, chicken thighs, bacon, sausage, canned tuna, tortillas, bread ingredients, frozen veg, potatoes, onions, garlic, basic spices. 
 
-If this is a weeknight meal: keep it simple, familiar, and under 60–90 minutes.
-If this is a Sunday creative meal: feel free to use international techniques and special tools (Donabe, wok, InstaPot, smoker, steamer, etc.).
-
-They have advanced tools and a deep pantry (miso, coconut milk, curry spices, vital wheat gluten, psyllium, xanthan, stevia, legumes, grains). Diet is mostly keto with moderate carbs acceptable due to Mounjaro. NO alcohol—use broth, vinegar, or citrus instead. Include concise ingredient list, step-by-step instructions, and one tip for modest portions. Use markdown headers.`;
+Diet: diabetic/pre-diabetic, using Mounjaro. Moderate carbs are fine with protein/fat. No alcohol in the recipe—use broth, vinegar, or citrus instead. Keep instructions short and practical. Include a concise ingredient list, step-by-step steps, and one tip for keeping portions sensible. Use markdown headers.`;
     try {
       const text = await this.callPollinations({
         messages:[
@@ -986,7 +842,7 @@ They have advanced tools and a deep pantry (miso, coconut milk, curry spices, vi
     try {
       const text = await this.callPollinations({
         messages:[
-          {role:'system', content: SYSTEM_CONTEXT + ' Be concise but creative. You are a helpful kitchen assistant inside a meal calendar app.'},
+          {role:'system', content: SYSTEM_CONTEXT + ' Be concise and practical. You are a helpful kitchen assistant inside a meal calendar app focused on simple family meals.'},
           ...this.chatHistory.map(m => ({role:m.role, content:m.content}))
         ],
         temperature: 0.8,
