@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trip Cost Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      margin: 0;
+      padding: 40px 20px;
+      color: #222;
+    }
+
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+      background: white;
+      padding: 24px;
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 1.6rem;
+      text-align: center;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #2d6cdf;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #1f57b8;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 14px;
+      background: #eef4ff;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .result h2 {
+      margin-top: 0;
+      font-size: 1.1rem;
+    }
+
+    .section {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #d8e3ff;
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .error {
+      margin-top: 12px;
+      color: #b00020;
+      font-size: 0.95rem;
+    }
+
+    .small {
+      color: #555;
+      font-size: 0.9rem;
+      text-align: center;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Trip Cost Calculator</h1>
+
+    <div class="field">
+      <label for="distance">One-Way Distance (miles)</label>
+      <input type="number" id="distance" placeholder="Enter one-way miles" min="0" step="any" />
+    </div>
+
+    <div class="field">
+      <label for="mpg">Vehicle MPG</label>
+      <input type="number" id="mpg" placeholder="Enter mpg" min="0" step="any" />
+    </div>
+
+    <div class="field">
+      <label for="price">Gas Price ($ per gallon)</label>
+      <input type="number" id="price" placeholder="Enter cost per gallon" min="0" step="any" />
+    </div>
+
+    <button onclick="calculateTripCost()">Calculate</button>
+
+    <div id="error" class="error"></div>
+
+    <div id="result" class="result">
+      <h2>Results</h2>
+
+      <div class="section">
+        <p><strong>One-Way Gallons Needed:</strong> <span id="oneWayGallons"></span></p>
+        <p><strong>One-Way Cost:</strong> $<span id="oneWayCost"></span></p>
+      </div>
+
+      <div class="section">
+        <p><strong>Round-Trip Distance:</strong> <span id="roundTripDistance"></span> miles</p>
+        <p><strong>Round-Trip Gallons Needed:</strong> <span id="roundTripGallons"></span></p>
+        <p><strong>Round-Trip Cost:</strong> $<span id="roundTripCost"></span></p>
+      </div>
+
+      <div class="section">
+        <p><strong>Monthly Work Commute Cost:</strong> $<span id="monthlyCost"></span></p>
+        <p><strong>Monthly Work Commute Distance:</strong> <span id="monthlyDistance"></span> miles</p>
+      </div>
+    </div>
+
+    <div class="small">
+      One-way: gallons = distance ÷ mpg, cost = gallons × price<br />
+      Round-trip: distance × 2<br />
+      Monthly work total: round-trip cost × 20 workdays
+    </div>
+  </div>
+
+  <script>
+    function calculateTripCost() {
+      const distance = parseFloat(document.getElementById('distance').value);
+      const mpg = parseFloat(document.getElementById('mpg').value);
+      const price = parseFloat(document.getElementById('price').value);
+
+      const errorEl = document.getElementById('error');
+      const resultEl = document.getElementById('result');
+
+      errorEl.textContent = '';
+      resultEl.style.display = 'none';
+
+      if (isNaN(distance) || isNaN(mpg) || isNaN(price)) {
+        errorEl.textContent = 'Please enter valid values for all fields.';
+        return;
+      }
+
+      if (distance < 0 || mpg <= 0 || price < 0) {
+        errorEl.textContent = 'Distance and price must be 0 or more, and MPG must be greater than 0.';
+        return;
+      }
+
+      const oneWayGallons = distance / mpg;
+      const oneWayCost = oneWayGallons * price;
+
+      const roundTripDistance = distance * 2;
+      const roundTripGallons = roundTripDistance / mpg;
+      const roundTripCost = roundTripGallons * price;
+
+      const workdaysPerMonth = 20;
+      const monthlyCost = roundTripCost * workdaysPerMonth;
+      const monthlyDistance = roundTripDistance * workdaysPerMonth;
+
+      document.getElementById('oneWayGallons').textContent = oneWayGallons.toFixed(2);
+      document.getElementById('oneWayCost').textContent = oneWayCost.toFixed(2);
+
+      document.getElementById('roundTripDistance').textContent = roundTripDistance.toFixed(2);
+      document.getElementById('roundTripGallons').textContent = roundTripGallons.toFixed(2);
+      document.getElementById('roundTripCost').textContent = roundTripCost.toFixed(2);
+
+      document.getElementById('monthlyCost').textContent = monthlyCost.toFixed(2);
+      document.getElementById('monthlyDistance').textContent = monthlyDistance.toFixed(2);
+
+      resultEl.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
