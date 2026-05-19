@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wage Calculator</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #d1d5db;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --good: #059669;
+      --danger: #b91c1c;
+      --shadow: 0 10px 25px rgba(0,0,0,0.08);
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 100%);
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1150px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    .grid-5 {
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+
+    input:focus, select:focus {
+      outline: 2px solid #bfdbfe;
+      border-color: var(--accent);
+    }
+
+    .small {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.45;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      margin-bottom: 14px;
+      font-weight: bold;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: bold;
+      transition: background 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--accent-dark);
+    }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    button.secondary:hover {
+      background: #d1d5db;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    th, td {
+      padding: 14px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eff6ff;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .money {
+      font-weight: bold;
+    }
+
+    .net {
+      color: var(--good);
+    }
+
+    .note {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .pill {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e3a8a;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+    }
+
+    .deduction-total {
+      font-weight: bold;
+      color: var(--accent-dark);
+      margin-top: 8px;
+    }
+
+    .warning {
+      color: var(--danger);
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .hourly-boxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .stat-box {
+      background: #f8fbff;
+      border: 1px solid #dbeafe;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 1.35rem;
+      font-weight: bold;
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 14px;
+      }
+
+      h1 {
+        font-size: 1.6rem;
+      }
+
+      th, td {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Wage Calculator</h1>
+    <div class="subtitle">
+      Calculate weekly, bi-weekly, monthly, and yearly wages from gross or net income, with specific deduction categories and hourly equivalents.
+    </div>
+
+    <div class="card">
+      <div class="pill">Input Mode</div>
+      <div class="grid grid-3">
+        <div>
+          <label for="inputMode">Choose how you want to calculate</label>
+          <select id="inputMode">
+            <option value="periodGross">Enter Gross Amount for a Period</option>
+            <option value="periodNet">Enter Net Amount for a Period</option>
+            <option value="hourly">Enter Hourly Rate and Hours per Week</option>
+          </select>
+        </div>
+        <div>
+          <label for="periodType">Pay Period</label>
+          <select id="periodType">
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Bi-Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+        <div>
+          <label for="hoursPerWeekEquivalent">Hours per week for hourly equivalents</label>
+          <input type="number" id="hoursPerWeekEquivalent" min="0.01" step="0.01" value="40" />
+          <div class="small">Used to convert salary/pay-period totals into hourly equivalents.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="periodSection">
+      <div class="pill">Period-Based Input</div>
+      <div class="grid grid-2">
+        <div>
+          <label for="periodAmount">Amount</label>
+          <input type="number" id="periodAmount" min="0" step="0.01" placeholder="Enter amount" />
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button id="calculateBtn">Calculate</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="hourlySection" style="display:none;">
+      <div class="pill">Hourly Input</div>
+      <div class="grid grid-3">
+        <div>
+          <label for="hourlyRate">Hourly rate ($)</label>
+          <input type="number" id="hourlyRate" min="0" step="0.01" placeholder="e.g. 20.00" />
+        </div>
+        <div>
+          <label for="hoursPerWeek">Hours per week</label>
+          <input type="number" id="hoursPerWeek" min="0.01" step="0.01" value="40" />
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button id="calculateHourlyBtn">Calculate from Hourly Pay</button>
+        </div>
+      </div>
+      <div class="small">Uses 52 weeks per year and 26 bi-weekly pay periods per year.</div>
+    </div>
+
+    <div class="card">
+      <div class="pill">Deduction Categories</div>
+      <div class="grid grid-5">
+        <div>
+          <label for="taxPercent">Taxes (%)</label>
+          <input type="number" id="taxPercent" min="0" max="100" step="0.01" value="22" />
+        </div>
+        <div>
+          <label for="retirementPercent">401(k) (%)</label>
+          <input type="number" id="retirementPercent" min="0" max="100" step="0.01" value="5" />
+        </div>
+        <div>
+          <label for="insurancePercent">Insurance (%)</label>
+          <input type="number" id="insurancePercent" min="0" max="100" step="0.01" value="2" />
+        </div>
+        <div>
+          <label for="tithingPercent">Tithing/Charity (%)</label>
+          <input type="number" id="tithingPercent" min="0" max="100" step="0.01" value="0" />
+        </div>
+        <div>
+          <label for="otherPercent">Other (%)</label>
+          <input type="number" id="otherPercent" min="0" max="100" step="0.01" value="1" />
+        </div>
+      </div>
+
+      <div class="deduction-total">
+        Total deductions: <span id="totalDeductionPercent">30.00%</span>
+      </div>
+      <div class="warning" id="deductionWarning" style="display:none;">
+        Total deductions cannot be 100% or more when calculating backward from net pay.
+      </div>
+      <div class="small">
+        Enter each deduction category as a percentage of gross pay. The app combines them automatically.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Results</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Time Span</th>
+            <th>Gross Pay</th>
+            <th>Total Deductions</th>
+            <th>Net Pay</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Weekly</td>
+            <td class="money" id="weeklyGross">$0.00</td>
+            <td id="weeklyDeduction">$0.00</td>
+            <td class="money net" id="weeklyNet">$0.00</td>
+          </tr>
+          <tr>
+            <td>Bi-Weekly</td>
+            <td class="money" id="biweeklyGross">$0.00</td>
+            <td id="biweeklyDeduction">$0.00</td>
+            <td class="money net" id="biweeklyNet">$0.00</td>
+          </tr>
+          <tr>
+            <td>Monthly</td>
+            <td class="money" id="monthlyGross">$0.00</td>
+            <td id="monthlyDeduction">$0.00</td>
+            <td class="money net" id="monthlyNet">$0.00</td>
+          </tr>
+          <tr>
+            <td>Yearly</td>
+            <td class="money" id="yearlyGross">$0.00</td>
+            <td id="yearlyDeduction">$0.00</td>
+            <td class="money net" id="yearlyNet">$0.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Hourly Equivalents</div>
+      <div class="hourly-boxes">
+        <div class="stat-box">
+          <div class="stat-label">Gross hourly equivalent</div>
+          <div class="stat-value" id="grossHourlyEquivalent">$0.00/hr</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Net hourly equivalent</div>
+          <div class="stat-value net" id="netHourlyEquivalent">$0.00/hr</div>
+        </div>
+      </div>
+      <div class="small">
+        Hourly equivalents are based on weekly pay divided by the "hours per week for hourly equivalents" value above.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Yearly Deduction Breakdown</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Percent</th>
+            <th>Yearly Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Taxes</td>
+            <td id="taxPercentDisplay">0.00%</td>
+            <td id="taxYearlyAmount">$0.00</td>
+          </tr>
+          <tr>
+            <td>401(k)</td>
+            <td id="retirementPercentDisplay">0.00%</td>
+            <td id="retirementYearlyAmount">$0.00</td>
+          </tr>
+          <tr>
+            <td>Insurance</td>
+            <td id="insurancePercentDisplay">0.00%</td>
+            <td id="insuranceYearlyAmount">$0.00</td>
+          </tr>
+          <tr>
+            <td>Tithing/Charity</td>
+            <td id="tithingPercentDisplay">0.00%</td>
+            <td id="tithingYearlyAmount">$0.00</td>
+          </tr>
+          <tr>
+            <td>Other</td>
+            <td id="otherPercentDisplay">0.00%</td>
+            <td id="otherYearlyAmount">$0.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title">How it works</div>
+      <div class="note">
+        - Weekly to yearly uses 52 weeks per year.<br />
+        - Bi-weekly uses 26 pay periods per year.<br />
+        - Monthly values are based on yearly ÷ 12.<br />
+        - Net pay = gross pay × (1 - total deduction rate).<br />
+        - If you enter net pay, gross pay is calculated backward from the total deduction rate.<br />
+        - Hourly equivalent = weekly pay ÷ hours per week entered for equivalents.<br />
+        - Deduction categories are shown separately in the yearly breakdown table.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="actions">
+        <button class="secondary" id="resetBtn">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const inputMode = document.getElementById('inputMode');
+    const periodType = document.getElementById('periodType');
+    const periodAmount = document.getElementById('periodAmount');
+    const calculateBtn = document.getElementById('calculateBtn');
+
+    const periodSection = document.getElementById('periodSection');
+    const hourlySection = document.getElementById('hourlySection');
+
+    const hourlyRate = document.getElementById('hourlyRate');
+    const hoursPerWeek = document.getElementById('hoursPerWeek');
+    const hoursPerWeekEquivalent = document.getElementById('hoursPerWeekEquivalent');
+    const calculateHourlyBtn = document.getElementById('calculateHourlyBtn');
+
+    const taxPercent = document.getElementById('taxPercent');
+    const retirementPercent = document.getElementById('retirementPercent');
+    const insurancePercent = document.getElementById('insurancePercent');
+    const tithingPercent = document.getElementById('tithingPercent');
+    const otherPercent = document.getElementById('otherPercent');
+
+    const totalDeductionPercentEl = document.getElementById('totalDeductionPercent');
+    const deductionWarning = document.getElementById('deductionWarning');
+
+    const weeklyGrossEl = document.getElementById('weeklyGross');
+    const weeklyDeductionEl = document.getElementById('weeklyDeduction');
+    const weeklyNetEl = document.getElementById('weeklyNet');
+
+    const biweeklyGrossEl = document.getElementById('biweeklyGross');
+    const biweeklyDeductionEl = document.getElementById('biweeklyDeduction');
+    const biweeklyNetEl = document.getElementById('biweeklyNet');
+
+    const monthlyGrossEl = document.getElementById('monthlyGross');
+    const monthlyDeductionEl = document.getElementById('monthlyDeduction');
+    const monthlyNetEl = document.getElementById('monthlyNet');
+
+    const yearlyGrossEl = document.getElementById('yearlyGross');
+    const yearlyDeductionEl = document.getElementById('yearlyDeduction');
+    const yearlyNetEl = document.getElementById('yearlyNet');
+
+    const grossHourlyEquivalentEl = document.getElementById('grossHourlyEquivalent');
+    const netHourlyEquivalentEl = document.getElementById('netHourlyEquivalent');
+
+    const taxPercentDisplay = document.getElementById('taxPercentDisplay');
+    const retirementPercentDisplay = document.getElementById('retirementPercentDisplay');
+    const insurancePercentDisplay = document.getElementById('insurancePercentDisplay');
+    const tithingPercentDisplay = document.getElementById('tithingPercentDisplay');
+    const otherPercentDisplay = document.getElementById('otherPercentDisplay');
+
+    const taxYearlyAmount = document.getElementById('taxYearlyAmount');
+    const retirementYearlyAmount = document.getElementById('retirementYearlyAmount');
+    const insuranceYearlyAmount = document.getElementById('insuranceYearlyAmount');
+    const tithingYearlyAmount = document.getElementById('tithingYearlyAmount');
+    const otherYearlyAmount = document.getElementById('otherYearlyAmount');
+
+    const resetBtn = document.getElementById('resetBtn');
+
+    let currentYearlyGross = 0;
+
+    function formatMoney(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(value || 0);
+    }
+
+    function formatHourly(value) {
+      return formatMoney(value) + '/hr';
+    }
+
+    function parsePercent(input) {
+      let val = parseFloat(input.value);
+      if (isNaN(val) || val < 0) val = 0;
+      if (val > 100) val = 100;
+      return val;
+    }
+
+    function getDeductionPercents() {
+      return {
+        tax: parsePercent(taxPercent),
+        retirement: parsePercent(retirementPercent),
+        insurance: parsePercent(insurancePercent),
+        tithing: parsePercent(tithingPercent),
+        other: parsePercent(otherPercent)
+      };
+    }
+
+    function getTotalDeductionRate() {
+      const p = getDeductionPercents();
+      return (p.tax + p.retirement + p.insurance + p.tithing + p.other) / 100;
+    }
+
+    function getEquivalentHours() {
+      let hours = parseFloat(hoursPerWeekEquivalent.value);
+      if (isNaN(hours) || hours <= 0) hours = 40;
+      return hours;
+    }
+
+    function updateDeductionDisplay() {
+      const p = getDeductionPercents();
+      const total = p.tax + p.retirement + p.insurance + p.tithing + p.other;
+      totalDeductionPercentEl.textContent = total.toFixed(2) + '%';
+
+      if (inputMode.value === 'periodNet' && total >= 100) {
+        deductionWarning.style.display = 'block';
+      } else {
+        deductionWarning.style.display = 'none';
+      }
+    }
+
+    function updateModeDisplay() {
+      const mode = inputMode.value;
+      if (mode === 'hourly') {
+        periodSection.style.display = 'none';
+        hourlySection.style.display = 'block';
+      } else {
+        periodSection.style.display = 'block';
+        hourlySection.style.display = 'none';
+      }
+      updateDeductionDisplay();
+    }
+
+    function annualGrossFromPeriod(period, amount) {
+      if (period === 'weekly') return amount * 52;
+      if (period === 'biweekly') return amount * 26;
+      if (period === 'monthly') return amount * 12;
+      return amount;
+    }
+
+    function updateDeductionBreakdown(yearlyGross) {
+      const p = getDeductionPercents();
+
+      taxPercentDisplay.textContent = p.tax.toFixed(2) + '%';
+      retirementPercentDisplay.textContent = p.retirement.toFixed(2) + '%';
+      insurancePercentDisplay.textContent = p.insurance.toFixed(2) + '%';
+      tithingPercentDisplay.textContent = p.tithing.toFixed(2) + '%';
+      otherPercentDisplay.textContent = p.other.toFixed(2) + '%';
+
+      taxYearlyAmount.textContent = formatMoney(yearlyGross * (p.tax / 100));
+      retirementYearlyAmount.textContent = formatMoney(yearlyGross * (p.retirement / 100));
+      insuranceYearlyAmount.textContent = formatMoney(yearlyGross * (p.insurance / 100));
+      tithingYearlyAmount.textContent = formatMoney(yearlyGross * (p.tithing / 100));
+      otherYearlyAmount.textContent = formatMoney(yearlyGross * (p.other / 100));
+    }
+
+    function updateHourlyEquivalents(yearlyGross, yearlyNet) {
+      const weeklyGross = yearlyGross / 52;
+      const weeklyNet = yearlyNet / 52;
+      const hours = getEquivalentHours();
+
+      const grossHourlyEquivalent = weeklyGross / hours;
+      const netHourlyEquivalent = weeklyNet / hours;
+
+      grossHourlyEquivalentEl.textContent = formatHourly(grossHourlyEquivalent);
+      netHourlyEquivalentEl.textContent = formatHourly(netHourlyEquivalent);
+    }
+
+    function renderResults(yearlyGross) {
+      currentYearlyGross = yearlyGross;
+
+      const deductionRate = getTotalDeductionRate();
+
+      const yearlyDeduction = yearlyGross * deductionRate;
+      const yearlyNet = yearlyGross - yearlyDeduction;
+
+      const monthlyGross = yearlyGross / 12;
+      const monthlyDeduction = yearlyDeduction / 12;
+      const monthlyNet = yearlyNet / 12;
+
+      const biweeklyGross = yearlyGross / 26;
+      const biweeklyDeduction = yearlyDeduction / 26;
+      const biweeklyNet = yearlyNet / 26;
+
+      const weeklyGross = yearlyGross / 52;
+      const weeklyDeduction = yearlyDeduction / 52;
+      const weeklyNet = yearlyNet / 52;
+
+      weeklyGrossEl.textContent = formatMoney(weeklyGross);
+      weeklyDeductionEl.textContent = formatMoney(weeklyDeduction);
+      weeklyNetEl.textContent = formatMoney(weeklyNet);
+
+      biweeklyGrossEl.textContent = formatMoney(biweeklyGross);
+      biweeklyDeductionEl.textContent = formatMoney(biweeklyDeduction);
+      biweeklyNetEl.textContent = formatMoney(biweeklyNet);
+
+      monthlyGrossEl.textContent = formatMoney(monthlyGross);
+      monthlyDeductionEl.textContent = formatMoney(monthlyDeduction);
+      monthlyNetEl.textContent = formatMoney(monthlyNet);
+
+      yearlyGrossEl.textContent = formatMoney(yearlyGross);
+      yearlyDeductionEl.textContent = formatMoney(yearlyDeduction);
+      yearlyNetEl.textContent = formatMoney(yearlyNet);
+
+      updateHourlyEquivalents(yearlyGross, yearlyNet);
+      updateDeductionBreakdown(yearlyGross);
+    }
+
+    function calculateFromPeriod() {
+      const mode = inputMode.value;
+      const period = periodType.value;
+      const amount = parseFloat(periodAmount.value);
+      const deductionRate = getTotalDeductionRate();
+
+      if (isNaN(amount) || amount < 0) {
+        alert('Please enter a valid amount.');
+        return;
+      }
+
+      if (mode === 'periodGross') {
+        const yearlyGross = annualGrossFromPeriod(period, amount);
+        renderResults(yearlyGross);
+      } else if (mode === 'periodNet') {
+        if (deductionRate >= 1) {
+          alert('Total deductions must be less than 100% to calculate backward from net pay.');
+          return;
+        }
+        const grossAmount = amount / (1 - deductionRate);
+        const yearlyGross = annualGrossFromPeriod(period, grossAmount);
+        renderResults(yearlyGross);
+      }
+    }
+
+    function calculateFromHourly() {
+      const rate = parseFloat(hourlyRate.value);
+      const hours = parseFloat(hoursPerWeek.value);
+
+      if (isNaN(rate) || rate < 0 || isNaN(hours) || hours <= 0) {
+        alert('Please enter a valid hourly rate and hours per week.');
+        return;
+      }
+
+      const weeklyGross = rate * hours;
+      const yearlyGross = weeklyGross * 52;
+
+      hoursPerWeekEquivalent.value = hours;
+      renderResults(yearlyGross);
+    }
+
+    function recalculateIfPossible() {
+      const hasPeriodAmount = periodAmount.value.trim() !== '';
+      const hasHourlyAmount = hourlyRate.value.trim() !== '';
+
+      if (inputMode.value === 'hourly' && hasHourlyAmount) {
+        calculateFromHourly();
+      } else if ((inputMode.value === 'periodGross' || inputMode.value === 'periodNet') && hasPeriodAmount) {
+        calculateFromPeriod();
+      } else {
+        renderResults(currentYearlyGross || 0);
+      }
+    }
+
+    function resetAll() {
+      inputMode.value = 'periodGross';
+      periodType.value = 'biweekly';
+      periodAmount.value = '';
+
+      hourlyRate.value = '';
+      hoursPerWeek.value = '40';
+      hoursPerWeekEquivalent.value = '40';
+
+      taxPercent.value = '22';
+      retirementPercent.value = '5';
+      insurancePercent.value = '2';
+      tithingPercent.value = '0';
+      otherPercent.value = '1';
+
+      currentYearlyGross = 0;
+
+      updateModeDisplay();
+      updateDeductionDisplay();
+      renderResults(0);
+    }
+
+    inputMode.addEventListener('change', updateModeDisplay);
+    calculateBtn.addEventListener('click', calculateFromPeriod);
+    calculateHourlyBtn.addEventListener('click', calculateFromHourly);
+    resetBtn.addEventListener('click', resetAll);
+
+    [
+      taxPercent,
+      retirementPercent,
+      insurancePercent,
+      tithingPercent,
+      otherPercent
+    ].forEach(input => {
+      input.addEventListener('input', () => {
+        updateDeductionDisplay();
+        recalculateIfPossible();
+      });
+    });
+
+    hoursPerWeekEquivalent.addEventListener('input', () => {
+      renderResults(currentYearlyGross || 0);
+    });
+
+    periodAmount.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') calculateFromPeriod();
+    });
+
+    hourlyRate.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') calculateFromHourly();
+    });
+
+    hoursPerWeek.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') calculateFromHourly();
+    });
+
+    updateModeDisplay();
+    updateDeductionDisplay();
+    renderResults(0);
+  </script>
+</body>
+</html>
