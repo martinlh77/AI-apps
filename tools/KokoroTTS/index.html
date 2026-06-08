@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Multilingual Audiobook TTS</title>
+    <title>Advanced Multilingual Audiobook TTS V.3</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 750px; margin: 40px auto; padding: 20px; background: #f9f9fb; color: #333; }
         h1 { margin-bottom: 5px; color: #111; }
@@ -140,14 +140,14 @@
     <div class="sliders-group">
         <div class="slider-item">
             <div class="slider-header">
-                <label for="speedSlider">Speaking Speed (Time Stretch)</label>
+                <label for="speedSlider">Speaking Speed</label>
                 <span id="speedVal">1.0x</span>
             </div>
             <input type="range" id="speedSlider" min="0.5" max="2.0" step="0.1" value="1.0">
         </div>
         <div class="slider-item">
             <div class="slider-header">
-                <label for="pitchSlider">Vocal Warmth / Tone Eq</label>
+                <label for="pitchSlider">Vocal EQ (Warmth)</label>
                 <span id="pitchVal">Flat</span>
             </div>
             <input type="range" id="pitchSlider" min="-10" max="10" step="1" value="0">
@@ -206,16 +206,7 @@
             dlMp3: document.getElementById('downloadMp3')
         };
 
-        // Audio API Global States for Live Player adjustments
-        let audioCtx = null;
-        let audioSource = null;
-
-        elements.speed.addEventListener('input', (e) => {
-            elements.speedLabel.innerText = `${e.target.value}x`;
-            // Dynamic application to active live audio player node elements
-            elements.player.playbackRate = parseFloat(e.target.value);
-        });
-        
+        elements.speed.addEventListener('input', (e) => elements.speedLabel.innerText = `${e.target.value}x`);
         elements.pitch.addEventListener('input', (e) => {
             const val = parseInt(e.target.value);
             elements.pitchLabel.innerText = val === 0 ? "Flat" : val > 0 ? `+${val} Bass` : `${val} Treble`;
@@ -248,24 +239,25 @@
             }
 
             if (data.type === 'COMPILE_SUCCESS') {
-                elements.genLabel.innerText = "Optimizing tone profiles...";
+                elements.genLabel.innerText = "Processing high-quality speed and vocal EQ modifications...";
                 
-                setTimeout(() => {
-                    const toneDb = parseInt(elements.pitch.value);
-                    let finalAudio = data.audioData;
+                const targetSpeed = parseFloat(elements.speed.value);
+                const toneDb = parseInt(elements.pitch.value);
 
-                    // If user shifted tone away from flat, apply browser-grade audio normalization
-                    if (toneDb !== 0) {
-                        finalAudio = applyHardwareEqualizer(data.audioData, data.samplingRate, toneDb);
-                    }
+                // Run the modifications asynchronously inside an OfflineAudioContext block
+                renderModifiedAudio(data.audioData, data.samplingRate, targetSpeed, toneDb)
+                    .then((processedAudio) => {
+                        elements.genLabel.innerText = "Synthesis Pipeline: Production Complete!";
+                        elements.genFill.style.width = "100%";
+                        elements.genPercent.innerText = "100%";
+                        elements.btn.disabled = false;
 
-                    elements.genLabel.innerText = "Synthesis Pipeline: Production Complete!";
-                    elements.genFill.style.width = "100%";
-                    elements.genPercent.innerText = "100%";
-                    elements.btn.disabled = false;
-
-                    setupOutputs(finalAudio, data.samplingRate, elements.format.value);
-                }, 20);
+                        setupOutputs(processedAudio, data.samplingRate, elements.format.value);
+                    })
+                    .catch((err) => {
+                        alert("DSP Rendering Failure: " + err);
+                        elements.btn.disabled = false;
+                    });
             }
 
             if (data.type === 'ERROR') {
@@ -309,49 +301,51 @@
             });
         });
 
-        /* Hardware-Optimized Equalization Pass via Offline Audio Engine */
-        function applyHardwareEqualizer(samples, sampleRate, toneDb) {
-            // Setup a headless offline audio context renderer context
-            const offlineCtx = new OfflineAudioContext(1, samples.length, sampleRate);
-            
-            // Allocate data arrays
-            const buffer = offlineCtx.createBuffer(1, samples.length, sampleRate);
-            buffer.copyToChannel(samples, 0);
+        /* High-Quality Async Render Pipeline.
+           This renders speed transformations using accurate length scaling, 
+           ensuring modifications are permanently baked directly into downloaded files.
+        */
+        function renderModifiedAudio(samples, sampleRate, speedFactor, toneDb) {
+            return new Promise((resolve, reject) => {
+                // Calculate the true scaled duration length needed for target playback speed
+                const targetLength = Math.floor(samples.length / speedFactor);
+                
+                // Construct a headless offline rendering workspace matching the new speed dimensions
+                const offlineCtx = new OfflineAudioContext(1, targetLength, sampleRate);
+                
+                const buffer = offlineCtx.createBuffer(1, samples.length, sampleRate);
+                buffer.copyToChannel(samples, 0);
 
-            const source = offlineCtx.createBufferSource();
-            source.buffer = buffer;
+                const source = offlineCtx.createBufferSource();
+                source.buffer = buffer;
+                
+                // Bake the speed parameter permanently into the hardware resampling matrix
+                source.playbackRate.value = speedFactor;
 
-            // Generate low-shelf filter targeting lower vocal frequencies
-            const filter = offlineCtx.createBiquadFilter();
-            filter.type = "lowshelf";
-            filter.frequency.value = 350; // Focus boundary targeting structural vocal timbers
-            filter.gain.value = toneDb * 1.5; // Gain scaling factor
+                // Configure EQ Nodes
+                const filter = offlineCtx.createBiquadFilter();
+                filter.type = "lowshelf";
+                filter.frequency.value = 400; 
+                filter.gain.value = toneDb * 1.5; 
 
-            // Route audio mapping path
-            source.connect(filter);
-            filter.connect(offlineCtx.destination);
-            source.start(0);
+                // Connection Routing Map
+                source.connect(filter);
+                filter.connect(offlineCtx.destination);
+                
+                source.start(0);
 
-            // Synchronous array interception hook tracking
-            let renderedAudio = samples;
-            offlineCtx.startRendering().then((renderedBuffer) => {
-                renderedAudio = renderedBuffer.getChannelData(0);
+                // Run the async pipeline engine
+                offlineCtx.startRendering()
+                    .then((renderedBuffer) => {
+                        resolve(renderedBuffer.getChannelData(0));
+                    })
+                    .catch((err) => reject(err));
             });
-
-            // Fallback block mechanism ensuring array extraction sequence
-            const start = Date.now();
-            while(Date.now() - start < 1000) {
-                if(renderedAudio !== samples) break;
-            }
-            return renderedAudio;
         }
 
         function setupOutputs(float32Array, samplingRate, targetFormat) {
             elements.dlWav.style.display = "none";
             elements.dlMp3.style.display = "none";
-
-            // Enforce live dynamic playback rates matching choices
-            elements.player.playbackRate = parseFloat(elements.speed.value);
 
             const wavBlob = encodeWAV(float32Array, samplingRate);
             const wavUrl = URL.createObjectURL(wavBlob);
@@ -372,7 +366,6 @@
                 }, 50);
             }
             elements.actions.style.display = "block";
-            elements.player.play();
         }
 
         function encodeWAV(samples, sampleRate) {
