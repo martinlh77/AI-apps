@@ -38,7 +38,7 @@
 </head>
 <body>
 
-    <h1>Multilingual Audiobook Synthesizer 7</h1>
+    <h1>Multilingual Audiobook Synthesizer</h1>
     <p class="subtitle">Paragraph-by-paragraph client-side browser generation using Kokoro TTS</p>
 
     <textarea id="textInput" placeholder="Enter your text here... Leave empty lines to define distinct paragraph segments for the audio compiler."></textarea>
@@ -83,10 +83,10 @@
                     <option value="bm_george">bm_george</option>
                     <option value="bm_lewis">bm_lewis</option>
                 </optgroup>
-                <optgroup label="🇪🇸 Spanish (Female)">
+                <optgroup label="🇪慢 Spanish (Female)">
                     <option value="ef_dora">ef_dora</option>
                 </optgroup>
-                <optgroup label="🇪🇸 Spanish (Male)">
+                <optgroup label="🇪慢 Spanish (Male)">
                     <option value="em_alex">em_alex</option>
                     <option value="em_santa">em_santa</option>
                 </optgroup>
@@ -279,7 +279,7 @@
             }
 
             if (data.type === 'COMPILE_SUCCESS') {
-                elements.genLabel.innerText = "Processing phase-aligned cross-correlated audio modifications...";
+                elements.genLabel.innerText = "Processing precise speed, pitch, and tone mapping modifications...";
                 
                 const targetSpeed = parseFloat(elements.speedNum.value);
                 const semitoneShift = parseFloat(elements.pitchNum.value);
@@ -341,141 +341,73 @@
             });
         });
 
-        /* High-Fidelity Decoupled DSP Rendering Pipeline.
-           Utilizes Synchronous Overlap-Add (SOLA) with cross-correlation phase matching 
-           to eliminate tinny, metallic flanging artifacts when stretching speed timelines.
-        */
         function renderModifiedAudio(samples, sampleRate, speedFactor, semitoneShift, warmthDb) {
             return new Promise((resolve, reject) => {
-                try {
-                    // 1. Process premium time-stretching using phase-matching cross-correlation
-                    let stretchedSamples = samples;
-                    if (speedFactor !== 1.0) {
-                        stretchedSamples = timeStretchSOLA(samples, speedFactor, sampleRate);
-                    }
+                // Calculate the final desired length based solely on the target speed factor
+                const desiredFinalLength = Math.floor(samples.length / speedFactor);
+                
+                // Calculate pitch shift hardware resample ratio: 2^(semitones / 12)
+                const pitchResampleRatio = Math.pow(2, semitoneShift / 12);
+                
+                // Determine the structural hardware playback rate needed to execute both changes simultaneously
+                const hardwarePlaybackRate = speedFactor * pitchResampleRatio;
+                
+                // CRITICAL FIX: Base the hardware renderer length on the combined rate 
+                // to prevent truncation when lowering pitch lowers the hardware speed.
+                const renderingLength = Math.ceil(samples.length / hardwarePlaybackRate);
+                
+                // Allocate a buffer size that dynamically adapts to prevent syllable drop-offs
+                const bufferLength = Math.max(desiredFinalLength, renderingLength) + 1000; 
 
-                    // 2. Compute pitch ratio independently: 2^(semitones / 12)
-                    const pitchRatio = Math.pow(2, semitoneShift / 12);
-                    
-                    // 3. Render pitch translation and equalizer curves natively
-                    const finalLength = Math.ceil(stretchedSamples.length / pitchRatio);
-                    const bufferLength = finalLength + 2000;
+                const offlineCtx = new OfflineAudioContext(1, bufferLength, sampleRate);
+                
+                const buffer = offlineCtx.createBuffer(1, samples.length, sampleRate);
+                buffer.copyToChannel(samples, 0);
 
-                    const offlineCtx = new OfflineAudioContext(1, bufferLength, sampleRate);
-                    
-                    const buffer = offlineCtx.createBuffer(1, stretchedSamples.length, sampleRate);
-                    buffer.copyToChannel(stretchedSamples, 0);
+                const source = offlineCtx.createBufferSource();
+                source.buffer = buffer;
+                
+                // Assign the compound rate directly to the hardware engine
+                source.playbackRate.value = hardwarePlaybackRate;
 
-                    const source = offlineCtx.createBufferSource();
-                    source.buffer = buffer;
-                    source.playbackRate.value = pitchRatio;
+                // Configure Warmth/Tone Biquad Equalization
+                const filter = offlineCtx.createBiquadFilter();
+                filter.type = "lowshelf";
+                filter.frequency.value = 380; 
+                filter.gain.value = warmthDb; 
 
-                    const filter = offlineCtx.createBiquadFilter();
-                    filter.type = "lowshelf";
-                    filter.frequency.value = 380; 
-                    filter.gain.value = warmthDb; 
+                // Signal Routing Path
+                source.connect(filter);
+                filter.connect(offlineCtx.destination);
+                
+                source.start(0);
 
-                    source.connect(filter);
-                    filter.connect(offlineCtx.destination);
-                    source.start(0);
-
-                    offlineCtx.startRendering()
-                        .then((renderedBuffer) => {
-                            const renderedData = renderedBuffer.getChannelData(0);
-                            const finalizedSamples = renderedData.subarray(0, finalLength);
-                            resolve(finalizedSamples);
-                        })
-                        .catch((err) => reject(err));
-
-                } catch (err) {
-                    reject(err);
-                }
+                offlineCtx.startRendering()
+                    .then((renderedBuffer) => {
+                        const renderedSamples = renderedBuffer.getChannelData(0);
+                        
+                        // Rescale the rendered channel data so it matches the exact requested timeline length
+                        const finalSamples = structuralRescale(renderedSamples, desiredFinalLength);
+                        resolve(finalSamples);
+                    })
+                    .catch((err) => reject(err));
             });
         }
 
-        /* Synchronous Overlap-Add (SOLA) Engine
-           Dynamically searches for wave synchronization points using cross-correlation 
-           to preserve clear, organic human vocal tones without robotic flanging.
-        */
-        function timeStretchSOLA(samples, speedFactor, sampleRate) {
-            const N = samples.length;
-            
-            // Adapt window sizes based on target sample rates (approx 30ms windows for natural vocal grains)
-            const W = sampleRate > 24000 ? 2048 : 1024; 
-            const H_in = Math.floor(W / 4);
-            const H_out = Math.round(H_in / speedFactor);
-            
-            // Maximum search range to look for matching waveform cycles (approx 15ms)
-            const S_max = Math.floor(W / 2); 
-
-            // Pre-allocate output buffer with an estimated timeline size
-            const estimatedLength = Math.ceil(N / speedFactor) + W + S_max;
-            const output = new Float32Array(estimatedLength);
-            const numOverlaps = new Float32Array(estimatedLength);
-
-            // Copy the very first frame down directly as a foundation anchor
-            for (let i = 0; i < W; i++) {
-                output[i] = samples[i];
-                numOverlaps[i] = 1.0;
-            }
-
-            let posIn = H_in;
-            let posOut = H_out;
-
-            // Generate an elegant linear fade window for perfect crossfading zones
-            const fadeWin = new Float32Array(W);
-            for (let i = 0; i < W; i++) fadeWin[i] = 1.0; 
-
-            while (posIn + W < N) {
-                let bestOffset = 0;
-                let maxCorrelation = -Infinity;
-
-                // CROSS-CORRELATION: Slide the window within the safety zone to match wave phases
-                // This eliminates the metallic "tin can" echoing effect.
-                const searchLimit = Math.min(S_max, estimatedLength - posOut - W);
-                for (let s = 0; s < searchLimit; s++) {
-                    let correlation = 0;
-                    for (let i = 0; i < H_in; i++) {
-                        correlation += samples[posIn + i] * output[posOut + s + i];
-                    }
-                    if (correlation > maxCorrelation) {
-                        maxCorrelation = correlation;
-                        bestOffset = s;
-                    }
+        function structuralRescale(samples, targetLength) {
+            const output = new Float32Array(targetLength);
+            const scale = samples.length / targetLength;
+            for (let i = 0; i < targetLength; i++) {
+                let pos = i * scale;
+                let idx = Math.floor(pos);
+                let frac = pos - idx;
+                if (idx + 1 < samples.length) {
+                    output[i] = samples[idx] * (1 - frac) + samples[idx + 1] * frac;
+                } else if (idx < samples.length) {
+                    output[i] = samples[idx];
                 }
-
-                const targetOut = posOut + bestOffset;
-
-                // Overlap-Add blending loop using mathematical normalization
-                for (let i = 0; i < W; i++) {
-                    const outIdx = targetOut + i;
-                    if (outIdx >= estimatedLength) break;
-
-                    // Compute clean crossfade weights across the overlap boundaries
-                    let weight = 1.0;
-                    if (i < H_in && numOverlaps[outIdx] > 0) {
-                        weight = i / H_in;
-                        output[outIdx] = (1.0 - weight) * output[outIdx] + weight * samples[posIn + i];
-                    } else {
-                        output[outIdx] += samples[posIn + i];
-                    }
-                    numOverlaps[outIdx] += 1.0;
-                }
-
-                posIn += H_in;
-                posOut += H_out;
             }
-
-            // Normalize any dense frame overlaps to prevent clipping volume spikes
-            let trueEnd = 0;
-            for (let i = 0; i < output.length; i++) {
-                if (numOverlaps[i] > 1.0) {
-                    output[i] = output[i] / numOverlaps[i];
-                }
-                if (numOverlaps[i] > 0) trueEnd = i;
-            }
-
-            return output.subarray(0, trueEnd + 1);
+            return output;
         }
 
         function setupOutputs(float32Array, samplingRate, targetFormat) {
