@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Multilingual TTS</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; }
+        textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+        select, button { padding: 10px; margin-right: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Free Multilingual TTS (Kokoro)</h1>
+    <textarea id="text" placeholder="Type your text here..."></textarea>
+    
+    <div>
+        <label for="voice">Choose Voice:</label>
+        <select id="voice">
+            <option value="af_heart">English - Female (Heart)</option>
+            <option value="am_fenrir">English - Male (Fenrir)</option>
+            <option value="ff_siwi">French - Female (Siwi)</option>
+            <option value="jf_alpha">Japanese - Female (Alpha)</option>
+            <option value="ko_female">Korean - Female</option>
+            <option value="zh_female">Mandarin - Female</option>
+        </select>
+        <button id="generateBtn">Generate Speech</button>
+    </div>
+
+    <div id="status">Status: Ready</div>
+    <audio id="audioPlayer" controls style="display:none; width:100%; margin-top:20px;"></audio>
+
+    <script>
+        // Initialize the background worker
+        const worker = new Worker('worker.js', { type: 'module' });
+        const statusDiv = document.getElementById('status');
+        const audioPlayer = document.getElementById('audioPlayer');
+
+        // Listen for responses from the Web Worker
+        worker.onmessage = function(e) {
+            const { type, status, audioUrl, error } = e.data;
+            
+            if (status) statusDiv.innerText = `Status: ${status}`;
+            
+            if (type === 'DONE') {
+                audioPlayer.src = audioUrl;
+                audioPlayer.style.display = 'block';
+                audioPlayer.play();
+            } else if (type === 'ERROR') {
+                alert("Speech generation failed: " + error);
+            }
+        };
+
+        // Trigger speech generation on click
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            const text = document.getElementById('text').value;
+            const voice = document.getElementById('voice').value;
+            
+            if (!text.trim()) return alert("Please enter text.");
+            
+            audioPlayer.style.display = 'none';
+            statusDiv.innerText = "Status: Initializing model/Generating...";
+            
+            // Send payload to worker
+            worker.postMessage({ text, voice });
+        });
+    </script>
+</body>
+</html>
