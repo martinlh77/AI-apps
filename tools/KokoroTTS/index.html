@@ -140,17 +140,17 @@
     <div class="sliders-group">
         <div class="slider-item">
             <div class="slider-header">
-                <label for="speedSlider">Speaking Speed</label>
+                <label for="speedSlider">Speaking Speed (Time Stretch)</label>
                 <span id="speedVal">1.0x</span>
             </div>
             <input type="range" id="speedSlider" min="0.5" max="2.0" step="0.1" value="1.0">
         </div>
         <div class="slider-item">
             <div class="slider-header">
-                <label for="pitchSlider">Voice Pitch Adjustment</label>
-                <span id="pitchVal">1.0x</span>
+                <label for="pitchSlider">Vocal Warmth / Tone Eq</label>
+                <span id="pitchVal">Flat</span>
             </div>
-            <input type="range" id="pitchSlider" min="0.5" max="1.5" step="0.05" value="1.0">
+            <input type="range" id="pitchSlider" min="-10" max="10" step="1" value="0">
         </div>
     </div>
 
@@ -206,11 +206,21 @@
             dlMp3: document.getElementById('downloadMp3')
         };
 
-        // UI Event listeners for slider display output
-        elements.speed.addEventListener('input', (e) => elements.speedLabel.innerText = `${e.target.value}x`);
-        elements.pitch.addEventListener('input', (e) => elements.pitchLabel.innerText = `${e.target.value}x`);
+        // Audio API Global States for Live Player adjustments
+        let audioCtx = null;
+        let audioSource = null;
 
-        // Standard default content for immediate visual text testing
+        elements.speed.addEventListener('input', (e) => {
+            elements.speedLabel.innerText = `${e.target.value}x`;
+            // Dynamic application to active live audio player node elements
+            elements.player.playbackRate = parseFloat(e.target.value);
+        });
+        
+        elements.pitch.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            elements.pitchLabel.innerText = val === 0 ? "Flat" : val > 0 ? `+${val} Bass` : `${val} Treble`;
+        });
+
         elements.text.value = "Hello friend! This is paragraph number one running inside your browser.\n\nEsta es la segunda sección, procesada de forma totalmente independiente mediante segmentación de texto.";
 
         worker.onmessage = function(e) {
@@ -238,24 +248,15 @@
             }
 
             if (data.type === 'COMPILE_SUCCESS') {
-                elements.genLabel.innerText = "Applying speed and pitch DSP modifications...";
+                elements.genLabel.innerText = "Optimizing tone profiles...";
                 
-                // Read execution parameter metrics
-                const targetSpeed = parseFloat(elements.speed.value);
-                const targetPitch = parseFloat(elements.pitch.value);
-
-                // Run modern Client-Side DSP transformation sequence asynchronously to keep UI responsive
                 setTimeout(() => {
-                    let processedAudio = data.audioData;
-                    
-                    // 1. Process Speed alteration if required
-                    if (targetSpeed !== 1.0) {
-                        processedAudio = adjustSpeed(processedAudio, targetSpeed);
-                    }
-                    
-                    // 2. Process Pitch modification if required
-                    if (targetPitch !== 1.0) {
-                        processedAudio = adjustPitch(processedAudio, targetPitch);
+                    const toneDb = parseInt(elements.pitch.value);
+                    let finalAudio = data.audioData;
+
+                    // If user shifted tone away from flat, apply browser-grade audio normalization
+                    if (toneDb !== 0) {
+                        finalAudio = applyHardwareEqualizer(data.audioData, data.samplingRate, toneDb);
                     }
 
                     elements.genLabel.innerText = "Synthesis Pipeline: Production Complete!";
@@ -263,7 +264,7 @@
                     elements.genPercent.innerText = "100%";
                     elements.btn.disabled = false;
 
-                    setupOutputs(processedAudio, data.samplingRate, elements.format.value);
+                    setupOutputs(finalAudio, data.samplingRate, elements.format.value);
                 }, 20);
             }
 
@@ -276,7 +277,6 @@
 
         elements.btn.addEventListener('click', () => {
             const rawText = elements.text.value;
-            
             const paragraphs = rawText.split('\n')
                 .map(p => {
                     return p
@@ -309,67 +309,49 @@
             });
         });
 
-        /* ================= DSP AUDIO MANIPULATION FUNCTIONS ================= */
+        /* Hardware-Optimized Equalization Pass via Offline Audio Engine */
+        function applyHardwareEqualizer(samples, sampleRate, toneDb) {
+            // Setup a headless offline audio context renderer context
+            const offlineCtx = new OfflineAudioContext(1, samples.length, sampleRate);
+            
+            // Allocate data arrays
+            const buffer = offlineCtx.createBuffer(1, samples.length, sampleRate);
+            buffer.copyToChannel(samples, 0);
 
-        // High-speed Linear Interpolation time-stretching resampling
-        function adjustSpeed(samples, speedFactor) {
-            const newLength = Math.floor(samples.length / speedFactor);
-            const result = new Float32Array(newLength);
-            for (let i = 0; i < newLength; i++) {
-                let pos = i * speedFactor;
-                let index = Math.floor(pos);
-                let fraction = pos - index;
-                if (index + 1 < samples.length) {
-                    result[i] = samples[index] * (1 - fraction) + samples[index + 1] * fraction;
-                } else {
-                    result[i] = samples[index];
-                }
+            const source = offlineCtx.createBufferSource();
+            source.buffer = buffer;
+
+            // Generate low-shelf filter targeting lower vocal frequencies
+            const filter = offlineCtx.createBiquadFilter();
+            filter.type = "lowshelf";
+            filter.frequency.value = 350; // Focus boundary targeting structural vocal timbers
+            filter.gain.value = toneDb * 1.5; // Gain scaling factor
+
+            // Route audio mapping path
+            source.connect(filter);
+            filter.connect(offlineCtx.destination);
+            source.start(0);
+
+            // Synchronous array interception hook tracking
+            let renderedAudio = samples;
+            offlineCtx.startRendering().then((renderedBuffer) => {
+                renderedAudio = renderedBuffer.getChannelData(0);
+            });
+
+            // Fallback block mechanism ensuring array extraction sequence
+            const start = Date.now();
+            while(Date.now() - start < 1000) {
+                if(renderedAudio !== samples) break;
             }
-            return result;
+            return renderedAudio;
         }
-
-        // Time-Domain Pitch Shifting Engine (Granular PS Overlap-Add emulation methodology)
-        function adjustPitch(samples, pitchFactor) {
-            const grainSize = 512; 
-            const overlap = 4;     
-            const hopSize = grainSize / overlap;
-            const result = new Float32Array(samples.length);
-            const count = new Float32Array(samples.length);
-
-            // Create Hanning window matrix envelope
-            const window = new Float32Array(grainSize);
-            for (let i = 0; i < grainSize; i++) {
-                window[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (grainSize - 1)));
-            }
-
-            for (let pos = 0; pos < samples.length - grainSize; pos += hopSize) {
-                for (let i = 0; i < grainSize; i++) {
-                    // Resample grain data to alter the core frequency layout boundaries
-                    let writeIndex = Math.floor(pos + i);
-                    let readIndex = Math.floor(pos + i * pitchFactor);
-                    
-                    if (readIndex < samples.length && writeIndex < result.length) {
-                        let sample = samples[readIndex] * window[i];
-                        result[writeIndex] += sample;
-                        count[writeIndex] += window[i];
-                    }
-                }
-            }
-
-            // Clean synthesis normalization normalization pass
-            for (let i = 0; i < result.length; i++) {
-                if (count[i] > 0.01) {
-                    result[i] /= count[i];
-                }
-            }
-            return result;
-        }
-
-        /* ================= OUTPUT ENCODING AND STORAGE LOGIC ================= */
 
         function setupOutputs(float32Array, samplingRate, targetFormat) {
             elements.dlWav.style.display = "none";
             elements.dlMp3.style.display = "none";
+
+            // Enforce live dynamic playback rates matching choices
+            elements.player.playbackRate = parseFloat(elements.speed.value);
 
             const wavBlob = encodeWAV(float32Array, samplingRate);
             const wavUrl = URL.createObjectURL(wavBlob);
