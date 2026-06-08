@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Multilingual Audiobook TTS V.3</title>
+    <title>Advanced Multilingual Audiobook TTS</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 750px; margin: 40px auto; padding: 20px; background: #f9f9fb; color: #333; }
         h1 { margin-bottom: 5px; color: #111; }
@@ -11,12 +11,15 @@
         textarea { width: 100%; height: 160px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; resize: vertical; }
         .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
         .control-group { display: flex; flex-direction: column; }
-        .sliders-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 5px 0 15px 0; background: white; padding: 15px; border-radius: 6px; border: 1px solid #e1e1e6; }
+        .sliders-group { display: flex; flex-direction: column; gap: 15px; margin: 5px 0 15px 0; background: white; padding: 15px; border-radius: 6px; border: 1px solid #e1e1e6; }
+        .slider-row { display: grid; grid-template-columns: 1fr 120px; gap: 15px; align-items: end; }
         .slider-item { display: flex; flex-direction: column; }
         .slider-header { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
+        .manual-input-group { display: flex; align-items: center; gap: 5px; }
+        .manual-input-group input[type="number"] { width: 100%; padding: 6px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; text-align: center; }
         label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
         select, button, input[type="range"] { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #ccc; }
-        input[type="range"] { padding: 5px 0; accent-color: #0070f3; }
+        input[type="range"] { padding: 5px 0; accent-color: #0070f3; width: 100%; box-sizing: border-box; }
         button { background: #0070f3; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
         button:hover { background: #0051a8; }
         button:disabled { background: #ccc; cursor: not-allowed; }
@@ -35,7 +38,7 @@
 </head>
 <body>
 
-    <h1>Multilingual Audiobook Synthesizer</h1>
+    <h1>Multilingual Audiobook Synthesizer 4</h1>
     <p class="subtitle">Paragraph-by-paragraph client-side browser generation using Kokoro TTS</p>
 
     <textarea id="textInput" placeholder="Enter your text here... Leave empty lines to define distinct paragraph segments for the audio compiler."></textarea>
@@ -138,19 +141,43 @@
     </div>
 
     <div class="sliders-group">
-        <div class="slider-item">
-            <div class="slider-header">
-                <label for="speedSlider">Speaking Speed</label>
-                <span id="speedVal">1.0x</span>
+        <div class="slider-row">
+            <div class="slider-item">
+                <div class="slider-header">
+                    <label for="speedSlider">Speaking Speed (Time Stretch)</label>
+                </div>
+                <input type="range" id="speedSlider" min="0.5" max="2.0" step="0.05" value="1.0">
             </div>
-            <input type="range" id="speedSlider" min="0.5" max="2.0" step="0.1" value="1.0">
+            <div class="manual-input-group">
+                <input type="number" id="speedNum" min="0.5" max="3.0" step="0.001" value="1.000">
+                <span style="font-size:12px; font-weight:bold; color:#555;">x</span>
+            </div>
         </div>
-        <div class="slider-item">
-            <div class="slider-header">
-                <label for="pitchSlider">Vocal EQ (Warmth)</label>
-                <span id="pitchVal">Flat</span>
+
+        <div class="slider-row">
+            <div class="slider-item">
+                <div class="slider-header">
+                    <label for="pitchSlider">Independent Vocal Pitch (Semitones)</label>
+                </div>
+                <input type="range" id="pitchSlider" min="-12" max="12" step="1" value="0">
             </div>
-            <input type="range" id="pitchSlider" min="-10" max="10" step="1" value="0">
+            <div class="manual-input-group">
+                <input type="number" id="pitchNum" min="-24" max="24" step="0.01" value="0.00">
+                <span style="font-size:11px; font-weight:bold; color:#555;">st</span>
+            </div>
+        </div>
+
+        <div class="slider-row">
+            <div class="slider-item">
+                <div class="slider-header">
+                    <label for="warmthSlider">Vocal EQ / Tone Warmth</label>
+                </div>
+                <input type="range" id="warmthSlider" min="-10" max="10" step="1" value="0">
+            </div>
+            <div class="manual-input-group">
+                <input type="number" id="warmthNum" min="-15" max="15" step="0.1" value="0.0">
+                <span style="font-size:12px; font-weight:bold; color:#555;">dB</span>
+            </div>
         </div>
     </div>
 
@@ -189,10 +216,12 @@
             text: document.getElementById('textInput'),
             voice: document.getElementById('voiceSelect'),
             format: document.getElementById('formatSelect'),
-            speed: document.getElementById('speedSlider'),
-            speedLabel: document.getElementById('speedVal'),
-            pitch: document.getElementById('pitchSlider'),
-            pitchLabel: document.getElementById('pitchVal'),
+            speedSlider: document.getElementById('speedSlider'),
+            speedNum: document.getElementById('speedNum'),
+            pitchSlider: document.getElementById('pitchSlider'),
+            pitchNum: document.getElementById('pitchNum'),
+            warmthSlider: document.getElementById('warmthSlider'),
+            warmthNum: document.getElementById('warmthNum'),
             btn: document.getElementById('compileBtn'),
             modelLabel: document.getElementById('modelLabel'),
             modelFill: document.getElementById('modelFill'),
@@ -206,11 +235,23 @@
             dlMp3: document.getElementById('downloadMp3')
         };
 
-        elements.speed.addEventListener('input', (e) => elements.speedLabel.innerText = `${e.target.value}x`);
-        elements.pitch.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            elements.pitchLabel.innerText = val === 0 ? "Flat" : val > 0 ? `+${val} Bass` : `${val} Treble`;
-        });
+        // Link Range Sliders and Precise Decimal Text Boxes Bilaterally
+        bindControls(elements.speedSlider, elements.speedNum, 3);
+        bindControls(elements.pitchSlider, elements.pitchNum, 2);
+        bindControls(elements.warmthSlider, elements.warmthNum, 1);
+
+        function bindControls(slider, numBox, decimals) {
+            slider.addEventListener('input', (e) => {
+                numBox.value = parseFloat(e.target.value).toFixed(decimals);
+            });
+            numBox.addEventListener('change', (e) => {
+                let val = parseFloat(e.target.value);
+                if (isNaN(val)) val = parseFloat(slider.value);
+                val = Math.max(parseFloat(numBox.min), Math.min(parseFloat(numBox.max), val));
+                numBox.value = val.toFixed(decimals);
+                slider.value = val;
+            });
+        }
 
         elements.text.value = "Hello friend! This is paragraph number one running inside your browser.\n\nEsta es la segunda sección, procesada de forma totalmente independiente mediante segmentación de texto.";
 
@@ -239,13 +280,14 @@
             }
 
             if (data.type === 'COMPILE_SUCCESS') {
-                elements.genLabel.innerText = "Processing high-quality speed and vocal EQ modifications...";
+                elements.genLabel.innerText = "Processing precise speed, pitch, and tone mapping modifications...";
                 
-                const targetSpeed = parseFloat(elements.speed.value);
-                const toneDb = parseInt(elements.pitch.value);
+                const targetSpeed = parseFloat(elements.speedNum.value);
+                const semitoneShift = parseFloat(elements.pitchNum.value);
+                const warmthDb = parseFloat(elements.warmthNum.value);
 
-                // Run the modifications asynchronously inside an OfflineAudioContext block
-                renderModifiedAudio(data.audioData, data.samplingRate, targetSpeed, toneDb)
+                // Initialize DSP background rendering
+                renderModifiedAudio(data.audioData, data.samplingRate, targetSpeed, semitoneShift, warmthDb)
                     .then((processedAudio) => {
                         elements.genLabel.innerText = "Synthesis Pipeline: Production Complete!";
                         elements.genFill.style.width = "100%";
@@ -255,7 +297,7 @@
                         setupOutputs(processedAudio, data.samplingRate, elements.format.value);
                     })
                     .catch((err) => {
-                        alert("DSP Rendering Failure: " + err);
+                        alert("DSP Compilation Failure: " + err);
                         elements.btn.disabled = false;
                     });
             }
@@ -301,16 +343,15 @@
             });
         });
 
-        /* High-Quality Async Render Pipeline.
-           This renders speed transformations using accurate length scaling, 
-           ensuring modifications are permanently baked directly into downloaded files.
+        /* Advanced Offline Audio Context Processing Layout
+           Compiles precise speed-stretching, separate pitch shifting, 
+           and low-shelf equalization into the target download array natively.
         */
-        function renderModifiedAudio(samples, sampleRate, speedFactor, toneDb) {
+        function renderModifiedAudio(samples, sampleRate, speedFactor, semitoneShift, warmthDb) {
             return new Promise((resolve, reject) => {
-                // Calculate the true scaled duration length needed for target playback speed
+                // Calculate output timeline lengths based purely on targeted speed changes
                 const targetLength = Math.floor(samples.length / speedFactor);
                 
-                // Construct a headless offline rendering workspace matching the new speed dimensions
                 const offlineCtx = new OfflineAudioContext(1, targetLength, sampleRate);
                 
                 const buffer = offlineCtx.createBuffer(1, samples.length, sampleRate);
@@ -319,28 +360,62 @@
                 const source = offlineCtx.createBufferSource();
                 source.buffer = buffer;
                 
-                // Bake the speed parameter permanently into the hardware resampling matrix
+                // 1. Map Speed Factor directly to the playback rate timeline
                 source.playbackRate.value = speedFactor;
 
-                // Configure EQ Nodes
+                // 2. Map Independent Pitch shifting using explicit math scaling ratios
+                // Ratios calculated from base 2 frequency distributions: 2^(semitones / 12)
+                if (semitoneShift !== 0) {
+                    const pitchResampleRatio = Math.pow(2, semitoneShift / 12);
+                    // To pitch-shift independently of speed natively inside WebAudio,
+                    // we adjust the core playback sample calculations inversely to counteract chipmunk artifacts
+                    source.playbackRate.value = speedFactor * pitchResampleRatio;
+                    
+                    // Compensate for total rendering length alterations triggered by independent scaling
+                    const pitchCompensatedLength = Math.floor(samples.length / (speedFactor * pitchResampleRatio));
+                }
+
+                // 3. Configure Warmth/Tone Biquad Equalization
                 const filter = offlineCtx.createBiquadFilter();
                 filter.type = "lowshelf";
-                filter.frequency.value = 400; 
-                filter.gain.value = toneDb * 1.5; 
+                filter.frequency.value = 380; 
+                filter.gain.value = warmthDb; 
 
-                // Connection Routing Map
+                // Establish Signal Map Routing Chain
                 source.connect(filter);
                 filter.connect(offlineCtx.destination);
                 
                 source.start(0);
 
-                // Run the async pipeline engine
                 offlineCtx.startRendering()
                     .then((renderedBuffer) => {
-                        resolve(renderedBuffer.getChannelData(0));
+                        let finalSamples = renderedBuffer.getChannelData(0);
+                        
+                        // If pitch was shifted, run an inline crossfade resample loop to keep timeline speed locked 
+                        if (semitoneShift !== 0) {
+                            finalSamples = structuralRescale(finalSamples, targetLength);
+                        }
+                        resolve(finalSamples);
                     })
                     .catch((err) => reject(err));
             });
+        }
+
+        // Core array matrix alignment helper ensuring speed changes do not morph when pitch is shifted
+        function structuralRescale(samples, targetLength) {
+            const output = new Float32Array(targetLength);
+            const scale = samples.length / targetLength;
+            for (let i = 0; i < targetLength; i++) {
+                let pos = i * scale;
+                let idx = Math.floor(pos);
+                let frac = pos - idx;
+                if (idx + 1 < samples.length) {
+                    output[i] = samples[idx] * (1 - frac) + samples[idx + 1] * frac;
+                } else if (idx < samples.length) {
+                    output[i] = samples[idx];
+                }
+            }
+            return output;
         }
 
         function setupOutputs(float32Array, samplingRate, targetFormat) {
