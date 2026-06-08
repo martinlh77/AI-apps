@@ -38,7 +38,7 @@
 </head>
 <body>
 
-    <h1>Multilingual Audiobook Synthesizer 4</h1>
+    <h1>Multilingual Audiobook Synthesizer 5</h1>
     <p class="subtitle">Paragraph-by-paragraph client-side browser generation using Kokoro TTS</p>
 
     <textarea id="textInput" placeholder="Enter your text here... Leave empty lines to define distinct paragraph segments for the audio compiler."></textarea>
@@ -83,10 +83,10 @@
                     <option value="bm_george">bm_george</option>
                     <option value="bm_lewis">bm_lewis</option>
                 </optgroup>
-                <optgroup label="🇪🇸 Spanish (Female)">
+                <optgroup label="🇪慢 Spanish (Female)">
                     <option value="ef_dora">ef_dora</option>
                 </optgroup>
-                <optgroup label="🇪🇸 Spanish (Male)">
+                <optgroup label="🇪慢 Spanish (Male)">
                     <option value="em_alex">em_alex</option>
                     <option value="em_santa">em_santa</option>
                 </optgroup>
@@ -235,7 +235,6 @@
             dlMp3: document.getElementById('downloadMp3')
         };
 
-        // Link Range Sliders and Precise Decimal Text Boxes Bilaterally
         bindControls(elements.speedSlider, elements.speedNum, 3);
         bindControls(elements.pitchSlider, elements.pitchNum, 2);
         bindControls(elements.warmthSlider, elements.warmthNum, 1);
@@ -286,7 +285,6 @@
                 const semitoneShift = parseFloat(elements.pitchNum.value);
                 const warmthDb = parseFloat(elements.warmthNum.value);
 
-                // Initialize DSP background rendering
                 renderModifiedAudio(data.audioData, data.samplingRate, targetSpeed, semitoneShift, warmthDb)
                     .then((processedAudio) => {
                         elements.genLabel.innerText = "Synthesis Pipeline: Production Complete!";
@@ -343,16 +341,25 @@
             });
         });
 
-        /* Advanced Offline Audio Context Processing Layout
-           Compiles precise speed-stretching, separate pitch shifting, 
-           and low-shelf equalization into the target download array natively.
-        */
         function renderModifiedAudio(samples, sampleRate, speedFactor, semitoneShift, warmthDb) {
             return new Promise((resolve, reject) => {
-                // Calculate output timeline lengths based purely on targeted speed changes
-                const targetLength = Math.floor(samples.length / speedFactor);
+                // Calculate the final desired length based solely on the target speed factor
+                const desiredFinalLength = Math.floor(samples.length / speedFactor);
                 
-                const offlineCtx = new OfflineAudioContext(1, targetLength, sampleRate);
+                // Calculate pitch shift hardware resample ratio: 2^(semitones / 12)
+                const pitchResampleRatio = Math.pow(2, semitoneShift / 12);
+                
+                // Determine the structural hardware playback rate needed to execute both changes simultaneously
+                const hardwarePlaybackRate = speedFactor * pitchResampleRatio;
+                
+                // CRITICAL FIX: Base the hardware renderer length on the combined rate 
+                // to prevent truncation when lowering pitch lowers the hardware speed.
+                const renderingLength = Math.ceil(samples.length / hardwarePlaybackRate);
+                
+                // Allocate a buffer size that dynamically adapts to prevent syllable drop-offs
+                const bufferLength = Math.max(desiredFinalLength, renderingLength) + 1000; 
+
+                const offlineCtx = new OfflineAudioContext(1, bufferLength, sampleRate);
                 
                 const buffer = offlineCtx.createBuffer(1, samples.length, sampleRate);
                 buffer.copyToChannel(samples, 0);
@@ -360,28 +367,16 @@
                 const source = offlineCtx.createBufferSource();
                 source.buffer = buffer;
                 
-                // 1. Map Speed Factor directly to the playback rate timeline
-                source.playbackRate.value = speedFactor;
+                // Assign the compound rate directly to the hardware engine
+                source.playbackRate.value = hardwarePlaybackRate;
 
-                // 2. Map Independent Pitch shifting using explicit math scaling ratios
-                // Ratios calculated from base 2 frequency distributions: 2^(semitones / 12)
-                if (semitoneShift !== 0) {
-                    const pitchResampleRatio = Math.pow(2, semitoneShift / 12);
-                    // To pitch-shift independently of speed natively inside WebAudio,
-                    // we adjust the core playback sample calculations inversely to counteract chipmunk artifacts
-                    source.playbackRate.value = speedFactor * pitchResampleRatio;
-                    
-                    // Compensate for total rendering length alterations triggered by independent scaling
-                    const pitchCompensatedLength = Math.floor(samples.length / (speedFactor * pitchResampleRatio));
-                }
-
-                // 3. Configure Warmth/Tone Biquad Equalization
+                // Configure Warmth/Tone Biquad Equalization
                 const filter = offlineCtx.createBiquadFilter();
                 filter.type = "lowshelf";
                 filter.frequency.value = 380; 
                 filter.gain.value = warmthDb; 
 
-                // Establish Signal Map Routing Chain
+                // Signal Routing Path
                 source.connect(filter);
                 filter.connect(offlineCtx.destination);
                 
@@ -389,19 +384,16 @@
 
                 offlineCtx.startRendering()
                     .then((renderedBuffer) => {
-                        let finalSamples = renderedBuffer.getChannelData(0);
+                        const renderedSamples = renderedBuffer.getChannelData(0);
                         
-                        // If pitch was shifted, run an inline crossfade resample loop to keep timeline speed locked 
-                        if (semitoneShift !== 0) {
-                            finalSamples = structuralRescale(finalSamples, targetLength);
-                        }
+                        // Rescale the rendered channel data so it matches the exact requested timeline length
+                        const finalSamples = structuralRescale(renderedSamples, desiredFinalLength);
                         resolve(finalSamples);
                     })
                     .catch((err) => reject(err));
             });
         }
 
-        // Core array matrix alignment helper ensuring speed changes do not morph when pitch is shifted
         function structuralRescale(samples, targetLength) {
             const output = new Float32Array(targetLength);
             const scale = samples.length / targetLength;
