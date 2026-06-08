@@ -1,37 +1,82 @@
 import { KokoroTTS } from "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js";
+import { env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1/dist/transformers.min.js";
 
 let ttsInstance = null;
 
-// Pre-load the core ONNX community model
-async function getTTS() {
+// Catch download status directly out of the Hugging Face Pipeline
+env.backends.onnx.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1/dist/";
+
+async function initializeModel() {
     if (!ttsInstance) {
-        postMessage({ status: "Downloading model (this may take a moment)..." });
-        
-        // You can change device to "webgpu" if the user's browser supports it
         ttsInstance = await KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX", {
-            dtype: "q8", 
-            device: "wasm" 
+            dtype: "q8",
+            device: "wasm",
+            progress_callback: (data) => {
+                // Intercept download status and forward upstream to UI
+                if (data.status === 'progress') {
+                    self.postMessage({
+                        type: 'MODEL_PROGRESS',
+                        file: data.file,
+                        progress: data.progress
+                    });
+                }
+                if (data.status === 'ready') {
+                    self.postMessage({ type: 'MODEL_READY' });
+                }
+            }
         });
     }
     return ttsInstance;
 }
 
 self.onmessage = async function(e) {
-    const { text, voice } = e.data;
+    const { type, paragraphs, voice } = e.data;
 
-    try {
-        const tts = await getTTS();
-        postMessage({ status: "Synthesizing audio..." });
+    if (type === 'START_SYNTHESIS') {
+        try {
+            const tts = await initializeModel();
+            const compiledChunks = [];
+            let globalSamplingRate = 24000; // Kokoro constant default layout baseline
 
-        // Generate the audio structure
-        const audio = await tts.generate(text, { voice: voice });
-        
-        // Convert the raw audio Float32Array to a playable browser Blob URL
-        const blob = audio.toBlob(); 
-        const audioUrl = URL.createObjectURL(blob);
+            for (let i = 0; i < paragraphs.length; i++) {
+                // Signal current synthesis index
+                self.postMessage({
+                    type: 'CHUNK_PROGRESS',
+                    current: i + 1,
+                    total: paragraphs.length
+                });
 
-        postMessage({ type: 'DONE', status: 'Speech ready!', audioUrl });
-    } catch (err) {
-        postMessage({ type: 'ERROR', status: 'Error occurred.', error: err.message });
+                // Generate audio segment
+                const rawAudioOutput = await tts.generate(paragraphs[i], { voice: voice });
+                
+                compiledChunks.push(rawAudioOutput.audio);
+                if (rawAudioOutput.sampling_rate) {
+                    globalSamplingRate = rawAudioOutput.sampling_rate;
+                }
+            }
+
+            // Concatenation: Calculate aggregate total layout allocation length
+            const totalLength = compiledChunks.reduce((acc, chunk) => acc + chunk.length, 0);
+            const stitchedWaveform = new Float32Array(totalLength);
+            
+            let arrayInsertionOffset = 0;
+            for (const chunk of compiledChunks) {
+                stitchedWaveform.set(chunk, arrayInsertionOffset);
+                arrayInsertionOffset += chunk.length;
+            }
+
+            // Return floating-point array data blocks to index window
+            self.postMessage({
+                type: 'COMPILE_SUCCESS',
+                audioData: stitchedWaveform,
+                samplingRate: globalSamplingRate
+            });
+
+        } catch (err) {
+            self.postMessage({
+                type: 'ERROR',
+                error: err.message
+            });
+        }
     }
 };
