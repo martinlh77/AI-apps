@@ -11,8 +11,12 @@
         textarea { width: 100%; height: 160px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; resize: vertical; }
         .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
         .control-group { display: flex; flex-direction: column; }
+        .sliders-group { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 5px 0 15px 0; background: white; padding: 15px; border-radius: 6px; border: 1px solid #e1e1e6; }
+        .slider-item { display: flex; flex-direction: column; }
+        .slider-header { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
         label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        select, button { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #ccc; }
+        select, button, input[type="range"] { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #ccc; }
+        input[type="range"] { padding: 5px 0; accent-color: #0070f3; }
         button { background: #0070f3; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
         button:hover { background: #0051a8; }
         button:disabled { background: #ccc; cursor: not-allowed; }
@@ -133,6 +137,23 @@
         </div>
     </div>
 
+    <div class="sliders-group">
+        <div class="slider-item">
+            <div class="slider-header">
+                <label for="speedSlider">Speaking Speed</label>
+                <span id="speedVal">1.0x</span>
+            </div>
+            <input type="range" id="speedSlider" min="0.5" max="2.0" step="0.1" value="1.0">
+        </div>
+        <div class="slider-item">
+            <div class="slider-header">
+                <label for="pitchSlider">Voice Pitch Adjustment</label>
+                <span id="pitchVal">1.0x</span>
+            </div>
+            <input type="range" id="pitchSlider" min="0.5" max="1.5" step="0.05" value="1.0">
+        </div>
+    </div>
+
     <button id="compileBtn">Compile Audiobook File</button>
 
     <div class="status-container">
@@ -168,6 +189,10 @@
             text: document.getElementById('textInput'),
             voice: document.getElementById('voiceSelect'),
             format: document.getElementById('formatSelect'),
+            speed: document.getElementById('speedSlider'),
+            speedLabel: document.getElementById('speedVal'),
+            pitch: document.getElementById('pitchSlider'),
+            pitchLabel: document.getElementById('pitchVal'),
             btn: document.getElementById('compileBtn'),
             modelLabel: document.getElementById('modelLabel'),
             modelFill: document.getElementById('modelFill'),
@@ -180,6 +205,10 @@
             dlWav: document.getElementById('downloadWav'),
             dlMp3: document.getElementById('downloadMp3')
         };
+
+        // UI Event listeners for slider display output
+        elements.speed.addEventListener('input', (e) => elements.speedLabel.innerText = `${e.target.value}x`);
+        elements.pitch.addEventListener('input', (e) => elements.pitchLabel.innerText = `${e.target.value}x`);
 
         // Standard default content for immediate visual text testing
         elements.text.value = "Hello friend! This is paragraph number one running inside your browser.\n\nEsta es la segunda sección, procesada de forma totalmente independiente mediante segmentación de texto.";
@@ -209,12 +238,33 @@
             }
 
             if (data.type === 'COMPILE_SUCCESS') {
-                elements.genLabel.innerText = "Synthesis Pipeline: Production Complete!";
-                elements.genFill.style.width = "100%";
-                elements.genPercent.innerText = "100%";
-                elements.btn.disabled = false;
+                elements.genLabel.innerText = "Applying speed and pitch DSP modifications...";
+                
+                // Read execution parameter metrics
+                const targetSpeed = parseFloat(elements.speed.value);
+                const targetPitch = parseFloat(elements.pitch.value);
 
-                setupOutputs(data.audioData, data.samplingRate, elements.format.value);
+                // Run modern Client-Side DSP transformation sequence asynchronously to keep UI responsive
+                setTimeout(() => {
+                    let processedAudio = data.audioData;
+                    
+                    // 1. Process Speed alteration if required
+                    if (targetSpeed !== 1.0) {
+                        processedAudio = adjustSpeed(processedAudio, targetSpeed);
+                    }
+                    
+                    // 2. Process Pitch modification if required
+                    if (targetPitch !== 1.0) {
+                        processedAudio = adjustPitch(processedAudio, targetPitch);
+                    }
+
+                    elements.genLabel.innerText = "Synthesis Pipeline: Production Complete!";
+                    elements.genFill.style.width = "100%";
+                    elements.genPercent.innerText = "100%";
+                    elements.btn.disabled = false;
+
+                    setupOutputs(processedAudio, data.samplingRate, elements.format.value);
+                }, 20);
             }
 
             if (data.type === 'ERROR') {
@@ -224,54 +274,103 @@
             }
         };
 
-elements.btn.addEventListener('click', () => {
-    const rawText = elements.text.value;
-    
-    // 1. Split text into paragraph chunks via newlines
-    const paragraphs = rawText.split('\n')
-        .map(p => {
-            return p
-                .trim()
-                // Replace curly/smart single quotes with standard straight ones
-                .replace(/[\u2018\u2019]/g, "'")
-                // Replace curly/smart double quotes with standard straight ones
-                .replace(/[\u201C\u201D]/g, '"')
-                // Replace em-dashes and en-dashes with standard hyphens
-                .replace(/[\u2014\u2013]/g, "-")
-                // Strip out any unusual non-ascii symbols that break phoneme generation
-                .replace(/[^\x00-\x7F]/g, (char) => {
-                    // Retain standard accented international characters for Spanish/French etc.
-                    if (/[áéíóúüñÁÉÍÓÚÜÑàèìòùÀÈÌÒÙâêîûôÂÊÎÛÔçÇ]/.test(char)) return char;
-                    // Strip anything else suspicious
-                    return '';
-                });
-        })
-        // 2. Filter out entries that became empty strings after cleanup
-        .filter(p => p.trim().length > 0);
+        elements.btn.addEventListener('click', () => {
+            const rawText = elements.text.value;
+            
+            const paragraphs = rawText.split('\n')
+                .map(p => {
+                    return p
+                        .trim()
+                        .replace(/[\u2018\u2019]/g, "'")
+                        .replace(/[\u201C\u201D]/g, '"')
+                        .replace(/[\u2014\u2013]/g, "-")
+                        .replace(/[^\x00-\x7F]/g, (char) => {
+                            if (/[áéíóúüñÁÉÍÓÚÜÑàèìòùÀÈÌÒÙâêîûôÂÊÎÛÔçÇ]/.test(char)) return char;
+                            return '';
+                        });
+                })
+                .filter(p => p.trim().length > 0);
 
-    if (paragraphs.length === 0) {
-        alert("Please drop text blocks into the input window.");
-        return;
-    }
+            if (paragraphs.length === 0) {
+                alert("Please drop text blocks into the input window.");
+                return;
+            }
 
-    elements.btn.disabled = true;
-    elements.actions.style.display = "none";
-    elements.genFill.style.width = "0%";
-    elements.genPercent.innerText = "0%";
-    elements.genLabel.innerText = "Initializing array compiler...";
+            elements.btn.disabled = true;
+            elements.actions.style.display = "none";
+            elements.genFill.style.width = "0%";
+            elements.genPercent.innerText = "0%";
+            elements.genLabel.innerText = "Initializing array compiler...";
 
-    worker.postMessage({
-        type: 'START_SYNTHESIS',
-        paragraphs: paragraphs,
-        voice: elements.voice.value
-    });
-});
+            worker.postMessage({
+                type: 'START_SYNTHESIS',
+                paragraphs: paragraphs,
+                voice: elements.voice.value
+            });
+        });
+
+        /* ================= DSP AUDIO MANIPULATION FUNCTIONS ================= */
+
+        // High-speed Linear Interpolation time-stretching resampling
+        function adjustSpeed(samples, speedFactor) {
+            const newLength = Math.floor(samples.length / speedFactor);
+            const result = new Float32Array(newLength);
+            for (let i = 0; i < newLength; i++) {
+                let pos = i * speedFactor;
+                let index = Math.floor(pos);
+                let fraction = pos - index;
+                if (index + 1 < samples.length) {
+                    result[i] = samples[index] * (1 - fraction) + samples[index + 1] * fraction;
+                } else {
+                    result[i] = samples[index];
+                }
+            }
+            return result;
+        }
+
+        // Time-Domain Pitch Shifting Engine (Granular PS Overlap-Add emulation methodology)
+        function adjustPitch(samples, pitchFactor) {
+            const grainSize = 512; 
+            const overlap = 4;     
+            const hopSize = grainSize / overlap;
+            const result = new Float32Array(samples.length);
+            const count = new Float32Array(samples.length);
+
+            // Create Hanning window matrix envelope
+            const window = new Float32Array(grainSize);
+            for (let i = 0; i < grainSize; i++) {
+                window[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (grainSize - 1)));
+            }
+
+            for (let pos = 0; pos < samples.length - grainSize; pos += hopSize) {
+                for (let i = 0; i < grainSize; i++) {
+                    // Resample grain data to alter the core frequency layout boundaries
+                    let writeIndex = Math.floor(pos + i);
+                    let readIndex = Math.floor(pos + i * pitchFactor);
+                    
+                    if (readIndex < samples.length && writeIndex < result.length) {
+                        let sample = samples[readIndex] * window[i];
+                        result[writeIndex] += sample;
+                        count[writeIndex] += window[i];
+                    }
+                }
+            }
+
+            // Clean synthesis normalization normalization pass
+            for (let i = 0; i < result.length; i++) {
+                if (count[i] > 0.01) {
+                    result[i] /= count[i];
+                }
+            }
+            return result;
+        }
+
+        /* ================= OUTPUT ENCODING AND STORAGE LOGIC ================= */
 
         function setupOutputs(float32Array, samplingRate, targetFormat) {
             elements.dlWav.style.display = "none";
             elements.dlMp3.style.display = "none";
 
-            // 1. Generate standard WAV representation
             const wavBlob = encodeWAV(float32Array, samplingRate);
             const wavUrl = URL.createObjectURL(wavBlob);
 
@@ -280,7 +379,6 @@ elements.btn.addEventListener('click', () => {
                 elements.dlWav.href = wavUrl;
                 elements.dlWav.style.display = "inline-block";
             } else {
-                // 2. Generate on-the-fly MP3 translation from float32 array matrix
                 elements.genLabel.innerText = "Encoding bitstream matrix to MP3...";
                 setTimeout(() => {
                     const mp3Blob = encodeMP3(float32Array, samplingRate);
@@ -295,29 +393,24 @@ elements.btn.addEventListener('click', () => {
             elements.player.play();
         }
 
-        // Standard PCM WAV structure conversion logic
         function encodeWAV(samples, sampleRate) {
             const buffer = new ArrayBuffer(44 + samples.length * 2);
             const view = new DataView(buffer);
             
-            /* RIFF identifier */
             writeString(view, 0, 'RIFF');
             view.setUint32(4, 36 + samples.length * 2, true);
             writeString(view, 8, 'WAVE');
-            /* Format chunk identifier */
             writeString(view, 12, 'fmt ');
             view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true); // PCM Type
-            view.setUint16(22, 1, true); // Mono channel
+            view.setUint16(20, 1, true); 
+            view.setUint16(22, 1, true); 
             view.setUint32(24, sampleRate, true);
             view.setUint32(28, sampleRate * 2, true);
             view.setUint16(32, 2, true);
-            view.setUint16(34, 16, true); // 16 Bit depth
-            /* Data chunk identifier */
+            view.setUint16(34, 16, true); 
             writeString(view, 36, 'data');
             view.setUint32(40, samples.length * 2, true);
             
-            // Float32 to Int16 Conversion scaling
             let offset = 44;
             for (let i = 0; i < samples.length; i++, offset += 2) {
                 let s = Math.max(-1, Math.min(1, samples[i]));
@@ -326,12 +419,10 @@ elements.btn.addEventListener('click', () => {
             return new Blob([view], { type: 'audio/wav' });
         }
 
-        // Lamejs execution logic converting raw PCM structures directly inside the browser
         function encodeMP3(samples, sampleRate) {
             const mp3encoder = new lamejs.Mp3Encoder(1, sampleRate, 128);
             const mp3Data = [];
             
-            // Convert native floats to the short integer formats required by LameJS
             const int16Samples = new Int16Array(samples.length);
             for (let i = 0; i < samples.length; i++) {
                 let s = Math.max(-1, Math.min(1, samples[i]));
