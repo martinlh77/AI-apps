@@ -224,30 +224,48 @@
             }
         };
 
-        elements.btn.addEventListener('click', () => {
-            const rawText = elements.text.value;
-            // Split by lines, clean whitespaces, omit empty entries
-            const paragraphs = rawText.split('\n')
-                                      .map(p => p.trim())
-                                      .filter(p => p.length > 0);
+elements.btn.addEventListener('click', () => {
+    const rawText = elements.text.value;
+    
+    // 1. Split text into paragraph chunks via newlines
+    const paragraphs = rawText.split('\n')
+        .map(p => {
+            return p
+                .trim()
+                // Replace curly/smart single quotes with standard straight ones
+                .replace(/[\u2018\u2019]/g, "'")
+                // Replace curly/smart double quotes with standard straight ones
+                .replace(/[\u201C\u201D]/g, '"')
+                // Replace em-dashes and en-dashes with standard hyphens
+                .replace(/[\u2014\u2013]/g, "-")
+                // Strip out any unusual non-ascii symbols that break phoneme generation
+                .replace(/[^\x00-\x7F]/g, (char) => {
+                    // Retain standard accented international characters for Spanish/French etc.
+                    if (/[áéíóúüñÁÉÍÓÚÜÑàèìòùÀÈÌÒÙâêîûôÂÊÎÛÔçÇ]/.test(char)) return char;
+                    // Strip anything else suspicious
+                    return '';
+                });
+        })
+        // 2. Filter out entries that became empty strings after cleanup
+        .filter(p => p.trim().length > 0);
 
-            if (paragraphs.length === 0) {
-                alert("Please drop text blocks into the input window.");
-                return;
-            }
+    if (paragraphs.length === 0) {
+        alert("Please drop text blocks into the input window.");
+        return;
+    }
 
-            elements.btn.disabled = true;
-            elements.actions.style.display = "none";
-            elements.genFill.style.width = "0%";
-            elements.genPercent.innerText = "0%";
-            elements.genLabel.innerText = "Initializing array compiler...";
+    elements.btn.disabled = true;
+    elements.actions.style.display = "none";
+    elements.genFill.style.width = "0%";
+    elements.genPercent.innerText = "0%";
+    elements.genLabel.innerText = "Initializing array compiler...";
 
-            worker.postMessage({
-                type: 'START_SYNTHESIS',
-                paragraphs: paragraphs,
-                voice: elements.voice.value
-            });
-        });
+    worker.postMessage({
+        type: 'START_SYNTHESIS',
+        paragraphs: paragraphs,
+        voice: elements.voice.value
+    });
+});
 
         function setupOutputs(float32Array, samplingRate, targetFormat) {
             elements.dlWav.style.display = "none";
