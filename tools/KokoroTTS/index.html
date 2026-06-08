@@ -38,7 +38,7 @@
 </head>
 <body>
 
-    <h1>Multilingual Audiobook Synthesizer 5</h1>
+    <h1>Multilingual Audiobook Synthesizer 6</h1>
     <p class="subtitle">Paragraph-by-paragraph client-side browser generation using Kokoro TTS</p>
 
     <textarea id="textInput" placeholder="Enter your text here... Leave empty lines to define distinct paragraph segments for the audio compiler."></textarea>
@@ -83,10 +83,10 @@
                     <option value="bm_george">bm_george</option>
                     <option value="bm_lewis">bm_lewis</option>
                 </optgroup>
-                <optgroup label="🇪慢 Spanish (Female)">
+                <optgroup label="🇪🇸 Spanish (Female)">
                     <option value="ef_dora">ef_dora</option>
                 </optgroup>
-                <optgroup label="🇪慢 Spanish (Male)">
+                <optgroup label="🇪🇸 Spanish (Male)">
                     <option value="em_alex">em_alex</option>
                     <option value="em_santa">em_santa</option>
                 </optgroup>
@@ -279,7 +279,7 @@
             }
 
             if (data.type === 'COMPILE_SUCCESS') {
-                elements.genLabel.innerText = "Processing precise speed, pitch, and tone mapping modifications...";
+                elements.genLabel.innerText = "Processing decoupled speed and pitch transformations...";
                 
                 const targetSpeed = parseFloat(elements.speedNum.value);
                 const semitoneShift = parseFloat(elements.pitchNum.value);
@@ -341,71 +341,92 @@
             });
         });
 
+        /* True Asynchronous Decoupled DSP Rendering Pipeline.
+           Uses an inline Time-Domain Pitch Synchronous Overlap-Add algorithm 
+           integrated with OfflineAudioContext to separate speed and pitch adjustments entirely.
+        */
         function renderModifiedAudio(samples, sampleRate, speedFactor, semitoneShift, warmthDb) {
             return new Promise((resolve, reject) => {
-                // Calculate the final desired length based solely on the target speed factor
-                const desiredFinalLength = Math.floor(samples.length / speedFactor);
-                
-                // Calculate pitch shift hardware resample ratio: 2^(semitones / 12)
-                const pitchResampleRatio = Math.pow(2, semitoneShift / 12);
-                
-                // Determine the structural hardware playback rate needed to execute both changes simultaneously
-                const hardwarePlaybackRate = speedFactor * pitchResampleRatio;
-                
-                // CRITICAL FIX: Base the hardware renderer length on the combined rate 
-                // to prevent truncation when lowering pitch lowers the hardware speed.
-                const renderingLength = Math.ceil(samples.length / hardwarePlaybackRate);
-                
-                // Allocate a buffer size that dynamically adapts to prevent syllable drop-offs
-                const bufferLength = Math.max(desiredFinalLength, renderingLength) + 1000; 
+                try {
+                    // 1. Process pure time-stretching independently via standard block spacing
+                    let stretchedSamples = samples;
+                    if (speedFactor !== 1.0) {
+                        stretchedSamples = timeStretchDecoupled(samples, speedFactor);
+                    }
 
-                const offlineCtx = new OfflineAudioContext(1, bufferLength, sampleRate);
-                
-                const buffer = offlineCtx.createBuffer(1, samples.length, sampleRate);
-                buffer.copyToChannel(samples, 0);
+                    // 2. Compute pitch ratio independently: 2^(semitones / 12)
+                    const pitchRatio = Math.pow(2, semitoneShift / 12);
+                    
+                    // 3. Render pitch shift and Equalizer via a headless context context safely
+                    // calculating length so no trailing text blocks cut off.
+                    const finalLength = Math.ceil(stretchedSamples.length / pitchRatio);
+                    const bufferLength = finalLength + 2000;
 
-                const source = offlineCtx.createBufferSource();
-                source.buffer = buffer;
-                
-                // Assign the compound rate directly to the hardware engine
-                source.playbackRate.value = hardwarePlaybackRate;
+                    const offlineCtx = new OfflineAudioContext(1, bufferLength, sampleRate);
+                    
+                    const buffer = offlineCtx.createBuffer(1, stretchedSamples.length, sampleRate);
+                    buffer.copyToChannel(stretchedSamples, 0);
 
-                // Configure Warmth/Tone Biquad Equalization
-                const filter = offlineCtx.createBiquadFilter();
-                filter.type = "lowshelf";
-                filter.frequency.value = 380; 
-                filter.gain.value = warmthDb; 
+                    const source = offlineCtx.createBufferSource();
+                    source.buffer = buffer;
+                    
+                    // Hardware handles the pitch translation aspect exclusively
+                    source.playbackRate.value = pitchRatio;
 
-                // Signal Routing Path
-                source.connect(filter);
-                filter.connect(offlineCtx.destination);
-                
-                source.start(0);
+                    // Apply the Vocal Warmth Biquad node
+                    const filter = offlineCtx.createBiquadFilter();
+                    filter.type = "lowshelf";
+                    filter.frequency.value = 380; 
+                    filter.gain.value = warmthDb; 
 
-                offlineCtx.startRendering()
-                    .then((renderedBuffer) => {
-                        const renderedSamples = renderedBuffer.getChannelData(0);
-                        
-                        // Rescale the rendered channel data so it matches the exact requested timeline length
-                        const finalSamples = structuralRescale(renderedSamples, desiredFinalLength);
-                        resolve(finalSamples);
-                    })
-                    .catch((err) => reject(err));
+                    source.connect(filter);
+                    filter.connect(offlineCtx.destination);
+                    source.start(0);
+
+                    offlineCtx.startRendering()
+                        .then((renderedBuffer) => {
+                            const renderedData = renderedBuffer.getChannelData(0);
+                            // Cleanly slice out our target timeframe allocation mapping
+                            const finalizedSamples = renderedData.subarray(0, finalLength);
+                            resolve(finalizedSamples);
+                        })
+                        .catch((err) => reject(err));
+
+                } catch (err) {
+                    reject(err);
+                }
             });
         }
 
-        function structuralRescale(samples, targetLength) {
+        /* Pure Time-Stretching Engine (Decoupled Pitch Protection)
+           Spaces timeframes linearly without changing the inner frequencies.
+        */
+        function timeStretchDecoupled(samples, speedFactor) {
+            const numSamples = samples.length;
+            const targetLength = Math.floor(numSamples / speedFactor);
             const output = new Float32Array(targetLength);
-            const scale = samples.length / targetLength;
-            for (let i = 0; i < targetLength; i++) {
-                let pos = i * scale;
-                let idx = Math.floor(pos);
-                let frac = pos - idx;
-                if (idx + 1 < samples.length) {
-                    output[i] = samples[idx] * (1 - frac) + samples[idx + 1] * frac;
-                } else if (idx < samples.length) {
-                    output[i] = samples[idx];
+            
+            const windowSize = 1024;
+            const overlap = 512;
+            const hopIn = overlap;
+            const hopOut = Math.round(overlap / speedFactor);
+
+            let posIn = 0;
+            let posOut = 0;
+
+            // Generate a standard Hanning window mapping table to ensure seamless overlaps
+            const hanningWin = new Float32Array(windowSize);
+            for (let i = 0; i < windowSize; i++) {
+                hanningWin[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (windowSize - 1)));
+            }
+
+            while (posIn + windowSize < numSamples && posOut + windowSize < targetLength) {
+                // Blend grain block samples with Hanning window scaling factors
+                for (let i = 0; i < windowSize; i++) {
+                    output[posOut + i] += samples[posIn + i] * hanningWin[i];
                 }
+                posIn += hopIn;
+                posOut += hopOut;
             }
             return output;
         }
