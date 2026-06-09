@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V4.2</title>
+    <title>Pollinations AI Chat (Media Enabled) V4.3</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -652,7 +652,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.2</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.3</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -960,9 +960,17 @@
 
             <textarea id="tts-text-input" class="tts-textarea" placeholder="Enter text to convert to speech..."></textarea>
 
-            <button id="tts-generate-btn" class="tts-generate-btn">
-                <i class="fas fa-magic"></i> Generate Audio
-            </button>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button id="tts-generate-btn" class="tts-generate-btn" style="flex:1;">
+                    <i class="fas fa-magic"></i> Generate Audio
+                </button>
+                <button id="tts-pause-btn" class="tts-generate-btn" style="width:auto; display:none; background:#6c757d;">
+                    <i class="fas fa-pause"></i> Pause Queue
+                </button>
+                <button id="tts-cancel-btn" class="tts-generate-btn" style="width:auto; display:none; background:#dc3545;">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            </div>
 
             <div id="tts-output"></div>
         </div>
@@ -1022,6 +1030,8 @@
     let isProcessingTtsQueue = false;
     let activeTtsMessageIds = new Set();
     let kokoroLoadProgress = 0;
+    let ttsPaused = false;
+    let currentTtsJob = null;
 
     const SYSTEM_PRESETS = {
         custom: '',
@@ -1747,45 +1757,46 @@ When generating Python (which is rare):
         const voice = options.voice || document.getElementById('voice-select')?.value || 'af_heart';
         const dtype = document.getElementById('kokoro-dtype')?.value || 'q8';
 
-        if (!needsChunking(cleanText)) {
-            const single = await synthesizeKokoro(cleanText, { voice, dtype });
-            const blob = new Blob([single.audioBuffer], { type: 'audio/wav' });
-            const url = URL.createObjectURL(blob);
-            return {
-                blob,
-                url,
-                text: cleanText,
-                samplingRate: single.samplingRate || 24000,
-                chunked: false,
-                chunkCount: 1
-            };
+        const chunks = needsChunking(cleanText)
+            ? splitTextSmart(cleanText, KOKORO_HARD_CHUNK_TARGET)
+            : [cleanText];
+
+        const total = chunks.length;
+        const floatChunks = [];
+        let sampleRate = 24000;
+
+        for (let i = 0; i < chunks.length; i++) {
+            if (typeof options.isCancelled === 'function' && options.isCancelled()) {
+                throw new Error('TTS job cancelled');
+            }
+
+            if (typeof options.onProgress === 'function') {
+                options.onProgress({
+                    current: i + 1,
+                    total,
+                    chunkText: chunks[i]
+                });
+            }
+
+            const single = await synthesizeKokoro(chunks[i], { voice, dtype });
+            const wavBlob = new Blob([single.audioBuffer], { type: 'audio/wav' });
+            const wavArrayBuffer = await wavBlob.arrayBuffer();
+            const pcmBytes = wavArrayBuffer.slice(44);
+            const pcm16 = new Int16Array(pcmBytes);
+            const float32 = new Float32Array(pcm16.length);
+
+            for (let j = 0; j < pcm16.length; j++) {
+                float32[j] = pcm16[j] / 32768;
+            }
+
+            floatChunks.push(float32);
+            sampleRate = single.samplingRate || sampleRate;
         }
 
-        const chunks = splitTextSmart(cleanText, KOKORO_HARD_CHUNK_TARGET);
-        const requestId = 'kokoro-batch-' + Date.now() + '-' + Math.random().toString(36).slice(2);
-
-        const batchData = await new Promise((resolve, reject) => {
-            kokoroPending.set(requestId, {
-                resolve,
-                reject,
-                onProgress: options.onProgress
-            });
-
-            kokoroWorker.postMessage({
-                type: 'GENERATE_BATCH',
-                requestId,
-                chunks,
-                voice,
-                dtype
-            });
-        });
-
-        const floatChunks = (batchData.audioChunks || []).map(arr => new Float32Array(arr));
         if (!floatChunks.length) {
-            throw new Error('No audio chunks returned from Kokoro batch generation');
+            throw new Error('No audio chunks returned from Kokoro generation');
         }
 
-        const sampleRate = batchData.samplingRate || 24000;
         const combined = concatFloat32Arrays(floatChunks);
         const blob = encodeWavFromFloat32(combined, sampleRate);
         const url = URL.createObjectURL(blob);
@@ -1795,8 +1806,8 @@ When generating Python (which is rare):
             url,
             text: cleanText,
             samplingRate: sampleRate,
-            chunked: true,
-            chunkCount: chunks.length
+            chunked: total > 1,
+            chunkCount: total
         };
     }
 
@@ -1930,61 +1941,218 @@ When generating Python (which is rare):
         }
     }
 
+    function updateTtsPopupControls() {
+        const pauseBtn = document.getElementById('tts-pause-btn');
+        const cancelBtn = document.getElementById('tts-cancel-btn');
+        const generateBtn = document.getElementById('tts-generate-btn');
+
+        const hasWork = !!currentTtsJob || ttsGenerationQueue.length > 0 || activeTtsMessageIds.size > 0;
+
+        if (pauseBtn) {
+            pauseBtn.style.display = hasWork ? 'inline-block' : 'none';
+            pauseBtn.innerHTML = ttsPaused
+                ? '<i class="fas fa-play"></i> Resume Queue'
+                : '<i class="fas fa-pause"></i> Pause Queue';
+        }
+
+        if (cancelBtn) {
+            cancelBtn.style.display = hasWork ? 'inline-block' : 'none';
+        }
+
+        if (generateBtn && !hasWork) {
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Audio';
+        }
+    }
+
+    function updateStandaloneTtsProgress(text, current = 0, total = 0) {
+        if (!ttsOutput) return;
+
+        const progressLine = total > 0
+            ? `Chunk ${current}/${total}`
+            : '';
+
+        ttsOutput.innerHTML = `
+            <div style="color: var(--text-color);">
+                <strong>Generating Audio...</strong>
+                <div style="margin-top:10px;">${escapeHtml(text || '')}</div>
+                ${progressLine ? `<div style="margin-top:10px; font-size:0.9em; opacity:0.85;"><strong>${progressLine}</strong></div>` : ''}
+            </div>
+        `;
+        ttsOutput.classList.add('show');
+    }
+
+    function cancelQueuedTtsJobs(includeCurrent = false) {
+        ttsGenerationQueue.forEach(job => {
+            if (job && typeof job.reject === 'function') {
+                job.reject(new Error('TTS job cancelled'));
+            }
+
+            if (job?.msgId) {
+                activeTtsMessageIds.delete(job.msgId);
+                const container = document.getElementById(`audio-container-${job.msgId}`);
+                if (container) {
+                    container.innerHTML = `
+                        <div class="audio-loading" style="color:orange;">
+                            <div><strong>Cancelled.</strong> Removed from queue.</div>
+                        </div>
+                    `;
+                }
+
+                const speakerButtons = document.querySelectorAll(`[onclick="speakMessageById('${job.msgId}')"]`);
+                speakerButtons.forEach(btn => btn.classList.remove('loading'));
+
+                const hiddenBtn = document.getElementById(`audio-btn-${job.msgId}`);
+                if (hiddenBtn) {
+                    hiddenBtn.disabled = false;
+                    hiddenBtn.innerHTML = '<i class="fas fa-volume-up"></i> Generate Audio';
+                }
+            }
+        });
+
+        ttsGenerationQueue = [];
+
+        if (includeCurrent && currentTtsJob) {
+            if (currentTtsJob.mode === 'popup') {
+                ttsOutput.innerHTML = `
+                    <div style="color:orange;">
+                        <strong>Cancelled.</strong> Current popup TTS will stop after the current chunk finishes.
+                    </div>
+                `;
+                ttsOutput.classList.add('show');
+            } else if (currentTtsJob.msgId) {
+                const container = document.getElementById(`audio-container-${currentTtsJob.msgId}`);
+                if (container) {
+                    container.innerHTML = `
+                        <div class="audio-loading" style="color:orange;">
+                            <div><strong>Cancelled.</strong> Current TTS will stop after the current chunk finishes.</div>
+                        </div>
+                    `;
+                }
+            }
+
+            currentTtsJob.cancelled = true;
+        }
+
+        updateTtsPopupControls();
+    }
+
     function queueTtsGeneration(job) {
         return new Promise((resolve, reject) => {
-            ttsGenerationQueue.push({ ...job, resolve, reject });
+            ttsGenerationQueue.push({
+                ...job,
+                mode: job.mode || 'message',
+                cancelled: false,
+                resolve,
+                reject
+            });
+            updateTtsPopupControls();
             processTtsQueue();
         });
     }
 
-    async function processTtsQueue() {
+       async function processTtsQueue() {
         if (isProcessingTtsQueue) return;
-        if (ttsGenerationQueue.length === 0) return;
 
         isProcessingTtsQueue = true;
+        updateTtsPopupControls();
 
-        while (ttsGenerationQueue.length > 0) {
-            const job = ttsGenerationQueue.shift();
-            const { msgId, textContent, resolve, reject } = job;
+        try {
+            while (ttsGenerationQueue.length > 0 || currentTtsJob) {
+                while (ttsPaused && !currentTtsJob) {
+                    await new Promise(resolve => setTimeout(resolve, 150));
+                }
 
-            let loadingTimer = null;
+                if (currentTtsJob || ttsGenerationQueue.length === 0) {
+                    if (!currentTtsJob) break;
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                    continue;
+                }
 
-            try {
-                activeTtsMessageIds.add(msgId);
-                setMessageAudioLoading(msgId, true, 'Waiting for Kokoro...');
+                const job = ttsGenerationQueue.shift();
+                currentTtsJob = job;
+                updateTtsPopupControls();
 
-                loadingTimer = setInterval(() => {
-                    if (kokoroReady) {
-                        updateMessageAudioLoadingText(msgId, 'Preparing speech generation...');
+                const { msgId, textContent, resolve, reject } = job;
+                let loadingTimer = null;
+
+                try {
+                    if (job.cancelled) {
+                        throw new Error('TTS job cancelled');
+                    }
+
+                    activeTtsMessageIds.add(msgId);
+
+                    if (job.mode === 'popup') {
+                        updateStandaloneTtsProgress(
+                            kokoroReady ? 'Preparing speech generation...' : `Loading model... ${kokoroLoadProgress}%`,
+                            0,
+                            0
+                        );
                     } else {
-                        updateMessageAudioLoadingText(msgId, `Loading model... ${kokoroLoadProgress}%`);
+                        setMessageAudioLoading(msgId, true, 'Waiting for Kokoro...');
                     }
-                }, 250);
 
-                const result = await synthesizeKokoroSmart(textContent, {
-                    onProgress: (data) => {
-                        if (data.total && data.current) {
-                            updateMessageAudioLoadingText(
-                                msgId,
-                                `Generating chunk ${data.current} of ${data.total}...`
+                    loadingTimer = setInterval(() => {
+                        if (job.cancelled) return;
+
+                        if (job.mode === 'popup') {
+                            updateStandaloneTtsProgress(
+                                kokoroReady ? 'Preparing speech generation...' : `Loading model... ${kokoroLoadProgress}%`,
+                                0,
+                                0
                             );
-                        } else if (kokoroReady) {
-                            updateMessageAudioLoadingText(msgId, 'Synthesizing speech locally...');
+                        } else {
+                            if (kokoroReady) {
+                                updateMessageAudioLoadingText(msgId, 'Preparing speech generation...');
+                            } else {
+                                updateMessageAudioLoadingText(msgId, `Loading model... ${kokoroLoadProgress}%`);
+                            }
                         }
-                    }
-                });
+                    }, 250);
 
-                if (loadingTimer) clearInterval(loadingTimer);
-                activeTtsMessageIds.delete(msgId);
-                resolve(result);
-            } catch (err) {
-                if (loadingTimer) clearInterval(loadingTimer);
-                activeTtsMessageIds.delete(msgId);
-                reject(err);
+                    const result = await synthesizeKokoroSmart(textContent, {
+                        isCancelled: () => !!job.cancelled,
+                        onProgress: (data) => {
+                            if (job.cancelled) return;
+
+                            if (job.mode === 'popup') {
+                                updateStandaloneTtsProgress(
+                                    'Generating...',
+                                    data.current || 0,
+                                    data.total || 0
+                                );
+                            } else {
+                                if (data.total && data.current) {
+                                    updateMessageAudioLoadingText(
+                                        msgId,
+                                        `Chunk ${data.current}/${data.total} generating...`
+                                    );
+                                } else if (kokoroReady) {
+                                    updateMessageAudioLoadingText(msgId, 'Synthesizing speech locally...');
+                                }
+                            }
+                        }
+                    });
+
+                    if (loadingTimer) clearInterval(loadingTimer);
+                    activeTtsMessageIds.delete(msgId);
+                    currentTtsJob = null;
+                    resolve(result);
+                    updateTtsPopupControls();
+                } catch (err) {
+                    if (loadingTimer) clearInterval(loadingTimer);
+                    activeTtsMessageIds.delete(msgId);
+                    currentTtsJob = null;
+                    reject(err);
+                    updateTtsPopupControls();
+                }
             }
+        } finally {
+            isProcessingTtsQueue = false;
+            currentTtsJob = null;
+            updateTtsPopupControls();
         }
-
-        isProcessingTtsQueue = false;
     }
 
     async function generateAudioForMessage(msgId, textContent) {
@@ -2003,7 +2171,7 @@ When generating Python (which is rare):
             speakerButtons.forEach(btn => btn.classList.remove('loading'));
 
             const showDownload = document.getElementById('audio-show-download')?.checked;
-            const chunkInfo = result.chunked ? `<span style="font-size:0.75em; opacity:0.75;">Chunked into ${result.chunkCount} parts</span>` : '';
+            const chunkInfo = result.chunked ? `<span style="font-size:0.75em; opacity:0.75;">Chunks: ${result.chunkCount}/${result.chunkCount}</span>` : `<span style="font-size:0.75em; opacity:0.75;">Chunk: 1/1</span>`;
 
             container.innerHTML = `
                 <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -2018,18 +2186,28 @@ When generating Python (which is rare):
         } catch (e) {
             const container = document.getElementById(`audio-container-${msgId}`);
             if (container) {
-                container.innerHTML = `
-                    <div class="audio-loading" style="color:#dc3545;">
-                        <div><strong>Audio generation failed.</strong> ${escapeHtml(e.message)}</div>
-                    </div>
-                `;
+                if (e.message === 'TTS job cancelled') {
+                    container.innerHTML = `
+                        <div class="audio-loading" style="color:orange;">
+                            <div><strong>Cancelled.</strong> Audio generation stopped.</div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="audio-loading" style="color:#dc3545;">
+                            <div><strong>Audio generation failed.</strong> ${escapeHtml(e.message)}</div>
+                        </div>
+                    `;
+                }
             }
 
             const speakerButtons = document.querySelectorAll(`[onclick="speakMessageById('${msgId}')"]`);
             speakerButtons.forEach(btn => btn.classList.remove('loading'));
 
-            showNotification("Audio generation failed: " + e.message);
-            console.error(e);
+            if (e.message !== 'TTS job cancelled') {
+                showNotification("Audio generation failed: " + e.message);
+                console.error(e);
+            }
         } finally {
             activeTtsMessageIds.delete(msgId);
             const hiddenBtn = document.getElementById(`audio-btn-${msgId}`);
@@ -2671,6 +2849,8 @@ When generating Python (which is rare):
         ttsGenerationQueue = [];
         isProcessingTtsQueue = false;
         activeTtsMessageIds.clear();
+        ttsPaused = false;
+        currentTtsJob = null;
 
         chatContainer.innerHTML = `
             <div class="message-wrapper ai">
@@ -2929,6 +3109,8 @@ When generating Python (which is rare):
     const closeTtsModal = document.getElementById('close-tts-modal');
     const ttsTextInput = document.getElementById('tts-text-input');
     const ttsGenerateBtn = document.getElementById('tts-generate-btn');
+    const ttsPauseBtn = document.getElementById('tts-pause-btn');
+    const ttsCancelBtn = document.getElementById('tts-cancel-btn');
     const ttsOutput = document.getElementById('tts-output');
 
     ttsPopupBtn.addEventListener('click', function(e) {
@@ -2947,6 +3129,23 @@ When generating Python (which is rare):
         }
     });
 
+    ttsPauseBtn.addEventListener('click', function() {
+        ttsPaused = !ttsPaused;
+        updateTtsPopupControls();
+
+        if (!ttsPaused) {
+            processTtsQueue();
+        }
+    });
+
+    ttsCancelBtn.addEventListener('click', function() {
+        cancelQueuedTtsJobs(true);
+        ttsPaused = false;
+        ttsGenerateBtn.disabled = false;
+        ttsGenerateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Audio';
+        updateTtsPopupControls();
+    });
+
     ttsGenerateBtn.addEventListener('click', async function() {
         const text = ttsTextInput.value.trim();
 
@@ -2955,25 +3154,49 @@ When generating Python (which is rare):
             return;
         }
 
+        if ((currentTtsJob && currentTtsJob.mode === 'popup') || ttsGenerationQueue.some(job => job.mode === 'popup')) {
+            showNotification('Popup TTS is already queued or running');
+            return;
+        }
+
         ttsGenerateBtn.disabled = true;
-        ttsGenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-        ttsOutput.classList.remove('show');
+        ttsGenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Queued...';
+        updateStandaloneTtsProgress('Queued...', 0, 0);
 
         try {
-            await generateStandaloneTTS(text);
+            const result = await queueTtsGeneration({
+                mode: 'popup',
+                msgId: 'popup-tts',
+                textContent: text,
+                cancelled: false
+            });
+
+            await generateStandaloneTTSResult(result);
+            showNotification('Audio generated successfully!');
         } catch (error) {
-            showNotification('TTS generation failed: ' + error.message);
-            console.error('TTS error:', error);
+            if (error.message === 'TTS job cancelled') {
+                ttsOutput.innerHTML = `
+                    <div style="color:orange;">
+                        <strong>Cancelled.</strong> Audio generation stopped.
+                    </div>
+                `;
+                ttsOutput.classList.add('show');
+            } else {
+                showNotification('TTS generation failed: ' + error.message);
+                console.error('TTS error:', error);
+            }
         } finally {
             ttsGenerateBtn.disabled = false;
             ttsGenerateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Audio';
+            updateTtsPopupControls();
         }
     });
 
-    async function generateStandaloneTTS(text) {
-        const result = await synthesizeKokoroSmart(text);
+    async function generateStandaloneTTSResult(result) {
         const showDownload = document.getElementById('audio-show-download')?.checked;
-        const chunkInfo = result.chunked ? `<div style="margin-top: 8px; font-size: 0.8em; opacity: 0.75;">Chunked into ${result.chunkCount} parts</div>` : '';
+        const chunkInfo = result.chunked
+            ? `<div style="margin-top: 8px; font-size: 0.8em; opacity: 0.75;">Chunks: ${result.chunkCount}/${result.chunkCount}</div>`
+            : `<div style="margin-top: 8px; font-size: 0.8em; opacity: 0.75;">Chunk: 1/1</div>`;
 
         ttsOutput.innerHTML = `
             <div style="color: var(--text-color);">
@@ -2996,7 +3219,9 @@ When generating Python (which is rare):
         `;
 
         ttsOutput.classList.add('show');
-        showNotification('Audio generated successfully!');
+        ttsGenerateBtn.disabled = false;
+        ttsGenerateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Audio';
+        updateTtsPopupControls();
     }
 
     const byopSection = document.getElementById('byop-section');
@@ -3095,7 +3320,7 @@ When generating Python (which is rare):
 
     loadAllDataFromStorage();
 
-    console.log("Chat application V4.2 with smart Kokoro full-dialogue chunking initialized successfully!");
+           console.log("Chat application V4.3 with smart Kokoro full-dialogue chunking initialized successfully!");
     console.log("Press Ctrl+Shift+P to toggle code preview");
     console.log("Premium models (🔒) require your own API key from enter.pollinations.ai");
 </script>
