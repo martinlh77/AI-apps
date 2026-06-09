@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V4.3</title>
+    <title>Pollinations AI Chat (Media Enabled) V4.4</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -652,7 +652,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.3</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.4</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -1693,6 +1693,24 @@ When generating Python (which is rare):
         return output;
     }
 
+    async function decodeWavToFloat32(audioBufferLike) {
+        const arrayBuffer = audioBufferLike instanceof ArrayBuffer
+            ? audioBufferLike
+            : await audioBufferLike.arrayBuffer();
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        try {
+            const decoded = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+            const channelData = decoded.getChannelData(0);
+            return {
+                samples: new Float32Array(channelData),
+                sampleRate: decoded.sampleRate
+            };
+        } finally {
+            await audioContext.close();
+        }
+    }
+
     function encodeWavFromFloat32(samples, sampleRate) {
         const buffer = new ArrayBuffer(44 + samples.length * 2);
         const view = new DataView(buffer);
@@ -1748,7 +1766,7 @@ When generating Python (which is rare):
         });
     }
 
-    async function synthesizeKokoroSmart(text, options = {}) {
+       async function synthesizeKokoroSmart(text, options = {}) {
         const cleanText = (text || '').trim();
         if (!cleanText) throw new Error('No text to synthesize');
 
@@ -1774,23 +1792,25 @@ When generating Python (which is rare):
                 options.onProgress({
                     current: i + 1,
                     total,
-                    chunkText: chunks[i]
+                    chunkText: chunks[i],
+                    phase: 'generating'
                 });
             }
 
             const single = await synthesizeKokoro(chunks[i], { voice, dtype });
-            const wavBlob = new Blob([single.audioBuffer], { type: 'audio/wav' });
-            const wavArrayBuffer = await wavBlob.arrayBuffer();
-            const pcmBytes = wavArrayBuffer.slice(44);
-            const pcm16 = new Int16Array(pcmBytes);
-            const float32 = new Float32Array(pcm16.length);
+            const decoded = await decodeWavToFloat32(single.audioBuffer);
 
-            for (let j = 0; j < pcm16.length; j++) {
-                float32[j] = pcm16[j] / 32768;
+            floatChunks.push(decoded.samples);
+            sampleRate = decoded.sampleRate || single.samplingRate || sampleRate;
+
+            if (typeof options.onProgress === 'function') {
+                options.onProgress({
+                    current: i + 1,
+                    total,
+                    chunkText: chunks[i],
+                    phase: 'completed'
+                });
             }
-
-            floatChunks.push(float32);
-            sampleRate = single.samplingRate || sampleRate;
         }
 
         if (!floatChunks.length) {
@@ -1807,7 +1827,8 @@ When generating Python (which is rare):
             text: cleanText,
             samplingRate: sampleRate,
             chunked: total > 1,
-            chunkCount: total
+            chunkCount: total,
+            chunks
         };
     }
 
@@ -1925,19 +1946,24 @@ When generating Python (which is rare):
                     <div>
                         <div>Generating audio...</div>
                         <div class="audio-progress-text">${text || 'Queued...'}</div>
+                        <div class="audio-progress-detail" style="font-size:0.78rem; opacity:0.72; margin-top:2px;"></div>
                     </div>
                 </div>
             `;
         }
-    }
 
-    function updateMessageAudioLoadingText(msgId, text) {
+    function updateMessageAudioLoadingText(msgId, text, detail = '') {
         const container = document.getElementById(`audio-container-${msgId}`);
         if (!container) return;
 
         const progressEl = container.querySelector('.audio-progress-text');
         if (progressEl) {
             progressEl.textContent = text;
+        }
+
+        const detailEl = container.querySelector('.audio-progress-detail');
+        if (detailEl) {
+            detailEl.textContent = detail;
         }
     }
 
@@ -1965,7 +1991,7 @@ When generating Python (which is rare):
         }
     }
 
-    function updateStandaloneTtsProgress(text, current = 0, total = 0) {
+    function updateStandaloneTtsProgress(text, current = 0, total = 0, detail = '') {
         if (!ttsOutput) return;
 
         const progressLine = total > 0
@@ -1977,6 +2003,7 @@ When generating Python (which is rare):
                 <strong>Generating Audio...</strong>
                 <div style="margin-top:10px;">${escapeHtml(text || '')}</div>
                 ${progressLine ? `<div style="margin-top:10px; font-size:0.9em; opacity:0.85;"><strong>${progressLine}</strong></div>` : ''}
+                ${detail ? `<div style="margin-top:6px; font-size:0.82em; opacity:0.72;">${escapeHtml(detail)}</div>` : ''}
             </div>
         `;
         ttsOutput.classList.add('show');
@@ -2087,7 +2114,8 @@ When generating Python (which is rare):
                         updateStandaloneTtsProgress(
                             kokoroReady ? 'Preparing speech generation...' : `Loading model... ${kokoroLoadProgress}%`,
                             0,
-                            0
+                            0,
+                            ''
                         );
                     } else {
                         setMessageAudioLoading(msgId, true, 'Waiting for Kokoro...');
@@ -2097,11 +2125,12 @@ When generating Python (which is rare):
                         if (job.cancelled) return;
 
                         if (job.mode === 'popup') {
-                            updateStandaloneTtsProgress(
-                                kokoroReady ? 'Preparing speech generation...' : `Loading model... ${kokoroLoadProgress}%`,
-                                0,
-                                0
-                            );
+                        updateStandaloneTtsProgress(
+                            kokoroReady ? 'Preparing speech generation...' : `Loading model... ${kokoroLoadProgress}%`,
+                            0,
+                            0,
+                            ''
+                        );
                         } else {
                             if (kokoroReady) {
                                 updateMessageAudioLoadingText(msgId, 'Preparing speech generation...');
@@ -2116,20 +2145,32 @@ When generating Python (which is rare):
                         onProgress: (data) => {
                             if (job.cancelled) return;
 
+                            const chunkLabel = data.total && data.current
+                                ? `Chunk ${data.current}/${data.total}`
+                                : 'Synthesizing speech locally...';
+
+                            const chunkPreview = (data.chunkText || '').trim().slice(0, 160);
+
                             if (job.mode === 'popup') {
                                 updateStandaloneTtsProgress(
-                                    'Generating...',
+                                    data.phase === 'completed' ? 'Chunk complete' : 'Generating...',
                                     data.current || 0,
-                                    data.total || 0
+                                    data.total || 0,
+                                    chunkPreview
                                 );
                             } else {
                                 if (data.total && data.current) {
                                     updateMessageAudioLoadingText(
                                         msgId,
-                                        `Chunk ${data.current}/${data.total} generating...`
+                                        `${chunkLabel} ${data.phase === 'completed' ? 'complete' : 'generating...'}`,
+                                        chunkPreview
                                     );
                                 } else if (kokoroReady) {
-                                    updateMessageAudioLoadingText(msgId, 'Synthesizing speech locally...');
+                                    updateMessageAudioLoadingText(
+                                        msgId,
+                                        'Synthesizing speech locally...',
+                                        chunkPreview
+                                    );
                                 }
                             }
                         }
@@ -3320,7 +3361,7 @@ When generating Python (which is rare):
 
     loadAllDataFromStorage();
 
-           console.log("Chat application V4.3 with smart Kokoro full-dialogue chunking initialized successfully!");
+           console.log("Chat application V4.4 with smart Kokoro full-dialogue chunking initialized successfully!");
     console.log("Press Ctrl+Shift+P to toggle code preview");
     console.log("Premium models (🔒) require your own API key from enter.pollinations.ai");
 </script>
