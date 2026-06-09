@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V3.9</title>
+    <title>Pollinations AI Chat (Media Enabled) V4.0</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -67,45 +67,48 @@
         * { box-sizing: border-box; }
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; flex-direction: column; transition: background-color 0.3s; }
 
-        /* Header */
         header { 
-    padding: 10px 20px; 
-    background-color: var(--chat-bg); 
-    border-bottom: 1px solid var(--border-color); 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-    /* ADD THESE LINES: */
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    flex-shrink: 0;
-    width: 100%;
-}
+            padding: 10px 20px; 
+            background-color: var(--chat-bg); 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
         .settings-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-color); }
         .session-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-color); margin-right: 10px; }
-        
-        /* Main Chat Area */
+
         #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
-        
-        /* Messages */
+
         .message-wrapper { display: flex; flex-direction: column; max-width: 85%; }
         .message-wrapper.user { align-self: flex-end; align-items: flex-end; }
         .message-wrapper.ai { align-self: flex-start; align-items: flex-start; }
-        
+
         .message-sender { font-size: 0.75rem; margin-bottom: 4px; opacity: 0.7; display: flex; align-items: center; gap: 5px; }
         .copy-msg-btn { cursor: pointer; font-size: 0.8rem; opacity: 0.5; transition: opacity 0.2s; }
         .copy-msg-btn:hover { opacity: 1; }
+        .message-action-btn {
+            cursor: pointer;
+            font-size: 0.85rem;
+            opacity: 0.55;
+            transition: opacity 0.2s;
+            margin-left: 6px;
+        }
+        .message-action-btn:hover { opacity: 1; }
 
         .message-bubble { padding: 12px 16px; border-radius: 12px; line-height: 1.5; position: relative; word-wrap: break-word; overflow-x: auto; }
         .user .message-bubble { background-color: var(--user-msg-bg); color: var(--user-msg-text); border-bottom-right-radius: 2px; }
-        .ai .message-bubble { background-color: var(--ai-msg-bg); color: var(--ai-msg-text); border-bottom-left-radius: 2px; width: 100%; }
+        .ai .message-bubble { background-color: var(--ai-msg-bg); color: var(--ai-msg-text); width: 100%; border-bottom-left-radius: 2px; }
 
-        /* Images in chat */
         .chat-image { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border-color); cursor: pointer; }
         .chat-video { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border-color); }
 
-        /* Code Blocks */
         .code-container { margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #444; background: #1e1e1e; }
         .code-header { background: var(--code-header-bg); color: #ccc; padding: 5px 10px; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-family: monospace; }
         .python-output-container { 
@@ -146,7 +149,6 @@
         pre { margin: 0; padding: 10px; overflow-x: auto; }
         code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9rem; }
 
-        /* Preview Panel */
         #preview-panel { 
             position: fixed; 
             top: 0; 
@@ -162,7 +164,7 @@
             box-shadow: -5px 0 15px rgba(0,0,0,0.3);
         }
         #preview-panel.open { right: 0; }
-        
+
         .preview-header { 
             padding: 15px 20px; 
             background-color: var(--chat-bg); 
@@ -179,14 +181,14 @@
             cursor: pointer; 
             color: var(--text-color); 
         }
-        
+
         #preview-iframe { 
             flex: 1; 
             border: none; 
             background: white; 
             width: 100%;
         }
-        
+
         .preview-controls {
             padding: 10px 20px;
             background-color: var(--chat-bg);
@@ -207,7 +209,6 @@
             opacity: 0.9;
         }
 
-        /* Input Area */
         .input-area { background-color: var(--chat-bg); padding: 15px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; align-items: flex-end; }
         .file-upload-label { cursor: pointer; padding: 10px; color: var(--text-color); }
         textarea { flex: 1; background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; resize: none; min-height: 44px; max-height: 150px; font-family: inherit; }
@@ -216,8 +217,7 @@
         .send-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .stop-btn { background-color: var(--reset-btn-bg); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; height: 44px; font-weight: bold; display: none; }
         .stop-btn:hover { background-color: var(--reset-btn-hover); }
-        
-        /* Reset Buttons */
+
         .reset-buttons { display: flex; gap: 10px; padding: 10px 15px; background-color: var(--chat-bg); border-top: 1px solid var(--border-color); }
         .reset-btn { 
             padding: 8px 15px; 
@@ -244,7 +244,6 @@
             background-color: var(--full-reset-btn-hover); 
         }
 
-        /* Session Panel */
         #session-panel { 
             position: fixed; 
             top: 0; 
@@ -319,7 +318,6 @@
             color: #dc3545; 
         }
 
-        /* Settings Panel */
         #settings-panel { position: fixed; top: 0; right: -320px; width: 300px; height: 100%; background-color: var(--chat-bg); border-left: 1px solid var(--border-color); transition: right 0.3s; z-index: 1000; padding: 20px; overflow-y: auto; box-shadow: -2px 0 5px rgba(0,0,0,0.1); }
         #settings-panel.open { right: 0; }
         .settings-group { margin-bottom: 20px; }
@@ -327,7 +325,6 @@
         .settings-group select, .settings-group input { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-color); }
         .close-settings { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 1.2rem; }
 
-        /* BYOP Info Box */
         .byop-info {
             background: var(--byop-bg);
             border: 1px solid var(--byop-border);
@@ -398,7 +395,6 @@
             font-weight: bold;
         }
 
-        /* Audio Controls */
         .audio-controls { 
             margin-top: 10px; 
             display: flex; 
@@ -421,30 +417,27 @@
             opacity: 0.9;
         }
 
-        /* Preview Area for Uploads */
         #file-preview { display: flex; gap: 10px; flex-wrap: wrap; padding: 0 15px; background: var(--chat-bg); }
         .preview-item { font-size: 0.8rem; background: var(--ai-msg-bg); padding: 5px 10px; border-radius: 15px; display: flex; align-items: center; gap: 5px; }
         .remove-file { cursor: pointer; color: red; font-weight: bold; }
 
-        /* Notification */
         .notification {
-    position: fixed;
-    top: 70px;  /* CHANGED: Was 20px, now 70px to clear ~50px header */
-    right: 20px;
-    padding: 15px 25px;
-    border-radius: 5px;
-    background-color: #28a745;
-    color: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    transform: translateX(200%);
-    transition: transform 0.3s ease-in-out;
-    z-index: 1001;  /* Keep above header (z-index 100) but below modals */
-}
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateX(200%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 1001;
+        }
         .notification.show {
             transform: translateX(0);
         }
 
-        /* Drag and Drop Overlay */
         .drag-overlay {
             position: fixed;
             top: 0;
@@ -503,13 +496,11 @@
             font-size: 1rem;
         }
 
-        /* Visual feedback on chat container */
         #chat-container.drag-over {
             background: rgba(0, 123, 255, 0.05);
             box-shadow: inset 0 0 20px rgba(0, 123, 255, 0.2);
         }
 
-        /* TTS Modal */
         #tts-modal {
             display: none;
             position: fixed;
@@ -604,12 +595,10 @@
             display: block;
         }
 
-        /* Paid model indicator in selects */
         option.paid-model-option {
             color: #ffc107;
         }
 
-        /* Responsive adjustments */
         @media (max-width: 768px) {
             #preview-panel { width: 100%; right: -100%; }
             .message-wrapper { max-width: 95%; }
@@ -627,7 +616,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V3.9</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.0</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -659,11 +648,11 @@
             <i class="fas fa-paperclip"></i>
         </label>
         <input type="file" id="file-input" multiple style="display: none;" accept="image/*,audio/*,text/*,.json,.html,.js,.css,.py">
-        
+
         <button id="tts-popup-btn" class="file-upload-label" style="border: none; background: none;" title="Text-to-Speech">
             <i class="fas fa-volume-up"></i>
         </button>
-        
+
         <textarea id="user-input" placeholder="Type a message... (Enter to send, Shift+Enter for new line)"></textarea>
         <button id="send-btn" class="send-btn" type="button"><i class="fas fa-paper-plane"></i></button>
         <button id="stop-btn" class="stop-btn" type="button" title="Stop Generation"><i class="fas fa-stop"></i></button>
@@ -674,7 +663,6 @@
         <button id="full-reset-btn" class="reset-btn full-reset" type="button"><i class="fas fa-redo"></i> Full Reset</button>
     </div>
 
-    <!-- Preview Panel -->
     <div id="preview-panel">
         <div class="preview-header">
             <h3><i class="fas fa-eye"></i> Live Preview</h3>
@@ -690,7 +678,7 @@
     <div id="settings-panel">
         <div class="close-settings" id="close-settings">&times;</div>
         <h3>Settings</h3>
-        
+
         <div class="settings-group">
             <label>Theme</label>
             <button id="theme-toggle" type="button" style="width:100%; padding:8px; cursor:pointer;">Switch to Dark Mode</button>
@@ -715,14 +703,12 @@
             <small style="color:var(--text-color); opacity:0.7; display: block; margin-top: 4px;">Enter your own key to unlock 🔒 premium models</small>
         </div>
 
-        <!-- System Message -->
         <div class="settings-group">
             <label>System Message</label>
             <textarea id="system-message" placeholder="You are a helpful AI assistant" rows="3" style="resize: vertical; min-height: 60px;"></textarea>
             <small style="color:var(--text-color); opacity:0.7;">Defines the AI's role and behavior.</small>
         </div>
 
-        <!-- NEW: System Preset Dropdown -->
         <div class="settings-group">
             <label>Load System Preset</label>
             <select id="system-preset-select">
@@ -740,14 +726,13 @@
             <label>Voice Style/Emotion</label>
             <input type="text" id="voice-style" placeholder="e.g. Excited, Whispering, Angry" value="snarky">
             <small style="color:var(--text-color); opacity:0.7;">
-                Applies to both voice tone and AI response style.
+                Applies to AI response style. Kokoro voice selection is controlled below.
             </small>
         </div>
 
         <div class="settings-group">
             <label>Model</label>
             <select id="model-select">
-
                 <option value="qwen-character">Qwen Character</option>
                 <option value="qwen-safety">Qwen3 Guard 8B</option>
                 <option value="nova-fast">Nova-Micro</option>
@@ -774,110 +759,185 @@
                 <option value="grok" class="paid-model-option" style="display: none;">Grok 🔒</option>
                 <option value="gemini-large" class="paid-model-option" style="display: none;">Gemini-Large🎙️👁️👂🧠💻🔍 🔒</option>
                 <option value="claude-large" class="paid-model-option" style="display: none;">Claude-Large👁️💻 🔒</option>
-<option value="claude-opus-4.7" class="paid-model-option" style="display: none;">Claude Opus 4.7👁️💻 🔒</option>
-<option value="deepseek-pro" class="paid-model-option" style="display: none;">DeepSeek V4 Pro🧠💻 🔒</option>
-<option value="gemini-flash-lite-3.1" class="paid-model-option" style="display: none;">Gemini 3.1 Flash Lite👁️🔍 🔒</option>
-<option value="grok-large" class="paid-model-option" style="display: none;">Grok 4.20 Reasoning🧠 🔒</option>
-<option value="midijourney-large" class="paid-model-option" style="display: none;">MIDIjourney Large🎵 🔒</option>
-<option value="kimi-k2.6">Moonshot Kimi K2.6👁️🧠</option>
-<option value="midijourney">MIDIjourney🎵</option>
-<option value="mistral-large">Mistral Large 3👁️</option>
-<option value="nova">Nova 2 Lite🧠</option>
-<option value="openai-audio-large">OpenAI Audio Large🎙️👁️👂🗣️</option>
-<option value="qwen-coder-large">Qwen3 Coder Next💻</option>
-<option value="qwen-large">Qwen3.6 Plus👁️🧠</option>
-<option value="qwen-vision">Qwen3 VL 30B Thinking👁️🧠</option>
+                <option value="claude-opus-4.7" class="paid-model-option" style="display: none;">Claude Opus 4.7👁️💻 🔒</option>
+                <option value="deepseek-pro" class="paid-model-option" style="display: none;">DeepSeek V4 Pro🧠💻 🔒</option>
+                <option value="gemini-flash-lite-3.1" class="paid-model-option" style="display: none;">Gemini 3.1 Flash Lite👁️🔍 🔒</option>
+                <option value="grok-large" class="paid-model-option" style="display: none;">Grok 4.20 Reasoning🧠 🔒</option>
+                <option value="midijourney-large" class="paid-model-option" style="display: none;">MIDIjourney Large🎵 🔒</option>
+                <option value="kimi-k2.6">Moonshot Kimi K2.6👁️🧠</option>
+                <option value="midijourney">MIDIjourney🎵</option>
+                <option value="mistral-large">Mistral Large 3👁️</option>
+                <option value="nova">Nova 2 Lite🧠</option>
+                <option value="openai-audio-large">OpenAI Audio Large🎙️👁️👂🗣️</option>
+                <option value="qwen-coder-large">Qwen3 Coder Next💻</option>
+                <option value="qwen-large">Qwen3.6 Plus👁️🧠</option>
+                <option value="qwen-vision">Qwen3 VL 30B Thinking👁️🧠</option>
             </select>
         </div>
 
         <hr>
         <h4>Audio Settings</h4>
-        
+
         <div class="settings-group">
-            <label>Show Audio Button</label>
-            <input type="checkbox" id="audio-enable"> 
-            <span style="font-size:0.9rem;">(Shows button on AI responses)</span>
+            <label>Show Audio Buttons</label>
+            <input type="checkbox" id="audio-enable" checked>
+            <span style="font-size:0.9rem;">(Shows speak button on all messages)</span>
         </div>
 
         <div class="settings-group">
             <label>
-                <input type="checkbox" id="audio-read-exactly" checked> 
-                Read Text Exactly As Written
+                <input type="checkbox" id="audio-autoplay-stream">
+                Auto-play AI audio as generated
             </label>
             <small style="color:var(--text-color); opacity:0.7;">
-                When unchecked, openai-audio generates its own response.
+                Speaks AI responses progressively while text is streaming.
             </small>
         </div>
 
         <div class="settings-group">
-            <label>Voice</label>
+            <label>
+                <input type="checkbox" id="audio-show-download">
+                Show download audio button
+            </label>
+            <small style="color:var(--text-color); opacity:0.7;">
+                Allows downloading generated audio for any message.
+            </small>
+        </div>
+
+        <div class="settings-group">
+            <label>Kokoro Voice</label>
             <select id="voice-select">
-                <optgroup label="Standard Voices">
-                    <option value="alloy" selected>Alloy (Neutral)</option>
-                    <option value="echo">Echo (Deep Male)</option>
-                    <option value="fable">Fable (British-ish)</option>
-                    <option value="onyx">Onyx (Deep/Gravel)</option>
-                    <option value="nova">Nova (Energetic Female)</option>
-                    <option value="shimmer">Shimmer (Clear Female)</option>
+                <optgroup label="American English (Female)">
+                    <option value="af_heart" selected>af_heart</option>
+                    <option value="af_bella">af_bella</option>
+                    <option value="af_nicole">af_nicole</option>
+                    <option value="af_sarah">af_sarah</option>
+                    <option value="af_sky">af_sky</option>
+                    <option value="af_alloy">af_alloy</option>
+                    <option value="af_aoede">af_aoede</option>
+                    <option value="af_jessica">af_jessica</option>
+                    <option value="af_kore">af_kore</option>
+                    <option value="af_nova">af_nova</option>
+                    <option value="af_river">af_river</option>
                 </optgroup>
-                <optgroup label="Extended Voices">
-                    <option value="coral">Coral</option>
-                    <option value="verse">Verse</option>
-                    <option value="ballad">Ballad</option>
-                    <option value="ash">Ash</option>
-                    <option value="sage">Sage</option>
-                    <option value="amuch">Amuch</option>
-                    <option value="dan">Dan</option>
+                <optgroup label="American English (Male)">
+                    <option value="am_fenrir">am_fenrir</option>
+                    <option value="am_adam">am_adam</option>
+                    <option value="am_echo">am_echo</option>
+                    <option value="am_eric">am_eric</option>
+                    <option value="am_liam">am_liam</option>
+                    <option value="am_michael">am_michael</option>
+                    <option value="am_onyx">am_onyx</option>
+                    <option value="am_puck">am_puck</option>
+                    <option value="am_santa">am_santa</option>
+                </optgroup>
+                <optgroup label="British English (Female)">
+                    <option value="bf_alice">bf_alice</option>
+                    <option value="bf_emma">bf_emma</option>
+                    <option value="bf_isabella">bf_isabella</option>
+                    <option value="bf_lily">bf_lily</option>
+                </optgroup>
+                <optgroup label="British English (Male)">
+                    <option value="bm_daniel">bm_daniel</option>
+                    <option value="bm_fable">bm_fable</option>
+                    <option value="bm_george">bm_george</option>
+                    <option value="bm_lewis">bm_lewis</option>
+                </optgroup>
+                <optgroup label="Spanish">
+                    <option value="ef_dora">ef_dora</option>
+                    <option value="em_alex">em_alex</option>
+                    <option value="em_santa">em_santa</option>
+                </optgroup>
+                <optgroup label="French">
+                    <option value="ff_siwis">ff_siwis</option>
+                </optgroup>
+                <optgroup label="Japanese">
+                    <option value="jf_alpha">jf_alpha</option>
+                    <option value="jf_glowing">jf_glowing</option>
+                    <option value="jf_nezumi">jf_nezumi</option>
+                    <option value="jf_tealtree">jf_tealtree</option>
+                    <option value="jm_kiko">jm_kiko</option>
+                </optgroup>
+                <optgroup label="Mandarin Chinese">
+                    <option value="zf_xiaobei">zf_xiaobei</option>
+                    <option value="zf_xiaoni">zf_xiaoni</option>
+                    <option value="zf_xiaoxiao">zf_xiaoxiao</option>
+                    <option value="zf_xiaoyan">zf_xiaoyan</option>
+                    <option value="zm_yunjian">zm_yunjian</option>
+                    <option value="zm_yunxi">zm_yunxi</option>
+                    <option value="zm_yunxia">zm_yunxia</option>
+                    <option value="zm_yunyang">zm_yunyang</option>
+                </optgroup>
+                <optgroup label="Korean">
+                    <option value="kf_alpha">kf_alpha</option>
+                    <option value="km_beta">km_beta</option>
+                </optgroup>
+                <optgroup label="Hindi">
+                    <option value="hf_alpha">hf_alpha</option>
+                    <option value="hf_beta">hf_beta</option>
+                    <option value="hm_omega">hm_omega</option>
+                    <option value="hm_psi">hm_psi</option>
+                </optgroup>
+                <optgroup label="Italian">
+                    <option value="if_sara">if_sara</option>
+                    <option value="im_domenico">im_domenico</option>
+                </optgroup>
+                <optgroup label="Brazilian Portuguese">
+                    <option value="pf_dora">pf_dora</option>
+                    <option value="pm_alex">pm_alex</option>
+                    <option value="pm_santa">pm_santa</option>
                 </optgroup>
             </select>
+        </div>
+
+        <div class="settings-group">
+            <label>Kokoro Quality</label>
+            <select id="kokoro-dtype">
+                <option value="q8" selected>q8</option>
+                <option value="fp32">fp32</option>
+                <option value="fp16">fp16</option>
+                <option value="q4">q4</option>
+                <option value="q4f16">q4f16</option>
+            </select>
+            <small style="color:var(--text-color); opacity:0.7;">
+                q8 is a good balance of speed and quality in browser.
+            </small>
         </div>
 
         <div class="settings-group">
             <label>Audio Length Limit</label>
             <select id="audio-length-limit">
-                <option value="500">Short (30-60 sec)</option>
-                <option value="1000" selected>Medium (1-2 min)</option>
-                <option value="2000">Long (3-5 min)</option>
-                <option value="4000" disabled>Very Long (10-15 min)</option>
-                <option value="999999" disabled>Unlimited</option>
+                <option value="500">Short</option>
+                <option value="1000" selected>Medium</option>
+                <option value="2000">Long</option>
+                <option value="4000">Very Long</option>
+                <option value="999999">Unlimited</option>
             </select>
             <small style="color:var(--text-color); opacity:0.7;">
-                Longer audio takes more time to generate.
-            </small>
-        </div>
-
-        <div class="settings-group">
-            <label>
-                <input type="checkbox" id="audio-upload-catbox"> 
-                Upload Audio to Catbox.moe
-            </label>
-            <small style="color:var(--text-color); opacity:0.7;">
-                Uploads audio for permanent hosting. Uncheck for local playback only.
+                Longer text takes more time to generate.
             </small>
         </div>
     </div>
 
-    <!-- TTS Modal -->
     <div id="tts-modal">
         <div class="tts-modal-content">
             <div class="tts-modal-header">
                 <h3><i class="fas fa-volume-up"></i> Text-to-Speech Generator</h3>
                 <button class="close-tts-modal" id="close-tts-modal">&times;</button>
             </div>
-            
+
             <textarea id="tts-text-input" class="tts-textarea" placeholder="Enter text to convert to speech..."></textarea>
-            
+
             <button id="tts-generate-btn" class="tts-generate-btn">
                 <i class="fas fa-magic"></i> Generate Audio
             </button>
-            
+
             <div id="tts-output"></div>
         </div>
     </div>
 
     <div id="notification" class="notification"></div>
 
-    <!-- Drag and Drop Overlay -->
     <div id="drag-overlay" class="drag-overlay">
         <div class="drag-overlay-content">
             <i class="fas fa-cloud-upload-alt"></i>
@@ -887,25 +947,22 @@
     </div>
 
 <script>
-    // --- Configuration ---
     const USER_API_TOKEN = "pk_OIQlw5rh71ylmlqV";
     const API_URL = "https://gen.pollinations.ai/v1/chat/completions";
-    
-    // --- BYOP Policy: Paid-only models ---
-const PAID_ONLY_MODELS = [
-    "claude",
-    "grok",
-    "gemini-large",
-    "gemini-legacy",
-    "claude-large",
-    "deepseek",
-    "deepseek-pro",
-    "claude-opus-4.7",
-    "gemini-flash-lite-3.1",
-    "midijourney-large"
-];
-    
-    // --- State ---
+
+    const PAID_ONLY_MODELS = [
+        "claude",
+        "grok",
+        "gemini-large",
+        "gemini-legacy",
+        "claude-large",
+        "deepseek",
+        "deepseek-pro",
+        "claude-opus-4.7",
+        "gemini-flash-lite-3.1",
+        "midijourney-large"
+    ];
+
     let conversationHistory = [];
     let uploadedFiles = [];
     let isDarkMode = false;
@@ -918,7 +975,14 @@ const PAID_ONLY_MODELS = [
     let pyodide = null;
     let pyodideReady = false;
 
-    // System Prompt Presets
+    let kokoroWorker = null;
+    let kokoroReady = false;
+    let kokoroPending = new Map();
+    let audioQueue = [];
+    let isAudioQueuePlaying = false;
+    let currentAudioElement = null;
+    let autoSpeakState = null;
+
     const SYSTEM_PRESETS = {
         custom: '',
         general: 'You are a helpful AI assistant. Provide clear, accurate, and helpful responses.',
@@ -954,7 +1018,7 @@ ONLY if user says "use LaTeX", "math mode", "equation formatting", or "typeset e
   $$
 - **CRITICAL - Use single backslashes:** Write \\frac, \\sqrt, \\sum, \\int (these become \\frac, \\sqrt in output)
 - **DO NOT use double backslashes:** Never write \\\\frac or \\\\sqrt (this causes the "extra slashes" bug)
-- **DO NOT escape dollar signs:** Use $ not \$
+- **DO NOT escape dollar signs:** Use $ not \\$
 - **DO NOT wrap LaTeX in markdown code blocks** unless user asks for "LaTeX code"
 
 **Python Rules (Browser Environment - Rare)**  
@@ -969,7 +1033,6 @@ When generating Python (which is rare):
 - Concepts: explain in text, don't write demonstration scripts`
     };
 
-    // --- DOM Elements ---
     const chatContainer = document.getElementById('chat-container');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
@@ -996,31 +1059,27 @@ When generating Python (which is rare):
     const openNewTab = document.getElementById('open-new-tab');
     const dragOverlay = document.getElementById('drag-overlay');
 
-    // --- BYOP Policy Functions ---
     function hasUserProvidedOwnKey() {
         const currentToken = tokenInput.value.trim();
-        // User has provided their own key if it's not empty and different from the hardcoded public token
         return currentToken && currentToken !== USER_API_TOKEN;
     }
 
     function updatePaidModelOptions() {
         const hasKey = hasUserProvidedOwnKey();
         const paidOptions = document.querySelectorAll('.paid-model-option');
-        
+
         paidOptions.forEach(option => {
             option.style.display = hasKey ? 'block' : 'none';
         });
-        
-        // If currently selected model is paid and user removed key, switch to default
+
         const selects = [
             document.getElementById('model-select')
         ];
-        
+
         selects.forEach(select => {
             if (!select) return;
             const currentValue = select.value;
             if (PAID_ONLY_MODELS.includes(currentValue) && !hasKey) {
-                // Reset to first available free option
                 for (let i = 0; i < select.options.length; i++) {
                     if (!PAID_ONLY_MODELS.includes(select.options[i].value)) {
                         select.selectedIndex = i;
@@ -1031,24 +1090,21 @@ When generating Python (which is rare):
             }
         });
     }
-    
-    // --- Initialization ---
+
     const savedToken = localStorage.getItem('userApiToken');
     if (savedToken) {
         tokenInput.value = savedToken;
     } else if (USER_API_TOKEN) {
         tokenInput.value = USER_API_TOKEN;
     }
-    
-    // Check paid model visibility on init
+
     updatePaidModelOptions();
 
-    // --- Markdown Renderer Setup with Preview Button ---
     const renderer = new marked.Renderer();
-    
+
     renderer.code = function({ text, lang }) {
         const validLang = !!(lang && hljs.getLanguage(lang)) ? lang : 'plaintext';
-        
+
         let highlighted = text || '';
         try {
             if (text) {
@@ -1058,18 +1114,16 @@ When generating Python (which is rare):
             console.error("Highlight error:", e);
         }
 
-        const escapedText = (text || '').replace(/`/g, '\\`').replace(/\$/g, '\\$');
         const codeId = 'code-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-        
         const isPreviewable = ['html', 'css', 'javascript', 'js'].includes(validLang.toLowerCase());
         const isPython = validLang.toLowerCase() === 'python';
-        
+
         let actionButtons = '';
-        
+
         if (isPreviewable) {
             actionButtons += `<button class="preview-code-btn" onclick="previewCode('${codeId}', '${validLang}')"><i class="fas fa-eye"></i> Preview</button>`;
         }
-        
+
         if (isPython) {
             actionButtons += `<button class="preview-code-btn python-btn" onclick="executePython('${codeId}')"><i class="fas fa-play"></i> Run Python</button>`;
         }
@@ -1092,19 +1146,18 @@ When generating Python (which is rare):
             </div>`;
     };
 
-marked.use({ 
-    renderer,
-    gfm: true,
-    breaks: true 
-});
+    marked.use({
+        renderer,
+        gfm: true,
+        breaks: true
+    });
 
-    // --- Preview Functions ---
     window.previewCode = function(codeId, lang) {
         const codeElement = document.getElementById(codeId);
         if (!codeElement) return;
-        
+
         const code = codeElement.textContent;
-        
+
         const messageWrapper = codeElement.closest('.message-wrapper.ai');
         if (messageWrapper) {
             extractAllCodeFromMessage(messageWrapper);
@@ -1117,7 +1170,7 @@ marked.use({
                 currentPreviewCode.js = code;
             }
         }
-        
+
         updatePreview();
         previewPanel.classList.add('open');
         showNotification('Preview opened!');
@@ -1125,13 +1178,13 @@ marked.use({
 
     function extractAllCodeFromMessage(messageWrapper) {
         currentPreviewCode = { html: '', css: '', js: '' };
-        
+
         const codeBlocks = messageWrapper.querySelectorAll('code[data-lang]');
-        
+
         codeBlocks.forEach(codeBlock => {
             const lang = codeBlock.getAttribute('data-lang').toLowerCase();
             const code = codeBlock.textContent;
-            
+
             if (lang === 'html') {
                 currentPreviewCode.html = code;
             } else if (lang === 'css') {
@@ -1146,9 +1199,9 @@ marked.use({
         const htmlContent = currentPreviewCode.html || '<body></body>';
         const cssContent = currentPreviewCode.css ? `<style>${currentPreviewCode.css}</style>` : '';
         const jsContent = currentPreviewCode.js ? `<script>${currentPreviewCode.js}<\/script>` : '';
-        
+
         let finalHTML = htmlContent;
-        
+
         if (finalHTML.includes('</head>')) {
             finalHTML = finalHTML.replace('</head>', `${cssContent}</head>`);
         } else if (finalHTML.includes('<body>')) {
@@ -1156,21 +1209,20 @@ marked.use({
         } else {
             finalHTML = `<!DOCTYPE html><html><head>${cssContent}</head><body>${finalHTML}</body></html>`;
         }
-        
+
         if (finalHTML.includes('</body>')) {
             finalHTML = finalHTML.replace('</body>', `${jsContent}</body>`);
         } else {
             finalHTML += jsContent;
         }
-        
-        const iframe = previewIframe;
-        iframe.srcdoc = finalHTML;
+
+        previewIframe.srcdoc = finalHTML;
     }
 
     closePreview.addEventListener('click', function() {
         previewPanel.classList.remove('open');
     });
-    // --- Python Execution Functions ---
+
     async function initPyodide() {
         if (pyodideReady || pyodide) return;
         showNotification("Loading Python runtime (this may take a moment)...");
@@ -1183,15 +1235,14 @@ marked.use({
                 await micropip.install("numpy")
                 await micropip.install("pillow")
             `);
-            
-            // Setup matplotlib to capture output
+
             await pyodide.runPythonAsync(`
                 import matplotlib
                 matplotlib.use('Agg')
                 import matplotlib.pyplot as plt
                 import io
                 import base64
-                
+
                 def show_plot():
                     buf = io.BytesIO()
                     plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
@@ -1200,7 +1251,7 @@ marked.use({
                     plt.clf()
                     return img_str
             `);
-            
+
             pyodideReady = true;
             showNotification("Python ready! You can now run code blocks.");
         } catch (e) {
@@ -1214,81 +1265,69 @@ marked.use({
             await initPyodide();
             if (!pyodideReady) return;
         }
-        
+
         const codeElement = document.getElementById(codeId);
         const outputContainer = document.getElementById(`output-${codeId}`);
         const textOutput = outputContainer.querySelector('.python-output-text');
         const imageOutput = outputContainer.querySelector('.python-output-image');
-        
-        // Find the current AI message wrapper this code block is inside
+
         const currentAiBubble = codeElement.closest('.message-wrapper.ai');
-        
         const code = codeElement.textContent;
-        
+
         outputContainer.style.display = 'block';
         textOutput.textContent = 'Running...';
         textOutput.style.color = 'var(--text-color)';
         imageOutput.innerHTML = '';
-        
+
         let outputBuffer = '';
         const generatedImages = [];
-        
-        // Track files before execution
+
         let existingFiles = [];
         try {
             existingFiles = pyodide.FS.readdir('.').filter(f => !f.startsWith('.'));
         } catch (e) {}
-        
+
         try {
-            // Capture stdout
             pyodide.setStdout({ batched: (text) => {
                 outputBuffer += text;
                 textOutput.textContent = outputBuffer || 'Running...';
             }});
-            
-            // Run the code
+
             await pyodide.runPythonAsync(code);
-            
-            // Check for matplotlib plots
+
             try {
                 const imgData = await pyodide.runPythonAsync('show_plot()');
                 if (imgData) {
                     const base64Url = `data:image/png;base64,${imgData}`;
                     generatedImages.push(base64Url);
-                    // Show in code output area (small preview)
                     imageOutput.innerHTML += `<div style="font-size:0.8rem;opacity:0.7;margin-bottom:5px;">Preview (also posted to chat above):</div>
                     <img src="${base64Url}" alt="Matplotlib plot" style="max-width: 300px; border-radius: 6px; display: block;">`;
                 }
-            } catch (plotErr) {
-                // No matplotlib plot
-            }
-            
-            // Check for newly created image files (PIL/Pillow, etc.)
+            } catch (plotErr) {}
+
             try {
                 const currentFiles = pyodide.FS.readdir('.').filter(f => !f.startsWith('.'));
                 const newFiles = currentFiles.filter(f => !existingFiles.includes(f));
-                
+
                 for (const filename of newFiles) {
-                    if (filename.endsWith('.png') || filename.endsWith('.jpg') || 
+                    if (filename.endsWith('.png') || filename.endsWith('.jpg') ||
                         filename.endsWith('.jpeg') || filename.endsWith('.gif')) {
-                        
+
                         try {
                             const data = pyodide.FS.readFile(filename);
                             const ext = filename.split('.').pop().toLowerCase();
-                            const mimeType = ext === 'png' ? 'image/png' : 
+                            const mimeType = ext === 'png' ? 'image/png' :
                                            ext === 'gif' ? 'image/gif' : 'image/jpeg';
-                            
+
                             const base64String = arrayBufferToBase64(data);
                             const base64Url = `data:${mimeType};base64,${base64String}`;
                             generatedImages.push(base64Url);
-                            
-                            // Show in code output area (small preview)
+
                             if (imageOutput.innerHTML === '') {
                                 imageOutput.innerHTML += `<div style="font-size:0.8rem;opacity:0.7;margin-bottom:5px;">Preview (also posted to chat above):</div>`;
                             }
                             imageOutput.innerHTML += `<img src="${base64Url}" alt="${filename}" style="max-width: 300px; border-radius: 6px; margin-top: 8px; display: block;">`;
-                            
-                            // Clean up virtual filesystem
+
                             pyodide.FS.unlink(filename);
                         } catch (fileErr) {
                             console.error('Error reading file:', fileErr);
@@ -1298,16 +1337,14 @@ marked.use({
             } catch (fsErr) {
                 console.error('FS error:', fsErr);
             }
-            
-            // CRITICAL: Insert as separate user message in chat flow
+
             if (generatedImages.length > 0) {
-                // Build message content for API (text + images)
                 const messageContent = [{type: 'text', text: '[Generated image from Python code]'}];
                 const filesForUI = [];
-                
+
                 generatedImages.forEach((url, idx) => {
                     messageContent.push({
-                        type: 'image_url', 
+                        type: 'image_url',
                         image_url: {url: url}
                     });
                     filesForUI.push({
@@ -1316,61 +1353,56 @@ marked.use({
                         name: `python_output_${idx}.png`
                     });
                 });
-                
-                // Add to conversation history FIRST (so API sees it)
+
                 conversationHistory.push({
                     role: 'user',
                     content: messageContent
                 });
-                
-                // Create message element directly and insert AFTER current AI message
+
                 const msgId = 'msg-' + Date.now();
                 const userWrapper = document.createElement('div');
                 userWrapper.className = 'message-wrapper user';
                 userWrapper.id = 'python-output-' + msgId;
-                
+
                 let imagesHtml = '';
                 filesForUI.forEach(f => {
                     imagesHtml += `<img src="${f.content}" class="chat-image" alt="Python output" style="max-width: 400px;">`;
                 });
-                
+
                 userWrapper.innerHTML = `
                     <div class="message-sender">
                         You (Python Output)
-                        <span class="copy-msg-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
+                        <span class="copy-msg-btn message-action-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
+                        ${document.getElementById('audio-enable')?.checked ? `<span class="message-action-btn" onclick="speakMessageById('${msgId}')"><i class="fas fa-volume-up"></i></span>` : ''}
                     </div>
                     <div class="message-bubble">
                         <div id="${msgId}" style="margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8;">Generated image from code execution:</div>
+                        <div id="raw-${msgId}" style="display:none;">Generated image from code execution</div>
                         ${imagesHtml}
+                        <div id="audio-container-${msgId}"></div>
                     </div>
                 `;
-                
-                // Insert immediately after the current AI message
+
                 if (currentAiBubble && currentAiBubble.nextSibling) {
                     chatContainer.insertBefore(userWrapper, currentAiBubble.nextSibling);
                 } else {
                     chatContainer.appendChild(userWrapper);
                 }
-                
-                // Scroll to show the new message
+
                 userWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                
-                // Save session
                 saveConversationToStorage();
-                
                 showNotification('Image posted to chat for vision models');
             }
-            
-            // Update text output in code block area
+
             if (outputBuffer === '' && generatedImages.length === 0) {
                 textOutput.textContent = '✓ Executed successfully (no output)';
             } else if (outputBuffer !== '') {
                 textOutput.textContent = outputBuffer;
             }
-            
+
         } catch (err) {
             const errorMsg = err.toString();
-            
+
             if (isGUIError(errorMsg)) {
                 textOutput.innerHTML = `<span style="color:orange">⚠️ GUI Library Not Supported</span><br><br>
                 This code uses turtle/tkinter/pygame which don't work in browsers.<br>
@@ -1394,9 +1426,9 @@ marked.use({
         const htmlContent = currentPreviewCode.html || '<body></body>';
         const cssContent = currentPreviewCode.css ? `<style>${currentPreviewCode.css}</style>` : '';
         const jsContent = currentPreviewCode.js ? `<script>${currentPreviewCode.js}<\/script>` : '';
-        
+
         let finalHTML = htmlContent;
-        
+
         if (finalHTML.includes('</head>')) {
             finalHTML = finalHTML.replace('</head>', `${cssContent}</head>`);
         } else if (finalHTML.includes('<body>')) {
@@ -1404,26 +1436,25 @@ marked.use({
         } else {
             finalHTML = `<!DOCTYPE html><html><head>${cssContent}</head><body>${finalHTML}</body></html>`;
         }
-        
+
         if (finalHTML.includes('</body>')) {
             finalHTML = finalHTML.replace('</body>', `${jsContent}</body>`);
         } else {
             finalHTML += jsContent;
         }
-        
+
         const blob = new Blob([finalHTML], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
-        
         showNotification('Opened in new tab!');
     });
 
-    // --- Helper Functions ---
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
+
     function arrayBufferToBase64(buffer) {
         let binary = '';
         const bytes = new Uint8Array(buffer);
@@ -1433,62 +1464,270 @@ marked.use({
         }
         return window.btoa(binary);
     }
+
     function isGUIError(errorMsg) {
         const guiModules = ['turtle', 'tkinter', 'pygame', 'cv2', 'opencv', 'PyQt5', 'PyQt6', 'pyside2', 'pyside6', 'wx', 'gi'];
         const lowerError = errorMsg.toLowerCase();
-        return guiModules.some(mod => lowerError.includes(mod)) || 
+        return guiModules.some(mod => lowerError.includes(mod)) ||
                lowerError.includes('no display') ||
                lowerError.includes('removed from the python standard library');
     }
-    // --- Dynamic Voice Loading ---
-    async function loadAvailableVoices() {
-        try {
-            const token = tokenInput.value || USER_API_TOKEN;
-            const res = await fetch('https://gen.pollinations.ai/text/models', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const models = await res.json();
-            
-            const audioModel = models.find(m => m.name === 'openai-audio');
-            
-            if (audioModel && audioModel.voices) {
-                const voiceSelect = document.getElementById('voice-select');
-                
-                const standardVoices = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
-                const extendedVoices = audioModel.voices.filter(v => !standardVoices.includes(v));
-                
-                let html = '<optgroup label="Standard Voices">';
-                standardVoices.forEach(voice => {
-                    const descriptions = {
-                        'alloy': 'Neutral',
-                        'echo': 'Deep Male',
-                        'fable': 'British-ish',
-                        'onyx': 'Deep/Gravel',
-                        'nova': 'Energetic Female',
-                        'shimmer': 'Clear Female'
-                    };
-                    html += `<option value="${voice}">${voice.charAt(0).toUpperCase() + voice.slice(1)} (${descriptions[voice]})</option>`;
-                });
-                html += '</optgroup>';
-                
-                if (extendedVoices.length > 0) {
-                    html += `<optgroup label="Extended Voices (${extendedVoices.length})">`;
-                    extendedVoices.forEach(voice => {
-                        html += `<option value="${voice}">${voice.charAt(0).toUpperCase() + voice.slice(1)}</option>`;
-                    });
-                    html += '</optgroup>';
-                }
-                
-                voiceSelect.innerHTML = html;
-                console.log(`✅ Loaded ${audioModel.voices.length} voices from API`);
+
+    function initKokoroWorker() {
+        if (kokoroWorker) return;
+
+        kokoroWorker = new Worker('./kokoro-worker.js', { type: 'module' });
+
+        kokoroWorker.onmessage = async function(e) {
+            const data = e.data;
+
+            if (data.type === 'MODEL_PROGRESS') {
+                showNotification(`Loading Kokoro: ${Math.round(data.progress)}%`);
+                return;
             }
+
+            if (data.type === 'MODEL_READY') {
+                kokoroReady = true;
+                return;
+            }
+
+            if (data.type === 'INIT_DONE') {
+                kokoroReady = true;
+                return;
+            }
+
+            if (data.type === 'AUDIO_RESULT') {
+                const pending = kokoroPending.get(data.requestId);
+                if (!pending) return;
+
+                kokoroPending.delete(data.requestId);
+
+                const blob = new Blob([data.audioBuffer], { type: 'audio/wav' });
+                const url = URL.createObjectURL(blob);
+
+                pending.resolve({
+                    blob,
+                    url,
+                    text: data.text,
+                    samplingRate: data.samplingRate
+                });
+                return;
+            }
+
+            if (data.type === 'ERROR') {
+                const pending = kokoroPending.get(data.requestId);
+                if (pending) {
+                    kokoroPending.delete(data.requestId);
+                    pending.reject(new Error(data.error || 'Kokoro worker error'));
+                } else {
+                    console.error('Kokoro error:', data.error);
+                }
+            }
+        };
+
+        kokoroWorker.onerror = function(err) {
+            console.error('Kokoro worker crashed:', err);
+            showNotification('Kokoro worker error');
+        };
+    }
+
+    async function ensureKokoroReady() {
+        initKokoroWorker();
+        if (kokoroReady) return;
+
+        const dtype = document.getElementById('kokoro-dtype')?.value || 'q8';
+
+        await new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('Kokoro init timeout')), 120000);
+
+            const checkReady = setInterval(() => {
+                if (kokoroReady) {
+                    clearTimeout(timeout);
+                    clearInterval(checkReady);
+                    resolve();
+                }
+            }, 250);
+
+            kokoroWorker.postMessage({
+                type: 'INIT',
+                dtype
+            });
+        });
+    }
+
+    async function synthesizeKokoro(text, options = {}) {
+        const cleanText = (text || '').trim();
+        if (!cleanText) throw new Error('No text to synthesize');
+
+        await ensureKokoroReady();
+
+        const requestId = 'kokoro-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+        const voice = options.voice || document.getElementById('voice-select')?.value || 'af_heart';
+        const dtype = document.getElementById('kokoro-dtype')?.value || 'q8';
+        const maxLength = parseInt(document.getElementById('audio-length-limit')?.value || '1000');
+        const truncated = cleanText.slice(0, maxLength);
+
+        return new Promise((resolve, reject) => {
+            kokoroPending.set(requestId, { resolve, reject });
+            kokoroWorker.postMessage({
+                type: 'GENERATE',
+                requestId,
+                text: truncated,
+                voice,
+                dtype
+            });
+        });
+    }
+
+    function playAudioUrl(url, onEnded = null) {
+        if (currentAudioElement) {
+            currentAudioElement.pause();
+        }
+
+        const audio = new Audio(url);
+        currentAudioElement = audio;
+
+        if (onEnded) {
+            audio.onended = onEnded;
+        }
+
+        audio.play().catch(err => {
+            console.error('Playback failed:', err);
+        });
+
+        return audio;
+    }
+
+    function enqueueAudioChunk(chunk) {
+        audioQueue.push(chunk);
+        processAudioQueue();
+    }
+
+    function processAudioQueue() {
+        if (isAudioQueuePlaying || audioQueue.length === 0) return;
+
+        isAudioQueuePlaying = true;
+        const next = audioQueue.shift();
+
+        const audio = new Audio(next.url);
+        currentAudioElement = audio;
+        audio.onended = () => {
+            isAudioQueuePlaying = false;
+            processAudioQueue();
+        };
+        audio.play().catch(err => {
+            console.error('Queue playback failed:', err);
+            isAudioQueuePlaying = false;
+            processAudioQueue();
+        });
+    }
+
+    function initAutoSpeakState(aiContentId) {
+        autoSpeakState = {
+            messageId: aiContentId,
+            spokenTextLength: 0,
+            enabled: document.getElementById('audio-autoplay-stream')?.checked
+        };
+    }
+
+    function extractSpeakableChunk(fullText, alreadySpokenLength) {
+        const fresh = fullText.slice(alreadySpokenLength);
+        if (!fresh.trim()) return null;
+
+        const sentenceMatch = fresh.match(/^([\s\S]*?[.!?]+)(\s|$)/);
+        if (sentenceMatch && sentenceMatch[1].trim().length > 20) {
+            return sentenceMatch[1];
+        }
+
+        if (fresh.length > 180) {
+            const cut = fresh.lastIndexOf(' ');
+            if (cut > 80) {
+                return fresh.slice(0, cut);
+            }
+        }
+
+        return null;
+    }
+
+    async function maybeAutoSpeakChunk(accumulatedText, aiContentId) {
+        if (!autoSpeakState || !autoSpeakState.enabled) return;
+        if (autoSpeakState.messageId !== aiContentId) return;
+
+        const chunk = extractSpeakableChunk(accumulatedText, autoSpeakState.spokenTextLength);
+        if (!chunk) return;
+
+        autoSpeakState.spokenTextLength += chunk.length;
+
+        try {
+            const result = await synthesizeKokoro(chunk);
+            enqueueAudioChunk(result);
         } catch (e) {
-            console.error('Failed to load voices from API:', e);
-            console.log('Using hardcoded voice list as fallback');
+            console.error('Auto-speak chunk failed:', e);
         }
     }
 
-    // --- Event Listeners ---
+    async function finalizeAutoSpeak(accumulatedText, aiContentId) {
+        if (!autoSpeakState || !autoSpeakState.enabled) return;
+        if (autoSpeakState.messageId !== aiContentId) return;
+
+        const remaining = accumulatedText.slice(autoSpeakState.spokenTextLength).trim();
+        if (!remaining) return;
+
+        autoSpeakState.spokenTextLength = accumulatedText.length;
+
+        try {
+            const result = await synthesizeKokoro(remaining);
+            enqueueAudioChunk(result);
+        } catch (e) {
+            console.error('Final auto-speak chunk failed:', e);
+        }
+    }
+
+    async function generateAudioForMessage(msgId, textContent) {
+        const audioBtn = document.getElementById(`audio-btn-${msgId}`);
+        if (audioBtn) {
+            audioBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        }
+
+        try {
+            const result = await synthesizeKokoro(textContent);
+            const container = document.getElementById(`audio-container-${msgId}`);
+            if (!container) return;
+
+            const showDownload = document.getElementById('audio-show-download')?.checked;
+
+            container.innerHTML = `
+                <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <audio controls autoplay src="${result.url}"></audio>
+                    <button class="audio-btn" onclick="generateAudioForMessage('${msgId}', \`${(textContent || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
+                        <i class="fas fa-sync-alt"></i> Re-run
+                    </button>
+                    ${showDownload ? `<a class="audio-btn" href="${result.url}" download="message-audio-${msgId}.wav" style="text-decoration:none; display:inline-flex; align-items:center;"><i class="fas fa-download"></i>&nbsp;Download</a>` : ''}
+                </div>
+            `;
+        } catch (e) {
+            showNotification("Audio generation failed: " + e.message);
+            console.error(e);
+        } finally {
+            if (audioBtn) {
+                audioBtn.innerHTML = '<i class="fas fa-volume-up"></i> Generate Audio';
+            }
+        }
+    }
+
+    window.speakMessageById = async function(msgId) {
+        const rawEl = document.getElementById(`raw-${msgId}`);
+        const visibleEl = document.getElementById(msgId);
+        const text = rawEl?.innerText?.trim() || visibleEl?.innerText?.trim() || '';
+
+        if (!text) {
+            showNotification('No text available for audio');
+            return;
+        }
+
+        await generateAudioForMessage(msgId, text);
+    };
+
     settingsBtn.addEventListener('click', function(e) {
         e.preventDefault();
         settingsPanel.classList.add('open');
@@ -1499,7 +1738,6 @@ marked.use({
         settingsPanel.classList.remove('open');
     });
 
-    // Save token to localStorage and update paid model visibility
     tokenInput.addEventListener('change', function() {
         if (this.value.trim()) {
             localStorage.setItem('userApiToken', this.value.trim());
@@ -1509,7 +1747,7 @@ marked.use({
         }
         updatePaidModelOptions();
     });
-    
+
     themeToggle.addEventListener('click', function(e) {
         e.preventDefault();
         isDarkMode = !isDarkMode;
@@ -1520,7 +1758,7 @@ marked.use({
     userInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
-        if(this.value === '') this.style.height = '44px';
+        if (this.value === '') this.style.height = '44px';
     });
 
     userInput.addEventListener('keydown', function(e) {
@@ -1546,54 +1784,49 @@ marked.use({
             const spinners = document.querySelectorAll('.fa-spinner');
             spinners.forEach(s => {
                 const bubble = s.closest('.message-bubble');
-                if(bubble) bubble.innerHTML += '<br>[Stopped by user]';
+                if (bubble) bubble.innerHTML += '<br>[Stopped by user]';
             });
         }
     });
 
-    // Reset buttons with confirmation
     resetChatBtn.addEventListener('click', function(e) {
         e.preventDefault();
         if (confirm('Are you sure you want to reset the chat? This will clear the current conversation history.')) {
             resetChat();
         }
     });
-    
+
     fullResetBtn.addEventListener('click', function(e) {
         e.preventDefault();
         if (confirm('Are you sure you want to perform a full reset? This will clear all chats, sessions, and reset everything to default.')) {
             fullReset();
         }
     });
-    
-    // Session panel
+
     toggleSessions.addEventListener('click', function(e) {
         e.preventDefault();
         sessionPanel.classList.add('open');
     });
-    
+
     closeSessions.addEventListener('click', function(e) {
         e.preventDefault();
         sessionPanel.classList.remove('open');
     });
-    
+
     newSessionBtn.addEventListener('click', function(e) {
         e.preventDefault();
         createNewSession();
     });
 
-    // --- Drag and Drop Event Listeners ---
-    // Prevent default browser behavior (opening files in new tab)
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         window.addEventListener(eventName, preventDefaults, false);
     });
-    
+
     function preventDefaults(e) {
         e.preventDefault();
         e.stopPropagation();
     }
 
-    // Show overlay when files enter window
     window.addEventListener('dragenter', (e) => {
         if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
             dragCounter++;
@@ -1602,8 +1835,7 @@ marked.use({
         }
     });
 
-    // Hide overlay when files leave window
-    window.addEventListener('dragleave', (e) => {
+    window.addEventListener('dragleave', () => {
         dragCounter--;
         if (dragCounter === 0) {
             dragOverlay.classList.remove('active');
@@ -1611,16 +1843,14 @@ marked.use({
         }
     });
 
-    // Handle the drop
     window.addEventListener('drop', (e) => {
         dragCounter = 0;
         dragOverlay.classList.remove('active');
         chatContainer.classList.remove('drag-over');
-        
+
         const files = e.dataTransfer.files;
         if (files.length > 0) {
             processFiles(files);
-            // Scroll to show the file previews
             setTimeout(() => {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
                 filePreview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1628,17 +1858,16 @@ marked.use({
         }
     });
 
-    // Optional: Allow dropping specifically on chat container for instant upload
     chatContainer.addEventListener('dragover', (e) => {
         e.preventDefault();
         chatContainer.classList.add('drag-over');
     });
-    
+
     chatContainer.addEventListener('dragleave', (e) => {
         e.preventDefault();
         chatContainer.classList.remove('drag-over');
     });
-    
+
     chatContainer.addEventListener('drop', (e) => {
         e.preventDefault();
         chatContainer.classList.remove('drag-over');
@@ -1648,28 +1877,24 @@ marked.use({
         }
     });
 
-    // --- File Upload Logic (Modified for Drag & Drop) ---
-    
-    // Process files from either input or drop
     function processFiles(fileList) {
         const files = Array.from(fileList);
         if (files.length === 0) return;
-        
+
         files.forEach(file => {
-            // Skip directories and empty files
             if (file.size === 0 || file.type === '') {
                 showNotification(`Skipped: ${file.name} (not a valid file)`);
                 return;
             }
-            
+
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const content = evt.target.result;
-                
+
                 let fileType = 'text';
-                if(file.type.startsWith('image')) fileType = 'image';
-                else if(file.type.startsWith('audio')) fileType = 'audio';
-                
+                if (file.type.startsWith('image')) fileType = 'image';
+                else if (file.type.startsWith('audio')) fileType = 'audio';
+
                 uploadedFiles.push({
                     name: file.name,
                     type: fileType,
@@ -1679,11 +1904,11 @@ marked.use({
                 renderFilePreviews();
                 showNotification(`Added: ${file.name}`);
             };
-            
+
             reader.onerror = function() {
                 showNotification(`Failed to read: ${file.name}`);
             };
-            
+
             if (file.type.startsWith('image') || file.type.startsWith('audio')) {
                 reader.readAsDataURL(file);
             } else {
@@ -1737,404 +1962,280 @@ marked.use({
         }
     };
 
-    // --- Audio Generation Function ---
-    async function generateAudioForMessage(msgId, textContent, messagesContext = null) {
-        const audioBtn = document.getElementById(`audio-btn-${msgId}`);
-        if (!audioBtn) return;
-        
-        const originalText = audioBtn.innerHTML;
-        audioBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        
-        const newSeed = Math.floor(Math.random() * 999999);
-        
+    async function sendMessage(regenerateSeed = null, previousContext = null) {
+        const text = userInput.value.trim();
+        if ((!text && uploadedFiles.length === 0 && !regenerateSeed) || isGenerating) return;
+
+        let messagesPayload = [];
+
+        if (regenerateSeed && previousContext) {
+            messagesPayload = previousContext;
+        } else {
+            let userContent = [];
+
+            if (text) userContent.push({ type: "text", text: text });
+
+            uploadedFiles.forEach(f => {
+                if (f.type === 'image') {
+                    userContent.push({ type: "image_url", image_url: { url: f.content } });
+                } else if (f.type === 'audio') {
+                    userContent.push({ type: "text", text: `[User uploaded audio file: ${f.name}]` });
+                } else {
+                    userContent.push({ type: "text", text: `[File: ${f.name}]\n${f.content}` });
+                }
+            });
+
+            const userMsgObj = { role: 'user', content: userContent };
+
+            if (!regenerateSeed) {
+                appendMessage('user', text, uploadedFiles);
+                conversationHistory.push(userMsgObj);
+                userInput.value = '';
+                userInput.style.height = '44px';
+                uploadedFiles = [];
+                renderFilePreviews();
+            }
+
+            messagesPayload = [...conversationHistory];
+        }
+
+        const emotion = document.getElementById('voice-style').value;
+        const rawSystemMsg = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
+        const systemMsg = {
+            role: 'system',
+            content: `${rawSystemMsg} ${emotion ? 'Voice and Response Style/Emotion: ' + emotion : ''}`
+        };
+
+        let finalMessages = [systemMsg, ...messagesPayload];
+
+        const token = tokenInput.value || USER_API_TOKEN;
+        if (!token) {
+            showNotification("Please enter your API Token in settings.");
+            return;
+        }
+
+        const modelSelect = document.getElementById('model-select');
+        let model = modelSelect.value;
+
+        if (PAID_ONLY_MODELS.includes(model) && !hasUserProvidedOwnKey()) {
+            showNotification("🔒 Premium models require your own API key. Enter your key in settings.");
+            return;
+        }
+
+        const isBedrockModel = model === 'qwen-character' || model === 'qwen-safety' || model === 'polly';
+        const useStreaming = !isBedrockModel;
+
+        if (isBedrockModel) {
+            finalMessages = finalMessages.map(msg => {
+                if (Array.isArray(msg.content)) {
+                    const textParts = msg.content
+                        .filter(part => part.type === 'text')
+                        .map(part => part.text);
+                    return {
+                        role: msg.role,
+                        content: textParts.join('\n')
+                    };
+                }
+                if (msg.cache_control) {
+                    const { cache_control, ...cleanMsg } = msg;
+                    return cleanMsg;
+                }
+                return msg;
+            });
+        }
+
+        const seed = regenerateSeed !== null ? regenerateSeed : Math.floor(Math.random() * 10000);
+
+        const requestBody = {
+            messages: finalMessages,
+            model: model,
+            stream: useStreaming,
+            seed: seed,
+            ...(model !== 'polly' ? { temperature: 1 } : {})
+        };
+
+        if (!isBedrockModel && model !== 'polly') {
+            requestBody.max_tokens = ['mistral', 'nova-fast'].includes(model) ? 4096 : 64000;
+        }
+
+        isGenerating = true;
+        sendBtn.style.display = 'none';
+        stopBtn.style.display = 'inline-block';
+        abortController = new AbortController();
+
+        const aiMsgId = 'ai-msg-' + Date.now();
+        const aiContentId = 'ai-content-' + aiMsgId;
+
+        if (!regenerateSeed) {
+            appendPlaceholder('ai', aiMsgId, aiContentId);
+        }
+
+        const aiContentDiv = document.getElementById(aiContentId);
+        let accumulatedText = "";
+
+        initAutoSpeakState(aiContentId);
+
         try {
-            const maxLength = parseInt(document.getElementById('audio-length-limit')?.value || '4000');
-            const text = textContent.slice(0, maxLength);
-            const voice = document.getElementById('voice-select').value;
-            const tone = document.getElementById('voice-style').value;
-            const readExactly = document.getElementById('audio-read-exactly').checked;
-            
-            let tts_prompt;
-            if (readExactly) {
-                tts_prompt = `${tone ? `(in a ${tone} tone) ` : ""}Read the following text exactly as written, word for word: "${text}"`;
-            } else {
-                tts_prompt = text;
-            }
-            
-            const token = tokenInput.value || USER_API_TOKEN;
-            const apiLink = `https://gen.pollinations.ai/text/${encodeURIComponent(tts_prompt)}?model=openai-audio&seed=${newSeed}&voice=${voice}&stream=false&private=false`;
-            const fetchUrl = `${apiLink}&key=${token}`;
-            
-            const res = await fetch(fetchUrl);
-            
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`Audio generation failed: ${res.status} ${res.statusText}. ${errorText}`);
-            }
-            
-            const audioBlob = await res.blob();
-            
-            if (audioBlob.size === 0) throw new Error("Empty audio file received");
-            
-            const localBlobUrl = URL.createObjectURL(audioBlob);
-            
-            const container = document.getElementById(`audio-container-${msgId}`);
-            if (!container) return;
-            
-            const previousAudio = container.querySelector('audio');
-            if (previousAudio) previousAudio.parentElement.remove();
-            
-            container.innerHTML = `
-                <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                    <audio controls autoplay src="${localBlobUrl}"></audio>
-                    <button class="audio-btn" onclick="generateAudioForMessage('${msgId}', \`${textContent.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
-                        <i class="fas fa-sync-alt"></i> Re-run
-                    </button>
-                    <span style="color:var(--text-color); opacity:0.7; font-size:0.8em;">
-                        Voice: ${voice} | Seed: ${newSeed} | 
-                        <span id="upload-status-${msgId}">Uploading to catbox...</span>
-                    </span>
-                </div>
-            `;
-            
-            const uploadToCatbox = document.getElementById('audio-upload-catbox')?.checked;
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(requestBody),
+                signal: abortController.signal
+            });
 
-            if (uploadToCatbox) {
+            if (!response.ok) {
+                let errorMsg = response.statusText || `Status ${response.status}`;
                 try {
-                    const formData = new FormData();
-                    formData.append('reqtype', 'fileupload');
-                    formData.append('fileToUpload', audioBlob, `audio_${msgId}_${newSeed}.mp3`);
-                    
-                    const uploadRes = await fetch(
-                        'https://corsproxy.io/?' + encodeURIComponent('https://catbox.moe/user/api.php'), 
-                        {
-                            method: 'POST',
-                            body: formData
-                        }
-                    );
-                    
-                    if (!uploadRes.ok) throw new Error(`Catbox upload failed: ${uploadRes.status}`);
-                    
-                    const catboxUrl = (await uploadRes.text()).trim();
-                    
-                    if (catboxUrl.startsWith('http')) {
-                        const statusSpan = document.getElementById(`upload-status-${msgId}`);
-                        if (statusSpan) {
-                            statusSpan.innerHTML = `<a href="${catboxUrl}" target="_blank" style="color:var(--accent);">Direct link</a>`;
-                        }
-                    } else {
-                        throw new Error("Invalid catbox response");
+                    const errorObj = await response.json();
+                    if (errorObj.error && errorObj.error.message) {
+                        errorMsg = errorObj.error.message;
                     }
-                    
-                } catch (uploadError) {
-                    console.error("Catbox upload error:", uploadError);
-                    const statusSpan = document.getElementById(`upload-status-${msgId}`);
-                    if (statusSpan) {
-                        statusSpan.innerHTML = `<span style="color:orange; font-size:0.7em;">⚠️ Upload failed (local playback only)</span>`;
+                } catch (e) {}
+                throw new Error(errorMsg);
+            }
+
+            if (isBedrockModel) {
+                const data = await response.json();
+                accumulatedText = data.choices[0].message.content;
+
+                if (aiContentDiv) {
+                    aiContentDiv.innerHTML = marked.parse(accumulatedText);
+                }
+
+                const rawEl = document.getElementById(`raw-${aiContentId}`);
+                if (rawEl) rawEl.textContent = accumulatedText;
+
+                conversationHistory.push({ role: 'assistant', content: accumulatedText });
+
+                if (document.getElementById('audio-autoplay-stream')?.checked && accumulatedText.trim()) {
+                    try {
+                        const result = await synthesizeKokoro(accumulatedText);
+                        enqueueAudioChunk(result);
+                    } catch (e) {
+                        console.error('Auto-play failed:', e);
                     }
                 }
+
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
             } else {
-                const statusSpan = document.getElementById(`upload-status-${msgId}`);
-                if (statusSpan) {
-                    statusSpan.innerHTML = `<span style="color:var(--text-color); opacity:0.7; font-size:0.7em;">Local playback only</span>`;
-                }
-            }
-            
-        } catch (e) {
-            showNotification("Audio generation failed: " + e.message);
-            console.error("Audio error details:", e);
-        } finally {
-            audioBtn.innerHTML = originalText;
-        }
-    }
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
 
-    // --- Main Send Message Function ---
-async function sendMessage(regenerateSeed = null, previousContext = null) {
-    const text = userInput.value.trim();
-    if ((!text && uploadedFiles.length === 0 && !regenerateSeed) || isGenerating) return;
+                let buffer = '';
+                let firstChunk = true;
 
-    let messagesPayload = [];
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-    if (regenerateSeed && previousContext) {
-        messagesPayload = previousContext;
-    } else {
-        let userContent = [];
-        
-        if (text) userContent.push({ type: "text", text: text });
-        
-        uploadedFiles.forEach(f => {
-            if (f.type === 'image') {
-                userContent.push({ type: "image_url", image_url: { url: f.content } });
-            } else if (f.type === 'audio') {
-                userContent.push({ type: "text", text: `[User uploaded audio file: ${f.name}]` }); 
-            } else {
-                userContent.push({ type: "text", text: `[File: ${f.name}]\n${f.content}` });
-            }
-        });
+                    const chunk = decoder.decode(value, { stream: true });
+                    buffer += chunk;
 
-        const userMsgObj = { role: 'user', content: userContent };
-        
-        if(!regenerateSeed) {
-            appendMessage('user', text, uploadedFiles);
-            conversationHistory.push(userMsgObj);
-            userInput.value = '';
-            userInput.style.height = '44px';
-            uploadedFiles = [];
-            renderFilePreviews();
-        }
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
 
-        messagesPayload = [...conversationHistory];
-    }
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
+                            if (firstChunk) {
+                                aiContentDiv.innerHTML = '';
+                                firstChunk = false;
+                            }
+                            try {
+                                const json = JSON.parse(trimmedLine.substring(6));
+                                const delta = json.choices[0].delta;
 
-    const emotion = document.getElementById('voice-style').value;
-    const rawSystemMsg = document.getElementById('system-message').value.trim() || 'You are a helpful AI assistant';
-const systemMsg = {
-    role: 'system',
-    content: `${rawSystemMsg} ${emotion ? 'Voice and Response Style/Emotion: ' + emotion : ''}`  // ✅ Keep as string
-};
+                                if (delta.content) {
+                                    accumulatedText += delta.content;
+                                    aiContentDiv.innerHTML = marked.parse(accumulatedText);
 
-    let finalMessages = [systemMsg, ...messagesPayload];
+                                    const rawEl = document.getElementById(`raw-${aiContentId}`);
+                                    if (rawEl) rawEl.textContent = accumulatedText;
 
-    const token = tokenInput.value || USER_API_TOKEN;
-    if (!token) {
-        showNotification("Please enter your API Token in settings.");
-        return;
-    }
+                                    chatContainer.scrollTop = chatContainer.scrollHeight;
 
-    const modelSelect = document.getElementById('model-select');
-    let model = modelSelect.value;
-    
-    // Check if trying to use paid model without own key
-    if (PAID_ONLY_MODELS.includes(model) && !hasUserProvidedOwnKey()) {
-        showNotification("🔒 Premium models require your own API key. Enter your key in settings.");
-        return;
-    }
-    
-    // CRITICAL: qwen-character does not support streaming or array content format
-const isBedrockModel = model === 'qwen-character' || model === 'qwen-safety' || model === 'polly';
-const useStreaming = !isBedrockModel;
-    
-// Convert messages to Bedrock-compatible format for Bedrock models
-if (isBedrockModel) {
-        finalMessages = finalMessages.map(msg => {
-            // Convert array content to string (Bedrock doesn't support content blocks)
-            if (Array.isArray(msg.content)) {
-                const textParts = msg.content
-                    .filter(part => part.type === 'text')
-                    .map(part => part.text);
-                return {
-                    role: msg.role,
-                    content: textParts.join('\n')
-                };
-            }
-            // Remove cache_control if present (Bedrock doesn't support it)
-            if (msg.cache_control) {
-                const { cache_control, ...cleanMsg } = msg;
-                return cleanMsg;
-            }
-            return msg;
-        });
-    }
-    
-    const seed = regenerateSeed !== null ? regenerateSeed : Math.floor(Math.random() * 10000);
+                                    maybeAutoSpeakChunk(accumulatedText, aiContentId);
 
-const requestBody = {
-    messages: finalMessages,
-    model: model,
-    stream: useStreaming,
-    seed: seed,
-    ...(model !== 'polly' ? { temperature: 1 } : {})
-};
-    
-// Only add max_tokens for models that need it, and NOT for Bedrock models
-if (!isBedrockModel && model !== 'polly') {
-        requestBody.max_tokens = ['mistral', 'nova-fast'].includes(model) ? 4096 : 64000;
-    }
+                                    if (previewPanel.classList.contains('open')) {
+                                        const messageWrapper = aiContentDiv.closest('.message-wrapper.ai');
+                                        if (messageWrapper) {
+                                            extractAllCodeFromMessage(messageWrapper);
+                                            updatePreview();
+                                        }
+                                    }
+                                }
 
-    isGenerating = true;
-    sendBtn.style.display = 'none';
-    stopBtn.style.display = 'inline-block';
-    abortController = new AbortController();
-    
-    const aiMsgId = 'ai-msg-' + Date.now();
-    const aiContentId = 'ai-content-' + aiMsgId;
-    
-    if(!regenerateSeed) {
-        appendPlaceholder('ai', aiMsgId, aiContentId);
-    }
-
-    const aiContentDiv = document.getElementById(aiContentId);
-    let accumulatedText = "";
-
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(requestBody),
-            signal: abortController.signal
-        });
-
-        if (!response.ok) {
-            let errorMsg = response.statusText || `Status ${response.status}`;
-            try {
-                const errorObj = await response.json();
-                if (errorObj.error && errorObj.error.message) {
-                    errorMsg = errorObj.error.message;
-                }
-            } catch (e) {
-                // Could not parse JSON error, stick to status
-            }
-            throw new Error(errorMsg);
-        }
-
-if (isBedrockModel) {
-    // Non-streaming handling (like Test Chat)
-    const data = await response.json();
-    accumulatedText = data.choices[0].message.content;
-    
-    if (aiContentDiv) {
-        aiContentDiv.innerHTML = marked.parse(accumulatedText);
-    }
-    
-    conversationHistory.push({ role: 'assistant', content: accumulatedText });
-    
-    // Setup audio button if enabled
-    const showAudioButton = document.getElementById('audio-enable')?.checked;
-    if (showAudioButton && accumulatedText) {
-        const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
-        if (audioBtn) {
-            audioBtn.style.display = 'inline-block';
-            audioBtn.onclick = function() {
-                generateAudioForMessage(aiContentId, accumulatedText);
-            };
-        }
-    }
-    
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    
-} else {
-    // Streaming handling (existing code)
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    
-    let buffer = ''; 
-    let firstChunk = true;
-
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
-
-        const lines = buffer.split('\n');
-        buffer = lines.pop(); 
-
-        for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
-                if (firstChunk) {
-                    aiContentDiv.innerHTML = '';
-                    firstChunk = false;
-                }
-                try {
-                    const json = JSON.parse(trimmedLine.substring(6));
-                    const delta = json.choices[0].delta;
-
-                    if (delta.content) {
-                        accumulatedText += delta.content;
-                        aiContentDiv.innerHTML = marked.parse(accumulatedText);
-                        chatContainer.scrollTop = chatContainer.scrollHeight;
-                        
-                        if (previewPanel.classList.contains('open')) {
-                            const messageWrapper = aiContentDiv.closest('.message-wrapper.ai');
-                            if (messageWrapper) {
-                                extractAllCodeFromMessage(messageWrapper);
-                                updatePreview();
+                            } catch (e) {
+                                console.error("Error parsing stream line", e);
                             }
                         }
                     }
-                    
-                } catch (e) {
-                    console.error("Error parsing stream line", e);
+                }
+
+                await finalizeAutoSpeak(accumulatedText, aiContentId);
+
+                conversationHistory.push({ role: 'assistant', content: accumulatedText });
+
+                if (typeof renderMathInElement !== 'undefined') {
+                    const aiWrapper = document.getElementById(aiMsgId);
+                    if (aiWrapper) {
+                        renderMathInElement(aiWrapper, {
+                            delimiters: [
+                                {left: '$$', right: '$$', display: true},
+                                {left: '$', right: '$', display: false}
+                            ],
+                            throwOnError: false,
+                            strict: false
+                        });
+                    }
                 }
             }
-        }
-    }
 
-    conversationHistory.push({ role: 'assistant', content: accumulatedText });
-
-    // Render LaTeX on the completed message
-    if (typeof renderMathInElement !== 'undefined') {
-        const aiWrapper = document.getElementById(aiMsgId);
-        if (aiWrapper) {
-            renderMathInElement(aiWrapper, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false}
-                ],
-                throwOnError: false,
-                strict: false
-            });
-        }
-    }
-
-    const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
-    if (audioBtn) {
-        audioBtn.style.display = 'inline-block';
-        audioBtn.onclick = function() {
-            generateAudioForMessage(aiContentId, accumulatedText);
-        };
-    }
-}
-
-} catch (error) {
-
-        console.error("Send message error:", error);
-        if (aiContentDiv) {
-            if (error.name === 'AbortError') {
-                aiContentDiv.innerHTML += `<br><span style="color:orange">[Stopped by user]</span>`;
-            } else {
-                if(aiContentDiv.innerHTML.includes('fa-spinner')) {
-                     aiContentDiv.innerHTML = '';                
+        } catch (error) {
+            console.error("Send message error:", error);
+            if (aiContentDiv) {
+                if (error.name === 'AbortError') {
+                    aiContentDiv.innerHTML += `<br><span style="color:orange">[Stopped by user]</span>`;
+                } else {
+                    if (aiContentDiv.innerHTML.includes('fa-spinner')) {
+                        aiContentDiv.innerHTML = '';
+                    }
+                    aiContentDiv.innerHTML += `<div style="color:red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin-top: 5px;"><strong>Error:</strong> ${error.message}</div>`;
                 }
-                aiContentDiv.innerHTML += `<div style="color:red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin-top: 5px;"><strong>Error:</strong> ${error.message}</div>`;
             }
-        }
-    } finally {
-        // Always reset state, even if Bedrock model failed
-        isGenerating = false;
-        sendBtn.style.display = 'inline-block';
-        stopBtn.style.display = 'none';
-        abortController = null;
-        
-        try {
-            saveConversationToStorage();
-        } catch (e) {
-            console.error("Failed to save conversation:", e);
-              showNotification("Warning: Could not save to storage");
+        } finally {
+            isGenerating = false;
+            sendBtn.style.display = 'inline-block';
+            stopBtn.style.display = 'none';
+            abortController = null;
+
+            try {
+                saveConversationToStorage();
+            } catch (e) {
+                console.error("Failed to save conversation:", e);
+                showNotification("Warning: Could not save to storage");
             }
         }
     }
-
 
     function appendMessage(role, text, files = []) {
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper ${role}`;
-        
+
         const sender = role === 'user' ? 'You' : 'AI';
         const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-        
+
         let fileHtml = '';
-        if(files.length > 0) {
+        if (files.length > 0) {
             files.forEach(f => {
-                if(f.type === 'image') {
+                if (f.type === 'image') {
                     fileHtml += `<img src="${f.content}" class="chat-image" alt="${f.name}" onclick="window.open('${f.content}', '_blank')">`;
                 } else {
-                    fileHtml += `<div class="code-container"><div class="code-header">File: ${f.name}</div><pre>${f.type === 'text' ? escapeHtml(f.content.substring(0, 100)) + '...' : '[Binary Data]'}</pre></div>`;
+                    fileHtml += `<div class="code-container"><div class="code-header">File: ${f.name}</div><pre>${f.type === 'text' ? escapeHtml((f.content || '').substring(0, 100)) + '...' : '[Binary Data]'}</pre></div>`;
                 }
             });
         }
@@ -2146,78 +2247,78 @@ if (isBedrockModel) {
             displayContent = `<div style="white-space: pre-wrap;">${escapeHtml(text || '')}</div>`;
         }
 
+        const showAudioButton = document.getElementById('audio-enable')?.checked;
         let audioButtonHtml = '';
-        if (role === 'ai') {
-            const showAudioButton = document.getElementById('audio-enable')?.checked;
-            if (showAudioButton) {
-                audioButtonHtml = `
-                    <button id="audio-btn-${msgId}" class="audio-btn" 
-                            onclick="generateAudioForMessage('${msgId}', \`${(text || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)"
-                            style="margin-top:8px; display:none;">
-                        <i class="fas fa-volume-up"></i> Generate Audio
-                    </button>
-                    <div id="audio-container-${msgId}"></div>
-                `;
-            }
+        if (showAudioButton) {
+            audioButtonHtml = `
+                <button id="audio-btn-${msgId}" class="audio-btn" style="margin-top:8px; display:none;">
+                    <i class="fas fa-volume-up"></i> Generate Audio
+                </button>
+            `;
         }
 
         wrapper.innerHTML = `
             <div class="message-sender">
-                ${sender} 
-                <span class="copy-msg-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
+                ${sender}
+                <span class="copy-msg-btn message-action-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
+                ${showAudioButton ? `<span class="message-action-btn" onclick="speakMessageById('${msgId}')"><i class="fas fa-volume-up"></i></span>` : ''}
             </div>
             <div class="message-bubble">
                 <div id="${msgId}">${displayContent}</div>
+                <div id="raw-${msgId}" style="display:none;">${escapeHtml(text || '')}</div>
                 ${fileHtml}
                 ${audioButtonHtml}
+                <div id="audio-container-${msgId}"></div>
             </div>
         `;
-        
-    chatContainer.appendChild(wrapper);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
-    
-    // Render LaTeX math if present (only for AI messages, only when KaTeX loaded)
-    if (role === 'ai' && typeof renderMathInElement !== 'undefined') {
-        setTimeout(() => {
-            renderMathInElement(wrapper, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false}
-                ],
-                throwOnError: false,
-                strict: false
-            });
-        }, 50);
+
+        chatContainer.appendChild(wrapper);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        if (role === 'ai' && typeof renderMathInElement !== 'undefined') {
+            setTimeout(() => {
+                renderMathInElement(wrapper, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false}
+                    ],
+                    throwOnError: false,
+                    strict: false
+                });
+            }, 50);
+        }
     }
-}
+
     function appendPlaceholder(role, id, contentId) {
         const wrapper = document.createElement('div');
         wrapper.className = `message-wrapper ${role}`;
         wrapper.id = id;
-        
+
         const showAudioButton = document.getElementById('audio-enable')?.checked;
         const audioButtonHtml = showAudioButton ? `
-        <button id="audio-btn-${contentId}" class="audio-btn" style="margin-top:8px; display:none;">
-            <i class="fas fa-volume-up"></i> Generate Audio
-        </button>
-        <div id="audio-container-${contentId}"></div>
-    ` : '';
-        
+            <button id="audio-btn-${contentId}" class="audio-btn" style="margin-top:8px; display:none;">
+                <i class="fas fa-volume-up"></i> Generate Audio
+            </button>
+            <div id="audio-container-${contentId}"></div>
+        ` : `<div id="audio-container-${contentId}"></div>`;
+
         wrapper.innerHTML = `
             <div class="message-sender">
-                AI <span class="copy-msg-btn" onclick="copyMessage(this, '${contentId}')"><i class="fas fa-copy"></i></span>
+                AI
+                <span class="copy-msg-btn message-action-btn" onclick="copyMessage(this, '${contentId}')"><i class="fas fa-copy"></i></span>
+                ${showAudioButton ? `<span class="message-action-btn" onclick="speakMessageById('${contentId}')"><i class="fas fa-volume-up"></i></span>` : ''}
             </div>
             <div class="message-bubble">
                 <div id="${contentId}"><i class="fas fa-spinner fa-spin"></i> Thinking...</div>
+                <div id="raw-${contentId}" style="display:none;"></div>
                 ${audioButtonHtml}
             </div>
         `;
-        
+
         chatContainer.appendChild(wrapper);
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
-    
-    // --- Reset Functions ---
+
     function resetChat() {
         conversationHistory = [];
         chatContainer.innerHTML = `
@@ -2229,7 +2330,7 @@ if (isBedrockModel) {
         showNotification("Chat history cleared!");
         saveConversationToStorage();
     }
-    
+
     function fullReset() {
         conversationHistory = [];
         uploadedFiles = [];
@@ -2255,12 +2356,11 @@ if (isBedrockModel) {
         currentSessionId = null;
         createNewSession();
     }
-    
-    // --- Session Functions ---
+
     function createNewSession() {
         const timestamp = new Date().toISOString();
         const title = `Session ${Object.keys(sessions).length + 1} - ${formatDateTime(timestamp)}`;
-        
+
         const sessionId = 'session_' + Date.now();
         sessions[sessionId] = {
             id: sessionId,
@@ -2268,39 +2368,39 @@ if (isBedrockModel) {
             timestamp: timestamp,
             conversation: []
         };
-        
+
         currentSessionId = sessionId;
         conversationHistory = [];
-        
+
         chatContainer.innerHTML = `
             <div class="message-wrapper ai">
                 <div class="message-sender">System</div>
                 <div class="message-bubble">New session created: ${title}</div>
             </div>
         `;
-        
+
         saveAllDataToStorage();
         loadSessionsToList();
         showNotification("New session created!");
         sessionPanel.classList.remove('open');
     }
-    
+
     function loadSessionsToList() {
         sessionList.innerHTML = '';
-        
-        const sortedSessions = Object.values(sessions).sort((a, b) => 
+
+        const sortedSessions = Object.values(sessions).sort((a, b) =>
             new Date(b.timestamp) - new Date(a.timestamp)
         );
-        
+
         sortedSessions.forEach(session => {
             const sessionItem = document.createElement('div');
             sessionItem.className = `session-item ${currentSessionId === session.id ? 'active' : ''}`;
             sessionItem.dataset.sessionId = session.id;
-            
+
             if (!session.title) {
                 session.title = `Session ${session.id.split('_')[1]} - ${formatDateTime(session.timestamp)}`;
             }
-            
+
             sessionItem.innerHTML = `
                 <div class="session-title" id="session-title-${session.id}">${session.title}</div>
                 <div class="session-meta">${formatDateTime(session.timestamp)}</div>
@@ -2309,16 +2409,16 @@ if (isBedrockModel) {
                     <button class="session-action-btn delete" data-session-id="${session.id}"><i class="fas fa-trash"></i></button>
                 </div>
             `;
-            
+
             sessionItem.addEventListener('click', function(e) {
                 if (!e.target.closest('.session-action-btn')) {
                     loadSession(session.id);
                 }
             });
-            
+
             sessionList.appendChild(sessionItem);
         });
-        
+
         document.querySelectorAll('.session-action-btn.rename').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -2326,7 +2426,7 @@ if (isBedrockModel) {
                 renameSession(sessionId);
             });
         });
-        
+
         document.querySelectorAll('.session-action-btn.delete').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -2335,17 +2435,16 @@ if (isBedrockModel) {
             });
         });
     }
-    
+
     function loadSession(sessionId) {
         if (!sessions[sessionId]) return;
-        
+
         currentSessionId = sessionId;
         conversationHistory = sessions[sessionId].conversation || [];
-        
+
         loadSessionsToList();
-        
         chatContainer.innerHTML = '';
-        
+
         if (conversationHistory.length === 0) {
             chatContainer.innerHTML = `
                 <div class="message-wrapper ai">
@@ -2373,16 +2472,16 @@ if (isBedrockModel) {
                 }
             });
         }
-        
+
         showNotification(`Loaded session: ${sessions[sessionId].title}`);
         saveAllDataToStorage();
         sessionPanel.classList.remove('open');
     }
-    
+
     function renameSession(sessionId) {
         const session = sessions[sessionId];
         if (!session) return;
-        
+
         const newTitle = prompt("Enter new title for session:", session.title);
         if (newTitle !== null && newTitle.trim() !== "") {
             session.title = newTitle.trim();
@@ -2391,10 +2490,10 @@ if (isBedrockModel) {
             showNotification("Session renamed!");
         }
     }
-    
+
     function deleteSession(sessionId) {
         if (!sessions[sessionId]) return;
-        
+
         if (confirm(`Are you sure you want to delete "${sessions[sessionId].title}"?`)) {
             delete sessions[sessionId];
             if (currentSessionId === sessionId) {
@@ -2410,13 +2509,12 @@ if (isBedrockModel) {
             showNotification("Session deleted!");
         }
     }
-    
+
     function formatDateTime(isoString) {
         const date = new Date(isoString);
         return date.toLocaleString();
     }
-    
-    // --- Storage Functions ---
+
     function saveAllDataToStorage() {
         const dataToSave = {
             sessions: sessions,
@@ -2425,7 +2523,7 @@ if (isBedrockModel) {
         };
         localStorage.setItem('chatSessions', JSON.stringify(dataToSave));
     }
-    
+
     function loadAllDataFromStorage() {
         const savedData = localStorage.getItem('chatSessions');
         if (savedData) {
@@ -2433,7 +2531,7 @@ if (isBedrockModel) {
                 const parsedData = JSON.parse(savedData);
                 sessions = parsedData.sessions || {};
                 currentSessionId = parsedData.currentSessionId || null;
-                
+
                 if (!currentSessionId || !sessions[currentSessionId]) {
                     if (Object.keys(sessions).length > 0) {
                         currentSessionId = Object.keys(sessions)[0];
@@ -2442,7 +2540,7 @@ if (isBedrockModel) {
                         return;
                     }
                 }
-                
+
                 loadSession(currentSessionId);
             } catch (e) {
                 console.error("Failed to parse saved data:", e);
@@ -2453,18 +2551,17 @@ if (isBedrockModel) {
         } else {
             createNewSession();
         }
-        
+
         loadSessionsToList();
     }
-    
+
     function saveConversationToStorage() {
         if (currentSessionId && sessions[currentSessionId]) {
             sessions[currentSessionId].conversation = conversationHistory;
             saveAllDataToStorage();
         }
     }
-    
-    // --- Notification Function ---
+
     function showNotification(message) {
         notification.textContent = message;
         notification.classList.add('show');
@@ -2473,7 +2570,6 @@ if (isBedrockModel) {
         }, 3000);
     }
 
-    // --- Keyboard shortcut for preview ---
     document.addEventListener('keydown', function(e) {
         if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') {
             e.preventDefault();
@@ -2492,7 +2588,6 @@ if (isBedrockModel) {
         }
     });
 
-    // --- TTS Popup Functionality ---
     const ttsModal = document.getElementById('tts-modal');
     const ttsPopupBtn = document.getElementById('tts-popup-btn');
     const closeTtsModal = document.getElementById('close-tts-modal');
@@ -2518,19 +2613,19 @@ if (isBedrockModel) {
 
     ttsGenerateBtn.addEventListener('click', async function() {
         const text = ttsTextInput.value.trim();
-        
+
         if (!text) {
             showNotification('Please enter text to convert to speech');
             return;
         }
-        
+
         const maxLength = parseInt(document.getElementById('audio-length-limit')?.value || '4000');
         const truncatedText = text.slice(0, maxLength);
-        
+
         ttsGenerateBtn.disabled = true;
         ttsGenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
         ttsOutput.classList.remove('show');
-        
+
         try {
             await generateStandaloneTTS(truncatedText);
         } catch (error) {
@@ -2543,101 +2638,41 @@ if (isBedrockModel) {
     });
 
     async function generateStandaloneTTS(text) {
-        const voice = document.getElementById('voice-select').value;
-        const tone = document.getElementById('voice-style').value;
-        const readExactly = document.getElementById('audio-read-exactly').checked;
-        const uploadToCatbox = document.getElementById('audio-upload-catbox')?.checked;
-        const newSeed = Math.floor(Math.random() * 999999);
-        
-        let tts_prompt;
-        if (readExactly) {
-            tts_prompt = `${tone ? `(in a ${tone} tone) ` : ""}Read the following text exactly as written, word for word: "${text}"`;
-        } else {
-            tts_prompt = text;
-        }
-        
-        const token = tokenInput.value || USER_API_TOKEN;
-        const apiLink = `https://gen.pollinations.ai/text/${encodeURIComponent(tts_prompt)}?model=openai-audio&seed=${newSeed}&voice=${voice}&stream=false&private=false`;
-        const fetchUrl = `${apiLink}&key=${token}`;
-        
-        const res = await fetch(fetchUrl);
-        
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`Audio generation failed: ${res.status} ${res.statusText}. ${errorText}`);
-        }
-        
-        const audioBlob = await res.blob();
-        
-        if (audioBlob.size === 0) throw new Error("Empty audio file received");
-        
-        const localBlobUrl = URL.createObjectURL(audioBlob);
-        
-        let catboxLinkHtml = '';
-        
-        if (uploadToCatbox) {
-            try {
-                const formData = new FormData();
-                formData.append('reqtype', 'fileupload');
-                formData.append('fileToUpload', audioBlob, `tts_${newSeed}.mp3`);
-                
-                const uploadRes = await fetch(
-                    'https://corsproxy.io/?' + encodeURIComponent('https://catbox.moe/user/api.php'), 
-                    {
-                        method: 'POST',
-                        body: formData
-                    }
-                );
-                
-                if (!uploadRes.ok) throw new Error(`Catbox upload failed: ${uploadRes.status}`);
-                
-                const catboxUrl = (await uploadRes.text()).trim();
-                
-                if (catboxUrl.startsWith('http')) {
-                    catboxLinkHtml = `
-                        <div style="margin-top: 10px; padding: 10px; background: var(--chat-bg); border-radius: 5px;">
-                            <strong>Direct Link:</strong><br>
-                            <a href="${catboxUrl}" target="_blank" style="color: var(--user-msg-bg); word-break: break-all;">${catboxUrl}</a>
-                            <button class="audio-btn" onclick="navigator.clipboard.writeText('${catboxUrl}'); showNotification('Link copied!');" style="margin-left: 10px;">
-                                <i class="fas fa-copy"></i> Copy
-                            </button>
-                        </div>
-                    `;
-                }
-            } catch (uploadError) {
-                console.error("Catbox upload error:", uploadError);
-                catboxLinkHtml = '<div style="margin-top: 10px; color: orange;">⚠️ Upload to Catbox failed (local playback only)</div>';
-            }
-        }
-        
+        const result = await synthesizeKokoro(text);
+        const showDownload = document.getElementById('audio-show-download')?.checked;
+
         ttsOutput.innerHTML = `
             <div style="color: var(--text-color);">
                 <strong>Generated Audio:</strong>
                 <div style="margin-top: 10px;">
-                    <audio controls src="${localBlobUrl}" style="width: 100%;"></audio>
+                    <audio controls autoplay src="${result.url}" style="width: 100%;"></audio>
                 </div>
                 <div style="margin-top: 10px; font-size: 0.85em; opacity: 0.8;">
-                    Voice: ${voice} | Seed: ${newSeed}
+                    Voice: ${document.getElementById('voice-select')?.value || 'af_heart'}
                 </div>
-                ${catboxLinkHtml}
+                ${showDownload ? `
+                    <div style="margin-top:10px;">
+                        <a class="audio-btn" href="${result.url}" download="tts-output.wav" style="text-decoration:none; display:inline-flex; align-items:center;">
+                            <i class="fas fa-download"></i>&nbsp;Download
+                        </a>
+                    </div>
+                ` : ''}
             </div>
         `;
-        
+
         ttsOutput.classList.add('show');
         showNotification('Audio generated successfully!');
     }
 
-    // --- BYOP Collapse Functionality ---
     const byopSection = document.getElementById('byop-section');
     const byopToggle = document.getElementById('byop-toggle');
-    
-    // Load saved state
+
     const byopCollapsed = localStorage.getItem('byopCollapsed') === 'true';
     if (byopCollapsed) {
         byopSection.classList.add('collapsed');
         if (byopToggle) byopToggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
     }
-    
+
     if (byopToggle) {
         byopToggle.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -2646,8 +2681,7 @@ if (isBedrockModel) {
             this.innerHTML = isCollapsed ? '<i class="fas fa-chevron-down"></i>' : '<i class="fas fa-chevron-up"></i>';
         });
     }
-    
-    // Also allow clicking the header to toggle
+
     if (byopSection) {
         byopSection.querySelector('.byop-header').addEventListener('click', function(e) {
             if (e.target === this || e.target.tagName === 'H4') {
@@ -2656,27 +2690,22 @@ if (isBedrockModel) {
         });
     }
 
-    // --- System Preset Initialization ---
     const systemMessageInput = document.getElementById('system-message');
     const systemPresetSelect = document.getElementById('system-preset-select');
-    
-    // Load saved system message text
+
     const savedSystemMessage = localStorage.getItem('systemMessage');
     if (savedSystemMessage) {
         systemMessageInput.value = savedSystemMessage;
     }
-    
-    // Load saved preset selection
+
     const savedPreset = localStorage.getItem('systemPreset');
     if (savedPreset && SYSTEM_PRESETS[savedPreset] !== undefined) {
         systemPresetSelect.value = savedPreset;
-        // If it's a preset (not custom), populate the textarea
         if (savedPreset !== 'custom' && SYSTEM_PRESETS[savedPreset]) {
             systemMessageInput.value = SYSTEM_PRESETS[savedPreset];
         }
     }
-    
-    // Handle preset selection change
+
     systemPresetSelect.addEventListener('change', function() {
         const preset = this.value;
         if (preset === 'custom') {
@@ -2689,33 +2718,52 @@ if (isBedrockModel) {
         localStorage.setItem('systemPreset', preset);
         showNotification('System prompt updated: ' + this.options[this.selectedIndex].text);
     });
-    
-    // Save system message text when user edits manually
+
     systemMessageInput.addEventListener('input', function() {
         localStorage.setItem('systemMessage', this.value);
-        // If user manually edits, switch to custom
         if (systemPresetSelect.value !== 'custom') {
             systemPresetSelect.value = 'custom';
             localStorage.setItem('systemPreset', 'custom');
         }
     });
 
-    // Load available voices from API
-    loadAvailableVoices();
+    function bindCheckboxSetting(id, defaultValue = false) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const saved = localStorage.getItem(id);
+        el.checked = saved !== null ? saved === 'true' : defaultValue;
+        el.addEventListener('change', () => localStorage.setItem(id, el.checked));
+    }
 
-    // --- Initialize App ---
-    // Pre-load Pyodide in background so it's ready when needed
+    function bindSelectSetting(id, defaultValue = '') {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const saved = localStorage.getItem(id);
+        if (saved !== null) el.value = saved;
+        else if (defaultValue) el.value = defaultValue;
+        el.addEventListener('change', () => localStorage.setItem(id, el.value));
+    }
+
+    bindCheckboxSetting('audio-enable', true);
+    bindCheckboxSetting('audio-autoplay-stream', false);
+    bindCheckboxSetting('audio-show-download', false);
+    bindSelectSetting('voice-select', 'af_heart');
+    bindSelectSetting('kokoro-dtype', 'q8');
+    bindSelectSetting('audio-length-limit', '1000');
+
     setTimeout(() => {
         if (!pyodideReady) initPyodide();
     }, 2000);
-    
+
+    setTimeout(() => {
+        ensureKokoroReady().catch(err => console.warn('Kokoro preload failed:', err));
+    }, 1000);
+
     loadAllDataFromStorage();
 
-    console.log("Chat application with BYOP policy and drag-drop support initialized successfully!");
+    console.log("Chat application V4.0 with Kokoro audio initialized successfully!");
     console.log("Press Ctrl+Shift+P to toggle code preview");
     console.log("Premium models (🔒) require your own API key from enter.pollinations.ai");
-
 </script>
 </body>
-
 </html>
