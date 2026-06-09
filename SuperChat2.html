@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V4.0</title>
+    <title>Pollinations AI Chat (Media Enabled) V4.1</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -13,11 +13,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-
-    <script type="module">
-        import { env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1/dist/transformers.min.js";
-        env.backends.onnx.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1/dist/";
-    </script>
 
     <style>
         :root {
@@ -96,9 +91,9 @@
         .message-wrapper.user { align-self: flex-end; align-items: flex-end; }
         .message-wrapper.ai { align-self: flex-start; align-items: flex-start; }
         
-        .message-sender { font-size: 0.75rem; margin-bottom: 4px; opacity: 0.7; display: flex; align-items: center; gap: 8px; }
-        .copy-msg-btn, .speak-msg-btn { cursor: pointer; font-size: 0.8rem; opacity: 0.5; transition: opacity 0.2s; }
-        .copy-msg-btn:hover, .speak-msg-btn:hover { opacity: 1; }
+        .message-sender { font-size: 0.75rem; margin-bottom: 4px; opacity: 0.7; display: flex; align-items: center; gap: 5px; }
+        .copy-msg-btn { cursor: pointer; font-size: 0.8rem; opacity: 0.5; transition: opacity 0.2s; }
+        .copy-msg-btn:hover { opacity: 1; }
 
         .message-bubble { padding: 12px 16px; border-radius: 12px; line-height: 1.5; position: relative; word-wrap: break-word; overflow-x: auto; }
         .user .message-bubble { background-color: var(--user-msg-bg); color: var(--user-msg-text); border-bottom-right-radius: 2px; }
@@ -133,6 +128,13 @@
             border: 1px solid var(--border-color);
             display: block;
             margin-top: 8px;
+        }
+        .preview-code-btn.python-btn {
+            background: #3776ab;
+            margin-left: 5px;
+        }
+        .preview-code-btn.python-btn:hover {
+            background: #2d5f8b;
         }
         .code-header-buttons { display: flex; gap: 5px; }
         .copy-code-btn, .preview-code-btn { background: #444; color: #fff; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 0.7rem; }
@@ -394,19 +396,27 @@
             font-weight: bold;
         }
 
-        /* Audio Player Box */
-        .audio-playback-container {
-            margin-top: 8px;
-            padding: 6px;
-            background: rgba(0, 0, 0, 0.04);
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        /* Audio Controls */
+        .audio-controls { 
+            margin-top: 10px; 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            background: rgba(0,0,0,0.05); 
+            padding: 8px; 
+            border-radius: 5px; 
         }
-        .audio-playback-container audio {
-            width: 100%;
-            height: 32px;
+        .audio-btn { 
+            background: var(--user-msg-bg); 
+            color: white; 
+            border: none; 
+            padding: 5px 10px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 0.8rem; 
+        }
+        .audio-btn:hover {
+            opacity: 0.9;
         }
 
         /* Preview Area for Uploads */
@@ -417,7 +427,7 @@
         /* Notification */
         .notification {
             position: fixed;
-            top: 70px;
+            top: 70px;  
             right: 20px;
             padding: 15px 25px;
             border-radius: 5px;
@@ -426,7 +436,7 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             transform: translateX(200%);
             transition: transform 0.3s ease-in-out;
-            z-index: 1001;
+            z-index: 1001;  
         }
         .notification.show {
             transform: translateX(0);
@@ -491,6 +501,7 @@
             font-size: 1rem;
         }
 
+        /* Visual feedback on chat container */
         #chat-container.drag-over {
             background: rgba(0, 123, 255, 0.05);
             box-shadow: inset 0 0 20px rgba(0, 123, 255, 0.2);
@@ -591,11 +602,21 @@
             display: block;
         }
 
+        /* Paid model indicator in selects */
+        option.paid-model-option {
+            color: #ffc107;
+        }
+
+        /* Responsive adjustments */
         @media (max-width: 768px) {
             #preview-panel { width: 100%; right: -100%; }
             .message-wrapper { max-width: 95%; }
-            .drag-overlay-content { padding: 30px 40px; }
-            .drag-overlay-content h3 { font-size: 1.4rem; }
+            .drag-overlay-content {
+                padding: 30px 40px;
+            }
+            .drag-overlay-content h3 {
+                font-size: 1.4rem;
+            }
         }
     </style>
 </head>
@@ -604,7 +625,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.0</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.1</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -623,16 +644,9 @@
     </div>
 
     <div id="chat-container">
-        <div class="message-wrapper ai" id="msg-system-initial">
-            <div class="message-sender">
-                System 
-                <span class="copy-msg-btn" onclick="copyMessage(this, 'txt-system-initial')"><i class="fas fa-copy"></i></span>
-                <span class="speak-msg-btn" onclick="speakMessage(this, 'txt-system-initial')"><i class="fas fa-volume-up"></i></span>
-            </div>
-            <div class="message-bubble">
-                <div id="txt-system-initial">Hello! I am ready to chat. Ensure your Token is set in the settings.</div>
-                <div id="audio-container-msg-system-initial"></div>
-            </div>
+        <div class="message-wrapper ai">
+            <div class="message-sender">System</div>
+            <div class="message-bubble">Hello! I am ready to chat. Ensure your Token is set in the settings.</div>
         </div>
     </div>
 
@@ -687,60 +701,40 @@
                 </button>
             </div>
             <div class="byop-content" id="byop-content">
-                <p>This app uses a shared API key by default. To access premium models (marked with 🔒), enter your own API key from <a href="https://enter.pollinations.ai" target="_blank">Pollinations AI Portal</a>.</p>
+                <p>This app uses a shared API key by default. To access premium models (marked with 🔒), enter your own API key from <a href="https://enter.pollinations.ai" target="_blank">enter.pollinations.ai</a>.</p>
+                <p style="font-size: 0.8em; margin-top: 8px;">With your own key, you pay for your own usage and unlock premium models.</p>
             </div>
         </div>
 
         <div class="settings-group">
-            <label>API Key / Token</label>
-            <input type="password" id="api-token" placeholder="Paste your token here...">
-        </div>
-
-        <div class="settings-group" style="background: rgba(0,123,255,0.05); padding: 10px; border-radius: 6px; border: 1px solid rgba(0,123,255,0.2);">
-            <label style="color: var(--user-msg-bg); font-weight: bold;"><i class="fas fa-music"></i> Kokoro Audio Engine</label>
-            
-            <div style="margin: 8px 0; display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="audio-stream-enable" style="width: auto; margin: 0;">
-                <label for="audio-stream-enable" style="margin: 0; font-weight: normal; font-size: 0.85rem; cursor: pointer;">Stream audio during generation</label>
-            </div>
-
-            <div style="margin: 8px 0; display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" id="audio-download-enable" style="width: auto; margin: 0;">
-                <label for="audio-download-enable" style="margin: 0; font-weight: normal; font-size: 0.85rem; cursor: pointer;">Enable auto-download for audio</label>
-            </div>
-
-            <div style="margin-top: 10px;">
-                <label style="font-size:0.8rem; margin-bottom: 2px;">Voice Model</label>
-                <select id="voice-select">
-                    <option value="af_heart" selected>af_heart (Female / Neutral)</option>
-                    <option value="af_bella">af_bella (Female / Soft)</option>
-                    <option value="am_adam">am_adam (Male / Crisp)</option>
-                    <option value="am_michael">am_michael (Male / Standard)</option>
-                    <option value="bf_emma">bf_emma (British Female)</option>
-                    <option value="bm_george">bm_george (British Male)</option>
-                </select>
-            </div>
+            <label>API Key <small style="font-weight: normal; opacity: 0.7;">(Required for premium models)</small></label>
+            <input type="password" id="api-token" placeholder="Enter your personal API key (sk_...)">
+            <small style="color:var(--text-color); opacity:0.7; display: block; margin-top: 4px;">Enter your own key to unlock 🔒 premium models</small>
         </div>
 
         <div class="settings-group">
-            <label>System Prompt Preset</label>
+            <label>System Message</label>
+            <textarea id="system-message" placeholder="You are a helpful AI assistant" rows="3" style="resize: vertical; min-height: 60px;"></textarea>
+            <small style="color:var(--text-color); opacity:0.7;">Defines the AI's role and behavior.</small>
+        </div>
+
+        <div class="settings-group">
+            <label>Load System Preset</label>
             <select id="system-preset-select">
-                <option value="default">Default Assistant</option>
-                <option value="python_dev">Python Code Runner & Visualizer 💻🐍</option>
-                <option value="creative">Creative Assistant</option>
-                <option value="custom">Custom (Type below)...</option>
+                <option value="custom">Custom (Use Text Above)</option>
+                <option value="general">General Assistant</option>
+                <option value="coding">Coding & Math Specialist</option>
+                <option value="concise">Concise Assistant</option>
+                <option value="creative">Creative Writer</option>
+                <option value="roleplaying">Roleplaying</option>
             </select>
-        </div>
-
-        <div class="settings-group">
-            <label>Custom System Message</label>
-            <textarea id="system-message" style="width:100%; min-height:8px;" placeholder="Enter custom system context..."></textarea>
+            <small style="color:var(--text-color); opacity:0.7;">Choosing a preset will replace the text above.</small>
         </div>
 
         <div class="settings-group">
             <label>Voice Style/Emotion</label>
             <input type="text" id="voice-style" placeholder="e.g. Excited, Whispering, Angry" value="snarky">
-            <small style="color:var(--text-color); opacity:0.7;"> Applies to voice tone and AI response style. </small>
+            <small style="color:var(--text-color); opacity:0.7;"> Applies to both voice tone and AI response style. </small>
         </div>
 
         <div class="settings-group">
@@ -754,9 +748,11 @@
                 <option value="mistral">Mistral</option>
                 <option value="openai">Openai👁️</option>
                 <option value="openai-fast">Openai-Fast👁️</option>
+                <option value="deepseek" class="paid-model-option" style="display: none;">Deepseek🧠 🔒</option>
                 <option value="perplexity-fast">Perplexity-Fast🔍</option>
                 <option value="gemini-search">Gemini-Search👁️🔍</option>
                 <option value="minimax">MiniMax M2.1💻</option>
+                <option value="openai-audio">OpenAI Audio 🎙️👁️👂🗣️(Voice)</option>
                 <option value="chickytutor">Chicky Tutor</option>
                 <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
                 <option value="kimi" selected>Moonshot Kimi K2.5👁️🧠</option>
@@ -765,17 +761,45 @@
                 <option value="claude-fast">Claude-Fast👁️</option>
                 <option value="nomnom">NomNom by Itachi🔍</option>
                 <option value="polly">Polly by Itachi 🤖</option>
+                <option value="gemini" class="paid-model-option" style="display: none;">Gemini🎙️👁️👂🔍💻 🔒</option>
+                <option value="claude" class="paid-model-option" style="display: none;">Claude 3.5 Sonnet 🔒</option>
+                <option value="grok" class="paid-model-option" style="display: none;">Grok 2 🔒</option>
+                <option value="gemini-large" class="paid-model-option" style="display: none;">Gemini Experimental 🔒</option>
+                <option value="claude-large" class="paid-model-option" style="display: none;">Claude 3.5 Opus 🔒</option>
+                <option value="deepseek-pro" class="paid-model-option" style="display: none;">Deepseek R1 Reasoning 🔒</option>
+                <option value="claude-opus-4.7" class="paid-model-option" style="display: none;">Claude 4.7 Opus Experimental 🔒</option>
             </select>
+            <small style="color:var(--text-color); opacity:0.7;">Select the AI model for generation.</small>
+        </div>
+
+        <div class="settings-group">
+            <label>Kokoro TTS Voice</label>
+            <select id="voice-select"></select>
+            <small style="color:var(--text-color); opacity:0.7;">Select the local voice for TTS generation.</small>
+        </div>
+
+        <div class="settings-group" style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="audio-enable" style="width: auto;" checked>
+            <label for="audio-enable" style="margin-bottom: 0;">Enable TTS Audio Generation</label>
+        </div>
+        <div class="settings-group" style="display: none;">
+            <input type="checkbox" id="audio-upload-catbox" style="width: auto;">
+            <label for="audio-upload-catbox" style="margin-bottom: 0;">Upload Audio to Catbox</label>
+        </div>
+        <div class="settings-group">
+            <small style="color:var(--text-color); opacity:0.7; display:block;">
+                All voice audio is computed completely offline in your browser via WebAssembly (WASM) for local playback only.
+            </small>
         </div>
     </div>
 
     <div id="tts-modal">
         <div class="tts-modal-content">
             <div class="tts-modal-header">
-                <h3><i class="fas fa-volume-up"></i> Local Kokoro TTS Generator</h3>
+                <h3><i class="fas fa-volume-up"></i> Text-to-Speech Generator</h3>
                 <button class="close-tts-modal" id="close-tts-modal">&times;</button>
             </div>
-            <textarea id="tts-text-input" class="tts-textarea" placeholder="Enter text to convert to speech dynamically..."></textarea>
+            <textarea id="tts-text-input" class="tts-textarea" placeholder="Enter text to convert to speech..."></textarea>
             <button id="tts-generate-btn" class="tts-generate-btn">
                 <i class="fas fa-magic"></i> Generate Audio
             </button>
@@ -785,99 +809,99 @@
 
     <div id="notification" class="notification"></div>
 
-    <div class="drag-overlay" id="drag-overlay">
+    <div id="drag-overlay" class="drag-overlay">
         <div class="drag-overlay-content">
             <i class="fas fa-cloud-upload-alt"></i>
-            <h3>Drop Files Here</h3>
-            <p>Upload files seamlessly into the conversation history</p>
+            <h3>Drop files here</h3>
+            <p>Images, audio, code, and text files accepted</p>
         </div>
     </div>
 
     <script type="module">
-        import { KokoroTTS, TextSplitterStream } from "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js";
+        // Inject local Kokoro Engine context and native browser threading configuration inside module scope
+        import { KokoroTTS } from "https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js";
+        import { env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1/dist/transformers.min.js";
+        
+        env.backends.onnx.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1/dist/";
 
-        // Global instances
-        let tts = null;
-        let isTtsLoading = false;
-
-        // Initialize local Kokoro model
-        async function getKokoroInstance() {
-            if (tts) return tts;
-            if (isTtsLoading) {
-                throw new Error("Kokoro Model setup is still initializing in background...");
-            }
-            isTtsLoading = true;
-            showNotification("📥 Loading local Kokoro TTS model weights (~82M parameters)...");
-            try {
-                tts = await KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX", {
+        let ttsInstance = null;
+        async function getTTSInstance() {
+            if (!ttsInstance) {
+                showNotification("Loading local Kokoro TTS engine... please wait.");
+                ttsInstance = await KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX", {
                     dtype: "q8",
                     device: "wasm"
                 });
-                showNotification("✅ Local Kokoro Audio Engine loaded successfully!");
-                isTtsLoading = false;
-                return tts;
+                showNotification("Kokoro engine loaded successfully!");
+            }
+            return ttsInstance;
+        }
+
+        window.localGenerateAudio = async function(text, voice, outputContainerId) {
+            const container = document.getElementById(outputContainerId);
+            if (!container) return;
+            container.innerHTML = '<span style="font-size:0.85rem; opacity:0.7;"><i class="fas fa-spinner fa-spin"></i> Synthesizing audio locally...</span>';
+            try {
+                const tts = await getTTSInstance();
+                const rawAudio = await tts.generate(text, { voice: voice });
+                const audioBlob = rawAudio.toBlob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                container.innerHTML = `<audio controls src="${audioUrl}" style="width:100%; margin-top:5px;"></audio>`;
             } catch (err) {
-                isTtsLoading = false;
                 console.error(err);
-                showNotification("❌ Failed to initialize Kokoro: " + err.message);
-                throw err;
+                container.innerHTML = `<span style="color:red; font-size:0.85rem;">⚠️ Local synthesis failed: ${err.message}</span>`;
             }
+        };
+
+        // Populate Kokoro voice lists
+        const kokoroVoices = [
+            { id: 'af_heart', name: 'Heart (Female)' },
+            { id: 'af_bella', name: 'Bella (Female)' },
+            { id: 'af_nicole', name: 'Nicole (Female)' },
+            { id: 'af_aoede', name: 'Aoede (Female)' },
+            { id: 'af_sarah', name: 'Sarah (Female)' },
+            { id: 'am_adam', name: 'Adam (Male)' },
+            { id: 'am_michael', name: 'Michael (Male)' },
+            { id: 'bf_emma', name: 'Emma (UK Female)' },
+            { id: 'bm_george', name: 'George (UK Male)' }
+        ];
+        const voiceSelect = document.getElementById('voice-select');
+        if (voiceSelect) {
+            voiceSelect.innerHTML = kokoroVoices.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
         }
+    </script>
 
-        // Standard WAV Blob encoder from floating point arrays
-        function createWavBlob(samples, sampleRate = 24000) {
-            const buffer = new ArrayBuffer(44 + samples.length * 2);
-            const view = new DataView(buffer);
+    <script>
+        // --- Configuration ---
+        const USER_API_TOKEN = "pk_OIQlw5rh71ylmlqV";
+        const API_URL = "https://gen.pollinations.ai/v1/chat/completions";
 
-            const writeString = (offset, string) => {
-                for (let i = 0; i < string.length; i++) {
-                    view.setUint8(offset + i, string.charCodeAt(i));
-                }
-            };
+        // --- BYOP Policy: Paid-only models ---
+        const PAID_ONLY_MODELS = [
+            "claude", "grok", "gemini-large", "gemini-legacy", "claude-large", "deepseek", "deepseek-pro", "claude-opus-4.7", "gemini"
+        ];
 
-            writeString(0, 'RIFF');
-            view.setUint32(4, 36 + samples.length * 2, true);
-            writeString(8, 'WAVE');
-            writeString(12, 'fmt ');
-            view.setUint32(16, 16, true);
-            view.setUint16(20, 1, true); // Linear PCM
-            view.setUint16(22, 1, true); // Mono
-            view.setUint32(24, sampleRate, true);
-            view.setUint32(28, sampleRate * 2, true);
-            view.setUint16(32, 2, true);
-            view.setUint16(34, 16, true);
-            writeString(36, 'data');
-            view.setUint32(40, samples.length * 2, true);
+        const SYSTEM_PRESETS = {
+            general: "You are a helpful, respectful, and fully functional AI assistant. Focus on accuracy and clarity.",
+            coding: "You are an expert software developer and mathematics specialist. Write robust, clean, semantic code blocks. Always provide explicit code breakdowns and use proper algorithmic formulations where needed.",
+            concise: "You are a direct and ultra-concise assistant. Answer with immediate raw facts. Minimize conversational pleasantries, introductory sentences, and filler words.",
+            creative: "You are an imaginative creative writer and narrative architect. Craft descriptive, layered, and engaging stories, scripts, or compositions using rich tone configurations.",
+            roleplaying: "You are an interactive roleplay partner. Adopt the requested persona perfectly, mirroring their tone, vocabulary, background, and quirks in every response."
+        };
 
-            let offset = 44;
-            for (let i = 0; i < samples.length; i++, offset += 2) {
-                let s = Math.max(-1, Math.min(1, samples[i]));
-                view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-            }
-            return new Blob([view], { type: 'audio/wav' });
-        }
-
-        // Global variables
-        const USER_API_TOKEN = "pollen_default_unauthenticated_key";
-        const PAID_ONLY_MODELS = [];
-
+        // --- Application State Variables ---
         let conversationHistory = [];
         let uploadedFiles = [];
         let isGenerating = false;
         let abortController = null;
-        let currentSessionId = null;
         let sessions = {};
+        let currentSessionId = null;
         let pyodide = null;
         let pyodideReady = false;
-        let dragCounter = 0;
+        let codePreviews = {}; 
+        let currentAiBubble = null; 
 
-        const SYSTEM_PRESETS = {
-            default: "You are a helpful, clever, and articulate AI assistant.",
-            python_dev: `You are a Senior Python Engineer. You have access to an internal Python execution engine. If the user asks for calculations, graphs, text transformation, or data visualization, write executable python scripts wrapped inside \`\`\`python ... \`\`\` codeblocks.`,
-            creative: "You are a poetic, imaginative storyteller with extreme emotional range."
-        };
-
-        // DOM elements
+        // --- DOM Elements ---
         const chatContainer = document.getElementById('chat-container');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
@@ -900,237 +924,304 @@
         const previewPanel = document.getElementById('preview-panel');
         const closePreview = document.getElementById('close-preview');
         const previewIframe = document.getElementById('preview-iframe');
-        const refreshPreviewBtn = document.getElementById('refresh-preview');
-        const openNewTabBtn = document.getElementById('open-new-tab');
-        const dragOverlay = document.getElementById('drag-overlay');
-        const byopToggle = document.getElementById('byop-toggle');
-        const byopContent = document.getElementById('byop-content');
-        const byopSection = document.getElementById('byop-section');
-        const systemPresetSelect = document.getElementById('system-preset-select');
+        const refreshPreview = document.getElementById('refresh-preview');
+        const openNewTab = document.getElementById('open-new-tab');
         const systemMessageInput = document.getElementById('system-message');
-        const voiceSelect = document.getElementById('voice-select');
-        const audioStreamEnable = document.getElementById('audio-stream-enable');
-        const audioDownloadEnable = document.getElementById('audio-download-enable');
+        const systemPresetSelect = document.getElementById('system-preset-select');
 
-        // Text-to-Speech Engine Implementation
-        window.speakMessage = async function(btn, textId) {
-            const textElement = document.getElementById(textId);
-            if (!textElement) return;
-
-            const textToSpeak = textElement.innerText || textElement.textContent;
-            if (!textToSpeak.trim()) {
-                showNotification("No text to synthesize.");
-                return;
+        // --- Core Application Initialization and Messaging Logic ---
+        marked.setOptions({
+            highlight: function(code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
             }
+        });
 
-            const wrapper = textElement.closest('.message-wrapper');
-            const msgId = wrapper ? wrapper.id : 'msg-tts-popup';
-            const audioContainerId = `audio-container-${msgId}`;
-            let audioContainer = document.getElementById(audioContainerId);
-
-            if (!audioContainer) {
-                audioContainer = document.createElement('div');
-                audioContainer.id = audioContainerId;
-                textElement.parentNode.appendChild(audioContainer);
-            }
-
-            const originalIcon = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            audioContainer.innerHTML = `<small style="opacity:0.7;"><i class="fas fa-hourglass-start"></i> Synthesizing audio via Kokoro...</small>`;
-
-            try {
-                const kokoro = await getKokoroInstance();
-                const selectedVoice = voiceSelect.value;
-                
-                // Audio synthesis
-                const result = await kokoro.generate(textToSpeak, { voice: selectedVoice });
-                const wavBlob = createWavBlob(result.audio, result.sampling_rate || 24000);
-                const audioUrl = URL.createObjectURL(wavBlob);
-
-                audioContainer.innerHTML = `
-                    <div class="audio-playback-container">
-                        <audio controls src="${audioUrl}"></audio>
+        // Custom Marked implementation for embedding Interactive Execution UI directly into codeblocks
+        const renderer = new marked.Renderer();
+        const originalCodeRenderer = renderer.code;
+        renderer.code = function(codeObject, language, escaped) {
+            let codeText = typeof codeObject === 'object' ? codeObject.text : codeObject;
+            let codeLang = typeof codeObject === 'object' ? codeObject.lang : language;
+            
+            if (!codeLang) codeLang = 'plaintext';
+            
+            const rawHtml = originalCodeRenderer.call(this, codeObject, language, escaped);
+            const containerId = 'code-' + Math.floor(Math.random() * 1000000);
+            
+            let actionButtons = '';
+            let outputContainer = '';
+            
+            if (codeLang === 'html') {
+                actionButtons = `<button class="preview-code-btn" onclick="previewHTMLCode('${containerId}')"><i class="fas fa-eye"></i> Render View</button>`;
+            } else if (codeLang === 'python') {
+                actionButtons = `<button class="preview-code-btn python-btn" onclick="runPythonCode('${containerId}')"><i class="fas fa-play"></i> Run Code</button>`;
+                outputContainer = `
+                    <div id="output-container-${containerId}" class="python-output-container">
+                        <div id="output-text-${containerId}" class="python-output-text"></div>
+                        <div id="output-image-${containerId}" class="python-output-image"></div>
                     </div>
                 `;
+            }
+            
+            return `
+                <div id="${containerId}" class="code-container" data-raw-code="${encodeURIComponent(codeText)}">
+                    <div class="code-header">
+                        <span><i class="fas fa-code"></i> ${codeLang}</span>
+                        <div class="code-header-buttons">
+                            ${actionButtons}
+                            <button class="copy-code-btn" onclick="copyCodeBlock(this)"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                    </div>
+                    ${rawHtml}
+                    ${outputContainer}
+                </div>
+            `;
+        };
+        marked.setOptions({ renderer: renderer });
 
-                // Handle optional auto download feature
-                if (audioDownloadEnable.checked) {
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = audioUrl;
-                    downloadLink.download = `kokoro-${msgId}.wav`;
-                    document.body.appendChild(downloadLink);
-                    downloadLink.click();
-                    document.body.removeChild(downloadLink);
+        // --- Python Initialization via Pyodide ---
+        async function initPyodide() {
+            if (pyodideReady) return;
+            console.log("Initializing local Python sandbox environment inside web app container...");
+            try {
+                pyodide = await loadPyodide();
+                await pyodide.loadPackage(["matplotlib", "numpy", "pandas"]);
+                pyodideReady = true;
+                console.log("Pyodide Engine loaded successfully. Advanced local computation modules online.");
+            } catch (err) {
+                console.error("Pyodide initialization failure:", err);
+            }
+        }
+
+        window.runPythonCode = async function(containerId) {
+            if (!pyodideReady) {
+                showNotification("Initializing Python execution context runtime... please stand by.");
+                await initPyodide();
+                if (!pyodideReady) {
+                    showNotification("Python execution unavailable.");
+                    return;
+                }
+            }
+
+            const codeContainer = document.getElementById(containerId);
+            const rawCode = decodeURIComponent(codeContainer.getAttribute('data-raw-code'));
+            const textOutput = document.getElementById(`output-text-${containerId}`);
+            const imgOutput = document.getElementById(`output-image-${containerId}`);
+            const outContainer = document.getElementById(`output-container-${containerId}`);
+
+            outContainer.style.display = 'block';
+            textOutput.textContent = 'Running script locally...';
+            imgOutput.innerHTML = '';
+
+            const wrapperScript = `
+import sys
+import io
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
+
+# Isolate execution namespace mappings
+exec_globals = {}
+exec_locals = {}
+
+try:
+    exec(${JSON.stringify(rawCode)}, exec_globals, exec_locals)
+    stdout_val = sys.stdout.getvalue()
+    stderr_val = sys.stderr.getvalue()
+    
+    # Process potential Matplotlib layout outputs
+    generated_images = []
+    fig_nums = plt.get_fignums()
+    if fig_nums:
+        for num in fig_nums:
+            fig = plt.figure(num)
+            buf = io.BytesIO()
+            fig.savefig(buf, format='png', bbox_inches='tight')
+            buf.seek(0)
+            import base64
+            img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+            generated_images.append("data:image/png;base64," + img_base64)
+        plt.close('all')
+        
+    outcome = {
+        'success': True,
+        'stdout': stdout_val,
+        'stderr': stderr_val,
+        'images': generated_images
+    }
+except Exception as e:
+    import traceback
+    outcome = {
+        'success': False,
+        'error': str(e),
+        'traceback': traceback.format_exc()
+    }
+
+outcome
+            `;
+
+            try {
+                const pyResult = await pyodide.runPythonAsync(wrapperScript);
+                const result = pyResult.toJs();
+                
+                let outputBuffer = '';
+                if (result.stdout) outputBuffer += result.stdout;
+                if (result.stderr) outputBuffer += `\n[STDERR]\n${result.stderr}`;
+                if (!result.success) {
+                    if (isGUIError(result.error)) {
+                        outputBuffer += `\n❌ GUI Error: Visual windows require plot/image exports. Ensure script targets structural calculations or exports figures via matplotlib.`;
+                    } else {
+                        outputBuffer += `\n❌ Runtime Exception: ${result.error}\n\n${result.traceback}`;
+                    }
                 }
 
+                textOutput.textContent = outputBuffer || (result.images.length > 0 ? '✓ Executed successfully (Visual output plotted below)' : '✓ Executed successfully (no text output)');
+                
+                let generatedImages = result.images || [];
+                if (generatedImages.length > 0) {
+                    generatedImages.forEach(src => {
+                        const img = document.createElement('img');
+                        img.src = src;
+                        imgOutput.appendChild(img);
+                    });
+                    
+                    const messageContent = [{type: 'text', text: '[Generated image from Python code]'}];
+                    const filesForUI = [];
+                    generatedImages.forEach((url, idx) => {
+                        messageContent.push({ type: 'image_url', image_url: {url: url} });
+                        filesForUI.push({ type: 'image', content: url, name: `python_output_${idx}.png` });
+                    });
+
+                    conversationHistory.push({ role: 'user', content: messageContent });
+
+                    const msgId = 'msg-' + Date.now();
+                    const userWrapper = document.createElement('div');
+                    userWrapper.className = 'message-wrapper user';
+                    userWrapper.id = 'python-output-' + msgId;
+                    let imagesHtml = '';
+                    filesForUI.forEach(f => {
+                        imagesHtml += `<img src="${f.content}" class="chat-image" alt="Python output" style="max-width: 400px;">`;
+                    });
+                    userWrapper.innerHTML = `
+                        <div class="message-sender">
+                            You (Python Output)
+                            <span class="copy-msg-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
+                        </div>
+                        <div class="message-bubble">
+                            <div id="${msgId}" style="margin-bottom: 8px; font-size: 0.9rem; opacity: 0.8;">Generated image from code execution:</div>
+                            ${imagesHtml}
+                        </div>
+                    `;
+                    if (currentAiBubble && currentAiBubble.nextSibling) {
+                        chatContainer.insertBefore(userWrapper, currentAiBubble.nextSibling);
+                    } else {
+                        chatContainer.appendChild(userWrapper);
+                    }
+                    userWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    saveConversationToStorage();
+                    showNotification('Image posted to chat for vision models');
+                }
             } catch (err) {
-                console.error(err);
-                audioContainer.innerHTML = `<small style="color:red;"><i class="fas fa-exclamation-triangle"></i> Synthesis failed: ${err.message}</small>`;
-            } finally {
-                btn.innerHTML = originalIcon;
+                textOutput.textContent = `❌ Core Sandbox Bridge Error: ${err.message}`;
             }
         };
 
-        // Pyodide Core Initialization
-        async function initPyodide() {
-            if (pyodideReady) return;
-            try {
-                console.log("Loading Pyodide environment modules...");
-                pyodide = await loadPyodide();
-                await pyodide.loadPackage(["micropip", "matplotlib", "numpy"]);
-                
-                // Inject custom canvas image hook interceptors
-                await pyodide.runPythonAsync(`
-                    import io
-                    import base64
-                    import sys
-                    import matplotlib
-                    matplotlib.use('Agg')
-                    import matplotlib.pyplot as plt
+        window.previewHTMLCode = function(containerId) {
+            const codeContainer = document.getElementById(containerId);
+            const rawCode = decodeURIComponent(codeContainer.getAttribute('data-raw-code'));
+            codePreviews[containerId] = rawCode;
+            
+            previewIframe.srcdoc = rawCode;
+            previewPanel.setAttribute('data-current-container', containerId);
+            previewPanel.classList.add('open');
+        };
 
-                    class ElementsHookOutput:
-                        def __init__(self):
-                            self.outputs = []
-                        def write(self, text):
-                            sys.__stdout__.write(text)
-                            self.outputs.append(text)
-                        def flush(self):
-                            pass
+        window.copyCodeBlock = function(button) {
+            const container = button.closest('.code-container');
+            const rawCode = decodeURIComponent(container.getAttribute('data-raw-code'));
+            navigator.clipboard.writeText(rawCode).then(() => {
+                const icon = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => { button.innerHTML = icon; }, 2000);
+            }).catch(err => {
+                console.error('Could not copy code text: ', err);
+            });
+        };
 
-                    sys.stdout = ElementsHookOutput()
-                `);
-                pyodideReady = true;
-                console.log("Pyodide Engine ready to execute code arrays safely.");
-            } catch (e) {
-                console.error("Pyodide execution initialization error context:", e);
-            }
-        }
+        window.copyMessage = function(element, msgId) {
+            const messageDiv = document.getElementById(msgId);
+            if (!messageDiv) return;
+            const textToCopy = messageDiv.innerText || messageDiv.textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalHtml = element.innerHTML;
+                element.innerHTML = '<i class="fas fa-check" style="color:#28a745;"></i>';
+                setTimeout(() => { element.innerHTML = originalHtml; }, 2000);
+            }).catch(err => {
+                console.error('Could not copy message text: ', err);
+            });
+        };
+
+        window.generateAudioForMessage = function(msgId, text) {
+            const voice = document.getElementById('voice-select')?.value || 'af_heart';
+            const outputContainerId = `audio-container-${msgId}`;
+            window.localGenerateAudio(text, voice, outputContainerId);
+        };
 
         function hasUserProvidedOwnKey() {
-            const token = tokenInput.value;
-            return token && token.trim() !== '' && token !== USER_API_TOKEN;
+            const userKey = tokenInput.value || localStorage.getItem('apiToken');
+            return (userKey && userKey.trim().startsWith('sk_'));
         }
 
-        function appendMessageToUI(role, text, files = [], msgId = null) {
-            if (!msgId) msgId = 'msg-' + Date.now();
-            const wrapper = document.createElement('div');
-            wrapper.className = `message-wrapper ${role}`;
-            wrapper.id = msgId;
-
-            const sender = role === 'user' ? 'You' : 'AI';
-            const textId = `txt-${msgId}`;
-
-            let fileHtml = '';
-            if (files && files.length > 0) {
-                files.forEach(f => {
-                    if(f.type === 'image') {
-                        fileHtml += `<img src="${f.content}" class="chat-image" alt="${f.name}" onclick="window.open('${f.content}', '_blank')">`;
-                    } else {
-                        fileHtml += `<div class="code-container"><div class="code-header">File: ${f.name}</div><pre>${f.type === 'text' ? escapeHtml(f.content.substring(0, 100)) + '...' : '[Binary Data]'}</pre></div>`;
-                    }
-                });
-            }
-
-            let displayContent;
-            if (role === 'ai') {
-                displayContent = marked.parse(text || '');
-            } else {
-                displayContent = `<div style="white-space: pre-wrap;">${escapeHtml(text || '')}</div>`;
-            }
-
-            wrapper.innerHTML = `
-                <div class="message-sender">
-                    ${sender} 
-                    <span class="copy-msg-btn" onclick="copyMessage(this, '${textId}')"><i class="fas fa-copy"></i></span>
-                    <span class="speak-msg-btn" onclick="speakMessage(this, '${textId}')"><i class="fas fa-volume-up"></i></span>
-                </div>
-                <div class="message-bubble">
-                    <div id="${textId}">${displayContent}</div>
-                    ${fileHtml}
-                    <div id="audio-container-${msgId}"></div>
-                </div>
-            `;
-            chatContainer.appendChild(wrapper);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-
-            if (role === 'ai' && typeof renderMathInElement !== 'undefined') {
-                setTimeout(() => {
-                    renderMathInElement(wrapper, {
-                        delimiters: [
-                            {left: '$$', right: '$$', display: true},
-                            {left: '$', right: '$', display: false}
-                        ],
-                        throwOnError: false
-                    });
-                }, 50);
-            }
-            return wrapper;
-        }
-
-        async function sendMessage() {
+        async function sendMessage(regenerateSeed = null) {
             if (isGenerating) return;
+            
             const text = userInput.value.trim();
-            if (!text && uploadedFiles.length === 0) return;
+            const voiceStyleInput = document.getElementById('voice-style');
+            const voiceStyle = voiceStyleInput ? voiceStyleInput.value.trim() : 'snarky';
+
+            if (text === '' && uploadedFiles.length === 0 && regenerateSeed === null) return;
 
             isGenerating = true;
             sendBtn.style.display = 'none';
             stopBtn.style.display = 'inline-block';
             userInput.value = '';
+            adjustTextareaHeight();
 
-            const currentFiles = [...uploadedFiles];
-            uploadedFiles = [];
-            renderFilePreviews();
-
-            // Construct payload content blocks
-            let payloadContent = text;
-            if (currentFiles.length > 0) {
-                payloadContent = [];
-                if (text) {
-                    payloadContent.push({ type: 'text', text: text });
-                }
-                currentFiles.forEach(file => {
-                    if (file.type === 'image') {
-                        payloadContent.push({
-                            type: 'image_url',
-                            image_url: { url: file.content }
-                        });
-                    } else {
-                        payloadContent.push({
-                            type: 'text',
-                            text: `[Uploaded File: ${file.name}]\n\n${file.content}`
-                        });
-                    }
-                });
+            if (regenerateSeed === null) {
+                appendMessage('user', text, uploadedFiles);
             }
 
-            appendMessageToUI('user', text, currentFiles);
-            conversationHistory.push({ role: 'user', content: payloadContent });
-
-            // Generate AI Response Node elements
             const aiMsgId = 'msg-' + Date.now();
-            const aiContentId = `txt-${aiMsgId}`;
-            const aiWrapper = appendMessageToUI('ai', '', [], aiMsgId);
+            const aiContentId = 'content-' + aiMsgId;
+            appendPlaceholder('ai', aiMsgId, aiContentId);
             const aiContentDiv = document.getElementById(aiContentId);
+            currentAiBubble = document.getElementById(aiMsgId);
 
-            aiContentDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Thinking...';
-
-            let finalMessages = [];
-            const activePreset = systemPresetSelect.value;
-            let systemPromptText = SYSTEM_PRESETS.default;
-
-            if (activePreset === 'custom') {
-                systemPromptText = systemMessageInput.value || SYSTEM_PRESETS.default;
-            } else if (SYSTEM_PRESETS[activePreset]) {
-                systemPromptText = SYSTEM_PRESETS[activePreset];
+            let systemPrompt = systemMessageInput.value.trim() || "You are a helpful AI assistant";
+            if (voiceStyle) {
+                systemPrompt += `\n\n[CRITICAL INSTRUCTION: Adopt a "${voiceStyle}" tone configuration. Infuse your responses and code blocks with matching syntactic personality attributes.]`;
             }
 
-            finalMessages.push({ role: 'system', content: systemPromptText });
-            finalMessages = finalMessages.concat(conversationHistory);
+            systemPrompt += `\n\n[MATHEMATICAL TYPOGRAPHY MANDATE]\n` + SYSTEM_PRESETS.concise; 
 
-            let model = document.getElementById('model-select').value;
+            let finalMessages = [{ role: 'system', content: systemPrompt }];
+            conversationHistory.forEach(msg => {
+                finalMessages.push(msg);
+            });
+
+            const modelSelect = document.getElementById('model-select');
+            let model = modelSelect.value;
+
             if (PAID_ONLY_MODELS.includes(model) && !hasUserProvidedOwnKey()) {
                 showNotification("🔒 Premium models require your own API key. Enter your key in settings.");
-                resetInputControls();
+                isGenerating = false;
+                sendBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                if(aiContentDiv) aiContentDiv.innerHTML = "⚠️ Generation halted: Premium model selected without key configuration.";
                 return;
             }
 
@@ -1143,11 +1234,15 @@
                         const textParts = msg.content.filter(part => part.type === 'text').map(part => part.text);
                         return { role: msg.role, content: textParts.join('\n') };
                     }
+                    if (msg.cache_control) {
+                        const { cache_control, ...cleanMsg } = msg;
+                        return cleanMsg;
+                    }
                     return msg;
                 });
             }
 
-            const seed = Math.floor(Math.random() * 10000);
+            const seed = regenerateSeed !== null ? regenerateSeed : Math.floor(Math.random() * 10000);
             const requestBody = {
                 messages: finalMessages,
                 model: model,
@@ -1156,107 +1251,74 @@
                 ...(model !== 'polly' ? { temperature: 1 } : {})
             };
 
+            if (!isBedrockModel && model !== 'polly') {
+                requestBody.max_tokens = ['mistral', 'nova-fast'].includes(model) ? 4096 : 4096;
+            }
+
+            uploadedFiles = [];
+            renderFilePreview();
             abortController = new AbortController();
-
-            // Set up stream items if real-time speech compilation option is active
-            let kokoroStreamSplitter = null;
-            let audioContext = null;
-            let audioQueue = [];
-            let isPlayingQueue = false;
-
-            if (audioStreamEnable.checked && useStreaming) {
-                try {
-                    const kokoroInstance = await getKokoroInstance();
-                    kokoroStreamSplitter = new TextSplitterStream();
-                    const kokoroStream = kokoroInstance.stream(kokoroStreamSplitter);
-                    
-                    // Handle real-time audio playback chunk generation
-                    (async () => {
-                        for await (const { audio, sampling_rate } of kokoroStream) {
-                            audioQueue.push({ audio, rate: sampling_rate || 24000 });
-                            if (!isPlayingQueue) {
-                                playNextAudioChunk();
-                            }
-                        }
-                    })();
-                } catch (streamInitErr) {
-                    console.error("Audio streaming buffer pipeline creation error:", streamInitErr);
-                }
-            }
-
-            // Internal Audio Chunk Player
-            async function playNextAudioChunk() {
-                if (audioQueue.length === 0) {
-                    isPlayingQueue = false;
-                    return;
-                }
-                isPlayingQueue = true;
-                const { audio, rate } = audioQueue.shift();
-                
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                
-                const audioBuffer = audioContext.createBuffer(1, audio.length, rate);
-                audioBuffer.getChannelData(0).set(audio);
-                
-                const source = audioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(audioContext.destination);
-                source.onended = () => {
-                    playNextAudioChunk();
-                };
-                source.start(0);
-
-                // Download if auto-download toggle is enabled
-                if (audioDownloadEnable.checked) {
-                    const wavBlob = createWavBlob(audio, rate);
-                    const chunkUrl = URL.createObjectURL(wavBlob);
-                    const dLink = document.createElement('a');
-                    dLink.href = chunkUrl;
-                    dLink.download = `stream-chunk-${Date.now()}.wav`;
-                    dLink.click();
-                }
-            }
 
             try {
                 const token = tokenInput.value || USER_API_TOKEN;
-                const response = await fetch('https://text.pollinations.ai/', {
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: headers,
                     body: JSON.stringify(requestBody),
                     signal: abortController.signal
                 });
 
                 if (!response.ok) {
-                    throw new Error(`API error HTTP ${response.status}`);
+                    const errPayload = await response.text();
+                    throw new Error(`API Endpoint error: ${response.status} - ${errPayload}`);
                 }
 
                 let accumulatedText = '';
 
                 if (!useStreaming) {
                     const data = await response.json();
-                    accumulatedText = data.choices[0].message.content;
+                    accumulatedText = data.choices[0].message.content || '';
                     aiContentDiv.innerHTML = marked.parse(accumulatedText);
+                    conversationHistory.push({ role: 'assistant', content: accumulatedText });
                     
-                    if (kokoroStreamSplitter) {
-                        kokoroStreamSplitter.push(accumulatedText);
-                        kokoroStreamSplitter.close();
+                    if (typeof renderMathInElement !== 'undefined') {
+                        const aiWrapper = document.getElementById(aiMsgId);
+                        if (aiWrapper) {
+                            renderMathInElement(aiWrapper, {
+                                delimiters: [
+                                    {left: '$$', right: '$$', display: true},
+                                    {left: '$', right: '$', display: false}
+                                ],
+                                throwOnError: false,
+                                strict: false
+                            });
+                        }
                     }
+                    const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
+                    if (audioBtn) {
+                        audioBtn.style.display = 'inline-block';
+                        audioBtn.onclick = function() {
+                            generateAudioForMessage(aiContentId, accumulatedText);
+                        };
+                    }
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
                 } else {
                     const reader = response.body.getReader();
                     const decoder = new TextDecoder();
                     let buffer = '';
                     let firstChunk = true;
-                    let lastPushedIndex = 0;
 
                     while (true) {
                         const { done, value } = await reader.read();
                         if (done) break;
-                        buffer += decoder.decode(value, { stream: true });
+
+                        const chunk = decoder.decode(value, { stream: true });
+                        buffer += chunk;
                         const lines = buffer.split('\n');
                         buffer = lines.pop();
 
@@ -1275,15 +1337,6 @@
                                         aiContentDiv.innerHTML = marked.parse(accumulatedText);
                                         chatContainer.scrollTop = chatContainer.scrollHeight;
 
-                                        // Push text sequentially into streaming tokenizer if stream setup is active
-                                        if (kokoroStreamSplitter) {
-                                            const chunkToPush = accumulatedText.substring(lastPushedIndex);
-                                            if (chunkToPush) {
-                                                kokoroStreamSplitter.push(chunkToPush);
-                                                lastPushedIndex = accumulatedText.length;
-                                            }
-                                        }
-
                                         if (previewPanel.classList.contains('open')) {
                                             const messageWrapper = aiContentDiv.closest('.message-wrapper.ai');
                                             if (messageWrapper) {
@@ -1293,479 +1346,794 @@
                                         }
                                     }
                                 } catch (e) {
-                                    console.error("Error parsing stream line context JSON:", e);
+                                    console.error("Error parsing stream line", e);
                                 }
                             }
                         }
                     }
 
-                    if (kokoroStreamSplitter) {
-                        kokoroStreamSplitter.close();
+                    conversationHistory.push({ role: 'assistant', content: accumulatedText });
+
+                    if (typeof renderMathInElement !== 'undefined') {
+                        const aiWrapper = document.getElementById(aiMsgId);
+                        if (aiWrapper) {
+                            renderMathInElement(aiWrapper, {
+                                delimiters: [
+                                    {left: '$$', right: '$$', display: true},
+                                    {left: '$', right: '$', display: false}
+                                ],
+                                throwOnError: false,
+                                strict: false
+                            });
+                        }
+                    }
+
+                    const audioBtn = document.getElementById(`audio-btn-${aiContentId}`);
+                    if (audioBtn) {
+                        audioBtn.style.display = 'inline-block';
+                        audioBtn.onclick = function() {
+                            generateAudioForMessage(aiContentId, accumulatedText);
+                        };
+                    }
+                    
+                    const audioEnableCheck = document.getElementById('audio-enable');
+                    if (audioEnableCheck && audioEnableCheck.checked) {
+                        generateAudioForMessage(aiContentId, accumulatedText);
                     }
                 }
 
-                conversationHistory.push({ role: 'assistant', content: accumulatedText });
+                saveConversationToStorage();
 
-                if (typeof renderMathInElement !== 'undefined') {
-                    renderMathInElement(aiWrapper, {
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    console.log('Generation aborted gracefully.');
+                } else {
+                    console.error(err);
+                    if (aiContentDiv) {
+                        aiContentDiv.innerHTML += `<br><span style="color:red; font-weight:bold;">⚠️ Connection Fault: ${err.message}</span>`;
+                    }
+                }
+            } finally {
+                isGenerating = false;
+                sendBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                abortController = null;
+            }
+        }
+
+        function appendMessage(role, text, files) {
+            const msgId = 'msg-' + Date.now();
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${role}`;
+            
+            const sender = role === 'user' ? 'You' : 'AI Assistant';
+            
+            let fileHtml = '';
+            let apiContentArray = [];
+
+            if (text) {
+                apiContentArray.push({ type: 'text', text: text });
+            }
+
+            if (files && files.length > 0) {
+                files.forEach(f => {
+                    if (f.type === 'image') {
+                        fileHtml += `<img src="${f.content}" class="chat-image" alt="${f.name}" onclick="window.open('${f.content}', '_blank')">`;
+                        apiContentArray.push({ type: 'image_url', image_url: { url: f.content } });
+                    } else {
+                        fileHtml += `<div class="code-container"><div class="code-header">File: ${f.name}</div><pre>${f.type === 'text' ? escapeHtml(f.content.substring(0, 1000)) + '...' : '[Binary Content Block]'}</pre></div>`;
+                        apiContentArray.push({ type: 'text', text: `[File uploaded: ${f.name}]\n\`\`\`\n${f.content}\n\`\`\`` });
+                    }
+                });
+            }
+
+            let displayContent;
+            if (role === 'ai') {
+                displayContent = marked.parse(text || '');
+            } else {
+                displayContent = `<div style="white-space: pre-wrap;">${escapeHtml(text || '')}</div>`;
+            }
+
+            let audioButtonHtml = '';
+            if (role === 'ai') {
+                const showAudioButton = document.getElementById('audio-enable')?.checked;
+                if (showAudioButton) {
+                    audioButtonHtml = `
+                        <button id="audio-btn-${msgId}" class="audio-btn" onclick="generateAudioForMessage('${msgId}', \`${(text || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" style="margin-top:8px; display:none;">
+                            <i class="fas fa-volume-up"></i> Generate Audio
+                        </button>
+                        <div id="audio-container-${msgId}"></div>
+                    `;
+                }
+            }
+
+            wrapper.innerHTML = `
+                <div class="message-sender">
+                    ${sender}
+                    <span class="copy-msg-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
+                </div>
+                <div class="message-bubble">
+                    <div id="${msgId}">${displayContent}</div>
+                    ${fileHtml}
+                    ${audioButtonHtml}
+                </div>
+            `;
+
+            chatContainer.appendChild(wrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            if (role === 'user') {
+                const messagePayload = (apiContentArray.length === 1 && apiContentArray[0].type === 'text') ? apiContentArray[0].text : apiContentArray;
+                conversationHistory.push({ role: 'user', content: messagePayload });
+            }
+
+            if (role === 'ai' && typeof renderMathInElement !== 'undefined') {
+                setTimeout(() => {
+                    renderMathInElement(wrapper, {
                         delimiters: [
                             {left: '$$', right: '$$', display: true},
                             {left: '$', right: '$', display: false}
                         ],
-                        throwOnError: false
+                        throwOnError: false,
+                        strict: false
                     });
-                }
-
-                // Auto extract python segments to execute
-                extractAllCodeFromMessage(aiWrapper);
-                saveConversationToStorage();
-
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    aiContentDiv.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
-                }
-            } finally {
-                resetInputControls();
+                }, 50);
             }
         }
 
-        function resetInputControls() {
-            isGenerating = false;
-            sendBtn.style.display = 'inline-block';
-            stopBtn.style.display = 'none';
-            abortController = null;
+        function appendPlaceholder(role, id, contentId) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${role}`;
+            wrapper.id = id;
+            const sender = 'AI Assistant';
+            
+            wrapper.innerHTML = `
+                <div class="message-sender">
+                    ${sender}
+                    <span class="copy-msg-btn" onclick="copyMessage(this, '${contentId}')"><i class="fas fa-copy"></i></span>
+                </div>
+                <div class="message-bubble">
+                    <div id="${contentId}"><span style="opacity:0.6;"><i class="fas fa-spinner fa-spin"></i> Initializing response pipeline...</span></div>
+                    <button id="audio-btn-${contentId}" class="audio-btn" style="margin-top:8px; display:none;">
+                        <i class="fas fa-volume-up"></i> Generate Audio
+                    </button>
+                    <div id="audio-container-${contentId}"></div>
+                </div>
+            `;
+            chatContainer.appendChild(wrapper);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        function extractAllCodeFromMessage(wrapperElement) {
-            const codeBlocks = wrapperElement.querySelectorAll('pre code');
-            codeBlocks.forEach(block => {
-                const rawCode = block.innerText;
-                let language = 'javascript';
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                const isImage = file.type.startsWith('image/');
                 
-                for (const cls of block.classList) {
-                    if (cls.startsWith('language-')) {
-                        language = cls.replace('language-', '');
-                        break;
-                    }
-                }
-
-                const container = block.closest('pre');
-                if (container && !container.parentNode.classList.contains('code-container')) {
-                    const parent = container.parentNode;
-                    const codeWrapper = document.createElement('div');
-                    codeWrapper.className = 'code-container';
-
-                    const encoded = encodeURIComponent(rawCode);
-                    let actionBtnHtml = `<button class="preview-code-btn" onclick="previewHtmlCode('${encoded}')"><i class="fas fa-play"></i> Preview</button>`;
-
-                    if (language === 'python') {
-                        actionBtnHtml = `<button class="preview-code-btn python-btn" onclick="executePythonCode(this, '${encoded}')"><i class="fas fa-microchip"></i> Run Python</button>`;
-                    }
-
-                    codeWrapper.innerHTML = `
-                        <div class="code-header">
-                            <span><i class="fas fa-code"></i> ${language.toUpperCase()}</span>
-                            <div class="code-header-buttons">
-                                <button class="copy-code-btn" onclick="copyToClipboard(this, '${encoded}')"><i class="fas fa-copy"></i> Copy</button>
-                                ${actionBtnHtml}
-                            </div>
-                        </div>
-                        <div class="python-output-container">
-                            <div class="python-output-text"></div>
-                            <div class="python-output-image"></div>
-                        </div>
-                    `;
-
-                    parent.insertBefore(codeWrapper, container);
-                    codeWrapper.appendChild(container);
-                    hljs.highlightElement(block);
+                if (isImage) {
+                    reader.onload = function(e) {
+                        uploadedFiles.push({ type: 'image', content: e.target.result, name: file.name });
+                        renderFilePreview();
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    reader.onload = function(e) {
+                        uploadedFiles.push({ type: 'text', content: e.target.result, name: file.name });
+                        renderFilePreview();
+                    };
+                    reader.readAsText(file);
                 }
             });
         }
 
-        window.previewHtmlCode = function(encoded) {
-            const htmlContent = decodeURIComponent(encoded);
-            previewIframe.srcdoc = htmlContent;
-            previewPanel.classList.add('open');
-            showNotification("HTML Rendered in Preview Panel");
+        function renderFilePreview() {
+            filePreview.innerHTML = '';
+            uploadedFiles.forEach((f, idx) => {
+                const item = document.createElement('div');
+                item.className = 'preview-item';
+                item.innerHTML = `
+                    <span><i class="${f.type === 'image' ? 'fas fa-image' : 'fas fa-file-alt'}"></i> ${f.name}</span>
+                    <span class="remove-file" onclick="removeUploadedFile(${idx})">&times;</span>
+                `;
+                filePreview.appendChild(item);
+            });
+        }
+
+        window.removeUploadedFile = function(idx) {
+            uploadedFiles.splice(idx, 1);
+            renderFilePreview();
         };
 
-        window.executePythonCode = async function(btn, encoded) {
-            const code = decodeURIComponent(encoded);
-            const container = btn.closest('.code-container');
-            const outputContainer = container.querySelector('.python-output-container');
-            const outputText = container.querySelector('.python-output-text');
-            const outputImage = container.querySelector('.python-output-image');
+        function adjustTextareaHeight() {
+            userInput.style.height = 'auto';
+            userInput.style.height = (userInput.scrollHeight) + 'px';
+        }
 
-            outputContainer.style.display = 'block';
-            outputText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Initializing Environment and Running Python...';
-            outputImage.innerHTML = '';
+        function extractAllCodeFromMessage(messageWrapper) {
+            const htmlBlocks = messageWrapper.querySelectorAll('.code-container[data-raw-code]');
+            htmlBlocks.forEach(block => {
+                const containerId = block.id;
+                const rawCode = decodeURIComponent(block.getAttribute('data-raw-code'));
+                const langSpan = block.querySelector('.code-header span');
+                if (langSpan && langSpan.textContent.includes('html')) {
+                    codePreviews[containerId] = rawCode;
+                }
+            });
+        }
 
-            if (!pyodideReady) {
-                await initPyodide();
+        function updatePreview() {
+            const currentContainerId = previewPanel.getAttribute('data-current-container');
+            if (currentContainerId && codePreviews[currentContainerId]) {
+                previewIframe.srcdoc = codePreviews[currentContainerId];
+            }
+        }
+
+        function resetChat() {
+            conversationHistory = [];
+            uploadedFiles = [];
+            renderFilePreview();
+            chatContainer.innerHTML = `
+                <div class="message-wrapper ai">
+                    <div class="message-sender">System</div>
+                    <div class="message-bubble">Conversation cleared. Local environment stabilized. Ready to accept commands.</div>
+                </div>
+            `;
+            codePreviews = {};
+            currentAiBubble = null;
+            if (currentSessionId && sessions[currentSessionId]) {
+                sessions[currentSessionId].conversation = [];
+                saveAllDataToStorage();
+            }
+            showNotification("Conversation timeline cleared");
+        }
+
+        function loadSession(sessionId) {
+            if (!sessions[sessionId]) return;
+            currentSessionId = sessionId;
+            conversationHistory = sessions[sessionId].conversation || [];
+            
+            chatContainer.innerHTML = '';
+            
+            if (conversationHistory.length === 0) {
+                chatContainer.innerHTML = `
+                    <div class="message-wrapper ai">
+                        <div class="message-sender">System</div>
+                        <div class="message-bubble">New Session context window active. History storage initialized.</div>
+                    </div>
+                `;
+            } else {
+                conversationHistory.forEach(msg => {
+                    if (Array.isArray(msg.content)) {
+                        let textPart = '';
+                        let filesPart = [];
+                        msg.content.forEach(part => {
+                            if (part.type === 'text') textPart += part.text;
+                            if (part.type === 'image_url') {
+                                filesPart.push({ type: 'image', content: part.image_url.url, name: 'Attached Matrix Image' });
+                            }
+                        });
+                        renderHistoricalMessage(msg.role, textPart, filesPart);
+                    } else {
+                        if (msg.content.startsWith('[File uploaded:')) {
+                            const match = msg.content.match(/\[File uploaded: (.*?)\]\n\`\`\`\n([\s\S]*?)\n\`\`\`/);
+                            if (match) {
+                                renderHistoricalMessage(msg.role, '', [{ type: 'text', name: match[1], content: match[2] }]);
+                            } else {
+                                renderHistoricalMessage(msg.role, msg.content, []);
+                            }
+                        } else {
+                            renderHistoricalMessage(msg.role, msg.content, []);
+                        }
+                    }
+                });
+            }
+            
+            loadSessionsToList();
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function renderHistoricalMessage(role, text, files) {
+            const msgId = 'msg-' + Math.floor(Math.random() * 1000000);
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${role}`;
+            const sender = role === 'user' ? 'You' : 'AI Assistant';
+            
+            let fileHtml = '';
+            if (files && files.length > 0) {
+                files.forEach(f => {
+                    if (f.type === 'image') {
+                        fileHtml += `<img src="${f.content}" class="chat-image" alt="${f.name}" onclick="window.open('${f.content}', '_blank')">`;
+                    } else {
+                        fileHtml += `<div class="code-container"><div class="code-header">File: ${f.name}</div><pre>${escapeHtml(f.content.substring(0, 100)) + '...'}</pre></div>`;
+                    }
+                });
             }
 
-            try {
-                // Clear state
-                await pyodide.runPythonAsync(`
-                    sys.stdout.outputs = []
-                    plt.clf()
-                `);
+            let displayContent;
+            if (role === 'ai') {
+                displayContent = marked.parse(text || '');
+            } else {
+                displayContent = `<div style="white-space: pre-wrap;">${escapeHtml(text || '')}</div>`;
+            }
 
-                // Run code arrays safely
-                await pyodide.runPythonAsync(code);
+            let audioButtonHtml = '';
+            if (role === 'ai') {
+                audioButtonHtml = `
+                    <button id="audio-btn-${msgId}" class="audio-btn" onclick="generateAudioForMessage('${msgId}', \`${(text || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" style="margin-top:8px;">
+                        <i class="fas fa-volume-up"></i> Generate Audio
+                    </button>
+                    <div id="audio-container-${msgId}"></div>
+                `;
+            }
 
-                // Collect prints logs
-                const logs = await pyodide.runPythonAsync("chr(10).join(sys.stdout.outputs)");
+            wrapper.innerHTML = `
+                <div class="message-sender">
+                    ${sender}
+                    <span class="copy-msg-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
+                </div>
+                <div class="message-bubble">
+                    <div id="${msgId}">${displayContent}</div>
+                    ${fileHtml}
+                    ${audioButtonHtml}
+                </div>
+            `;
+            chatContainer.appendChild(wrapper);
+
+            if (role === 'ai' && typeof renderMathInElement !== 'undefined') {
+                renderMathInElement(wrapper, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false}
+                    ],
+                    throwOnError: false,
+                    strict: false
+                });
+            }
+        }
+
+        function createNewSession() {
+            const timestamp = new Date().toISOString();
+            const title = `Session ${Object.keys(sessions).length + 1} - ${formatDateTime(timestamp)}`;
+            const sessionId = 'session_' + Date.now();
+            
+            sessions[sessionId] = {
+                id: sessionId,
+                title: title,
+                timestamp: timestamp,
+                conversation: []
+            };
+            
+            currentSessionId = sessionId;
+            conversationHistory = [];
+            chatContainer.innerHTML = `
+                <div class="message-wrapper ai">
+                    <div class="message-sender">System</div>
+                    <div class="message-bubble">New session created: ${title}</div>
+                </div>
+            `;
+            saveAllDataToStorage();
+            loadSessionsToList();
+            showNotification("New session created!");
+            sessionPanel.classList.remove('open');
+        }
+
+        function loadSessionsToList() {
+            sessionList.innerHTML = '';
+            const sortedSessions = Object.values(sessions).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            sortedSessions.forEach(session => {
+                const sessionItem = document.createElement('div');
+                sessionItem.className = `session-item ${currentSessionId === session.id ? 'active' : ''}`;
+                sessionItem.dataset.sessionId = session.id;
                 
-                // Collect figures plots
-                const hasPlots = await pyodide.runPythonAsync(`
-                    import len as py_len
-                    fig = plt.gcf()
-                    len(fig.axes) > 0
-                `);
-
-                let resultsHtml = escapeHtml(logs) || 'Code executed successfully with no output logs.';
-                outputText.innerHTML = resultsHtml;
-
-                if (hasPlots) {
-                    await pyodide.runPythonAsync(`
-                        buf = io.BytesIO()
-                        plt.savefig(buf, format='png', bbox_inches='tight')
-                        buf.seek(0)
-                        img_str = base64.b64encode(buf.read()).decode('utf-8')
-                    `);
-                    const imgStr = pyodide.globals.get('img_str');
-                    outputImage.innerHTML = `<img src="data:image/png;base64,${imgStr}" alt="Matplotlib Plot Render">`;
+                if (!session.title) {
+                    session.title = `Session ${session.id.split('_')[1]} - ${formatDateTime(session.timestamp)}`;
                 }
                 
-                showNotification("Python script array finalized!");
+                sessionItem.innerHTML = `
+                    <div class="session-title" id="session-title-${session.id}">${session.title}</div>
+                    <div class="session-meta">${formatDateTime(session.timestamp)}</div>
+                    <div class="session-actions">
+                        <button class="session-action-btn rename" data-session-id="${session.id}"><i class="fas fa-edit"></i></button>
+                        <button class="session-action-btn delete" data-session-id="${session.id}"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                
+                sessionItem.addEventListener('click', function(e) {
+                    if (!e.target.closest('.session-action-btn')) {
+                        loadSession(session.id);
+                    }
+                });
+                sessionList.appendChild(sessionItem);
+            });
 
-            } catch (err) {
-                outputText.innerHTML = `<span style="color:#dc3545; font-weight:bold;">Python Runtime Exception:</span>\n${escapeHtml(err.message)}`;
+            document.querySelectorAll('.session-action-btn.rename').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const sessionId = btn.dataset.sessionId;
+                    renameSession(sessionId);
+                });
+            });
+
+            document.querySelectorAll('.session-action-btn.delete').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const sessionId = btn.dataset.sessionId;
+                    deleteSession(sessionId);
+                });
+            });
+        }
+
+        function renameSession(sessionId) {
+            if (!sessions[sessionId]) return;
+            const currentTitle = sessions[sessionId].title;
+            const newTitle = prompt("Enter new name for this workspace context session:", currentTitle);
+            if (newTitle && newTitle.trim() !== "") {
+                sessions[sessionId].title = newTitle.trim();
+                saveAllDataToStorage();
+                loadSessionsToList();
+                showNotification("Session workspace contextual label updated.");
             }
-        };
+        }
 
-        // UI Listeners & Elements Actions Handling Framework
+        function deleteSession(sessionId) {
+            if (!sessions[sessionId]) return;
+            if (confirm(`Purge and delete this conversation session context permanently?`)) {
+                delete sessions[sessionId];
+                saveAllDataToStorage();
+                
+                if (currentSessionId === sessionId) {
+                    const remaining = Object.keys(sessions);
+                    if (remaining.length > 0) {
+                        loadSession(remaining[0]);
+                    } else {
+                        createNewSession();
+                    }
+                } else {
+                    loadSessionsToList();
+                }
+                showNotification("Session purged successfully.");
+            }
+        }
+
+        function formatDateTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString();
+        }
+
+        // --- Storage Functions ---
+        function saveAllDataToStorage() {
+            const dataToSave = {
+                sessions: sessions,
+                currentSessionId: currentSessionId,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('chatSessions', JSON.stringify(dataToSave));
+        }
+
+        function loadAllDataFromStorage() {
+            const savedData = localStorage.getItem('chatSessions');
+            if (savedData) {
+                try {
+                    const parsedData = JSON.parse(savedData);
+                    sessions = parsedData.sessions || {};
+                    currentSessionId = parsedData.currentSessionId || null;
+                    
+                    if (!currentSessionId || !sessions[currentSessionId]) {
+                        if (Object.keys(sessions).length > 0) {
+                            currentSessionId = Object.keys(sessions)[0];
+                        } else {
+                            createNewSession();
+                            return;
+                        }
+                    }
+                    loadSession(currentSessionId);
+                } catch (e) {
+                    console.error("Failed to parse saved data:", e);
+                    sessions = {};
+                    currentSessionId = null;
+                    createNewSession();
+                }
+            } else {
+                createNewSession();
+            }
+            loadSessionsToList();
+        }
+
+        function saveConversationToStorage() {
+            if (currentSessionId && sessions[currentSessionId]) {
+                sessions[currentSessionId].conversation = conversationHistory;
+                saveAllDataToStorage();
+            }
+        }
+
+        // --- Notification Function ---
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(function() {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // --- Keyboard shortcut for preview ---
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') {
+                e.preventDefault();
+                if (previewPanel.classList.contains('open')) {
+                    previewPanel.classList.remove('open');
+                } else {
+                    const lastAiMessage = chatContainer.querySelector('.message-wrapper.ai:last-child');
+                    if (lastAiMessage) {
+                        extractAllCodeFromMessage(lastAiMessage);
+                        updatePreview();
+                        previewPanel.classList.add('open');
+                    } else {
+                        showNotification('No code to preview!');
+                    }
+                }
+            }
+        });
+
+        // --- TTS Popup Functionality ---
+        const ttsModal = document.getElementById('tts-modal');
+        const ttsPopupBtn = document.getElementById('tts-popup-btn');
+        const closeTtsModal = document.getElementById('close-tts-modal');
+        const ttsTextInput = document.getElementById('tts-text-input');
+        const ttsGenerateBtn = document.getElementById('tts-generate-btn');
+        const ttsOutput = document.getElementById('tts-output');
+
+        ttsPopupBtn.addEventListener('click', () => {
+            ttsModal.classList.add('open');
+            ttsTextInput.value = '';
+            ttsOutput.innerHTML = '';
+            ttsOutput.classList.remove('show');
+        });
+
+        closeTtsModal.addEventListener('click', () => {
+            ttsModal.classList.remove('open');
+        });
+
+        ttsGenerateBtn.addEventListener('click', async () => {
+            const rawText = ttsTextInput.value.trim();
+            if (!rawText) return;
+            const voice = document.getElementById('voice-select')?.value || 'af_heart';
+            ttsOutput.classList.add('show');
+            window.localGenerateAudio(rawText, voice, 'tts-output');
+        });
+
+        // Close panels when clicking background canvas elements
+        document.addEventListener('click', function(e) {
+            if (settingsPanel.classList.contains('open') && !settingsPanel.contains(e.target) && e.target !== settingsBtn && !settingsBtn.contains(e.target)) {
+                settingsPanel.classList.remove('open');
+            }
+            if (sessionPanel.classList.contains('open') && !sessionPanel.contains(e.target) && e.target !== toggleSessions && !toggleSessions.contains(e.target)) {
+                sessionPanel.classList.remove('open');
+            }
+            if (e.target === ttsModal) {
+                ttsModal.classList.remove('open');
+            }
+        });
+
+        // --- Event Listeners Initialization Layout ---
+        userInput.addEventListener('input', adjustTextareaHeight);
         userInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
         });
-        sendBtn.addEventListener('click', function(e) { e.preventDefault(); sendMessage(); });
+
+        sendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            sendMessage();
+        });
+
         stopBtn.addEventListener('click', function(e) {
             e.preventDefault();
             if (abortController) {
                 abortController.abort();
-                resetInputControls();
+                abortController = null;
+                isGenerating = false;
+                sendBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                const spinners = document.querySelectorAll('.fa-spinner');
+                spinners.forEach(s => {
+                    const bubble = s.closest('.message-bubble');
+                    if(bubble) bubble.innerHTML += '<br>[Stopped by user]';
+                });
             }
         });
 
         resetChatBtn.addEventListener('click', function(e) {
-            if (confirm('Clear current conversational timeline logs?')) resetChat();
+            e.preventDefault();
+            if (confirm('Are you sure you want to reset the chat? This will clear the current conversation history.')) {
+                resetChat();
+            }
         });
+
         fullResetBtn.addEventListener('click', function(e) {
-            if (confirm('Erase all cached memory parameters?')) fullReset();
+            e.preventDefault();
+            if (confirm('Are you sure you want to perform a full reset? This will clear all chats, sessions, and reset everything to default.')) {
+                localStorage.clear();
+                sessions = {};
+                currentSessionId = null;
+                conversationHistory = [];
+                uploadedFiles = [];
+                renderFilePreview();
+                tokenInput.value = '';
+                systemMessageInput.value = '';
+                systemPresetSelect.value = 'general';
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeToggle.textContent = 'Switch to Dark Mode';
+                createNewSession();
+                showNotification("System hardware configuration and storage hard reset performed.");
+            }
         });
 
-        toggleSessions.addEventListener('click', () => sessionPanel.classList.add('open'));
-        closeSessions.addEventListener('click', () => sessionPanel.classList.remove('open'));
-        newSessionBtn.addEventListener('click', createNewSession);
+        settingsBtn.addEventListener('click', (e) => { e.stopPropagation(); settingsPanel.classList.toggle('open'); });
+        closeSettings.addEventListener('click', () => { settingsPanel.classList.remove('open'); });
+        toggleSessions.addEventListener('click', (e) => { e.stopPropagation(); sessionPanel.classList.toggle('open'); });
+        closeSessions.addEventListener('click', () => { sessionPanel.classList.remove('open'); });
+        closePreview.addEventListener('click', () => { previewPanel.classList.remove('open'); });
 
-        settingsBtn.addEventListener('click', () => settingsPanel.classList.add('open'));
-        closeSettings.addEventListener('click', () => settingsPanel.classList.remove('open'));
-
-        themeToggle.addEventListener('click', function() {
-            const active = document.documentElement.getAttribute('data-theme') === 'dark';
-            document.documentElement.setAttribute('data-theme', active ? 'light' : 'dark');
-            themeToggle.innerText = active ? "Switch to Dark Mode" : "Switch to Light Mode";
-            localStorage.setItem('theme', active ? 'light' : 'dark');
+        refreshPreview.addEventListener('click', () => {
+            const currentContainerId = previewPanel.getAttribute('data-current-container');
+            if (currentContainerId && codePreviews[currentContainerId]) {
+                previewIframe.srcdoc = codePreviews[currentContainerId];
+                showNotification('Render View reloaded');
+            }
         });
 
-        // Drop handling framework configurations
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evName => {
-            window.addEventListener(evName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+        openNewTab.addEventListener('click', () => {
+            const currentContainerId = previewPanel.getAttribute('data-current-container');
+            if (currentContainerId && codePreviews[currentContainerId]) {
+                const blob = new Blob([codePreviews[currentContainerId]], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+                showNotification('Opened in new window frame.');
+            }
         });
 
-        window.addEventListener('dragenter', (e) => {
-            if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
-                dragCounter++;
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+            this.value = ''; 
+        });
+
+        // --- Drag and Drop Feature Core Bindings ---
+        const dragOverlay = document.getElementById('drag-overlay');
+        let dragCounter = 0;
+
+        window.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            dragCounter++;
+            if (dragCounter === 1) {
                 dragOverlay.classList.add('active');
             }
         });
-        window.addEventListener('dragleave', () => {
+
+        window.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+
+        window.addEventListener('dragleave', function(e) {
+            e.preventDefault();
             dragCounter--;
-            if (dragCounter <= 0) {
-                dragCounter = 0;
+            if (dragCounter === 0) {
                 dragOverlay.classList.remove('active');
             }
         });
-        window.addEventListener('drop', (e) => {
+
+        window.addEventListener('drop', function(e) {
+            e.preventDefault();
             dragCounter = 0;
             dragOverlay.classList.remove('active');
-            if (e.dataTransfer.files) processFiles(e.dataTransfer.files);
-        });
-
-        fileInput.addEventListener('change', (e) => {
-            processFiles(e.target.files);
-            fileInput.value = '';
-        });
-
-        function processFiles(filesList) {
-            Array.from(filesList).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    let type = 'text';
-                    if(file.type.startsWith('image')) type = 'image';
-                    else if(file.type.startsWith('audio')) type = 'audio';
-
-                    uploadedFiles.push({
-                        name: file.name,
-                        type: type,
-                        content: evt.target.result,
-                        mime: file.type
-                    });
-                    renderFilePreviews();
-                    showNotification(`Attached resource: ${file.name}`);
-                };
-                if (file.type.startsWith('image') || file.type.startsWith('audio')) {
-                    reader.readAsDataURL(file);
-                } else {
-                    reader.readAsText(file);
-                }
-            });
-        }
-
-        function renderFilePreviews() {
-            filePreview.innerHTML = '';
-            uploadedFiles.forEach((f, idx) => {
-                const el = document.createElement('div');
-                el.className = 'preview-item';
-                el.innerHTML = `<span>${f.name}</span> <span class="remove-file" onclick="removeFile(${idx})">&times;</span>`;
-                filePreview.appendChild(el);
-            });
-        }
-
-        window.removeFile = function(idx) {
-            uploadedFiles.splice(idx, 1);
-            renderFilePreviews();
-        };
-
-        window.copyToClipboard = function(btn, enc) {
-            const code = decodeURIComponent(enc);
-            navigator.clipboard.writeText(code).then(() => {
-                const orig = btn.innerText;
-                btn.innerText = "Copied!";
-                setTimeout(() => btn.innerText = orig, 1500);
-            });
-        };
-
-        window.copyMessage = function(btn, txtId) {
-            const el = document.getElementById(txtId);
-            if (el) {
-                navigator.clipboard.writeText(el.innerText).then(() => {
-                    const icon = btn.querySelector('i');
-                    if(icon) {
-                        icon.className = "fas fa-check";
-                        setTimeout(() => icon.className = "fas fa-copy", 1500);
-                    }
-                });
-            }
-        };
-
-        // Text-to-Speech modal wizard bindings
-        const ttsModal = document.getElementById('tts-modal');
-        const ttsPopupBtn = document.getElementById('tts-popup-btn');
-        const closeTtsModal = document.getElementById('close-tts-modal');
-        const ttsGenerateBtn = document.getElementById('tts-generate-btn');
-        const ttsTextInput = document.getElementById('tts-text-input');
-        const ttsOutput = document.getElementById('tts-output');
-
-        ttsPopupBtn.addEventListener('click', () => ttsModal.classList.add('open'));
-        closeTtsModal.addEventListener('click', () => ttsModal.classList.remove('open'));
-        
-        ttsGenerateBtn.addEventListener('click', async function() {
-            const val = ttsTextInput.value.trim();
-            if (!val) return;
-
-            ttsGenerateBtn.disabled = true;
-            ttsOutput.style.display = 'block';
-            ttsOutput.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing local waveform matrix synthesis...';
-
-            try {
-                const instance = await getKokoroInstance();
-                const v = voiceSelect.value;
-                const result = await instance.generate(val, { voice: v });
-                const blob = createWavBlob(result.audio, result.sampling_rate || 24000);
-                const url = URL.createObjectURL(blob);
-
-                ttsOutput.innerHTML = `
-                    <div class="audio-playback-container">
-                        <strong>Generated Speech Waveform:</strong>
-                        <audio controls src="${url}"></audio>
-                    </div>
-                `;
-
-                if (audioDownloadEnable.checked) {
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `kokoro-wizard-${Date.now()}.wav`;
-                    link.click();
-                }
-
-            } catch (err) {
-                ttsOutput.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
-            } finally {
-                ttsGenerateBtn.disabled = false;
+            
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handleFiles(e.dataTransfer.files);
+                showNotification(`${e.dataTransfer.files.length} file(s) staged successfully`);
             }
         });
 
-        // Session orchestration layers
-        function createNewSession() {
-            const ts = new Date().toISOString();
-            const id = 'session_' + Date.now();
-            const title = `Session ${Object.keys(sessions).length + 1}`;
-            
-            sessions[id] = { id: id, title: title, timestamp: ts, conversation: [] };
-            currentSessionId = id;
-            conversationHistory = [];
-            
-            chatContainer.innerHTML = '';
-            appendMessageToUI('ai', 'New execution session timeline mapped. Ready.', [], 'msg-system-initial');
-            
-            saveAllDataToStorage();
-            loadSessionsToList();
-            sessionPanel.classList.remove('open');
+        // --- Theme Engine Control ---
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (savedTheme === 'dark') {
+            themeToggle.textContent = 'Switch to Light Mode';
         }
 
-        function loadSession(id) {
-            if(!sessions[id]) return;
-            currentSessionId = id;
-            conversationHistory = sessions[id].conversation || [];
-            chatContainer.innerHTML = '';
-            
-            if (conversationHistory.length === 0) {
-                appendMessageToUI('ai', 'Timeline empty. Ready for queries.', [], 'msg-system-initial');
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            let newTheme = 'light';
+            if (currentTheme === 'light') {
+                newTheme = 'dark';
+                themeToggle.textContent = 'Switch to Light Mode';
             } else {
-                conversationHistory.forEach(msg => {
-                    let plainText = '';
-                    if (Array.isArray(msg.content)) {
-                        plainText = msg.content.filter(p => p.type === 'text').map(p => p.text).join('\n');
-                    } else {
-                        plainText = msg.content;
-                    }
-                    appendMessageToUI(msg.role, plainText, []);
-                });
+                themeToggle.textContent = 'Switch to Dark Mode';
             }
-            loadSessionsToList();
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // --- BYOP Info Toggle ---
+        const byopSection = document.getElementById('byop-section');
+        const byopToggle = document.getElementById('byop-toggle');
+        const isByopCollapsed = localStorage.getItem('byopCollapsed') === 'true';
+
+        if (isByopCollapsed) {
+            byopSection.classList.add('collapsed');
+            byopToggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
         }
 
-        function loadSessionsToList() {
-            sessionList.innerHTML = '';
-            Object.values(sessions).forEach(s => {
-                const item = document.createElement('div');
-                item.className = `session-item ${currentSessionId === s.id ? 'active' : ''}`;
-                item.innerHTML = `
-                    <div class="session-title">${s.title}</div>
-                    <div class="session-actions">
-                        <button class="session-action-btn delete" onclick="event.stopPropagation(); deleteSession('${s.id}')"><i class="fas fa-trash"></i></button>
-                    </div>
-                `;
-                item.onclick = () => loadSession(s.id);
-                sessionList.appendChild(item);
-            });
+        byopToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const collapsed = byopSection.classList.toggle('collapsed');
+            localStorage.setItem('byopCollapsed', collapsed);
+            byopToggle.innerHTML = collapsed ? '<i class="fas fa-chevron-down"></i>' : '<i class="fas fa-chevron-up"></i>';
+        });
+
+        // --- API Token Event Bindings ---
+        const savedToken = localStorage.getItem('apiToken');
+        if (savedToken) {
+            tokenInput.value = savedToken;
+        }
+        tokenInput.addEventListener('input', function() {
+            localStorage.setItem('apiToken', this.value.trim());
+        });
+
+        // --- System Prompt Event Bindings ---
+        const savedSystemMessage = localStorage.getItem('systemMessage');
+        if (savedSystemMessage !== null) {
+            systemMessageInput.value = savedSystemMessage;
+        }
+        const savedPreset = localStorage.getItem('systemPreset') || 'general';
+        systemPresetSelect.value = savedPreset;
+
+        if (savedSystemMessage === null && SYSTEM_PRESETS[savedPreset]) {
+            systemMessageInput.value = SYSTEM_PRESETS[savedPreset];
         }
 
-        window.deleteSession = function(id) {
-            if(confirm('Delete this saved chat timeline container?')) {
-                delete sessions[id];
-                if(currentSessionId === id) currentSessionId = Object.keys(sessions)[0] || null;
-                if(!currentSessionId) { createNewSession(); } else { loadSession(currentSessionId); }
-                saveAllDataToStorage();
+        systemPresetSelect.addEventListener('change', function() {
+            const preset = this.value;
+            if (preset === 'custom') {
+                systemMessageInput.value = '';
+                localStorage.setItem('systemMessage', '');
+            } else if (SYSTEM_PRESETS[preset]) {
+                systemMessageInput.value = SYSTEM_PRESETS[preset];
+                localStorage.setItem('systemMessage', SYSTEM_PRESETS[preset]);
             }
-        };
+            localStorage.setItem('systemPreset', preset);
+            showNotification('System workspace preset updated.');
+        });
 
-        function resetChat() {
-            conversationHistory = [];
-            chatContainer.innerHTML = '';
-            appendMessageToUI('ai', 'Chat content timeline cleared.', [], 'msg-system-initial');
-            saveConversationToStorage();
-        }
-
-        function fullReset() {
-            localStorage.clear();
-            sessions = {};
-            currentSessionId = null;
-            conversationHistory = [];
-            createNewSession();
-            location.reload();
-        }
-
-        function saveAllDataToStorage() {
-            localStorage.setItem('superchat_sessions', JSON.stringify({
-                sessions: sessions,
-                currentSessionId: currentSessionId
-            }));
-        }
-
-        function saveConversationToStorage() {
-            if(currentSessionId && sessions[currentSessionId]) {
-                sessions[currentSessionId].conversation = conversationHistory;
-                saveAllDataToStorage();
+        systemMessageInput.addEventListener('input', function() {
+            localStorage.setItem('systemMessage', this.value);
+            if (systemPresetSelect.value !== 'custom') {
+                systemPresetSelect.value = 'custom';
+                localStorage.setItem('systemPreset', 'custom');
             }
-        }
+        });
 
-        function loadAllDataFromStorage() {
-            const theme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-            themeToggle.innerText = theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode";
-
-            const stored = localStorage.getItem('superchat_sessions');
-            if (stored) {
-                try {
-                    const parsed = JSON.parse(stored);
-                    sessions = parsed.sessions || {};
-                    currentSessionId = parsed.currentSessionId;
-                } catch(e) { console.error(e); }
-            }
-            if(!currentSessionId || !sessions[currentSessionId]) {
-                createNewSession();
-            } else {
-                loadSession(currentSessionId);
-            }
-        }
-
-        function showNotification(msg) {
-            notification.textContent = msg;
-            notification.classList.add('show');
-            setTimeout(() => notification.classList.remove('show'), 3500);
-        }
-
+        // --- Helper Functions ---
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Initialize application lifecycle dependencies
-        byopToggle.addEventListener('click', () => {
-            byopSection.classList.toggle('collapsed');
-            const icon = byopToggle.querySelector('i');
-            icon.className = byopSection.classList.contains('collapsed') ? "fas fa-chevron-down" : "fas fa-chevron-up";
-        });
+        function isGUIError(errorMsg) {
+            const guiModules = ['turtle', 'tkinter', 'pygame', 'cv2', 'opencv', 'PyQt5', 'PyQt6', 'pyside2', 'pyside6', 'wx', 'gi'];
+            const lowerError = errorMsg.toLowerCase();
+            return guiModules.some(mod => lowerError.includes(mod)) || lowerError.includes('no display') || lowerError.includes('removed from the python standard library');
+        }
 
-        systemPresetSelect.addEventListener('change', function() {
-            if (this.value !== 'custom') {
-                systemMessageInput.value = SYSTEM_PRESETS[this.value] || '';
-            } else {
-                systemMessageInput.value = '';
-            }
-        });
-
-        // Initialize on page load
+        // --- Initialize App --
+        setTimeout(() => {
+            if (!pyodideReady) initPyodide();
+        }, 2000);
+        
         loadAllDataFromStorage();
-        setTimeout(() => { if(!pyodideReady) initPyodide(); }, 1500);
+
+        console.log("Chat application successfully re-stabilized. All native structures and scripts restored.");
     </script>
 </body>
 </html>
