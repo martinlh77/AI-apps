@@ -1694,20 +1694,24 @@ When generating Python (which is rare):
     }
 
     async function decodeWavToFloat32(audioBufferLike) {
-        const arrayBuffer = audioBufferLike instanceof ArrayBuffer
+        const sourceBuffer = audioBufferLike instanceof ArrayBuffer
             ? audioBufferLike
             : await audioBufferLike.arrayBuffer();
 
+        const safeCopy = sourceBuffer.slice(0);
+
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         try {
-            const decoded = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+            const decoded = await audioContext.decodeAudioData(safeCopy);
             const channelData = decoded.getChannelData(0);
             return {
                 samples: new Float32Array(channelData),
                 sampleRate: decoded.sampleRate
             };
         } finally {
-            await audioContext.close();
+            try {
+                await audioContext.close();
+            } catch (e) {}
         }
     }
 
@@ -1744,7 +1748,7 @@ When generating Python (which is rare):
         return new Blob([view], { type: 'audio/wav' });
     }
 
-    async function synthesizeKokoro(text, options = {}) {
+    async function synthesizeKokoroSmart(text, options = {}) {
         const cleanText = (text || '').trim();
         if (!cleanText) throw new Error('No text to synthesize');
 
@@ -1951,6 +1955,7 @@ When generating Python (which is rare):
                 </div>
             `;
         }
+    }
 
     function updateMessageAudioLoadingText(msgId, text, detail = '') {
         const container = document.getElementById(`audio-container-${msgId}`);
@@ -2078,7 +2083,7 @@ When generating Python (which is rare):
         });
     }
 
-       async function processTtsQueue() {
+    async function processTtsQueue() {
         if (isProcessingTtsQueue) return;
 
         isProcessingTtsQueue = true;
@@ -2121,21 +2126,23 @@ When generating Python (which is rare):
                         setMessageAudioLoading(msgId, true, 'Waiting for Kokoro...');
                     }
 
+                    let hasChunkProgressStarted = false;
+
                     loadingTimer = setInterval(() => {
-                        if (job.cancelled) return;
+                        if (job.cancelled || hasChunkProgressStarted) return;
 
                         if (job.mode === 'popup') {
-                        updateStandaloneTtsProgress(
-                            kokoroReady ? 'Preparing speech generation...' : `Loading model... ${kokoroLoadProgress}%`,
-                            0,
-                            0,
-                            ''
-                        );
+                            updateStandaloneTtsProgress(
+                                kokoroReady ? 'Preparing speech generation...' : `Loading model... ${kokoroLoadProgress}%`,
+                                0,
+                                0,
+                                ''
+                            );
                         } else {
                             if (kokoroReady) {
-                                updateMessageAudioLoadingText(msgId, 'Preparing speech generation...');
+                                updateMessageAudioLoadingText(msgId, 'Preparing speech generation...', '');
                             } else {
-                                updateMessageAudioLoadingText(msgId, `Loading model... ${kokoroLoadProgress}%`);
+                                updateMessageAudioLoadingText(msgId, `Loading model... ${kokoroLoadProgress}%`, '');
                             }
                         }
                     }, 250);
@@ -2144,6 +2151,8 @@ When generating Python (which is rare):
                         isCancelled: () => !!job.cancelled,
                         onProgress: (data) => {
                             if (job.cancelled) return;
+
+                            hasChunkProgressStarted = true;
 
                             const chunkLabel = data.total && data.current
                                 ? `Chunk ${data.current}/${data.total}`
@@ -3361,7 +3370,7 @@ When generating Python (which is rare):
 
     loadAllDataFromStorage();
 
-           console.log("Chat application V4.4 with smart Kokoro full-dialogue chunking initialized successfully!");
+    console.log("Chat application V4.4 with smart Kokoro full-dialogue chunking initialized successfully!");
     console.log("Press Ctrl+Shift+P to toggle code preview");
     console.log("Premium models (🔒) require your own API key from enter.pollinations.ai");
 </script>
