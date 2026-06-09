@@ -81,7 +81,7 @@ function encodeWAV(samples, sampleRate) {
 }
 
 self.onmessage = async function(e) {
-    const { type, requestId, text, voice, dtype } = e.data;
+    const { type, requestId, text, chunks, voice, dtype } = e.data;
 
     try {
         if (type === 'INIT') {
@@ -104,6 +104,43 @@ self.onmessage = async function(e) {
                 samplingRate: result.sampling_rate || 24000,
                 audioBuffer: arrayBuffer
             }, [arrayBuffer]);
+
+            return;
+        }
+
+        if (type === 'GENERATE_BATCH') {
+            const tts = await ensureTTS({ dtype: dtype || "q8" });
+
+            if (!Array.isArray(chunks) || chunks.length === 0) {
+                throw new Error('No chunks provided for batch generation');
+            }
+
+            const audioChunks = [];
+            let sampleRate = 24000;
+
+            for (let i = 0; i < chunks.length; i++) {
+                self.postMessage({
+                    type: 'BATCH_PROGRESS',
+                    requestId,
+                    current: i + 1,
+                    total: chunks.length
+                });
+
+                const result = await tts.generate(chunks[i], { voice });
+                audioChunks.push(result.audio.buffer.slice(0));
+                if (result.sampling_rate) {
+                    sampleRate = result.sampling_rate;
+                }
+            }
+
+            self.postMessage({
+                type: 'BATCH_RESULT',
+                requestId,
+                samplingRate: sampleRate,
+                audioChunks
+            }, audioChunks);
+
+            return;
         }
     } catch (err) {
         self.postMessage({
