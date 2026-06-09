@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V4.1</title>
+    <title>Pollinations AI Chat (Media Enabled) V4.2</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -399,15 +399,6 @@
             font-weight: bold;
         }
 
-        .audio-controls {
-            margin-top: 10px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            background: rgba(0,0,0,0.05);
-            padding: 8px;
-            border-radius: 5px;
-        }
         .audio-btn {
             background: var(--user-msg-bg);
             color: white;
@@ -661,7 +652,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.1</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.2</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -950,16 +941,12 @@
         </div>
 
         <div class="settings-group">
-            <label>Audio Length Limit</label>
-            <select id="audio-length-limit">
-                <option value="500">Short</option>
-                <option value="1000" selected>Medium</option>
-                <option value="2000">Long</option>
-                <option value="4000">Very Long</option>
-                <option value="999999">Unlimited</option>
+            <label>Audio Length</label>
+            <select id="audio-length-limit" disabled>
+                <option value="full" selected>Always generate full dialogue</option>
             </select>
             <small style="color:var(--text-color); opacity:0.7;">
-                Longer text takes more time to generate.
+                Long messages are chunked automatically when needed.
             </small>
         </div>
     </div>
@@ -1007,6 +994,9 @@
         "gemini-flash-lite-3.1",
         "midijourney-large"
     ];
+
+    const KOKORO_SINGLE_PASS_THRESHOLD = 450;
+    const KOKORO_HARD_CHUNK_TARGET = 350;
 
     let conversationHistory = [];
     let uploadedFiles = [];
@@ -1548,21 +1538,19 @@ When generating Python (which is rare):
                 return;
             }
 
-            if (data.type === 'AUDIO_RESULT') {
+            if (data.type === 'AUDIO_RESULT' || data.type === 'BATCH_RESULT') {
                 const pending = kokoroPending.get(data.requestId);
                 if (!pending) return;
-
                 kokoroPending.delete(data.requestId);
+                pending.resolve(data);
+                return;
+            }
 
-                const blob = new Blob([data.audioBuffer], { type: 'audio/wav' });
-                const url = URL.createObjectURL(blob);
-
-                pending.resolve({
-                    blob,
-                    url,
-                    text: data.text,
-                    samplingRate: data.samplingRate
-                });
+            if (data.type === 'BATCH_PROGRESS') {
+                const pending = kokoroPending.get(data.requestId);
+                if (pending && typeof pending.onProgress === 'function') {
+                    pending.onProgress(data);
+                }
                 return;
             }
 
@@ -1607,6 +1595,127 @@ When generating Python (which is rare):
         });
     }
 
+    function splitTextSmart(text, targetLength = KOKORO_HARD_CHUNK_TARGET) {
+        const clean = (text || '').trim().replace(/\s+/g, ' ');
+        if (!clean) return [];
+
+        if (clean.length <= KOKORO_SINGLE_PASS_THRESHOLD) {
+            return [clean];
+        }
+
+        const paragraphParts = clean
+            .split(/\n\s*\n/)
+            .map(p => p.trim())
+            .filter(Boolean);
+
+        const sourceBlocks = paragraphParts.length ? paragraphParts : [clean];
+        const finalChunks = [];
+
+        for (const block of sourceBlocks) {
+            if (block.length <= targetLength) {
+                finalChunks.push(block);
+                continue;
+            }
+
+            const sentenceParts = block.match(/[^.!?]+[.!?]+(?:\s+|$)|[^.!?]+$/g) || [block];
+            let current = '';
+
+            for (const rawSentence of sentenceParts) {
+                const sentence = rawSentence.trim();
+                if (!sentence) continue;
+
+                if (sentence.length > targetLength) {
+                    if (current) {
+                        finalChunks.push(current.trim());
+                        current = '';
+                    }
+
+                    const words = sentence.split(/\s+/);
+                    let subChunk = '';
+
+                    for (const word of words) {
+                        const next = subChunk ? `${subChunk} ${word}` : word;
+                        if (next.length > targetLength && subChunk) {
+                            finalChunks.push(subChunk.trim());
+                            subChunk = word;
+                        } else {
+                            subChunk = next;
+                        }
+                    }
+
+                    if (subChunk.trim()) {
+                        finalChunks.push(subChunk.trim());
+                    }
+                    continue;
+                }
+
+                const nextCombined = current ? `${current} ${sentence}` : sentence;
+                if (nextCombined.length > targetLength && current) {
+                    finalChunks.push(current.trim());
+                    current = sentence;
+                } else {
+                    current = nextCombined;
+                }
+            }
+
+            if (current.trim()) {
+                finalChunks.push(current.trim());
+            }
+        }
+
+        return finalChunks.filter(Boolean);
+    }
+
+    function needsChunking(text) {
+        const clean = (text || '').trim();
+        if (!clean) return false;
+        return clean.length > KOKORO_SINGLE_PASS_THRESHOLD || /\n\s*\n/.test(clean);
+    }
+
+    function concatFloat32Arrays(chunks) {
+        const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+        const output = new Float32Array(totalLength);
+        let offset = 0;
+        for (const chunk of chunks) {
+            output.set(chunk, offset);
+            offset += chunk.length;
+        }
+        return output;
+    }
+
+    function encodeWavFromFloat32(samples, sampleRate) {
+        const buffer = new ArrayBuffer(44 + samples.length * 2);
+        const view = new DataView(buffer);
+
+        function writeString(offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + samples.length * 2, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, 'data');
+        view.setUint32(40, samples.length * 2, true);
+
+        let offset = 44;
+        for (let i = 0; i < samples.length; i++, offset += 2) {
+            let s = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        }
+
+        return new Blob([view], { type: 'audio/wav' });
+    }
+
     async function synthesizeKokoro(text, options = {}) {
         const cleanText = (text || '').trim();
         if (!cleanText) throw new Error('No text to synthesize');
@@ -1616,38 +1725,79 @@ When generating Python (which is rare):
         const requestId = 'kokoro-' + Date.now() + '-' + Math.random().toString(36).slice(2);
         const voice = options.voice || document.getElementById('voice-select')?.value || 'af_heart';
         const dtype = document.getElementById('kokoro-dtype')?.value || 'q8';
-        const maxLength = parseInt(document.getElementById('audio-length-limit')?.value || '1000');
-        const truncated = cleanText.slice(0, maxLength);
 
         return new Promise((resolve, reject) => {
             kokoroPending.set(requestId, { resolve, reject });
             kokoroWorker.postMessage({
                 type: 'GENERATE',
                 requestId,
-                text: truncated,
+                text: cleanText,
                 voice,
                 dtype
             });
         });
     }
 
-    function playAudioUrl(url, onEnded = null) {
-        if (currentAudioElement) {
-            currentAudioElement.pause();
+    async function synthesizeKokoroSmart(text, options = {}) {
+        const cleanText = (text || '').trim();
+        if (!cleanText) throw new Error('No text to synthesize');
+
+        await ensureKokoroReady();
+
+        const voice = options.voice || document.getElementById('voice-select')?.value || 'af_heart';
+        const dtype = document.getElementById('kokoro-dtype')?.value || 'q8';
+
+        if (!needsChunking(cleanText)) {
+            const single = await synthesizeKokoro(cleanText, { voice, dtype });
+            const blob = new Blob([single.audioBuffer], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            return {
+                blob,
+                url,
+                text: cleanText,
+                samplingRate: single.samplingRate || 24000,
+                chunked: false,
+                chunkCount: 1
+            };
         }
 
-        const audio = new Audio(url);
-        currentAudioElement = audio;
+        const chunks = splitTextSmart(cleanText, KOKORO_HARD_CHUNK_TARGET);
+        const requestId = 'kokoro-batch-' + Date.now() + '-' + Math.random().toString(36).slice(2);
 
-        if (onEnded) {
-            audio.onended = onEnded;
-        }
+        const batchData = await new Promise((resolve, reject) => {
+            kokoroPending.set(requestId, {
+                resolve,
+                reject,
+                onProgress: options.onProgress
+            });
 
-        audio.play().catch(err => {
-            console.error('Playback failed:', err);
+            kokoroWorker.postMessage({
+                type: 'GENERATE_BATCH',
+                requestId,
+                chunks,
+                voice,
+                dtype
+            });
         });
 
-        return audio;
+        const floatChunks = (batchData.audioChunks || []).map(arr => new Float32Array(arr));
+        if (!floatChunks.length) {
+            throw new Error('No audio chunks returned from Kokoro batch generation');
+        }
+
+        const sampleRate = batchData.samplingRate || 24000;
+        const combined = concatFloat32Arrays(floatChunks);
+        const blob = encodeWavFromFloat32(combined, sampleRate);
+        const url = URL.createObjectURL(blob);
+
+        return {
+            blob,
+            url,
+            text: cleanText,
+            samplingRate: sampleRate,
+            chunked: true,
+            chunkCount: chunks.length
+        };
     }
 
     function enqueueAudioChunk(chunk) {
@@ -1711,8 +1861,10 @@ When generating Python (which is rare):
         autoSpeakState.spokenTextLength += chunk.length;
 
         try {
-            const result = await synthesizeKokoro(chunk);
-            enqueueAudioChunk(result);
+            const single = await synthesizeKokoro(chunk);
+            const blob = new Blob([single.audioBuffer], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            enqueueAudioChunk({ blob, url });
         } catch (e) {
             console.error('Auto-speak chunk failed:', e);
         }
@@ -1728,8 +1880,10 @@ When generating Python (which is rare):
         autoSpeakState.spokenTextLength = accumulatedText.length;
 
         try {
-            const result = await synthesizeKokoro(remaining);
-            enqueueAudioChunk(result);
+            const single = await synthesizeKokoro(remaining);
+            const blob = new Blob([single.audioBuffer], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            enqueueAudioChunk({ blob, url });
         } catch (e) {
             console.error('Final auto-speak chunk failed:', e);
         }
@@ -1801,13 +1955,24 @@ When generating Python (which is rare):
 
                 loadingTimer = setInterval(() => {
                     if (kokoroReady) {
-                        updateMessageAudioLoadingText(msgId, 'Synthesizing speech locally...');
+                        updateMessageAudioLoadingText(msgId, 'Preparing speech generation...');
                     } else {
                         updateMessageAudioLoadingText(msgId, `Loading model... ${kokoroLoadProgress}%`);
                     }
                 }, 250);
 
-                const result = await synthesizeKokoro(textContent);
+                const result = await synthesizeKokoroSmart(textContent, {
+                    onProgress: (data) => {
+                        if (data.total && data.current) {
+                            updateMessageAudioLoadingText(
+                                msgId,
+                                `Generating chunk ${data.current} of ${data.total}...`
+                            );
+                        } else if (kokoroReady) {
+                            updateMessageAudioLoadingText(msgId, 'Synthesizing speech locally...');
+                        }
+                    }
+                });
 
                 if (loadingTimer) clearInterval(loadingTimer);
                 activeTtsMessageIds.delete(msgId);
@@ -1838,6 +2003,7 @@ When generating Python (which is rare):
             speakerButtons.forEach(btn => btn.classList.remove('loading'));
 
             const showDownload = document.getElementById('audio-show-download')?.checked;
+            const chunkInfo = result.chunked ? `<span style="font-size:0.75em; opacity:0.75;">Chunked into ${result.chunkCount} parts</span>` : '';
 
             container.innerHTML = `
                 <div style="margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -1846,6 +2012,7 @@ When generating Python (which is rare):
                         <i class="fas fa-sync-alt"></i> Re-run
                     </button>
                     ${showDownload ? `<a class="audio-btn" href="${result.url}" download="message-audio-${msgId}.wav" style="text-decoration:none; display:inline-flex; align-items:center;"><i class="fas fa-download"></i>&nbsp;Download</a>` : ''}
+                    ${chunkInfo}
                 </div>
             `;
         } catch (e) {
@@ -2275,8 +2442,10 @@ When generating Python (which is rare):
 
                 if (document.getElementById('audio-autoplay-stream')?.checked && accumulatedText.trim()) {
                     try {
-                        const result = await synthesizeKokoro(accumulatedText);
-                        enqueueAudioChunk(result);
+                        const single = await synthesizeKokoro(accumulatedText);
+                        const blob = new Blob([single.audioBuffer], { type: 'audio/wav' });
+                        const url = URL.createObjectURL(blob);
+                        enqueueAudioChunk({ blob, url });
                     } catch (e) {
                         console.error('Auto-play failed:', e);
                     }
@@ -2786,15 +2955,12 @@ When generating Python (which is rare):
             return;
         }
 
-        const maxLength = parseInt(document.getElementById('audio-length-limit')?.value || '4000');
-        const truncatedText = text.slice(0, maxLength);
-
         ttsGenerateBtn.disabled = true;
         ttsGenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
         ttsOutput.classList.remove('show');
 
         try {
-            await generateStandaloneTTS(truncatedText);
+            await generateStandaloneTTS(text);
         } catch (error) {
             showNotification('TTS generation failed: ' + error.message);
             console.error('TTS error:', error);
@@ -2805,8 +2971,9 @@ When generating Python (which is rare):
     });
 
     async function generateStandaloneTTS(text) {
-        const result = await synthesizeKokoro(text);
+        const result = await synthesizeKokoroSmart(text);
         const showDownload = document.getElementById('audio-show-download')?.checked;
+        const chunkInfo = result.chunked ? `<div style="margin-top: 8px; font-size: 0.8em; opacity: 0.75;">Chunked into ${result.chunkCount} parts</div>` : '';
 
         ttsOutput.innerHTML = `
             <div style="color: var(--text-color);">
@@ -2817,6 +2984,7 @@ When generating Python (which is rare):
                 <div style="margin-top: 10px; font-size: 0.85em; opacity: 0.8;">
                     Voice: ${document.getElementById('voice-select')?.value || 'af_heart'}
                 </div>
+                ${chunkInfo}
                 ${showDownload ? `
                     <div style="margin-top:10px;">
                         <a class="audio-btn" href="${result.url}" download="tts-output.wav" style="text-decoration:none; display:inline-flex; align-items:center;">
@@ -2916,7 +3084,6 @@ When generating Python (which is rare):
     bindCheckboxSetting('audio-show-download', false);
     bindSelectSetting('voice-select', 'af_heart');
     bindSelectSetting('kokoro-dtype', 'q8');
-    bindSelectSetting('audio-length-limit', '1000');
 
     setTimeout(() => {
         if (!pyodideReady) initPyodide();
@@ -2928,7 +3095,7 @@ When generating Python (which is rare):
 
     loadAllDataFromStorage();
 
-    console.log("Chat application V4.1 with Kokoro audio queue/spinner initialized successfully!");
+    console.log("Chat application V4.2 with smart Kokoro full-dialogue chunking initialized successfully!");
     console.log("Press Ctrl+Shift+P to toggle code preview");
     console.log("Premium models (🔒) require your own API key from enter.pollinations.ai");
 </script>
