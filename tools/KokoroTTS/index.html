@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Multilingual Audiobook TTS 2</title>
+    <title>Advanced Multilingual Audiobook TTS</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 750px; margin: 40px auto; padding: 20px; background: #f9f9fb; color: #333; }
         h1 { margin-bottom: 5px; color: #111; }
@@ -38,7 +38,7 @@
 </head>
 <body>
 
-    <h1>Multilingual Audiobook Synthesizer 2</h1>
+    <h1>Multilingual Audiobook Synthesizer</h1>
     <p class="subtitle">Paragraph-by-paragraph client-side browser generation using Kokoro TTS</p>
 
     <textarea id="textInput" placeholder="Enter your text here... Leave empty lines to define distinct paragraph segments for the audio compiler."></textarea>
@@ -307,36 +307,39 @@
             }
         };
 
-elements.btn.addEventListener('click', () => {
-    const rawText = elements.text.value;
-    const paragraphs = rawText.split('\n')
-        .map(p => {
-            return p
-                .trim()
-                .replace(/[\u2018\u2019]/g, "'")
-                .replace(/[\u201C\u201D]/g, '"')
-                .replace(/[\u2014\u2013]/g, "-");
-                // Removed the aggressive [^\x00-\x7F] strip filter to protect international scripts
-        })
-        .filter(p => p.trim().length > 0);
+        elements.btn.addEventListener('click', () => {
+            const rawText = elements.text.value;
+            const paragraphs = rawText.split('\n')
+                .map(p => {
+                    return p
+                        .trim()
+                        .replace(/[\u2018\u2019]/g, "'")
+                        .replace(/[\u201C\u201D]/g, '"')
+                        .replace(/[\u2014\u2013]/g, "-")
+                        .replace(/[^\x00-\x7F]/g, (char) => {
+                            if (/[áéíóúüñÁÉÍÓÚÜÑàèìòùÀÈÌÒÙâêîûôÂÊÎÛÔçÇ]/.test(char)) return char;
+                            return '';
+                        });
+                })
+                .filter(p => p.trim().length > 0);
 
-    if (paragraphs.length === 0) {
-        alert("Please drop text blocks into the input window.");
-        return;
-    }
+            if (paragraphs.length === 0) {
+                alert("Please drop text blocks into the input window.");
+                return;
+            }
 
-    elements.btn.disabled = true;
-    elements.actions.style.display = "none";
-    elements.genFill.style.width = "0%";
-    elements.genPercent.innerText = "0%";
-    elements.genLabel.innerText = "Initializing array compiler...";
+            elements.btn.disabled = true;
+            elements.actions.style.display = "none";
+            elements.genFill.style.width = "0%";
+            elements.genPercent.innerText = "0%";
+            elements.genLabel.innerText = "Initializing array compiler...";
 
-    worker.postMessage({
-        type: 'START_SYNTHESIS',
-        paragraphs: paragraphs,
-        voice: elements.voice.value
-    });
-});
+            worker.postMessage({
+                type: 'START_SYNTHESIS',
+                paragraphs: paragraphs,
+                voice: elements.voice.value
+            });
+        });
 
         /* High-Fidelity Decoupled DSP Rendering Pipeline.
            Utilizes Synchronous Overlap-Add (SOLA) with cross-correlation phase matching 
