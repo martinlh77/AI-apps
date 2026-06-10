@@ -29,6 +29,50 @@ async function initializeModel() {
     return ttsInstance;
 }
 
+/**
+ * Determines the correct language code for the Kokoro model based on the selected voice prefix.
+ * Default profiles use 'a' (American English) or 'b' (British English).
+ * Other languages map to their respective ISO or specific model tokens.
+ */
+function getLanguageCode(voice) {
+    if (!voice || voice.length < 2) return "en-us";
+    
+    const prefix = voice.substring(0, 2).toLowerCase();
+    switch (prefix) {
+        case 'af': // American Female
+        case 'am': // American Male
+            return 'en-us';
+        case 'bf': // British Female
+        case 'bm': // British Male
+            return 'en-gb';
+        case 'ef': // Spanish Female
+        case 'em': // Spanish Male
+            return 'es';
+        case 'ff': // French Female
+            return 'fr-fr';
+        case 'jf': // Japanese Female
+        case 'jm': // Japanese Male
+            return 'ja';
+        case 'kf': // Korean Female
+        case 'km': // Korean Male
+            return 'ko';
+        case 'hf': // Hindi Female
+        case 'hm': // Hindi Male
+            return 'hi';
+        case 'if': // Italian Female
+        case 'im': // Italian Male
+            return 'it';
+        case 'pf': // Portuguese Female
+        case 'pm': // Portuguese Male
+            return 'pt-br';
+        case 'zf': // Mandarin Female
+        case 'zm': // Mandarin Male
+            return 'cmn';
+        default:
+            return 'en-us';
+    }
+}
+
 self.onmessage = async function(e) {
     const { type, paragraphs, voice } = e.data;
 
@@ -38,6 +82,9 @@ self.onmessage = async function(e) {
             const compiledChunks = [];
             let globalSamplingRate = 24000; // Kokoro constant default layout baseline
 
+            // Determine language code dynamically from the voice name selection
+            const langCode = getLanguageCode(voice);
+
             for (let i = 0; i < paragraphs.length; i++) {
                 // Signal current synthesis index
                 self.postMessage({
@@ -46,8 +93,11 @@ self.onmessage = async function(e) {
                     total: paragraphs.length
                 });
 
-                // Generate audio segment
-                const rawAudioOutput = await tts.generate(paragraphs[i], { voice: voice });
+                // Generate audio segment with voice profile and its native language code configuration
+                const rawAudioOutput = await tts.generate(paragraphs[i], { 
+                    voice: voice,
+                    lang_code: langCode 
+                });
                 
                 compiledChunks.push(rawAudioOutput.audio);
                 if (rawAudioOutput.sampling_rate) {
