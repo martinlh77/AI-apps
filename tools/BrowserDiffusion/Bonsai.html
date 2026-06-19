@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Client-Side Image Generator (Bonsai 4B)</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; background: #fcfcfd; color: #222; }
+        h1 { font-size: 24px; margin-bottom: 5px; color: #111; }
+        p.subtitle { color: #666; margin-top: 0; margin-bottom: 25px; font-size: 14px; }
+        textarea { width: 100%; height: 100px; padding: 12px; border: 1px solid #dcdce1; border-radius: 8px; box-sizing: border-box; font-size: 16px; resize: vertical; }
+        .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 15px 0; }
+        .control-group { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 500; }
+        select, input { padding: 8px; border: 1px solid #dcdce1; border-radius: 6px; background: white; font-size: 14px; }
+        button { background: #4f46e5; color: white; border: none; padding: 12px 24px; font-size: 16px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: background 0.2s; width: 100%; margin-top: 10px; }
+        button:hover { background: #4338ca; }
+        button:disabled { background: #a5b4fc; cursor: not-allowed; }
+        .output-viewport { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 30px; border: 1px dashed #cfcfd6; border-radius: 12px; background: #f3f3f6; min-height: 400px; padding: 20px; position: relative; }
+        canvas { max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: none; }
+        .status-container { width: 100%; max-width: 500px; text-align: center; color: #555; font-size: 14px; }
+        .progress-bar-wrapper { width: 100%; background: #e4e4e7; height: 6px; border-radius: 3px; margin-top: 8px; overflow: hidden; display: none; }
+        .progress-bar-fill { height: 100%; background: #4f46e5; width: 0%; transition: width 0.1s ease; }
+        .placeholder-text { color: #8a8a93; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <h1>Local Client-Side Image Generator</h1>
+    <p class="subtitle">Powered by PrismML Bonsai Image 4B & WebGPU. Runs completely inside your browser tab.</p>
+
+    <textarea id="promptInput" placeholder="A majestic bonsai tree inside a quiet ceramic studio, soft morning light, highly detailed..."></textarea>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="resolutionSelect">Resolution</label>
+            <select id="resolutionSelect">
+                <option value="512x512" selected>512 × 512 (Fastest)</option>
+                <option value="704x352">704 × 352 (Wide)</option>
+                <option value="352x704">352 × 704 (Tall)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label for="stepsInput">Denoising Steps</label>
+            <input type="number" id="stepsInput" min="1" max="12" value="4">
+        </div>
+        <div class="control-group">
+            <label for="seedInput">Seed (0 for Random)</label>
+            <input type="number" id="seedInput" value="0">
+        </div>
+    </div>
+
+    <button id="generateBtn">Generate Image via WebGPU</button>
+
+    <div class="output-viewport">
+        <canvas id="outputCanvas"></canvas>
+        <div id="statusContainer" class="status-container">
+            <div id="statusText" class="placeholder-text">Enter a prompt and hit generate. The first run will cache ~1.4GB of structural model layers.</div>
+            <div id="progressBarWrapper" class="progress-bar-wrapper">
+                <div id="progressBarFill" class="progress-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const promptInput = document.getElementById('promptInput');
+        const resolutionSelect = document.getElementById('resolutionSelect');
+        const stepsInput = document.getElementById('stepsInput');
+        const seedInput = document.getElementById('seedInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const statusText = document.getElementById('statusText');
+        const progressBarWrapper = document.getElementById('progressBarWrapper');
+        const progressBarFill = document.getElementById('progressBarFill');
+        const ctx = outputCanvas.getContext('2d');
+
+        // Check if browser environment supports WebGPU
+        if (!navigator.gpu) {
+            statusText.innerHTML = "<b style='color: #ef4444;'>WebGPU Error:</b> Your browser or graphics hardware does not appear to support WebGPU. Please use a compatible modern browser (Chrome, Edge, or Opera) with hardware acceleration enabled.";
+            generateBtn.disabled = true;
+        }
+
+        // Initialize our isolated image execution worker
+        const worker = new Worker('image-worker.js', { type: 'module' });
+
+        generateBtn.addEventListener('click', () => {
+            const prompt = promptInput.value.trim();
+            if (!prompt) return alert('Please input an generation prompt text first!');
+
+            const [width, height] = resolutionSelect.value.split('x').map(Number);
+            const steps = parseInt(stepsInput.value) || 4;
+            let seed = parseInt(seedInput.value);
+            if (seed === 0) seed = Math.floor(Math.random() * 1000000);
+
+            // Interface Lockout
+            generateBtn.disabled = true;
+            outputCanvas.style.display = 'none';
+            progressBarWrapper.style.display = 'block';
+            progressBarFill.style.width = '0%';
+            statusText.innerText = "Initializing and compiling WebGPU shaders...";
+
+            // Send payload to worker thread
+            worker.postMessage({
+                type: 'START_GENERATION',
+                prompt, steps, width, height, seed
+            });
+        });
+
+        worker.onmessage = function(e) {
+            const { type, file, progress, current, total, width, height, rgbaPixels } = e.data;
+
+            switch (type) {
+                case 'MODEL_PROGRESS':
+                    progressBarWrapper.style.display = 'block';
+                    progressBarFill.style.width = `${progress}%`;
+                    statusText.innerText = `Caching weights: ${file} (${Math.round(progress)}%)`;
+                    break;
+
+                case 'MODEL_READY':
+                    statusText.innerText = "Model loaded successfully. Preparing execution layers...";
+                    break;
+
+                case 'STEP_PROGRESS':
+                    progressBarWrapper.style.display = 'block';
+                    const stepPercent = (current / total) * 100;
+                    progressBarFill.style.width = `${stepPercent}%`;
+                    statusText.innerText = `Denoising Latents: Step ${current} of ${total}`;
+                    break;
+
+                case 'GENERATION_SUCCESS':
+                    progressBarWrapper.style.display = 'none';
+                    statusText.innerText = "";
+                    
+                    // Render the returned raw binary buffer array back to canvas
+                    outputCanvas.width = width;
+                    outputCanvas.height = height;
+                    outputCanvas.style.display = 'block';
+
+                    const imgData = ctx.createImageData(width, height);
+                    imgData.data.set(new Uint8ClampedArray(rgbaPixels));
+                    ctx.putImageData(imgData, 0, 0);
+
+                    generateBtn.disabled = false;
+                    break;
+
+                case 'ERROR':
+                    progressBarWrapper.style.display = 'none';
+                    statusText.innerHTML = `<span style="color:#ef4444;">Error occurred: ${e.data.error}</span>`;
+                    generateBtn.disabled = false;
+                    break;
+            }
+        };
+    </script>
+</body>
+</html>
