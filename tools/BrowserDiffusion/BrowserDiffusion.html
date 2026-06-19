@@ -3,24 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Local Browser Diffusion Studio</title>
+    <title>Local Browser Multimodal Generation Studio 2</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 750px; margin: 40px auto; padding: 20px; background: #f9f9fb; color: #333; }
         h1 { margin-bottom: 5px; color: #111; }
         p.subtitle { color: #666; margin-top: 0; margin-bottom: 25px; }
-        textarea { width: 100%; height: 100px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; resize: vertical; }
-        .controls { display: grid; grid-template-columns: 1fr; gap: 15px; margin: 15px 0; }
-        .control-group { display: flex; flex-direction: column; }
-        .sliders-group { display: flex; flex-direction: column; gap: 15px; margin: 5px 0 15px 0; background: white; padding: 15px; border-radius: 6px; border: 1px solid #e1e1e6; }
-        .slider-row { display: grid; grid-template-columns: 1fr 120px; gap: 15px; align-items: end; }
-        .slider-item { display: flex; flex-direction: column; }
-        .slider-header { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; margin-bottom: 5px; }
-        .manual-input-group { display: flex; align-items: center; gap: 5px; }
-        .manual-input-group input[type="number"] { width: 100%; padding: 6px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; text-align: center; }
-        label { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        button, input[type="range"] { padding: 12px; font-size: 15px; border-radius: 6px; border: 1px solid #ccc; }
-        input[type="range"] { padding: 5px 0; accent-color: #0070f3; width: 100%; box-sizing: border-box; }
-        button { background: #0070f3; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 10px; width: 100%; }
+        textarea { width: 100%; height: 110px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; resize: vertical; }
+        label { font-weight: bold; margin-bottom: 5px; font-size: 14px; display: block; margin-top: 15px;}
+        button { background: #0070f3; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 20px; width: 100%; padding: 15px; font-size: 16px; border-radius: 6px; }
         button:hover { background: #0051a8; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         .status-container { background: white; border: 1px solid #e1e1e6; border-radius: 8px; padding: 15px; margin-top: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
@@ -30,7 +20,7 @@
         .progress-bar-fill { width: 0%; height: 100%; background: #0070f3; transition: width 0.1s ease; }
         #generationFill { background: #10b981; }
         .output-actions { display: none; margin-top: 25px; text-align: center; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e1e1e6; }
-        .output-actions canvas { border-radius: 6px; background: #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 100%; height: auto; }
+        .output-actions img { border-radius: 6px; background: #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 100%; height: auto; width: 384px; }
         .download-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
         .dl-btn { background: #475569; padding: 10px 20px; text-decoration: none; color: white; border-radius: 6px; font-size: 14px; font-weight: bold; }
         .dl-btn:hover { background: #334155; }
@@ -38,97 +28,53 @@
 </head>
 <body>
 
-    <h1>Local Diffusion Studio</h1>
-    <p class="subtitle">Client-side browser rendering engine powered by WebGPU</p>
+    <h1>Local Vision Studio</h1>
+    <p class="subtitle">Autoregressive local image generation using DeepSeek Janus-Pro & WebGPU</p>
 
-    <label for="promptInput">Positive Prompt</label>
-    <textarea id="promptInput" placeholder="A futuristic cyberpunk cityscape, neon lights, highly detailed, digital art..."></textarea>
+    <label for="promptInput">Generation Matrix Instruction</label>
+    <textarea id="promptInput" placeholder="A stunning beautiful cat sitting on a neon-lit futuristic cyberpunk desk, highly detailed..."></textarea>
 
-    <div class="controls">
-        <div class="control-group">
-            <label for="negPromptInput">Negative Filter Filter</label>
-            <textarea id="negPromptInput" style="height: 60px;" placeholder="blurry, low quality, distorted, bad proportions"></textarea>
-        </div>
-    </div>
-
-    <div class="sliders-group">
-        <div class="slider-row">
-            <div class="slider-item">
-                <div class="slider-header">
-                    <label for="stepsSlider">Inference Denoising Steps</label>
-                </div>
-                <input type="range" id="stepsSlider" min="4" max="25" step="1" value="8">
-            </div>
-            <div class="manual-input-group">
-                <input type="number" id="stepsNum" min="4" max="25" step="1" value="8">
-                <span style="font-size:12px; font-weight:bold; color:#555;">steps</span>
-            </div>
-        </div>
-    </div>
-
-    <button id="compileBtn">Render Text-to-Image Pipeline</button>
+    <button id="compileBtn">Compile & Render Image Matrix</button>
 
     <div class="status-container">
         <div class="progress-row">
             <div class="progress-label">
-                <span id="modelLabel">Model Engine Assets: Waiting</span>
+                <span id="modelLabel">Model weights status: Waiting</span>
                 <span id="modelPercent">0%</span>
             </div>
             <div class="progress-bar-bg"><div id="modelFill" class="progress-bar-fill"></div></div>
         </div>
         <div class="progress-row">
             <div class="progress-label">
-                <span id="generationLabel">Synthesis Pipeline: Idle</span>
-                <span id="generationPercent">0%</span>
+                <span id="generationLabel">Processing Status: Idle</span>
             </div>
-            <div class="progress-bar-bg"><div id="generationFill" class="progress-bar-fill"></div></div>
         </div>
     </div>
 
     <div class="output-actions" id="outputActions">
-        <canvas id="studioCanvas" width="256" height="256"></canvas>
+        <img id="studioImage" src="" alt="Local AI Render" />
         <div class="download-buttons">
-            <a id="downloadPng" class="dl-btn" href="#" download="diffusion_render.png">Download Output PNG</a>
+            <a id="downloadPng" class="dl-btn" href="#" download="janus_render.png">Download Output Image</a>
         </div>
     </div>
 
     <script type="module">
-        // Mirroring your exact working Kokoro worker initialization path style
-        const worker = new Worker(new URL('./diffusion-worker.js', import.meta.url), { type: 'module' });
+        // Inject cache-busting timestamp to ensure clean worker runtime updates
+        const worker = new Worker(new URL(`./diffusion-worker.js?v=${Date.now()}`, import.meta.url), { type: 'module' });
 
         const elements = {
             prompt: document.getElementById('promptInput'),
-            negPrompt: document.getElementById('negPromptInput'),
-            stepsSlider: document.getElementById('stepsSlider'),
-            stepsNum: document.getElementById('stepsNum'),
             btn: document.getElementById('compileBtn'),
             modelLabel: document.getElementById('modelLabel'),
             modelFill: document.getElementById('modelFill'),
             modelPercent: document.getElementById('modelPercent'),
             genLabel: document.getElementById('generationLabel'),
-            genFill: document.getElementById('generationFill'),
-            genPercent: document.getElementById('generationPercent'),
             actions: document.getElementById('outputActions'),
-            canvas: document.getElementById('studioCanvas'),
+            img: document.getElementById('studioImage'),
             dlPng: document.getElementById('downloadPng')
         };
 
-        bindControls(elements.stepsSlider, elements.stepsNum, 0);
-
-        function bindControls(slider, numBox, decimals) {
-            slider.addEventListener('input', (e) => {
-                numBox.value = parseInt(e.target.value).toFixed(decimals);
-            });
-            numBox.addEventListener('change', (e) => {
-                let val = parseInt(e.target.value);
-                if (isNaN(val)) val = parseInt(slider.value);
-                val = Math.max(parseInt(numBox.min), Math.min(parseInt(numBox.max), val));
-                numBox.value = val.toFixed(decimals);
-                slider.value = val;
-            });
-        }
-
-        elements.prompt.value = "An elegant cute cat sitting on a futuristic workspace, synthwave aesthetic, 8k resolution";
+        elements.prompt.value = "A gorgeous tiny dragon perched on a dynamic crystal geode, glowing runes, cinematic, hyper-detailed";
 
         worker.onmessage = function(e) {
             const data = e.data;
@@ -141,69 +87,46 @@
 
             if (data.type === 'STATUS') {
                 elements.genLabel.innerText = data.message;
-                if(data.message.includes("Compiled")) {
-                    elements.modelLabel.innerText = "Model Engine Assets: Fully Loaded";
+                if(data.message.includes("Ready")) {
+                    elements.modelLabel.innerText = "Model Engine Assets: Fully Initialized";
                     elements.modelFill.style.width = "100%";
                     elements.modelPercent.innerText = "100%";
                 }
             }
 
-            if (data.type === 'PROGRESS') {
-                const pct = (data.step / data.total) * 100;
-                elements.genLabel.innerText = `Denoising Latent Grid: Step ${data.step} of ${data.total}`;
-                elements.genFill.style.width = `${pct}%`;
-                elements.genPercent.innerText = `${Math.round(pct)}%`;
-            }
-
             if (data.type === 'SUCCESS') {
-                elements.genLabel.innerText = "Latent Generation Complete!";
-                elements.genFill.style.width = "100%";
-                elements.genPercent.innerText = "100%";
+                elements.genLabel.innerText = "Image Matrix Synthesized Successfully!";
                 elements.btn.disabled = false;
 
-                const ctx = elements.canvas.getContext('2d');
-                
+                // Handle decoding the Raw returned image format directly into a displayable browser image
                 if (data.image) {
-                    // Check if the worker passed a raw ImageData layout or a canvas-ready image object
-                    if (data.image instanceof ImageData) {
-                        ctx.putImageData(data.image, 0, 0);
-                        elements.dlPng.href = elements.canvas.toDataURL('image/png');
-                        elements.actions.style.display = "block";
-                    } else {
-                        // Native ImageBitmap rendering fallback
-                        createImageBitmap(data.image).then(bitmap => {
-                            ctx.drawImage(bitmap, 0, 0, 256, 256);
-                            elements.dlPng.href = elements.canvas.toDataURL('image/png');
-                            elements.actions.style.display = "block";
-                        });
-                    }
+                    const url = data.image.toCanvas().toDataURL('image/png');
+                    elements.img.src = url;
+                    elements.dlPng.href = url;
+                    elements.actions.style.display = "block";
                 }
             }
 
             if (data.type === 'ERROR') {
-                alert("Runtime Failure: " + data.error);
+                alert("Runtime Exception: " + data.error);
                 elements.btn.disabled = false;
-                elements.genLabel.innerText = "Pipeline Halted.";
+                elements.genLabel.innerText = "Execution failed.";
             }
         };
 
         elements.btn.addEventListener('click', () => {
             if (!elements.prompt.value.trim()) {
-                alert("Please type a generation prompt first.");
+                alert("Please input a text description model query.");
                 return;
             }
 
             elements.btn.disabled = true;
             elements.actions.style.display = "none";
-            elements.genFill.style.width = "0%";
-            elements.genPercent.innerText = "0%";
-            elements.genLabel.innerText = "Warming up WebGPU threads...";
+            elements.genLabel.innerText = "Spinning up local WebGPU threads...";
 
             worker.postMessage({
                 type: 'START_GENERATION',
-                prompt: elements.prompt.value,
-                negative_prompt: elements.negPrompt.value,
-                steps: elements.stepsNum.value
+                prompt: elements.prompt.value
             });
         });
     </script>
