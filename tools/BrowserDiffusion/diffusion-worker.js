@@ -1,19 +1,21 @@
 // diffusion-worker.js
-import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1/dist/transformers.min.js";
+import { AutoProcessor, MultiModalityCausalLM, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1/dist/transformers.min.js";
 
-// Emulate your working Kokoro architecture path configuration
 env.allowLocalModels = false;
 env.backends.onnx.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1/dist/";
 
-let pipeInstance = null;
+let processor = null;
+let model = null;
+const model_id = "onnx-community/Janus-Pro-1B-ONNX";
 
 async function initializeModel() {
-    if (!pipeInstance) {
-        self.postMessage({ type: 'STATUS', message: 'Downloading & compiling optimized Stable Diffusion pipeline...' });
+    if (!model || !processor) {
+        self.postMessage({ type: 'STATUS', message: 'Downloading & compiling DeepSeek Janus-Pro weights (WebGPU)...' });
         
-        // Use standard pipeline initializer but explicitly map to WebGPU
-        pipeInstance = await pipeline('text-to-image', 'Xenova/distil-diffusion-light', {
+        processor = await AutoProcessor.from_pretrained(model_id);
+        model = await MultiModalityCausalLM.from_pretrained(model_id, {
             device: 'webgpu',
+            dtype: 'fp32', // Safe fallback precision for web layers
             progress_callback: (data) => {
                 if (data.status === 'progress') {
                     self.postMessage({
@@ -22,42 +24,48 @@ async function initializeModel() {
                         progress: data.progress
                     });
                 }
-                if (data.status === 'ready') {
-                    self.postMessage({ type: 'STATUS', message: 'Weights Ready! Compiling WebGPU shaders...' });
-                }
             }
         });
+        self.postMessage({ type: 'STATUS', message: 'Janus Engine Ready! Running inference tokens...' });
     }
-    return pipeInstance;
+    return { processor, model };
 }
 
 self.onmessage = async function(e) {
-    const { type, prompt, negative_prompt, steps } = e.data;
+    const { type, prompt } = e.data;
 
     if (type === 'START_GENERATION') {
         try {
-            const pipe = await initializeModel();
+            const { processor, model } = await initializeModel();
 
-            self.postMessage({ type: 'STATUS', message: `Executing UNet Denoising Loop (${steps} steps)...` });
+            // Structure conversational block matching text_to_image templates
+            const conversation = [
+                { role: "<|User|>", content: prompt }
+            ];
 
-            const output = await pipe(prompt, {
-                negative_prompt: negative_prompt || 'blurry, low quality, distorted',
-                num_inference_steps: parseInt(steps) || 8,
-                width: 256,
-                height: 256,
-                callback_on_step_end: (info) => {
-                    self.postMessage({ 
-                        type: 'PROGRESS', 
-                        step: info.step + 1, 
-                        total: info.num_inference_steps 
-                    });
-                }
+            self.postMessage({ type: 'STATUS', message: 'Tokenizing input matrix and assembling vision grid...' });
+            const inputs = await processor(conversation, { chat_template: "text_to_image" });
+
+            self.postMessage({ type: 'STATUS', message: 'Autoregressive Generation Loop executing (This will take a moment)...' });
+            
+            // Generate visual context tokens (Janus uses a specific fixed token length for a 384x384 frame)
+            const outputs = await model.generate({
+                ...inputs,
+                max_new_tokens: 576, 
+                do_sample: true,
+                temperature: 0.7
             });
 
-            // Extract native image generation result structure
-            const image = output.images[0];
+            self.postMessage({ type: 'STATUS', message: 'Rasterizing pixel output array...' });
+
+            // Decode the generation tokens into visual pixel frames
+            const generated_tokens = outputs.slice(null, [inputs.input_ids.dims.at(-1), null]);
+            const decodedImages = await processor.post_process_image_generation(generated_tokens);
             
-            self.postMessage({ type: 'SUCCESS', image: image });
+            // Extract the final native structural image object
+            const imageBlobData = decodedImages[0];
+
+            self.postMessage({ type: 'SUCCESS', image: imageBlobData });
 
         } catch (err) {
             self.postMessage({
