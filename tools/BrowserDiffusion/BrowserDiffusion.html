@@ -86,7 +86,7 @@
 
     <script type="module">
         // Spawns worker mirroring indexV.7.html architecture
-        const worker = new Worker(new URL('./diffusion-worker.js', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL(`./diffusion-worker.js?v=${Date.now()}`, import.meta.url), { type: 'module' });
 
         const elements = {
             prompt: document.getElementById('promptInput'),
