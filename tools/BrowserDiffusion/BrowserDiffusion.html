@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local Browser Multimodal Generation Studio 2</title>
+    <title>Local Unified Browser Image Studio</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 750px; margin: 40px auto; padding: 20px; background: #f9f9fb; color: #333; }
         h1 { margin-bottom: 5px; color: #111; }
@@ -18,9 +18,8 @@
         .progress-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; color: #555; }
         .progress-bar-bg { width: 100%; height: 10px; background: #eef0f2; border-radius: 5px; overflow: hidden; }
         .progress-bar-fill { width: 0%; height: 100%; background: #0070f3; transition: width 0.1s ease; }
-        #generationFill { background: #10b981; }
         .output-actions { display: none; margin-top: 25px; text-align: center; background: white; padding: 20px; border-radius: 8px; border: 1px solid #e1e1e6; }
-        .output-actions img { border-radius: 6px; background: #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 100%; height: auto; width: 384px; }
+        canvas { border-radius: 6px; background: #eee; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 100%; height: auto; }
         .download-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
         .dl-btn { background: #475569; padding: 10px 20px; text-decoration: none; color: white; border-radius: 6px; font-size: 14px; font-weight: bold; }
         .dl-btn:hover { background: #334155; }
@@ -28,38 +27,37 @@
 </head>
 <body>
 
-    <h1>Local Vision Studio</h1>
-    <p class="subtitle">Autoregressive local image generation using DeepSeek Janus-Pro & WebGPU</p>
+    <h1>Local Vision Studio 2</h1>
+    <p class="subtitle">Single-file client-side generation using standalone text embedding matrices via WebGPU</p>
 
-    <label for="promptInput">Generation Matrix Instruction</label>
-    <textarea id="promptInput" placeholder="A stunning beautiful cat sitting on a neon-lit futuristic cyberpunk desk, highly detailed..."></textarea>
+    <label for="promptInput">Prompt Vector Core</label>
+    <textarea id="promptInput" placeholder="Type a concept matrix descriptor here..."></textarea>
 
-    <button id="compileBtn">Compile & Render Image Matrix</button>
+    <button id="compileBtn">Compile & Render Canvas Matrix</button>
 
     <div class="status-container">
         <div class="progress-row">
             <div class="progress-label">
-                <span id="modelLabel">Model weights status: Waiting</span>
+                <span id="modelLabel">Model Engine Pipeline: Idle</span>
                 <span id="modelPercent">0%</span>
             </div>
             <div class="progress-bar-bg"><div id="modelFill" class="progress-bar-fill"></div></div>
         </div>
         <div class="progress-row">
             <div class="progress-label">
-                <span id="generationLabel">Processing Status: Idle</span>
+                <span id="generationLabel">Processing Framework: Idle</span>
             </div>
         </div>
     </div>
 
     <div class="output-actions" id="outputActions">
-        <img id="studioImage" src="" alt="Local AI Render" />
+        <canvas id="studioCanvas" width="256" height="256"></canvas>
         <div class="download-buttons">
-            <a id="downloadPng" class="dl-btn" href="#" download="janus_render.png">Download Output Image</a>
+            <a id="downloadPng" class="dl-btn" href="#" download="matrix_render.png">Download Output PNG</a>
         </div>
     </div>
 
     <script type="module">
-        // Inject cache-busting timestamp to ensure clean worker runtime updates
         const worker = new Worker(new URL(`./diffusion-worker.js?v=${Date.now()}`, import.meta.url), { type: 'module' });
 
         const elements = {
@@ -70,59 +68,59 @@
             modelPercent: document.getElementById('modelPercent'),
             genLabel: document.getElementById('generationLabel'),
             actions: document.getElementById('outputActions'),
-            img: document.getElementById('studioImage'),
+            canvas: document.getElementById('studioCanvas'),
             dlPng: document.getElementById('downloadPng')
         };
 
-        elements.prompt.value = "A gorgeous tiny dragon perched on a dynamic crystal geode, glowing runes, cinematic, hyper-detailed";
+        elements.prompt.value = "A neon synthwave horizon over digital vector grids";
 
         worker.onmessage = function(e) {
             const data = e.data;
 
             if (data.type === 'MODEL_PROGRESS') {
-                elements.modelLabel.innerText = `Downloading: ${data.file.substring(data.file.lastIndexOf('/') + 1)}`;
+                elements.modelLabel.innerText = `Streaming: ${data.file.substring(data.file.lastIndexOf('/') + 1)}`;
                 elements.modelFill.style.width = `${data.progress}%`;
                 elements.modelPercent.innerText = `${Math.round(data.progress)}%`;
             }
 
             if (data.type === 'STATUS') {
                 elements.genLabel.innerText = data.message;
-                if(data.message.includes("Ready")) {
-                    elements.modelLabel.innerText = "Model Engine Assets: Fully Initialized";
+                if(data.message.includes("Loaded")) {
+                    elements.modelLabel.innerText = "Model Infrastructure: 100% Active";
                     elements.modelFill.style.width = "100%";
                     elements.modelPercent.innerText = "100%";
                 }
             }
 
             if (data.type === 'SUCCESS') {
-                elements.genLabel.innerText = "Image Matrix Synthesized Successfully!";
+                elements.genLabel.innerText = "Matrix Vector Complete!";
                 elements.btn.disabled = false;
 
-                // Handle decoding the Raw returned image format directly into a displayable browser image
-                if (data.image) {
-                    const url = data.image.toCanvas().toDataURL('image/png');
-                    elements.img.src = url;
-                    elements.dlPng.href = url;
-                    elements.actions.style.display = "block";
-                }
+                const ctx = elements.canvas.getContext('2d');
+                const imgData = ctx.createImageData(data.result.width, data.result.height);
+                imgData.data.set(new Uint8ClampedArray(data.result.pixels));
+                
+                ctx.putImageData(imgData, 0, 0);
+                elements.dlPng.href = elements.canvas.toDataURL('image/png');
+                elements.actions.style.display = "block";
             }
 
             if (data.type === 'ERROR') {
-                alert("Runtime Exception: " + data.error);
+                alert("Runtime Failure: " + data.error);
                 elements.btn.disabled = false;
-                elements.genLabel.innerText = "Execution failed.";
+                elements.genLabel.innerText = "Execution halted.";
             }
         };
 
         elements.btn.addEventListener('click', () => {
             if (!elements.prompt.value.trim()) {
-                alert("Please input a text description model query.");
+                alert("Please add text data.");
                 return;
             }
 
             elements.btn.disabled = true;
             elements.actions.style.display = "none";
-            elements.genLabel.innerText = "Spinning up local WebGPU threads...";
+            elements.genLabel.innerText = "Allocating secure WebGPU memory maps...";
 
             worker.postMessage({
                 type: 'START_GENERATION',
