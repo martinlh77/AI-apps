@@ -88,6 +88,12 @@
         // Spawns worker mirroring indexV.7.html architecture
         const worker = new Worker('./diffusion-worker.js', { type: 'module' });
 
+// Force background worker bugs into the main console
+worker.onerror = function(error) {
+    console.error("CRITICAL BACKGROUND WORKER ERROR:", error.message, "at", error.filename, "line", error.lineno);
+    alert("Worker Boot Failure: Check your browser inspect console for the full hardware stack trace.");
+};
+
         const elements = {
             prompt: document.getElementById('promptInput'),
             negPrompt: document.getElementById('negPromptInput'),
