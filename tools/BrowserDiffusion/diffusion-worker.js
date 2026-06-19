@@ -1,7 +1,6 @@
 // diffusion-worker.js
 import { StableDiffusionPipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
 
-// Allow downloading pre-quantized web-optimized ONNX models
 env.allowLocalModels = false;
 
 let pipe = null;
@@ -11,21 +10,29 @@ self.onmessage = async function(e) {
 
     if (type === 'START_GENERATION') {
         try {
-            // Initialize pipeline directly using the explicit v3 Diffusion class
             if (!pipe) {
-                self.postMessage({ type: 'STATUS', message: 'Downloading & compiling Diffusion weights (WebGPU)...' });
+                self.postMessage({ type: 'STATUS', message: 'Requesting WebGPU device & downloading weights...' });
                 
-                pipe = await StableDiffusionPipeline.from_pretrained('Xenova/distil-diffusion-light', {
-                    device: 'webgpu', 
-                    dtype: 'fp32'     
-                });
+                // Explicitly catch compilation errors
+                try {
+                    pipe = await StableDiffusionPipeline.from_pretrained('Xenova/distil-diffusion-light', {
+                        device: 'webgpu' // Let the browser auto-negotiate optimal shader precision
+                    });
+                } catch (gpuError) {
+                    console.error("WebGPU Init Failed, trying CPU/Wasm fallback...", gpuError);
+                    self.postMessage({ type: 'STATUS', message: 'WebGPU failed. Falling back to CPU/Wasm mode (Slower)...' });
+                    
+                    // Fallback to standard WebAssembly if their graphics card rejects the WebGPU shaders
+                    pipe = await StableDiffusionPipeline.from_pretrained('Xenova/distil-diffusion-light', {
+                        device: 'wasm'
+                    });
+                }
                 
-                self.postMessage({ type: 'STATUS', message: 'Pipeline Compiled! Starting generation steps...' });
+                self.postMessage({ type: 'STATUS', message: 'Pipeline Compiled Successfully!' });
             }
 
             self.postMessage({ type: 'STATUS', message: `Executing UNet Denoising Loop (${steps} steps)...` });
 
-            // Run the explicit pipeline
             const output = await pipe(prompt, {
                 negative_prompt: negative_prompt || 'blurry, low quality, distorted',
                 num_inference_steps: parseInt(steps) || 8,
@@ -40,12 +47,12 @@ self.onmessage = async function(e) {
                 }
             });
 
-            // Extract raw pixel configuration
             const image = output.images[0];
-            
             self.postMessage({ type: 'SUCCESS', image: image });
 
         } catch (error) {
+            // Log to worker console AND send up to UI thread
+            console.error("WORKER RUNTIME EXCEPTION:", error);
             self.postMessage({ type: 'ERROR', error: error.message });
         }
     }
