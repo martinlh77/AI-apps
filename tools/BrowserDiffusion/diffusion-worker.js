@@ -1,5 +1,5 @@
 // diffusion-worker.js
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0';
+import { StableDiffusionPipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2';
 
 // Allow downloading pre-quantized web-optimized ONNX models
 env.allowLocalModels = false;
@@ -11,13 +11,13 @@ self.onmessage = async function(e) {
 
     if (type === 'START_GENERATION') {
         try {
-            // Initialize pipeline if it hasn't been loaded yet
+            // Initialize pipeline directly using the explicit v3 Diffusion class
             if (!pipe) {
                 self.postMessage({ type: 'STATUS', message: 'Downloading & compiling Diffusion weights (WebGPU)...' });
                 
-                pipe = await pipeline('text-to-image', 'Xenova/distil-diffusion-light', {
-                    device: 'webgpu', // Uses WebGPU directly on the client machine
-                    dtype: 'fp32'     // Ensures compatible precision across standard web-runtimes
+                pipe = await StableDiffusionPipeline.from_pretrained('Xenova/distil-diffusion-light', {
+                    device: 'webgpu', 
+                    dtype: 'fp32'     
                 });
                 
                 self.postMessage({ type: 'STATUS', message: 'Pipeline Compiled! Starting generation steps...' });
@@ -25,11 +25,11 @@ self.onmessage = async function(e) {
 
             self.postMessage({ type: 'STATUS', message: `Executing UNet Denoising Loop (${steps} steps)...` });
 
-            // Run the actual inference pipeline
+            // Run the explicit pipeline
             const output = await pipe(prompt, {
                 negative_prompt: negative_prompt || 'blurry, low quality, distorted',
                 num_inference_steps: parseInt(steps) || 8,
-                width: 256, // Fixed to light dimensions for responsive client-side speeds
+                width: 256, 
                 height: 256,
                 callback_on_step_end: (info) => {
                     self.postMessage({ 
@@ -40,10 +40,9 @@ self.onmessage = async function(e) {
                 }
             });
 
-            // The pipeline returns a raw canvas/image element or raw pixel data
+            // Extract raw pixel configuration
             const image = output.images[0];
             
-            // Send the raw data back to the main thread
             self.postMessage({ type: 'SUCCESS', image: image });
 
         } catch (error) {
