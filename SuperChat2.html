@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V4.4</title>
+    <title>Pollinations AI Chat (Media Enabled) V4.7</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -652,7 +652,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.4</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.7</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -722,14 +722,18 @@
 
         <div class="byop-info" id="byop-section">
             <div class="byop-header">
-                <h4><i class="fas fa-flower"></i> Bring Your Own Pollen (BYOP)</h4>
+                <h4><i class="fas fa-flower"></i> Bring Your Own Pollinations Account (BYOP)</h4>
                 <button class="byop-toggle" id="byop-toggle" title="Toggle BYOP Info">
                     <i class="fas fa-chevron-up"></i>
                 </button>
             </div>
             <div class="byop-content" id="byop-content">
-                <p>This app uses a shared API key by default. To access premium models (marked with 🔒), enter your own API key from <a href="https://enter.pollinations.ai" target="_blank">enter.pollinations.ai</a>.</p>
-                <p style="font-size: 0.8em; margin-top: 8px;">With your own key, you pay for your own usage and unlock premium models.</p>
+                <p>No API key is built into this application.</p>
+                <p>All Pollinations models require your own API key.</p>
+                <p>Enter your personal Pollinations API key to use any model.</p>
+                <p>Models marked as Paid Only do not use Quest Pollen and consume paid credits directly.</p>
+                <p>Community models are maintained by members of the Pollinations community.</p>
+                <p>Leave the field blank if you do not yet have a Pollinations API key.</p>
             </div>
         </div>
 
@@ -768,48 +772,7 @@
 
         <div class="settings-group">
             <label>Model</label>
-            <select id="model-select">
-                <option value="vendouple/kimi-k2.6">Cheap Kimi 2.6</option>
-                <option value="qwen-character">Qwen Character</option>
-                <option value="qwen-safety">Qwen3 Guard 8B</option>
-                <option value="nova-fast">Nova-Micro</option>
-                <option value="qwen-coder">Qwen 2.5 Coder💻</option>
-                <option value="gemini-fast">Gemini Fast👁️🔍</option>
-                <option value="mistral">Mistral</option>
-                <option value="openai">Openai👁️</option>
-                <option value="openai-fast">Openai-Fast👁️</option>
-                <option value="deepseek" class="paid-model-option" style="display: none;">Deepseek🧠 🔒</option>
-                <option value="perplexity-fast">Perplexity-Fast🔍</option>
-                <option value="gemini-search">Gemini-Search👁️🔍</option>
-                <option value="minimax">MiniMax M2.1💻</option>
-                <option value="openai-audio">OpenAI Audio 🎙️👁️👂🗣️(Voice)</option>
-                <option value="chickytutor">Chicky Tutor</option>
-                <option value="perplexity-reasoning">Perplexity-Reasoning🧠🔍</option>
-                <option value="kimi" selected>Moonshot Kimi K2.5👁️🧠</option>
-                <option value="glm">Z.ai GLM-4.7👁️💻</option>
-                <option value="openai-large">Openai-Large👁️💻</option>
-                <option value="claude-fast">Claude-Fast👁️</option>
-                <option value="nomnom">NomNom by Itachi🔍</option>
-                <option value="polly">Polly by Itachi 🤖</option>
-                <option value="gemini" class="paid-model-option" style="display: none;">Gemini🎙️👁️👂🔍💻 🔒</option>
-                <option value="claude" class="paid-model-option" style="display: none;">Claude👁️ 🔒</option>
-                <option value="grok" class="paid-model-option" style="display: none;">Grok 🔒</option>
-                <option value="gemini-large" class="paid-model-option" style="display: none;">Gemini-Large🎙️👁️👂🧠💻🔍 🔒</option>
-                <option value="claude-large" class="paid-model-option" style="display: none;">Claude-Large👁️💻 🔒</option>
-                <option value="claude-opus-4.7" class="paid-model-option" style="display: none;">Claude Opus 4.7👁️💻 🔒</option>
-                <option value="deepseek-pro" class="paid-model-option" style="display: none;">DeepSeek V4 Pro🧠💻 🔒</option>
-                <option value="gemini-flash-lite-3.1" class="paid-model-option" style="display: none;">Gemini 3.1 Flash Lite👁️🔍 🔒</option>
-                <option value="grok-large" class="paid-model-option" style="display: none;">Grok 4.20 Reasoning🧠 🔒</option>
-                <option value="midijourney-large" class="paid-model-option" style="display: none;">MIDIjourney Large🎵 🔒</option>
-                <option value="kimi-k2.6">Moonshot Kimi K2.6👁️🧠</option>
-                <option value="midijourney">MIDIjourney🎵</option>
-                <option value="mistral-large">Mistral Large 3👁️</option>
-                <option value="nova">Nova 2 Lite🧠</option>
-                <option value="openai-audio-large">OpenAI Audio Large🎙️👁️👂🗣️</option>
-                <option value="qwen-coder-large">Qwen3 Coder Next💻</option>
-                <option value="qwen-large">Qwen3.6 Plus👁️🧠</option>
-                <option value="qwen-vision">Qwen3 VL 30B Thinking👁️🧠</option>
-            </select>
+            <select id="model-select"></select>
         </div>
 
         <hr>
@@ -988,21 +951,7 @@
     </div>
 
 <script>
-    const USER_API_TOKEN = "pk_OIQlw5rh71ylmlqV";
     const API_URL = "https://gen.pollinations.ai/v1/chat/completions";
-
-    const PAID_ONLY_MODELS = [
-        "claude",
-        "grok",
-        "gemini-large",
-        "gemini-legacy",
-        "claude-large",
-        "deepseek",
-        "deepseek-pro",
-        "claude-opus-4.7",
-        "gemini-flash-lite-3.1",
-        "midijourney-large"
-    ];
 
     const KOKORO_SINGLE_PASS_THRESHOLD = 450;
     const KOKORO_HARD_CHUNK_TARGET = 350;
@@ -1111,42 +1060,105 @@ When generating Python (which is rare):
     const dragOverlay = document.getElementById('drag-overlay');
 
     function hasUserProvidedOwnKey() {
-        const currentToken = tokenInput.value.trim();
-        return currentToken && currentToken !== USER_API_TOKEN;
+        return tokenInput.value.trim().length > 0;
+    }
+
+    async function loadModels() {
+        try {
+            const response = await fetch("https://gen.pollinations.ai/text/models");
+            if (!response.ok) {
+                throw new Error("HTTP error " + response.status);
+            }
+            const models = await response.json();
+            
+            const officialModels = [];
+            const communityModels = [];
+            
+            models.forEach(model => {
+                if (model.name.includes("/")) {
+                    communityModels.push(model);
+                } else {
+                    officialModels.push(model);
+                }
+            });
+            
+            officialModels.sort((a, b) => a.name.localeCompare(b.name));
+            communityModels.sort((a, b) => a.name.localeCompare(b.name));
+            
+            const modelSelect = document.getElementById('model-select');
+            modelSelect.innerHTML = '';
+            modelSelect.disabled = false;
+            
+            if (officialModels.length > 0) {
+                const officialGroup = document.createElement('optgroup');
+                officialGroup.label = "Official Models";
+                officialModels.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.name;
+                    
+                    let priceText = model.price ? ("$" + model.price) : "Unknown";
+                    let display = model.name + " " + priceText;
+                    if (model.paid_only === true) {
+                        display += " (Paid Only)";
+                    }
+                    option.textContent = display;
+                    officialGroup.appendChild(option);
+                });
+                modelSelect.appendChild(officialGroup);
+            }
+            
+            if (communityModels.length > 0) {
+                const communityGroup = document.createElement('optgroup');
+                communityGroup.label = "Community Models";
+                communityModels.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.name;
+                    
+                    let priceText = model.price ? ("$" + model.price) : "Unknown";
+                    let display = model.name + " " + priceText;
+                    if (model.paid_only === true) {
+                        display += " (Paid Only)";
+                    }
+                    option.textContent = display;
+                    communityGroup.appendChild(option);
+                });
+                modelSelect.appendChild(communityGroup);
+            }
+            
+            const savedModel = localStorage.getItem("selectedModel");
+            let modelExists = false;
+            for (let i = 0; i < modelSelect.options.length; i++) {
+                if (modelSelect.options[i].value === savedModel) {
+                    modelExists = true;
+                    break;
+                }
+            }
+            
+            if (modelExists) {
+                modelSelect.value = savedModel;
+            } else if (officialModels.length > 0) {
+                modelSelect.value = officialModels[0].name;
+            } else if (communityModels.length > 0) {
+                modelSelect.value = communityModels[0].name;
+            }
+            
+        } catch (error) {
+            console.error("Failed to load models:", error);
+            const modelSelect = document.getElementById('model-select');
+            modelSelect.innerHTML = '';
+            const option = document.createElement('option');
+            option.textContent = "Unable to load models";
+            modelSelect.appendChild(option);
+            modelSelect.disabled = true;
+        }
     }
 
     function updatePaidModelOptions() {
-        const hasKey = hasUserProvidedOwnKey();
-        const paidOptions = document.querySelectorAll('.paid-model-option');
-
-        paidOptions.forEach(option => {
-            option.style.display = hasKey ? 'block' : 'none';
-        });
-
-        const selects = [
-            document.getElementById('model-select')
-        ];
-
-        selects.forEach(select => {
-            if (!select) return;
-            const currentValue = select.value;
-            if (PAID_ONLY_MODELS.includes(currentValue) && !hasKey) {
-                for (let i = 0; i < select.options.length; i++) {
-                    if (!PAID_ONLY_MODELS.includes(select.options[i].value)) {
-                        select.selectedIndex = i;
-                        break;
-                    }
-                }
-                showNotification('Switched to free model - premium models require your own API key');
-            }
-        });
     }
 
     const savedToken = localStorage.getItem('userApiToken');
     if (savedToken) {
         tokenInput.value = savedToken;
-    } else if (USER_API_TOKEN) {
-        tokenInput.value = USER_API_TOKEN;
     }
 
     updatePaidModelOptions();
@@ -2567,19 +2579,10 @@ When generating Python (which is rare):
 
         let finalMessages = [systemMsg, ...messagesPayload];
 
-        const token = tokenInput.value || USER_API_TOKEN;
-        if (!token) {
-            showNotification("Please enter your API Token in settings.");
-            return;
-        }
+        const token = tokenInput.value;
 
         const modelSelect = document.getElementById('model-select');
         let model = modelSelect.value;
-
-        if (PAID_ONLY_MODELS.includes(model) && !hasUserProvidedOwnKey()) {
-            showNotification("🔒 Premium models require your own API key. Enter your key in settings.");
-            return;
-        }
 
         const isBedrockModel = model === 'qwen-character' || model === 'qwen-safety' || model === 'polly';
         const useStreaming = !isBedrockModel;
@@ -2634,245 +2637,197 @@ When generating Python (which is rare):
 
         initAutoSpeakState(aiContentId);
 
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: headers,
                 body: JSON.stringify(requestBody),
                 signal: abortController.signal
             });
 
             if (!response.ok) {
-                let errorMsg = response.statusText || `Status ${response.status}`;
-                try {
-                    const errorObj = await response.json();
-                    if (errorObj.error && errorObj.error.message) {
-                        errorMsg = errorObj.error.message;
-                    }
-                } catch (e) {}
-                throw new Error(errorMsg);
+                const errText = await response.text();
+                throw new Error(`Server returned ${response.status}: ${errText || response.statusText}`);
             }
 
-            if (isBedrockModel) {
+            if (!useStreaming) {
                 const data = await response.json();
-                accumulatedText = data.choices[0].message.content;
+                const reply = data.choices?.[0]?.message?.content || "";
+                accumulatedText = reply;
+                aiContentDiv.innerHTML = marked.parse(accumulatedText);
+                const rawDiv = document.getElementById(`raw-${aiMsgId}`);
+                if (rawDiv) rawDiv.innerText = accumulatedText;
 
-                if (aiContentDiv) {
-                    aiContentDiv.innerHTML = marked.parse(accumulatedText);
-                }
-
-                const rawEl = document.getElementById(`raw-${aiContentId}`);
-                if (rawEl) rawEl.textContent = accumulatedText;
+                renderMathInElement(aiContentDiv, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
 
                 conversationHistory.push({ role: 'assistant', content: accumulatedText });
+                saveConversationToStorage();
+                finalizeAutoSpeak(accumulatedText, aiContentId);
+                finishGeneration();
+                return;
+            }
 
-                if (document.getElementById('audio-autoplay-stream')?.checked && accumulatedText.trim()) {
-                    try {
-                        const single = await synthesizeKokoro(accumulatedText);
-                        const blob = new Blob([single.audioBuffer], { type: 'audio/wav' });
-                        const url = URL.createObjectURL(blob);
-                        enqueueAudioChunk({ blob, url });
-                    } catch (e) {
-                        console.error('Auto-play failed:', e);
-                    }
-                }
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let buffer = "";
 
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
 
-            } else {
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop();
 
-                let buffer = '';
-                let firstChunk = true;
+                for (const line of lines) {
+                    const cleanedLine = line.trim();
+                    if (!cleanedLine) continue;
+                    if (cleanedLine === "data: [DONE]") break;
 
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
+                    if (cleanedLine.startsWith("data: ")) {
+                        try {
+                            const jsonStr = cleanedLine.slice(6);
+                            if (jsonStr.trim() === "[DONE]") break;
+                            const parsed = JSON.parse(jsonStr);
+                            const chunk = parsed.choices?.[0]?.delta?.content || "";
+                            if (chunk) {
+                                accumulatedText += chunk;
+                                aiContentDiv.innerHTML = marked.parse(accumulatedText);
+                                const rawDiv = document.getElementById(`raw-${aiMsgId}`);
+                                if (rawDiv) rawDiv.innerText = accumulatedText;
 
-                    const chunk = decoder.decode(value, { stream: true });
-                    buffer += chunk;
-
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop();
-
-                    for (const line of lines) {
-                        const trimmedLine = line.trim();
-                        if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
-                            if (firstChunk) {
-                                aiContentDiv.innerHTML = '';
-                                firstChunk = false;
+                                maybeAutoSpeakChunk(accumulatedText, aiContentId);
                             }
-                            try {
-                                const json = JSON.parse(trimmedLine.substring(6));
-                                const delta = json.choices[0].delta;
-
-                                if (delta.content) {
-                                    accumulatedText += delta.content;
-                                    aiContentDiv.innerHTML = marked.parse(accumulatedText);
-
-                                    const rawEl = document.getElementById(`raw-${aiContentId}`);
-                                    if (rawEl) rawEl.textContent = accumulatedText;
-
-                                    chatContainer.scrollTop = chatContainer.scrollHeight;
-
-                                    maybeAutoSpeakChunk(accumulatedText, aiContentId);
-
-                                    if (previewPanel.classList.contains('open')) {
-                                        const messageWrapper = aiContentDiv.closest('.message-wrapper.ai');
-                                        if (messageWrapper) {
-                                            extractAllCodeFromMessage(messageWrapper);
-                                            updatePreview();
-                                        }
-                                    }
-                                }
-
-                            } catch (e) {
-                                console.error("Error parsing stream line", e);
-                            }
+                        } catch (e) {
+                            console.warn("Error parsing chunk", e, cleanedLine);
                         }
                     }
                 }
-
-                await finalizeAutoSpeak(accumulatedText, aiContentId);
-
-                conversationHistory.push({ role: 'assistant', content: accumulatedText });
-
-                if (typeof renderMathInElement !== 'undefined') {
-                    const aiWrapper = document.getElementById(aiMsgId);
-                    if (aiWrapper) {
-                        renderMathInElement(aiWrapper, {
-                            delimiters: [
-                                {left: '$$', right: '$$', display: true},
-                                {left: '$', right: '$', display: false}
-                            ],
-                            throwOnError: false,
-                            strict: false
-                        });
-                    }
-                }
             }
+
+            if (buffer.trim().startsWith("data: ")) {
+                 try {
+                     const jsonStr = buffer.trim().slice(6);
+                     if (jsonStr.trim() !== "[DONE]") {
+                         const parsed = JSON.parse(jsonStr);
+                         const chunk = parsed.choices?.[0]?.delta?.content || "";
+                         if (chunk) {
+                             accumulatedText += chunk;
+                             aiContentDiv.innerHTML = marked.parse(accumulatedText);
+                             const rawDiv = document.getElementById(`raw-${aiMsgId}`);
+                             if (rawDiv) rawDiv.innerText = accumulatedText;
+                         }
+                     }
+                 } catch(e){}
+            }
+
+            aiContentDiv.innerHTML = marked.parse(accumulatedText);
+            const finalRawDiv = document.getElementById(`raw-${aiMsgId}`);
+            if (finalRawDiv) finalRawDiv.innerText = accumulatedText;
+
+            renderMathInElement(aiContentDiv, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+
+            conversationHistory.push({ role: 'assistant', content: accumulatedText });
+            saveConversationToStorage();
+            finalizeAutoSpeak(accumulatedText, aiContentId);
 
         } catch (error) {
-            console.error("Send message error:", error);
-            if (aiContentDiv) {
-                if (error.name === 'AbortError') {
-                    aiContentDiv.innerHTML += `<br><span style="color:orange">[Stopped by user]</span>`;
-                } else {
-                    if (aiContentDiv.innerHTML.includes('fa-spinner')) {
-                        aiContentDiv.innerHTML = '';
-                    }
-                    aiContentDiv.innerHTML += `<div style="color:red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin-top: 5px;"><strong>Error:</strong> ${error.message}</div>`;
-                }
+            if (error.name === 'AbortError') {
+                console.log('Fetch aborted');
+            } else {
+                console.error(error);
+                aiContentDiv.innerHTML += `<br><span style="color:red;">Error: ${error.message}</span>`;
             }
         } finally {
-            isGenerating = false;
-            sendBtn.style.display = 'inline-block';
-            stopBtn.style.display = 'none';
-            abortController = null;
-
-            try {
-                saveConversationToStorage();
-            } catch (e) {
-                console.error("Failed to save conversation:", e);
-                showNotification("Warning: Could not save to storage");
-            }
+            finishGeneration();
         }
     }
 
-    function appendMessage(role, text, files = []) {
+    function finishGeneration() {
+        isGenerating = false;
+        sendBtn.style.display = 'inline-block';
+        stopBtn.style.display = 'none';
+        abortController = null;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function appendMessage(sender, text, files) {
         const wrapper = document.createElement('div');
-        wrapper.className = `message-wrapper ${role}`;
+        wrapper.className = `message-wrapper ${sender}`;
 
-        const sender = role === 'user' ? 'You' : 'AI';
-        const msgId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-
-        let fileHtml = '';
-        if (files.length > 0) {
+        let filesHtml = '';
+        if (files && files.length > 0) {
             files.forEach(f => {
                 if (f.type === 'image') {
-                    fileHtml += `<img src="${f.content}" class="chat-image" alt="${f.name}" onclick="window.open('${f.content}', '_blank')">`;
+                    filesHtml += `<img src="${f.content}" class="chat-image" alt="Uploaded image">`;
+                } else if (f.type === 'audio') {
+                    filesHtml += `<div class="file-attachment"><i class="fas fa-music"></i> Audio: ${f.name}</div>
+                    <audio controls src="${f.content}" class="chat-video"></audio>`;
                 } else {
-                    fileHtml += `<div class="code-container"><div class="code-header">File: ${f.name}</div><pre>${f.type === 'text' ? escapeHtml((f.content || '').substring(0, 100)) + '...' : '[Binary Data]'}</pre></div>`;
+                    filesHtml += `<div class="file-attachment"><i class="fas fa-file-alt"></i> ${f.name} (${f.content.length} chars)</div>`;
                 }
             });
         }
 
-        let displayContent;
-        if (role === 'ai') {
-            displayContent = marked.parse(text || '');
-        } else {
-            displayContent = `<div style="white-space: pre-wrap;">${escapeHtml(text || '')}</div>`;
-        }
-
-        const showAudioButton = document.getElementById('audio-enable')?.checked;
-        let audioButtonHtml = '';
-        if (showAudioButton) {
-            audioButtonHtml = `
-                <button id="audio-btn-${msgId}" class="audio-btn" style="margin-top:8px; display:none;">
-                    <i class="fas fa-volume-up"></i> Generate Audio
-                </button>
-            `;
-        }
+        const msgId = 'msg-' + Date.now();
 
         wrapper.innerHTML = `
             <div class="message-sender">
-                ${sender}
+                ${sender === 'user' ? 'You' : 'AI'}
                 <span class="copy-msg-btn message-action-btn" onclick="copyMessage(this, '${msgId}')"><i class="fas fa-copy"></i></span>
-                ${showAudioButton ? `<span class="message-action-btn" onclick="speakMessageById('${msgId}')"><i class="fas fa-volume-up"></i></span>` : ''}
+                ${document.getElementById('audio-enable')?.checked ? `<span class="message-action-btn" onclick="speakMessageById('${msgId}')"><i class="fas fa-volume-up"></i></span>` : ''}
             </div>
             <div class="message-bubble">
-                <div id="${msgId}">${displayContent}</div>
-                <div id="raw-${msgId}" style="display:none;">${escapeHtml(text || '')}</div>
-                ${fileHtml}
-                ${audioButtonHtml}
+                <div id="${msgId}">${escapeHtml(text).replace(/\n/g, '<br>')}</div>
+                <div id="raw-${msgId}" style="display:none;">${escapeHtml(text)}</div>
+                ${filesHtml}
                 <div id="audio-container-${msgId}"></div>
             </div>
         `;
 
         chatContainer.appendChild(wrapper);
         chatContainer.scrollTop = chatContainer.scrollHeight;
-
-        if (role === 'ai' && typeof renderMathInElement !== 'undefined') {
-            setTimeout(() => {
-                renderMathInElement(wrapper, {
-                    delimiters: [
-                        {left: '$$', right: '$$', display: true},
-                        {left: '$', right: '$', display: false}
-                    ],
-                    throwOnError: false,
-                    strict: false
-                });
-            }, 50);
-        }
     }
 
-    function appendPlaceholder(role, id, contentId) {
+    function appendPlaceholder(sender, wrapperId, contentId) {
         const wrapper = document.createElement('div');
-        wrapper.className = `message-wrapper ${role}`;
-        wrapper.id = id;
-
-        const showAudioButton = document.getElementById('audio-enable')?.checked;
-        const audioButtonHtml = showAudioButton ? `
-            <button id="audio-btn-${contentId}" class="audio-btn" style="margin-top:8px; display:none;">
-                <i class="fas fa-volume-up"></i> Generate Audio
-            </button>
-            <div id="audio-container-${contentId}"></div>
-        ` : `<div id="audio-container-${contentId}"></div>`;
+        wrapper.className = `message-wrapper ${sender}`;
+        wrapper.id = wrapperId;
 
         wrapper.innerHTML = `
             <div class="message-sender">
-                AI
+                ${sender === 'user' ? 'You' : 'AI'}
                 <span class="copy-msg-btn message-action-btn" onclick="copyMessage(this, '${contentId}')"><i class="fas fa-copy"></i></span>
-                ${showAudioButton ? `<span class="message-action-btn" onclick="speakMessageById('${contentId}')"><i class="fas fa-volume-up"></i></span>` : ''}
+                ${document.getElementById('audio-enable')?.checked ? `<span class="message-action-btn" onclick="speakMessageById('${contentId}')"><i class="fas fa-volume-up"></i></span>` : ''}
+                <span class="message-action-btn" title="Regenerate this response with a new seed" onclick="regenerateMessage('${wrapperId}')"><i class="fas fa-sync-alt"></i></span>
             </div>
             <div class="message-bubble">
                 <div id="${contentId}"><i class="fas fa-spinner fa-spin"></i> Thinking...</div>
                 <div id="raw-${contentId}" style="display:none;"></div>
-                ${audioButtonHtml}
+                <div id="audio-container-${contentId}"></div>
             </div>
         `;
 
@@ -2880,500 +2835,511 @@ When generating Python (which is rare):
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    function resetChat() {
-        conversationHistory = [];
-        chatContainer.innerHTML = `
-            <div class="message-wrapper ai">
-                <div class="message-sender">System</div>
-                <div class="message-bubble">Chat history cleared. Start a new conversation!</div>
-            </div>
-        `;
-        showNotification("Chat history cleared!");
-        saveConversationToStorage();
-    }
+    window.regenerateMessage = function(wrapperId) {
+        if (isGenerating) return;
 
-    function fullReset() {
-        conversationHistory = [];
-        uploadedFiles = [];
-        isGenerating = false;
-        currentPreviewCode = { html: '', css: '', js: '' };
-        ttsGenerationQueue = [];
-        isProcessingTtsQueue = false;
-        activeTtsMessageIds.clear();
-        ttsPaused = false;
-        currentTtsJob = null;
+        const wrapper = document.getElementById(wrapperId);
+        if (!wrapper) return;
 
-        chatContainer.innerHTML = `
-            <div class="message-wrapper ai">
-                <div class="message-sender">System</div>
-                <div class="message-bubble">Full reset complete. Welcome back!</div>
-            </div>
-        `;
-        userInput.value = '';
-        userInput.style.height = '44px';
-        filePreview.innerHTML = '';
-        if (USER_API_TOKEN) {
-            tokenInput.value = USER_API_TOKEN;
+        let previousUserContext = [];
+        const wrappers = Array.from(chatContainer.querySelectorAll('.message-wrapper'));
+        const targetIndex = wrappers.indexOf(wrapper);
+
+        if (targetIndex === -1) return;
+
+        let userMsgCount = 0;
+        for (let i = 0; i <= targetIndex; i++) {
+             const w = wrappers[i];
+             if (w.classList.contains('user')) {
+                 if (w.id && w.id.startsWith('python-output-')) {
+                     continue;
+                 }
+                 userMsgCount++;
+             }
         }
-        previewPanel.classList.remove('open');
-        showNotification("Full reset completed!");
-        localStorage.removeItem('chatSessions');
-        localStorage.removeItem('currentSessionId');
-        sessions = {};
-        currentSessionId = null;
-        createNewSession();
+
+        let currentCount = 0;
+        for (let i = 0; i < conversationHistory.length; i++) {
+            if (conversationHistory[i].role === 'user') {
+                currentCount++;
+                if (currentCount === userMsgCount) {
+                    previousUserContext = conversationHistory.slice(0, i + 1);
+                    break;
+                }
+            }
+        }
+
+        if (previousUserContext.length === 0) {
+            showNotification("Could not find matching conversation context history to regenerate.");
+            return;
+        }
+
+        while (chatContainer.childNodes.length > targetIndex) {
+            chatContainer.removeChild(chatContainer.lastChild);
+        }
+
+        conversationHistory = [...previousUserContext];
+
+        const aiMsgId = 'ai-msg-' + Date.now();
+        const aiContentId = 'ai-content-' + aiMsgId;
+        appendPlaceholder('ai', aiMsgId, aiContentId);
+
+        const newSeed = Math.floor(Math.random() * 10000);
+        sendMessage(newSeed, previousUserContext);
+    };
+
+    function showNotification(text) {
+        notification.innerText = text;
+        notification.classList.add('show');
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
     }
 
-    function createNewSession() {
-        const timestamp = new Date().toISOString();
-        const title = `Session ${Object.keys(sessions).length + 1} - ${formatDateTime(timestamp)}`;
+    function saveConversationToStorage() {
+        if (!currentSessionId) {
+            currentSessionId = 'session-' + Date.now();
+        }
 
-        const sessionId = 'session_' + Date.now();
-        sessions[sessionId] = {
-            id: sessionId,
+        let title = "New Chat";
+        const firstUserMsg = conversationHistory.find(m => m.role === 'user');
+        if (firstUserMsg) {
+            if (Array.isArray(firstUserMsg.content)) {
+                const txtPart = firstUserMsg.content.find(p => p.type === 'text');
+                title = txtPart ? txtPart.text.slice(0, 30) : "Media Chat";
+            } else {
+                title = firstUserMsg.content.slice(0, 30);
+            }
+            if (title.length >= 30) title += "...";
+        }
+
+        const modelSelect = document.getElementById('model-select');
+
+        sessions[currentSessionId] = {
+            id: currentSessionId,
             title: title,
-            timestamp: timestamp,
-            conversation: []
+            history: conversationHistory,
+            updatedAt: Date.now(),
+            systemMessage: document.getElementById('system-message').value,
+            preset: document.getElementById('system-preset-select').value,
+            model: modelSelect ? modelSelect.value : 'kimi',
+            emotion: document.getElementById('voice-style').value
         };
 
-        currentSessionId = sessionId;
-        conversationHistory = [];
+        localStorage.setItem('chat_sessions_v4', JSON.stringify(sessions));
+        localStorage.setItem('current_session_id_v4', currentSessionId);
 
-        chatContainer.innerHTML = `
-            <div class="message-wrapper ai">
-                <div class="message-sender">System</div>
-                <div class="message-bubble">New session created: ${title}</div>
-            </div>
-        `;
-
-        saveAllDataToStorage();
-        loadSessionsToList();
-        showNotification("New session created!");
-        sessionPanel.classList.remove('open');
+        renderSessionsList();
     }
 
-    function loadSessionsToList() {
-        sessionList.innerHTML = '';
-
-        const sortedSessions = Object.values(sessions).sort((a, b) =>
-            new Date(b.timestamp) - new Date(a.timestamp)
-        );
-
-        sortedSessions.forEach(session => {
-            const sessionItem = document.createElement('div');
-            sessionItem.className = `session-item ${currentSessionId === session.id ? 'active' : ''}`;
-            sessionItem.dataset.sessionId = session.id;
-
-            if (!session.title) {
-                session.title = `Session ${session.id.split('_')[1]} - ${formatDateTime(session.timestamp)}`;
+    function loadSessionsFromStorage() {
+        const stored = localStorage.getItem('chat_sessions_v4');
+        if (stored) {
+            try {
+                sessions = JSON.parse(stored);
+            } catch(e) {
+                sessions = {};
             }
+        }
+        currentSessionId = localStorage.getItem('current_session_id_v4');
 
-            sessionItem.innerHTML = `
-                <div class="session-title" id="session-title-${session.id}">${session.title}</div>
-                <div class="session-meta">${formatDateTime(session.timestamp)}</div>
+        renderSessionsList();
+
+        if (currentSessionId && sessions[currentSessionId]) {
+            loadSession(currentSessionId);
+        } else {
+            createNewSession(false);
+        }
+    }
+
+    function renderSessionsList() {
+        sessionList.innerHTML = '';
+        const sorted = Object.values(sessions).sort((a,b) => b.updatedAt - a.updatedAt);
+
+        if (sorted.length === 0) {
+            sessionList.innerHTML = '<div style="opacity:0.6; text-align:center; padding:20px;">No saved sessions</div>';
+            return;
+        }
+
+        sorted.forEach(s => {
+            const item = document.createElement('div');
+            item.className = `session-item ${s.id === currentSessionId ? 'active' : ''}`;
+            item.onclick = () => loadSession(s.id);
+
+            const dateStr = new Date(s.id.split('-')[1] ? parseInt(s.id.split('-')[1]) : s.updatedAt).toLocaleDateString();
+
+            item.innerHTML = `
+                <div class="session-title">${escapeHtml(s.title || 'Untitled Session')}</div>
+                <div class="session-meta">
+                    <span>${dateStr}</span> &bull; <span>${s.history ? s.history.filter(m=>m.role==='user').length : 0} messages</span>
+                </div>
                 <div class="session-actions">
-                    <button class="session-action-btn rename" data-session-id="${session.id}"><i class="fas fa-edit"></i></button>
-                    <button class="session-action-btn delete" data-session-id="${session.id}"><i class="fas fa-trash"></i></button>
+                    <button class="session-action-btn delete" onclick="deleteSession(event, '${s.id}')" title="Delete Session"><i class="fas fa-trash"></i></button>
                 </div>
             `;
-
-            sessionItem.addEventListener('click', function(e) {
-                if (!e.target.closest('.session-action-btn')) {
-                    loadSession(session.id);
-                }
-            });
-
-            sessionList.appendChild(sessionItem);
-        });
-
-        document.querySelectorAll('.session-action-btn.rename').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const sessionId = btn.dataset.sessionId;
-                renameSession(sessionId);
-            });
-        });
-
-        document.querySelectorAll('.session-action-btn.delete').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const sessionId = btn.dataset.sessionId;
-                deleteSession(sessionId);
-            });
+            sessionList.appendChild(item);
         });
     }
 
-    function loadSession(sessionId) {
-        if (!sessions[sessionId]) return;
+    window.deleteSession = function(e, id) {
+        e.stopPropagation();
+        if (confirm('Delete this session permanently?')) {
+            delete sessions[id];
+            localStorage.setItem('chat_sessions_v4', JSON.stringify(sessions));
 
-        currentSessionId = sessionId;
-        conversationHistory = sessions[sessionId].conversation || [];
+            if (currentSessionId === id) {
+                currentSessionId = null;
+                localStorage.removeItem('current_session_id_v4');
+                const remaining = Object.keys(sessions);
+                if (remaining.length > 0) {
+                    loadSession(remaining[0]);
+                } else {
+                    createNewSession();
+                }
+            } else {
+                renderSessionsList();
+            }
+            showNotification('Session deleted');
+        }
+    };
 
-        loadSessionsToList();
+    function loadSession(id) {
+        if (isGenerating) {
+            showNotification("Cannot switch sessions while generation is active.");
+            return;
+        }
+
+        cancelQueuedTtsJobs(true);
+
+        currentSessionId = id;
+        localStorage.setItem('current_session_id_v4', id);
+
+        const s = sessions[id];
+        conversationHistory = s.history || [];
+
+        document.getElementById('system-message').value = s.systemMessage || '';
+        document.getElementById('system-preset-select').value = s.preset || 'custom';
+        document.getElementById('voice-style').value = s.emotion || 'snarky';
+
+        const modelSelect = document.getElementById('model-select');
+        if (modelSelect && s.model) {
+            let optionExists = false;
+            for (let i = 0; i < modelSelect.options.length; i++) {
+                if (modelSelect.options[i].value === s.model) {
+                    optionExists = true;
+                    break;
+                }
+            }
+            if (optionExists) {
+                modelSelect.value = s.model;
+            }
+        }
+
         chatContainer.innerHTML = '';
 
         if (conversationHistory.length === 0) {
             chatContainer.innerHTML = `
                 <div class="message-wrapper ai">
                     <div class="message-sender">System</div>
-                    <div class="message-bubble">Loaded session: ${sessions[sessionId].title}</div>
+                    <div class="message-bubble">Session loaded. Ready to chat!</div>
                 </div>
             `;
         } else {
-            conversationHistory.forEach(msg => {
-                if (msg.role === 'user') {
-                    let textContent = '';
-                    if (Array.isArray(msg.content)) {
-                        msg.content.forEach(item => {
-                            if (item.type === 'text') {
-                                textContent += item.text + '\n';
-                            }
-                        });
-                        textContent = textContent.trim();
-                    } else {
-                        textContent = msg.content;
-                    }
-                    appendMessage('user', textContent);
-                } else if (msg.role === 'assistant') {
-                    appendMessage('ai', msg.content);
-                }
-            });
+            rebuildChatUIFromHistory();
         }
 
-        showNotification(`Loaded session: ${sessions[sessionId].title}`);
-        saveAllDataToStorage();
+        renderSessionsList();
         sessionPanel.classList.remove('open');
+        showNotification(`Loaded session: ${s.title}`);
     }
 
-    function renameSession(sessionId) {
-        const session = sessions[sessionId];
-        if (!session) return;
+    function rebuildChatUIFromHistory() {
+        conversationHistory.forEach((msg, index) => {
+            if (msg.role === 'system') return;
 
-        const newTitle = prompt("Enter new title for session:", session.title);
-        if (newTitle !== null && newTitle.trim() !== "") {
-            session.title = newTitle.trim();
-            saveAllDataToStorage();
-            loadSessionsToList();
-            showNotification("Session renamed!");
-        }
-    }
+            const wrapper = document.createElement('div');
+            wrapper.className = `message-wrapper ${msg.role}`;
 
-    function deleteSession(sessionId) {
-        if (!sessions[sessionId]) return;
+            const aiMsgId = 'ai-msg-' + index + '-' + Date.now();
+            const contentId = 'ai-content-' + aiMsgId;
 
-        if (confirm(`Are you sure you want to delete "${sessions[sessionId].title}"?`)) {
-            delete sessions[sessionId];
-            if (currentSessionId === sessionId) {
-                if (Object.keys(sessions).length > 0) {
-                    const firstSessionId = Object.keys(sessions)[0];
-                    loadSession(firstSessionId);
-                } else {
-                    createNewSession();
-                }
-            }
-            saveAllDataToStorage();
-            loadSessionsToList();
-            showNotification("Session deleted!");
-        }
-    }
+            let finalHtml = '';
+            let rawText = '';
 
-    function formatDateTime(isoString) {
-        const date = new Date(isoString);
-        return date.toLocaleString();
-    }
-
-    function saveAllDataToStorage() {
-        const dataToSave = {
-            sessions: sessions,
-            currentSessionId: currentSessionId,
-            timestamp: Date.now()
-        };
-        localStorage.setItem('chatSessions', JSON.stringify(dataToSave));
-    }
-
-    function loadAllDataFromStorage() {
-        const savedData = localStorage.getItem('chatSessions');
-        if (savedData) {
-            try {
-                const parsedData = JSON.parse(savedData);
-                sessions = parsedData.sessions || {};
-                currentSessionId = parsedData.currentSessionId || null;
-
-                if (!currentSessionId || !sessions[currentSessionId]) {
-                    if (Object.keys(sessions).length > 0) {
-                        currentSessionId = Object.keys(sessions)[0];
-                    } else {
-                        createNewSession();
-                        return;
+            if (Array.isArray(msg.content)) {
+                msg.content.forEach(part => {
+                    if (part.type === 'text') {
+                        rawText += part.text + '\n';
+                    } else if (part.type === 'image_url') {
+                        finalHtml += `<img src="${part.image_url.url}" class="chat-image" alt="Vision input context">`;
                     }
-                }
-
-                loadSession(currentSessionId);
-            } catch (e) {
-                console.error("Failed to parse saved data:", e);
-                sessions = {};
-                currentSessionId = null;
-                createNewSession();
-            }
-        } else {
-            createNewSession();
-        }
-
-        loadSessionsToList();
-    }
-
-    function saveConversationToStorage() {
-        if (currentSessionId && sessions[currentSessionId]) {
-            sessions[currentSessionId].conversation = conversationHistory;
-            saveAllDataToStorage();
-        }
-    }
-
-    function showNotification(message) {
-        notification.textContent = message;
-        notification.classList.add('show');
-        setTimeout(function() {
-            notification.classList.remove('show');
-        }, 3000);
-    }
-
-    document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'P') {
-            e.preventDefault();
-            if (previewPanel.classList.contains('open')) {
-                previewPanel.classList.remove('open');
+                });
             } else {
-                const lastAiMessage = chatContainer.querySelector('.message-wrapper.ai:last-child');
-                if (lastAiMessage) {
-                    extractAllCodeFromMessage(lastAiMessage);
-                    updatePreview();
-                    previewPanel.classList.add('open');
-                } else {
-                    showNotification('No code to preview!');
+                rawText = msg.content;
+            }
+
+            if (msg.role === 'assistant') {
+                finalHtml = `<div id="${contentId}">${marked.parse(rawText)}</div>` + finalHtml;
+            } else {
+                finalHtml = `<div id="${contentId}">${escapeHtml(rawText).replace(/\n/g, '<br>')}</div>` + finalHtml;
+            }
+
+            wrapper.innerHTML = `
+                <div class="message-sender">
+                    ${msg.role === 'user' ? 'You' : 'AI'}
+                    <span class="copy-msg-btn message-action-btn" onclick="copyMessage(this, '${contentId}')"><i class="fas fa-copy"></i></span>
+                    ${document.getElementById('audio-enable')?.checked ? `<span class="message-action-btn" onclick="speakMessageById('${contentId}')"><i class="fas fa-volume-up"></i></span>` : ''}
+                    ${msg.role === 'assistant' ? `<span class="message-action-btn" title="Regenerate this response with a new seed" onclick="regenerateMessage('${aiMsgId}')"><i class="fas fa-sync-alt"></i></span>` : ''}
+                </div>
+                <div class="message-bubble">
+                    ${finalHtml}
+                    <div id="raw-${contentId}" style="display:none;">${escapeHtml(rawText)}</div>
+                    <div id="audio-container-${contentId}"></div>
+                </div>
+            `;
+
+            wrapper.id = aiMsgId;
+            chatContainer.appendChild(wrapper);
+
+            if (msg.role === 'assistant') {
+                const aiDiv = document.getElementById(contentId);
+                if (aiDiv) {
+                    renderMathInElement(aiDiv, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false},
+                            {left: '\\(', right: '\\)', display: false},
+                            {left: '\\[', right: '\\]', display: true}
+                        ],
+                        throwOnError: false
+                    });
                 }
             }
+        });
+
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function createNewSession(autosave = true) {
+        if (isGenerating) {
+            showNotification("Cannot create new session while generating.");
+            return;
         }
-    });
 
-    const ttsModal = document.getElementById('tts-modal');
-    const ttsPopupBtn = document.getElementById('tts-popup-btn');
-    const closeTtsModal = document.getElementById('close-tts-modal');
-    const ttsTextInput = document.getElementById('tts-text-input');
-    const ttsGenerateBtn = document.getElementById('tts-generate-btn');
-    const ttsPauseBtn = document.getElementById('tts-pause-btn');
-    const ttsCancelBtn = document.getElementById('tts-cancel-btn');
-    const ttsOutput = document.getElementById('tts-output');
-
-    ttsPopupBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        ttsModal.classList.add('open');
-        ttsTextInput.focus();
-    });
-
-    closeTtsModal.addEventListener('click', function() {
-        ttsModal.classList.remove('open');
-    });
-
-    ttsModal.addEventListener('click', function(e) {
-        if (e.target === ttsModal) {
-            ttsModal.classList.remove('open');
-        }
-    });
-
-    ttsPauseBtn.addEventListener('click', function() {
-        ttsPaused = !ttsPaused;
-        updateTtsPopupControls();
-
-        if (!ttsPaused) {
-            processTtsQueue();
-        }
-    });
-
-    ttsCancelBtn.addEventListener('click', function() {
         cancelQueuedTtsJobs(true);
-        ttsPaused = false;
-        ttsGenerateBtn.disabled = false;
-        ttsGenerateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Audio';
-        updateTtsPopupControls();
-    });
 
-    ttsGenerateBtn.addEventListener('click', async function() {
-        const text = ttsTextInput.value.trim();
+        currentSessionId = 'session-' + Date.now();
+        conversationHistory = [];
 
-        if (!text) {
-            showNotification('Please enter text to convert to speech');
-            return;
-        }
-
-        if ((currentTtsJob && currentTtsJob.mode === 'popup') || ttsGenerationQueue.some(job => job.mode === 'popup')) {
-            showNotification('Popup TTS is already queued or running');
-            return;
-        }
-
-        ttsGenerateBtn.disabled = true;
-        ttsGenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Queued...';
-        updateStandaloneTtsProgress('Queued...', 0, 0);
-
-        try {
-            const result = await queueTtsGeneration({
-                mode: 'popup',
-                msgId: 'popup-tts',
-                textContent: text,
-                cancelled: false
-            });
-
-            await generateStandaloneTTSResult(result);
-            showNotification('Audio generated successfully!');
-        } catch (error) {
-            if (error.message === 'TTS job cancelled') {
-                ttsOutput.innerHTML = `
-                    <div style="color:orange;">
-                        <strong>Cancelled.</strong> Audio generation stopped.
-                    </div>
-                `;
-                ttsOutput.classList.add('show');
-            } else {
-                showNotification('TTS generation failed: ' + error.message);
-                console.error('TTS error:', error);
-            }
-        } finally {
-            ttsGenerateBtn.disabled = false;
-            ttsGenerateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Audio';
-            updateTtsPopupControls();
-        }
-    });
-
-    async function generateStandaloneTTSResult(result) {
-        const showDownload = document.getElementById('audio-show-download')?.checked;
-        const chunkInfo = result.chunked
-            ? `<div style="margin-top: 8px; font-size: 0.8em; opacity: 0.75;">Chunks: ${result.chunkCount}/${result.chunkCount}</div>`
-            : `<div style="margin-top: 8px; font-size: 0.8em; opacity: 0.75;">Chunk: 1/1</div>`;
-
-        ttsOutput.innerHTML = `
-            <div style="color: var(--text-color);">
-                <strong>Generated Audio:</strong>
-                <div style="margin-top: 10px;">
-                    <audio controls autoplay src="${result.url}" style="width: 100%;"></audio>
-                </div>
-                <div style="margin-top: 10px; font-size: 0.85em; opacity: 0.8;">
-                    Voice: ${document.getElementById('voice-select')?.value || 'af_heart'}
-                </div>
-                ${chunkInfo}
-                ${showDownload ? `
-                    <div style="margin-top:10px;">
-                        <a class="audio-btn" href="${result.url}" download="tts-output.wav" style="text-decoration:none; display:inline-flex; align-items:center;">
-                            <i class="fas fa-download"></i>&nbsp;Download
-                        </a>
-                    </div>
-                ` : ''}
+        chatContainer.innerHTML = `
+            <div class="message-wrapper ai">
+                <div class="message-sender">System</div>
+                <div class="message-bubble">New session started. How can I help you today?</div>
             </div>
         `;
 
-        ttsOutput.classList.add('show');
-        ttsGenerateBtn.disabled = false;
-        ttsGenerateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Audio';
-        updateTtsPopupControls();
+        if (autosave) {
+            saveConversationToStorage();
+        } else {
+            renderSessionsList();
+        }
+
+        sessionPanel.classList.remove('open');
+    }
+
+    function resetChat() {
+        cancelQueuedTtsJobs(true);
+        conversationHistory = [];
+        chatContainer.innerHTML = `
+            <div class="message-wrapper ai">
+                <div class="message-sender">System</div>
+                <div class="message-bubble">Chat history cleared. Set your Token/Model in settings to begin again.</div>
+            </div>
+        `;
+        if (currentSessionId && sessions[currentSessionId]) {
+            sessions[currentSessionId].history = [];
+            sessions[currentSessionId].title = "Cleared Chat";
+            sessions[currentSessionId].updatedAt = Date.now();
+            localStorage.setItem('chat_sessions_v4', JSON.stringify(sessions));
+            renderSessionsList();
+        }
+        showNotification('Chat cleared');
+    }
+
+    function fullReset() {
+        cancelQueuedTtsJobs(true);
+        localStorage.clear();
+        conversationHistory = [];
+        uploadedFiles = [];
+        sessions = {};
+        currentSessionId = null;
+
+        tokenInput.value = '';
+        document.getElementById('system-message').value = '';
+        document.getElementById('system-preset-select').value = 'custom';
+        document.getElementById('voice-style').value = 'snarky';
+
+        const modelSelect = document.getElementById('model-select');
+        if (modelSelect) modelSelect.value = 'kimi';
+
+        chatContainer.innerHTML = `
+            <div class="message-wrapper ai">
+                <div class="message-sender">System</div>
+                <div class="message-bubble">Application fully reset. All data caches and keys wiped clean.</div>
+            </div>
+        `;
+
+        renderFilePreviews();
+        renderSessionsList();
+        updatePaidModelOptions();
+        
+        loadModels();
+
+        showNotification('Full reset successful');
+    }
+
+    const presetSelect = document.getElementById('system-preset-select');
+    const systemTextarea = document.getElementById('system-message');
+
+    presetSelect.addEventListener('change', function() {
+        const val = this.value;
+        if (val !== 'custom' && SYSTEM_PRESETS[val] !== undefined) {
+            systemTextarea.value = SYSTEM_PRESETS[val];
+            showNotification(`Loaded system prompt preset: ${this.options[this.selectedIndex].text}`);
+            saveConversationToStorage();
+        }
+    });
+
+    systemTextarea.addEventListener('change', function() {
+        presetSelect.value = 'custom';
+        saveConversationToStorage();
+    });
+
+    document.getElementById('voice-style').addEventListener('change', function() {
+        saveConversationToStorage();
+    });
+
+    const modelSelectEl = document.getElementById('model-select');
+    if (modelSelectEl) {
+        modelSelectEl.addEventListener('change', function() {
+            localStorage.setItem("selectedModel", this.value);
+            saveConversationToStorage();
+            updatePaidModelOptions();
+        });
     }
 
     const byopSection = document.getElementById('byop-section');
     const byopToggle = document.getElementById('byop-toggle');
-
-    const byopCollapsed = localStorage.getItem('byopCollapsed') === 'true';
-    if (byopCollapsed) {
-        byopSection.classList.add('collapsed');
-        if (byopToggle) byopToggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
-    }
-
-    if (byopToggle) {
+    if (byopSection && byopToggle) {
         byopToggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const isCollapsed = byopSection.classList.toggle('collapsed');
-            localStorage.setItem('byopCollapsed', isCollapsed);
-            this.innerHTML = isCollapsed ? '<i class="fas fa-chevron-down"></i>' : '<i class="fas fa-chevron-up"></i>';
-        });
-    }
-
-    if (byopSection) {
-        byopSection.querySelector('.byop-header').addEventListener('click', function(e) {
-            if (e.target === this || e.target.tagName === 'H4') {
-                byopToggle.click();
+            e.preventDefault();
+            byopSection.classList.toggle('collapsed');
+            const icon = byopToggle.querySelector('i');
+            if (icon) {
+                if (byopSection.classList.contains('collapsed')) {
+                    icon.className = "fas fa-chevron-down";
+                } else {
+                    icon.className = "fas fa-chevron-up";
+                }
             }
         });
     }
 
-    const systemMessageInput = document.getElementById('system-message');
-    const systemPresetSelect = document.getElementById('system-preset-select');
+    const ttsPopupBtn = document.getElementById('tts-popup-btn');
+    const ttsModal = document.getElementById('tts-modal');
+    const closeTtsModal = document.getElementById('close-tts-modal');
+    const ttsTextInput = document.getElementById('tts-text-input');
+    const ttsGenerateBtn = document.getElementById('tts-generate-btn');
+    const ttsOutput = document.getElementById('tts-output');
 
-    const savedSystemMessage = localStorage.getItem('systemMessage');
-    if (savedSystemMessage) {
-        systemMessageInput.value = savedSystemMessage;
+    if (ttsPopupBtn && ttsModal) {
+        ttsPopupBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            ttsModal.classList.add('open');
+            updateTtsPopupControls();
+        });
     }
 
-    const savedPreset = localStorage.getItem('systemPreset');
-    if (savedPreset && SYSTEM_PRESETS[savedPreset] !== undefined) {
-        systemPresetSelect.value = savedPreset;
-        if (savedPreset !== 'custom' && SYSTEM_PRESETS[savedPreset]) {
-            systemMessageInput.value = SYSTEM_PRESETS[savedPreset];
-        }
+    if (closeTtsModal && ttsModal) {
+        closeTtsModal.addEventListener('click', function(e) {
+            e.preventDefault();
+            ttsModal.classList.remove('open');
+        });
     }
 
-    systemPresetSelect.addEventListener('change', function() {
-        const preset = this.value;
-        if (preset === 'custom') {
-            systemMessageInput.value = '';
-            localStorage.setItem('systemMessage', '');
-        } else if (SYSTEM_PRESETS[preset]) {
-            systemMessageInput.value = SYSTEM_PRESETS[preset];
-            localStorage.setItem('systemMessage', SYSTEM_PRESETS[preset]);
-        }
-        localStorage.setItem('systemPreset', preset);
-        showNotification('System prompt updated: ' + this.options[this.selectedIndex].text);
+    if (ttsGenerateBtn) {
+        ttsGenerateBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const text = ttsTextInput.value.trim();
+            if (!text) {
+                showNotification('Please enter text to generate speech');
+                return;
+            }
+
+            ttsGenerateBtn.disabled = true;
+            ttsGenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+            const popupJobId = 'popup-tts-' + Date.now();
+
+            try {
+                const result = await queueTtsGeneration({
+                    msgId: popupJobId,
+                    textContent: text,
+                    mode: 'popup'
+                });
+
+                if (result && result.url) {
+                    ttsOutput.innerHTML = `
+                        <div style="color: var(--text-color); margin-bottom: 8px;"><strong>Speech Generation Ready!</strong></div>
+                        <audio controls autoplay src="${result.url}" style="width:100%; margin-top:5px;"></audio>
+                        <div style="margin-top:10px; display:flex; gap:10px;">
+                            <a class="audio-btn" href="${result.url}" download="standalone-speech.wav" style="text-decoration:none; display:inline-flex; align-items:center; justify-content:center; flex:1;"><i class="fas fa-download"></i> Download Audio</a>
+                        </div>
+                    `;
+                    ttsOutput.classList.add('show');
+                }
+            } catch (err) {
+                if (err.message === 'TTS job cancelled') {
+                    ttsOutput.innerHTML = '<div style="color:orange;"><strong>Cancelled.</strong> Audio generation stopped.</div>';
+                } else {
+                    ttsOutput.innerHTML = `<div style="color:#dc3545;"><strong>Speech Generation Failed:</strong> ${escapeHtml(err.message)}</div>`;
+                }
+                ttsOutput.classList.add('show');
+                console.error(err);
+            } finally {
+                updateTtsPopupControls();
+            }
+        });
+    }
+
+    const ttsPauseBtn = document.getElementById('tts-pause-btn');
+    if (ttsPauseBtn) {
+        ttsPauseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            ttsPaused = !ttsPaused;
+            updateTtsPopupControls();
+            if (!ttsPaused) {
+                processTtsQueue();
+            }
+            showNotification(ttsPaused ? 'TTS queue paused' : 'TTS queue resumed');
+        });
+    }
+
+    const ttsCancelBtn = document.getElementById('tts-cancel-btn');
+    if (ttsCancelBtn) {
+        ttsCancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (confirm('Cancel all pending and active speech generation requests in the background queue?')) {
+                cancelQueuedTtsJobs(true);
+                showNotification('Speech generation queue cleared');
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadModels();
+        loadSessionsFromStorage();
     });
-
-    systemMessageInput.addEventListener('input', function() {
-        localStorage.setItem('systemMessage', this.value);
-        if (systemPresetSelect.value !== 'custom') {
-            systemPresetSelect.value = 'custom';
-            localStorage.setItem('systemPreset', 'custom');
-        }
-    });
-
-    function bindCheckboxSetting(id, defaultValue = false) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const saved = localStorage.getItem(id);
-        el.checked = saved !== null ? saved === 'true' : defaultValue;
-        el.addEventListener('change', () => localStorage.setItem(id, el.checked));
-    }
-
-    function bindSelectSetting(id, defaultValue = '') {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const saved = localStorage.getItem(id);
-        if (saved !== null) el.value = saved;
-        else if (defaultValue) el.value = defaultValue;
-        el.addEventListener('change', () => localStorage.setItem(id, el.value));
-    }
-
-    bindCheckboxSetting('audio-enable', true);
-    bindCheckboxSetting('audio-autoplay-stream', false);
-    bindCheckboxSetting('audio-show-download', false);
-    bindSelectSetting('voice-select', 'af_heart');
-    bindSelectSetting('kokoro-dtype', 'q8');
-
-    setTimeout(() => {
-        if (!pyodideReady) initPyodide();
-    }, 2000);
-
-    setTimeout(() => {
-        ensureKokoroReady().catch(err => console.warn('Kokoro preload failed:', err));
-    }, 1000);
-
-    loadAllDataFromStorage();
-
-    console.log("Chat application V4.4 with smart Kokoro full-dialogue chunking initialized successfully!");
-    console.log("Press Ctrl+Shift+P to toggle code preview");
-    console.log("Premium models (🔒) require your own API key from enter.pollinations.ai");
 </script>
 </body>
 </html>
