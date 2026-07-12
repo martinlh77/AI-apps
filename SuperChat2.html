@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat V4.5</title>
+    <title>Pollinations AI Chat V4.6</title>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
@@ -533,12 +533,26 @@
             transition: all 0.3s ease;
         }
 
+        .byop-info.collapsed #byop-content { display: none; }
+        .byop-info.collapsed h4 { margin-bottom: 0; }
+
         .byop-info h4 {
             margin: 0 0 8px 0;
             font-size: 0.95rem;
             display: flex;
             align-items: center;
             gap: 5px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        #byop-chevron {
+            margin-left: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .byop-info.collapsed #byop-chevron {
+            transform: rotate(-90deg);
         }
 
         .byop-info a {
@@ -814,7 +828,7 @@
     <header>
         <div style="display:flex; align-items:center;">
             <button class="session-btn" id="toggle-sessions" title="Sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight:bold; font-size:1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.5</div>
+            <div style="font-weight:bold; font-size:1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.6</div>
         </div>
         <button class="settings-btn" id="toggle-settings" title="Settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -836,7 +850,7 @@
         <div class="message-wrapper ai">
             <div class="message-sender">System</div>
             <div class="message-bubble">
-                Hello! This app no longer contains a built-in public API key. Free Pollinations models can be used without a token when available. Add your own token in Settings for paid or protected models.
+                Hello! This app does not include a built-in API key. <strong>All Pollinations models require a token.</strong> Standard models consume Quest pollen; Paid models require purchased pollen only. Add your token in Settings.
             </div>
         </div>
     </div>
@@ -884,23 +898,28 @@
             <button id="theme-toggle" type="button" style="width:100%; padding:8px; cursor:pointer;">Switch to Dark Mode</button>
         </div>
 
-        <div class="byop-info">
-            <h4><i class="fas fa-seedling"></i> Bring Your Own Pollen (BYOP)</h4>
-            <p>
-                This app does not include or use a shared public API key. Pollinations free models can be used without a token when available.
-            </p>
-            <p>
-                For paid, premium, protected, or higher-limit usage, enter your own Pollinations token below. The app sends it as an Authorization Bearer token only when you provide one.
-            </p>
-            <p style="font-size:0.8em;">
-                Docs: <a href="https://gen.pollinations.ai/docs" target="_blank">gen.pollinations.ai/docs</a>
-            </p>
+        <div class="byop-info collapsed" id="byop-info">
+            <h4 onclick="toggleByop()">
+                <i class="fas fa-seedling"></i> Bring Your Own Pollen (BYOP)
+                <i class="fas fa-chevron-down" id="byop-chevron"></i>
+            </h4>
+            <div id="byop-content">
+                <p>
+                    This app does not include or use a shared public API key. <strong>All Pollinations models require a token.</strong>
+                </p>
+                <p>
+                    Standard models consume Quest pollen (free tier). <strong>Paid models require purchased pollen only</strong> and do not use Quest pollen. The app sends your token as an Authorization Bearer header on every request.
+                </p>
+                <p style="font-size:0.8em;">
+                    Docs: <a href="https://gen.pollinations.ai/docs" target="_blank">gen.pollinations.ai/docs</a>
+                </p>
+            </div>
         </div>
 
         <div class="settings-group">
-            <label>Pollinations Token <small style="font-weight:normal; opacity:0.7;">(Optional)</small></label>
-            <input type="password" id="api-token" placeholder="Paste your Pollinations token if needed">
-            <small>Leave blank for models that allow unauthenticated access. Add your own token for paid or protected models.</small>
+            <label>Pollinations Token</label>
+            <input type="password" id="api-token" placeholder="Paste your Pollinations token">
+            <small>Required for all models. Standard models consume Quest pollen. Paid models require purchased pollen and do not accept Quest pollen.</small>
         </div>
 
         <div class="settings-group">
@@ -1090,6 +1109,13 @@ Browser Python environment:
         notification.classList.add("show");
         setTimeout(() => notification.classList.remove("show"), 3500);
     }
+
+    window.toggleByop = function() {
+        const box = document.getElementById("byop-info");
+        if (!box) return;
+        const nowCollapsed = box.classList.toggle("collapsed");
+        localStorage.setItem("byopCollapsed", nowCollapsed);
+    };
 
     function hasToken() {
         return !!tokenInput.value.trim();
@@ -1644,8 +1670,8 @@ Browser Python environment:
                     aiContentDiv.innerHTML += `<br><span style="color:orange">[Stopped by user]</span>`;
                 } else {
                     const helpful = hasToken()
-                        ? ""
-                        : "<br><small>If this is a paid or protected model, add your Pollinations token in Settings.</small>";
+                        ? "<br><small>If the error persists, check that your token has sufficient pollen for the selected model.</small>"
+                        : "<br><small>All Pollinations models require a token. Add your Pollinations token in Settings.</small>";
 
                     aiContentDiv.innerHTML = `
                         <div style="color:red; background:#ffe6e6; padding:10px; border-radius:5px;">
@@ -2003,7 +2029,7 @@ def show_plot():
         chatContainer.innerHTML = `
             <div class="message-wrapper ai">
                 <div class="message-sender">System</div>
-                <div class="message-bubble">Full reset complete. No built-in API key is used. You may use available free models or add your own token in Settings.</div>
+                <div class="message-bubble">Full reset complete. All Pollinations models require a token. Standard models consume Quest pollen; Paid models require purchased pollen only.</div>
             </div>
         `;
 
@@ -2241,7 +2267,7 @@ def show_plot():
             showNotification("Token saved.");
         } else {
             localStorage.removeItem("userApiToken");
-            showNotification("Token removed. Free models may still work.");
+            showNotification("Token removed. All models require a token to function.");
         }
     });
 
@@ -2407,6 +2433,18 @@ def show_plot():
         if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     });
 
+    // Restore BYOP collapsed state (default to collapsed)
+    const byopBox = document.getElementById("byop-info");
+    if (byopBox) {
+        const savedCollapsed = localStorage.getItem("byopCollapsed");
+        // Default collapsed if not explicitly set to false
+        if (savedCollapsed === "false") {
+            byopBox.classList.remove("collapsed");
+        } else {
+            byopBox.classList.add("collapsed");
+        }
+    }
+
     setTimeout(() => {
         if (!pyodideReady) initPyodide();
     }, 2500);
@@ -2414,8 +2452,9 @@ def show_plot():
     loadAllDataFromStorage();
     loadModels(false);
 
-    console.log("Pollinations Chat V4.5 initialized.");
+    console.log("Pollinations Chat V4.6 initialized.");
     console.log("No built-in public API key is used.");
+    console.log("All models require a token. Standard models use Quest pollen; Paid models require purchased pollen.");
     console.log("Models load live from:", MODELS_URL);
     console.log("Press Ctrl+Shift+P to toggle code preview.");
 </script>
