@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V5.0</title>
+    <title>Pollinations AI Chat (Media Enabled) V5.1</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -652,7 +652,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V5.0</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V5.1</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -1188,8 +1188,33 @@ When generating Python (which is rare):
                     const option = document.createElement('option');
                     option.value = model.name;
                     
-                    let priceText = model.price ? ("$" + model.price) : "Unknown";
-                    let display = model.name + " " + priceText;
+let priceText = "Unknown";
+
+if (model.paid_only === true) {
+    priceText = "Paid";
+} else if (model.pricing && model.pricing.currency) {
+    const promptTextTokens = parseFloat(model.pricing.promptTextTokens || '0');
+    const promptCachedTokens = parseFloat(model.pricing.promptCachedTokens || '0');
+    const completionTextTokens = parseFloat(model.pricing.completionTextTokens || '0');
+
+    let costPerToken = 0;
+    if (completionTextTokens > 0) {
+        costPerToken = completionTextTokens;
+    } else if (promptTextTokens > 0) {
+        costPerToken = promptTextTokens;
+    }
+
+    if (costPerToken > 0) {
+        priceText = `$${costPerToken.toFixed(8)}`;
+    } else {
+        priceText = "Quest Pollen";
+    }
+} else {
+    priceText = "Quest Pollen";
+}
+
+let display = model.name + " " + priceText;
+
                     if (model.paid_only === true) {
                         display += " (Paid Only)";
                     }
