@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pollinations AI Chat (Media Enabled) V4.8</title>
+    <title>Pollinations AI Chat (Media Enabled) V4.9</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
@@ -652,7 +652,7 @@
     <header>
         <div style="display: flex; align-items: center;">
             <button class="session-btn" id="toggle-sessions"><i class="fas fa-folder"></i></button>
-            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.8</div>
+            <div style="font-weight: bold; font-size: 1.1rem;"><i class="fas fa-robot"></i> Pollinations Chat V4.9</div>
         </div>
         <button class="settings-btn" id="toggle-settings"><i class="fas fa-cog"></i></button>
     </header>
@@ -1774,6 +1774,28 @@ When generating Python (which is rare):
         }
 
         return finalChunks.filter(Boolean);
+    }
+
+    async function synthesizeKokoro(text, options = {}) {
+        const cleanText = (text || '').trim();
+        if (!cleanText) throw new Error('No text to synthesize');
+
+        await ensureKokoroReady();
+
+        const requestId = 'kokoro-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+        const voice = options.voice || document.getElementById('voice-select')?.value || 'af_heart';
+        const dtype = document.getElementById('kokoro-dtype')?.value || 'q8';
+
+        return new Promise((resolve, reject) => {
+            kokoroPending.set(requestId, { resolve, reject });
+            kokoroWorker.postMessage({
+                type: 'GENERATE',
+                requestId,
+                text: cleanText,
+                voice,
+                dtype
+            });
+        });
     }
 
     function needsChunking(text) {
@@ -3427,6 +3449,18 @@ When generating Python (which is rare):
         await loadModels();
         loadSessionsFromStorage();
     });
+
+    // Pre-load Python runtime on page load
+    setTimeout(() => {
+        if (!pyodideReady && !pyodide) {
+            initPyodide().catch(err => console.warn('Pyodide preload failed:', err));
+        }
+    }, 2000);
+
+    // Also pre-load Kokoro on page load
+    setTimeout(() => {
+        ensureKokoroReady().catch(err => console.warn('Kokoro preload failed:', err));
+    }, 1000);
 </script>
 </body>
 </html>
