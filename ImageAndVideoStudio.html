@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pollinations Studio (Image & Video) v14.0</title>
+  <title>Pollinations Studio (Image & Video) v15.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -313,7 +313,7 @@
 <body class="p-4 md:p-8">
 
   <div class="max-w-4xl mx-auto">
-      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor) v14.0</h1>
+      <h1 class="text-3xl font-bold mb-6 text-center text-white">Pollinations Studio (Generator & Editor) v15.0</h1>
 
       <div id="message-area" class="mb-4"></div>
 
@@ -346,44 +346,9 @@
               <div id="model-select-group">
                   <label for="modelSelect" class="block text-sm font-medium mb-1">Model Selection</label>
                   <select id="modelSelect" class="w-full">
-                      <optgroup label="Image Generators & Editors">
-                          <!-- Free Image Models -->
-                          <option value="flux">Flux (Generator)</option>
-                          <option value="zimage" selected>Zimage (Generator)</option>
-                          <option value="klein">Flux.2 Klein 4B 👁️ (Editor/Generator)</option>
-                          <option value="gptimage">GPT-Image 👁️ (Editor/Generator)</option>
-                          <option value="qwen-image">Qwen Image 👁️ (Editor/Generator)</option>
-                          <option value="kontext">Kontext 👁️ (Editor/Generator)</option>
-                          <option value="wan-image">Wan 2.7 Image 👁️ (Editor/Generator)</option>
-                          
-                          <!-- Paid Image Models -->
-                          <option value="nanobanana">💎 Nano Banana 👁️ (Editor/Generator)</option>
-                          <option value="nanobanana-2">💎 Nano Banana 2 👁️ (Editor/Generator)</option>
-                          <option value="nanobanana-pro">💎 Nano Banana Pro 👁️ (Editor/Generator)</option>
-                          <option value="seedream5">💎 Seedream 5.0 Lite 👁️ (Editor/Generator)</option>
-                          <option value="gptimage-large">💎 GPT-Image 1.5 👁️ (Editor/Generator)</option>
-                          <option value="wan-image-pro">💎 Wan 2.7 Image Pro 👁️ (Editor/Generator)</option>
-                          <option value="grok-imagine">💎 Grok Imagine (Generator)</option>
-                          <option value="grok-imagine-pro">💎 Grok Imagine Pro (Generator)</option>
-                          <option value="p-image">💎 P-Image (Generator)</option>
-                          <option value="p-image-edit">💎 P-Image Edit 👁️ (Editor/Generator)</option>
-                          <option value="nova-canvas">💎 Nova Canvas 👁️ (Editor/Generator)</option>
-                      </optgroup>
-                      <optgroup label="Video Models">
-                          <!-- Free Video Models -->
-                          <option value="ltx-2">LTX-2 (Video - T2V with Audio)</option>
-                          <option value="nova-reel">Nova Reel (Video - T2V & I2V)</option>
-                          
-                          <!-- Paid Video Models -->
-                          <option value="grok-video-pro">💎 Grok Video Pro (Video - T2V & I2V)</option>
-                          <option value="seedance">💎 Seedance (Video - T2V & I2V)</option>
-                          <option value="seedance-pro">💎 Seedance-Pro (Video - T2V & I2V)</option>
-                          <option value="wan">💎 Wan (Video - T2V & I2V with Audio)</option>
-                          <option value="wan-fast">💎 Wan Fast (Video - T2V & I2V)</option>
-                          <option value="veo">💎 Veo (Video - T2V & First/Last Frame)</option>
-                          <option value="p-video">💎 P-Video (Video - T2V & I2V)</option>
-                      </optgroup>
-                  </select>
+    <!-- Models will be populated dynamically here -->
+    <option value="">Loading models...</option>
+</select>
               </div>
 
               <div>
@@ -1677,13 +1642,25 @@ async function uploadToPollinations(file) {
           return;
       }
 
-      const model = modelSelect.value;
-      const hasCustomKey = apiKeyInput.value.trim().length > 0;
-      
-      if (PAID_MODELS.includes(model) && !hasCustomKey) {
-          displayMessage(`The ${model} model requires a custom API key.`, 'error');
-          return;
-      }
+        const model = modelSelect.value;
+        const selectedOption = modelSelect.querySelector(`[value="${model}"]`);
+        const apiKey = document.getElementById('apiKeyInput').value.trim();
+
+        if (selectedOption && selectedOption.textContent.includes("(Paid)") && !apiKey) {
+            displayMessage("This model requires a Pollinations API key. Please enter one in settings.", "error");
+            return;
+        }
+
+const model = modelSelect.value;
+const hasCustomKey = apiKeyInput.value.trim().length > 0;
+
+// Dynamically check if the selected model is paid-only from the JSON data
+// We can re-fetch or simply check the option text for simplicity
+const selectedOption = modelSelect.querySelector(`[value="${model}"]`);
+if (selectedOption && selectedOption.textContent.includes("(Paid)") && !hasCustomKey) {
+    displayMessage(`The ${model} model requires a Pollinations API key.`, "error");
+    return;
+}
       
       if ((model === 'seedance' || model === 'seedance-pro') && VIDEO_MODELS.includes(model)) {
           const selectedDuration = parseInt(durationSelect.value);
@@ -1991,6 +1968,62 @@ async function uploadToPollinations(file) {
       renderHistory();
       renderUploadHistory();
   });
+async function loadEditorModels() {
+    const select = document.getElementById('modelSelect');
+    try {
+        const response = await fetch('https://gen.pollinations.ai/image/models');
+        if (!response.ok) throw new Error("Failed to fetch models");
+        const models = await response.json();
+        
+        select.innerHTML = ''; // Clear loading state
+
+        // Group models by category
+        const paid = models.filter(m => m.paid_only);
+        const community = models.filter(m => m.community);
+        const regular = models.filter(m => !m.paid_only && !m.community);
+
+        // Helper to create optgroups
+        const createGroup = (label, list) => {
+            if (list.length === 0) return null;
+            const group = document.createElement('optgroup');
+            group.label = label;
+            list.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.name;
+                // Add visual indicator for paid models
+                opt.textContent = (m.title || m.name) + (m.paid_only ? " (Paid)" : "");
+                group.appendChild(opt);
+            });
+            return group;
+        };
+
+        const paidGroup = createGroup("Paid Models", paid);
+        const regGroup = createGroup("Regular Models", regular);
+        const commGroup = createGroup("Community Models", community);
+
+        if (paidGroup) select.appendChild(paidGroup);
+        if (regGroup) select.appendChild(regGroup);
+        if (commGroup) select.appendChild(commGroup);
+
+        // Restore last used model from localStorage
+        const saved = localStorage.getItem('selectedModel');
+        if (saved && select.querySelector(`[value="${saved}"]`)) {
+            select.value = saved;
+        }
+
+    } catch (err) {
+        console.error("Model sync error:", err);
+        select.innerHTML = '<option value="">Error loading models</option>';
+    }
+}
+
+// Ensure this runs when the page loads
+document.addEventListener('DOMContentLoaded', loadEditorModels);
+
+// Save the selection when the user changes it
+document.getElementById('modelSelect').addEventListener('change', (e) => {
+    localStorage.setItem('selectedModel', e.target.value);
+});
   </script>
 </body>
 </html>
