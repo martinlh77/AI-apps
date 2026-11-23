@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+  <title>Tiiny AI — MiniMax-H3-Turbo Video Studio</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel-alt: #1f2630;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #3fb950;
+      --accent-hover: #2ea043;
+      --blue: #58a6ff;
+      --warn: #d29922;
+      --err: #f85149;
+      --radius: 10px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 860px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--blue);
+      border: 1px solid rgba(88, 166, 255, 0.35);
+      font-weight: 600;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      padding: 9px 11px;
+      font-size: 0.92rem;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .input-group input {
+      flex: 1;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 520px) {
+      .row, .row-3 { grid-template-columns: 1fr; }
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel-alt);
+      color: var(--text);
+      padding: 9px 14px;
+      border-radius: 7px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--blue);
+      background: #27303d;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #061409;
+      font-size: 0.96rem;
+      padding: 11px 16px;
+    }
+
+    button.primary:hover:not(:disabled) {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+    }
+
+    button.danger {
+      border-color: rgba(248, 81, 73, 0.5);
+      color: var(--err);
+    }
+
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .chip {
+      font-size: 0.76rem;
+      padding: 4px 9px;
+      border-radius: 6px;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .chip:hover { color: var(--text); border-color: var(--blue); }
+
+    .keyframe-box {
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(255,255,255,0.015);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .preview-thumb {
+      width: 100%;
+      max-height: 120px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: #000;
+      display: none;
+    }
+
+    .video-stage {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #05070a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+
+    .placeholder {
+      text-align: center;
+      color: var(--muted);
+      padding: 20px;
+      font-size: 0.9rem;
+    }
+
+    .progress-wrap {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .status-line {
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+    }
+
+    pre.log {
+      margin: 0;
+      background: #090c10;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 10px;
+      font-size: 0.78rem;
+      color: #a5d6ff;
+      max-height: 190px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: 0.83rem;
+    }
+
+    .history-meta {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ChromeOS / Android Chrome touch adaptations */
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { padding: clamp(10px, 2.5vw, 18px); }
+    button, input, select, textarea { touch-action: manipulation; }
+    button, .chip { min-height: 44px; }
+    button { padding: 10px 14px; }
+    input[type="file"] { width: 100%; min-height: 44px; font-size: 0.9rem; }
+    input, select, textarea { font-size: 16px !important; } /* avoids Android Chrome zoom-on-focus */
+    .container { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .card, header, .container, .row, .row-3, .input-group { min-width: 0; }
+    .video-stage { min-width: 0; }
+    video { max-width: 100%; }
+    .history-item { flex-wrap: wrap; }
+    .history-meta { min-width: 0; flex: 1 1 180px; }
+    .history-item .btn-row { flex: 0 0 auto; }
+    .log { -webkit-overflow-scrolling: touch; }
+    @media (max-width: 900px) {
+      .container { grid-template-columns: minmax(0, 1fr); }
+      header { align-items: flex-start; }
+      header h1 { line-height: 1.4; }
+      header .btn-row { width: 100%; }
+      header .btn-row button { width: 100%; }
+    }
+    @media (max-width: 600px) {
+      body { padding: 8px; }
+      header, .card { padding: 12px; }
+      .row, .row-3 { grid-template-columns: minmax(0, 1fr); }
+      .btn-row button { flex: 1 1 auto; }
+      .input-group { flex-wrap: wrap; }
+      .input-group input { flex: 1 1 100%; min-width: 0; }
+      .input-group button { flex: 1; }
+      .chip-group { gap: 8px; }
+      .chip { display: inline-flex; align-items: center; min-height: 40px; }
+      .video-stage { aspect-ratio: 16 / 9; }
+      .history-item { align-items: stretch; }
+      .history-item .btn-row { width: 100%; }
+      .history-item .btn-row button { flex: 1; }
+    }
+    @media (orientation: landscape) and (max-width: 900px) {
+      .container { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        🎬 Tiiny Video Studio
+        <span class="badge">MiniMax-H3-Turbo • 24 FPS + 32kHz Stereo</span>
+      </h1>
+      <div class="btn-row">
+        <button type="button" id="btnCheckDevice">🔍 Test Connection &amp; Load Model Info</button>
+      </div>
+    </header>
+
+    <!-- LEFT COLUMN: CONTROLS -->
+    <section class="card">
+      <h2>1. Connection, Auth &amp; Model</h2>
+
+      <div class="row">
+        <div>
+          <label for="baseUrl">Tiiny OpenAI-Compatible Base URL</label>
+          <input type="text" id="baseUrl" value="http://openai.api.tiiny/v1" />
+          <div class="chip-group">
+            <span class="chip" data-url="http://172.30.112.85/v1">172.30.112.85/v1</span>
+            <span class="chip" data-url="http://openai.api.tiiny/v1">openai.api.tiiny/v1</span>
+          </div>
+        </div>
+        <div>
+          <label for="modelId">Model ID</label>
+          <input type="text" id="modelId" value="lightx2v/MiniMax-H3-Turbo" />
+          <div class="chip-group" id="detectedModels"></div>
+        </div>
+      </div>
+
+      <div>
+        <label for="apiKey">
+          API Key <span class="hint">(sent as Bearer token; saved locally in browser)</span>
+        </label>
+        <div class="input-group">
+          <input type="password" id="apiKey" placeholder="sk-... or Tiiny API key (leave blank if auth is disabled)" autocomplete="off" />
+          <button type="button" id="btnToggleKey">Show</button>
+          <button type="button" class="danger" id="btnClearKey" title="Clear saved key">Clear</button>
+        </div>
+      </div>
+
+      <h2>2. Prompt &amp; Audio Direction</h2>
+      <div>
+        <label for="prompt">
+          Scene &amp; Sound Prompt
+          <span class="hint">(MiniMax-H3 generates video + synchronized stereo audio together)</span>
+        </label>
+        <textarea id="prompt" placeholder="Describe camera motion, lighting, subject action, and ambient/diegetic sound effects..."></textarea>
+        <div class="chip-group">
+          <span class="chip" data-preset="A cinematic tracking shot through a misty pine forest at dawn, golden sunbeams piercing the fog, soft crunch of footsteps on moss and distant birdsong.">🌲 Misty Forest Dawn</span>
+          <span class="chip" data-preset="Close-up slow-motion shot of artisan sourdough bread crust cracking open on a wooden board, warm bakery lighting, crisp crackling crust sound and soft ambient kitchen hum.">🍞 Artisan Sourdough</span>
+          <span class="chip" data-preset="Neon-lit cyberpunk street in heavy rain at night, reflections on wet asphalt, hovercar passing smoothly with a low bass whoosh and steady rainfall.">🌧️ Cyber Rain Street</span>
+        </div>
+      </div>
+
+      <h2>3. Generation Settings</h2>
+      <div class="row-3">
+        <div>
+          <label for="size">Canvas Resolution</label>
+          <select id="size">
+            <option value="832x480" selected>832×480 (16:9 Fast)</option>
+            <option value="1344x768">1344×768 (16:9 HD)</option>
+            <option value="480x832">480×832 (9:16 Vertical)</option>
+            <option value="768x1344">768×1344 (9:16 HD Vertical)</option>
+          </select>
+        </div>
+        <div>
+          <label for="seconds">Duration (Seconds)</label>
+          <input type="number" id="seconds" min="2" max="15" step="1" value="5" />
+        </div>
+        <div>
+          <label for="steps">Inference Steps <span class="hint">(4–8)</span></label>
+          <input type="number" id="steps" min="4" max="8" step="1" value="7" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="seed">Seed <span class="hint">(-1 = random)</span></label>
+          <input type="number" id="seed" value="-1" />
+        </div>
+        <div>
+          <label for="payloadMode">Request Format</label>
+          <select id="payloadMode">
+            <option value="auto" selected>Auto (JSON for Text / Multipart for Keyframes)</option>
+            <option value="multipart">Force Multipart Form-Data</option>
+            <option value="json">Force JSON Body</option>
+          </select>
+        </div>
+      </div>
+
+      <h2>4. Optional Keyframes (FL2VA — Max 2 Images)</h2>
+      <div class="row">
+        <div class="keyframe-box">
+          <label for="firstFrame">First Frame (Start Image)</label>
+          <input type="file" id="firstFrame" accept="image/png,image/jpeg,image/webp" />
+          <img id="firstPreview" class="preview-thumb" alt="First frame preview" />
+          <button type="button" id="clearFirst" style="display:none;">Remove First Frame</button>
+        </div>
+        <div class="keyframe-box">
+          <label for="lastFrame">Last Frame (End Image)</label>
+          <input type="file" id="lastFrame" accept="image/png,image/jpeg,image/webp" />
+          <img id="lastPreview" class="preview-thumb" alt="Last frame preview" />
+          <button type="button" id="clearLast" style="display:none;">Remove Last Frame</button>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" class="primary" id="btnGenerate" style="flex:1;">▶ Generate Video with Audio</button>
+        <button type="button" class="danger" id="btnCancel" disabled>Stop Polling</button>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: OUTPUT & DIAGNOSTICS -->
+    <section class="card">
+      <h2>Output Preview</h2>
+      <div class="video-stage">
+        <div class="placeholder" id="videoPlaceholder">
+          Generated MP4 (H.264 + 32 kHz Stereo Audio) will appear here.
+        </div>
+        <video id="videoPlayer" controls playsinline loop preload="metadata"></video>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="status-line">
+          <span id="statusText">Submitting job...</span>
+          <span id="elapsedText">0s</span>
+        </div>
+        <progress id="progressBar" max="100" value="0"></progress>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" id="btnDownload" disabled>⬇ Download MP4</button>
+        <button type="button" id="btnRefreshJobs">↻ Refresh Device Video Jobs</button>
+      </div>
+
+      <h2>Device Job History</h2>
+      <div class="history-list" id="historyList">
+        <div class="hint">Click "Refresh Device Video Jobs" or generate a clip to see stored videos on Tiiny.</div>
+      </div>
+
+      <h2>API Telemetry Log</h2>
+      <pre class="log" id="logBox">Ready. Pointed at http://openai.api.tiiny/v1</pre>
+    </section>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const STORAGE_KEY = "tiiny_video_studio_api_key";
+
+    const state = {
+      polling: false,
+      pollTimer: null,
+      clockTimer: null,
+      startTime: 0,
+      currentBlobUrl: null,
+      currentJobId: null
+    };
+
+    function log(msg, obj = null) {
+      const box = $("logBox");
+      const time = new Date().toLocaleTimeString();
+      let line = `[${time}] ${msg}`;
+      if (obj !== null) {
+        try {
+          line += "\n" + (typeof obj === "string" ? obj : JSON.stringify(obj, null, 2));
+        } catch {
+          line += "\n[Unserializable object]";
+        }
+      }
+      box.textContent = line + "\n\n" + box.textContent;
+    }
+
+    function getBaseUrl() {
+      return $("baseUrl").value.trim().replace(/\/+$/, "");
+    }
+
+    function getApiKey() {
+      return $("apiKey").value.trim();
+    }
+
+    function authHeaders(extra = {}) {
+      const headers = { ...extra };
+      const key = getApiKey();
+      if (key) {
+        headers["Authorization"] = `Bearer ${key}`;
+      }
+      return headers;
+    }
+
+    // API Key load, save, toggle, and clear
+    (function initApiKey() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        $("apiKey").value = saved;
+        log("Loaded saved API key from browser storage.");
+      }
+
+      $("apiKey").addEventListener("input", () => {
+        const val = $("apiKey").value.trim();
+        if (val) {
+          localStorage.setItem(STORAGE_KEY, val);
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      });
+
+      $("btnToggleKey").addEventListener("click", () => {
+        const input = $("apiKey");
+        const isPass = input.type === "password";
+        input.type = isPass ? "text" : "password";
+        $("btnToggleKey").textContent = isPass ? "Hide" : "Show";
+      });
+
+      $("btnClearKey").addEventListener("click", () => {
+        $("apiKey").value = "";
+        localStorage.removeItem(STORAGE_KEY);
+        log("Cleared saved API key.");
+      });
+    })();
+
+    // Preset URLs & Prompts
+    document.querySelectorAll(".chip[data-url]").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        $("baseUrl").value = chip.dataset.url;
+        log(`Base URL set to ${chip.dataset.url}`);
+      });
+    });
+
+    document.querySelectorAll(".chip[data-preset]").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        $("prompt").value = chip.dataset.preset;
+      });
+    });
+
+    // Keyframe file previews
+    function bindImageInput(inputId, previewId, clearBtnId) {
+      const input = $(inputId);
+      const img = $(previewId);
+      const clearBtn = $(clearBtnId);
+
+      input.addEventListener("change", () => {
+        const file = input.files[0];
+        if (!file) return;
+        img.src = URL.createObjectURL(file);
+        img.style.display = "block";
+        clearBtn.style.display = "inline-block";
+      });
+
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        img.src = "";
+        img.style.display = "none";
+        clearBtn.style.display = "none";
+      });
+    }
+
+    bindImageInput("firstFrame", "firstPreview", "clearFirst");
+    bindImageInput("lastFrame", "lastPreview", "clearLast");
+
+    // Check Tiiny connection, /v1/models, and /v1/video/info
+    async function inspectDevice() {
+      const base = getBaseUrl();
+      const targetModel = $("modelId").value.trim();
+      log(`Checking ${base}/models ...`);
+
+      try {
+        const res = await fetch(`${base}/models`, {
+          headers: authHeaders()
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+        const data = await res.json();
+        const models = data.data || [];
+        log(`Connected! Found ${models.length} model(s).`, models.map(m => m.id));
+
+        const container = $("detectedModels");
+        container.innerHTML = "";
+        models.forEach((m) => {
+          if (m.id.toLowerCase().includes("h3") || m.id.toLowerCase().includes("video") || models.length <= 6) {
+            const chip = document.createElement("span");
+            chip.className = "chip";
+            chip.textContent = m.id;
+            chip.onclick = () => {
+              $("modelId").value = m.id;
+              fetchVideoInfo(m.id);
+            };
+            container.appendChild(chip);
+          }
+        });
+
+        await fetchVideoInfo(targetModel);
+        await loadJobHistory();
+      } catch (err) {
+        log(`Connection error: ${err.message}. Check your API key, Tiiny Pocket reachability, and CORS/network.`);
+      }
+    }
+
+    async function fetchVideoInfo(modelName) {
+      const base = getBaseUrl();
+      try {
+        const res = await fetch(`${base}/video/info?model=${encodeURIComponent(modelName)}`, {
+          headers: authHeaders()
+        });
+        if (!res.ok) return;
+        const info = await res.json();
+        log(`Video capabilities for ${modelName}:`, info);
+
+        if (Array.isArray(info.canvases) && info.canvases.length > 0) {
+          const sizeSelect = $("size");
+          const current = sizeSelect.value;
+          sizeSelect.innerHTML = "";
+          info.canvases.forEach((c) => {
+            const opt = document.createElement("option");
+            opt.value = c;
+            opt.textContent = c;
+            if (c === current) opt.selected = true;
+            sizeSelect.appendChild(opt);
+          });
+        }
+        if (info.default_steps) {
+          $("steps").value = info.default_steps;
+        }
+      } catch (e) {
+        log(`Note: /v1/video/info check skipped (${e.message})`);
+      }
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function startGeneration() {
+      const prompt = $("prompt").value.trim();
+      if (!prompt) {
+        alert("Please enter a prompt describing the video and sound.");
+        return;
+      }
+
+      const base = getBaseUrl();
+      const model = $("modelId").value.trim();
+      const size = $("size").value;
+      const seconds = String($("seconds").value || 5);
+      const steps = parseInt($("steps").value || 7, 10);
+      const seed = parseInt($("seed").value, 10);
+      const firstFile = $("firstFrame").files[0];
+      const lastFile = $("lastFrame").files[0];
+      const mode = $("payloadMode").value;
+
+      const hasImages = Boolean(firstFile || lastFile);
+      const useMultipart = mode === "multipart" || (mode === "auto" && hasImages);
+
+      setGeneratingUI(true);
+      log(`Submitting video job to ${base}/videos (${useMultipart ? "multipart/form-data" : "application/json"})...`);
+
+      try {
+        let response;
+
+        if (useMultipart) {
+          const form = new FormData();
+          form.append("model", model);
+          form.append("prompt", prompt);
+          form.append("size", size);
+          form.append("seconds", seconds);
+          form.append("num_inference_steps", String(steps));
+          if (!Number.isNaN(seed) && seed >= 0) {
+            form.append("seed", String(seed));
+          }
+          if (firstFile) {
+            form.append("input_reference", firstFile, firstFile.name);
+          }
+          if (lastFile) {
+            form.append("last_frame", lastFile, lastFile.name);
+          }
+
+          response = await fetch(`${base}/videos`, {
+            method: "POST",
+            headers: authHeaders(),
+            body: form
+          });
+        } else {
+          const payload = {
+            model,
+            prompt,
+            size,
+            seconds,
+            num_inference_steps: steps
+          };
+          if (!Number.isNaN(seed) && seed >= 0) {
+            payload.seed = seed;
+          }
+          if (hasImages) {
+            payload.keyframes = [];
+            if (firstFile) payload.keyframes.push(await fileToBase64(firstFile));
+            if (lastFile) payload.keyframes.push(await fileToBase64(lastFile));
+          }
+
+          response = await fetch(`${base}/videos`, {
+            method: "POST",
+            headers: authHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify(payload)
+          });
+        }
+
+        const rawText = await response.text();
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          throw new Error(`Non-JSON response (${response.status}): ${rawText.slice(0, 300)}`);
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error?.message || JSON.stringify(data));
+        }
+
+        log("Job accepted by Tiiny:", data);
+
+        if (!data.id) {
+          throw new Error("Response did not include a job ID.");
+        }
+
+        state.currentJobId = data.id;
+        pollJob(data.id);
+      } catch (err) {
+        log(`Submission failed: ${err.message}`);
+        setGeneratingUI(false);
+      }
+    }
+
+    function pollJob(jobId) {
+      const base = getBaseUrl();
+      state.polling = true;
+
+      const check = async () => {
+        if (!state.polling) return;
+        try {
+          const res = await fetch(`${base}/videos/${encodeURIComponent(jobId)}`, {
+            headers: authHeaders()
+          });
+          const job = await res.json();
+
+          const status = (job.status || "processing").toLowerCase();
+          const pct = typeof job.progress === "number" ? job.progress : (status === "completed" ? 100 : 35);
+
+          $("statusText").textContent = `Job ${jobId.slice(0, 12)}… — ${status.toUpperCase()}`;
+          $("progressBar").value = pct;
+
+          if (status === "completed" || status === "succeeded") {
+            log(`Job ${jobId} completed! Downloading video content...`);
+            stopTimers();
+            await loadVideoContent(jobId);
+            setGeneratingUI(false);
+            loadJobHistory();
+            return;
+          }
+
+          if (status === "failed" || status === "cancelled" || status === "error") {
+            log(`Job ${jobId} failed:`, job);
+            stopTimers();
+            setGeneratingUI(false);
+            return;
+          }
+
+          state.pollTimer = setTimeout(check, 2500);
+        } catch (err) {
+          log(`Polling warning: ${err.message}. Retrying...`);
+          state.pollTimer = setTimeout(check, 3500);
+        }
+      };
+
+      check();
+    }
+
+    async function loadVideoContent(jobId) {
+      const base = getBaseUrl();
+      try {
+        const res = await fetch(`${base}/videos/${encodeURIComponent(jobId)}/content`, {
+          headers: authHeaders()
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status} fetching video content`);
+        const blob = await res.blob();
+
+        if (state.currentBlobUrl) {
+          URL.revokeObjectURL(state.currentBlobUrl);
+        }
+        state.currentBlobUrl = URL.createObjectURL(blob);
+        state.currentJobId = jobId;
+
+        const player = $("videoPlayer");
+        player.src = state.currentBlobUrl;
+        player.style.display = "block";
+        $("videoPlaceholder").style.display = "none";
+        $("btnDownload").disabled = false;
+        player.play().catch(() => {});
+
+        log(`Loaded MP4 (${(blob.size / (1024 * 1024)).toFixed(2)} MB) into player.`);
+      } catch (err) {
+        log(`Failed to load video stream: ${err.message}`);
+      }
+    }
+
+    async function loadJobHistory() {
+      const base = getBaseUrl();
+      const list = $("historyList");
+      try {
+        const res = await fetch(`${base}/videos`, {
+          headers: authHeaders()
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const payload = await res.json();
+        const items = Array.isArray(payload) ? payload : (payload.data || []);
+
+        if (!items.length) {
+          list.innerHTML = `<div class="hint">No stored videos found on Tiiny device yet.</div>`;
+          return;
+        }
+
+        list.innerHTML = "";
+        items.slice(0, 15).forEach((item) => {
+          const row = document.createElement("div");
+          row.className = "history-item";
+
+          const meta = document.createElement("div");
+          meta.className = "history-meta";
+          meta.innerHTML = `<strong>${item.id}</strong> <span class="hint">(${item.status || "ready"})</span>`;
+
+          const actions = document.createElement("div");
+          actions.className = "btn-row";
+
+          const playBtn = document.createElement("button");
+          playBtn.textContent = "▶ Load";
+          playBtn.onclick = () => loadVideoContent(item.id);
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "danger";
+          delBtn.textContent = "✕";
+          delBtn.title = "Delete from device";
+          delBtn.onclick = async () => {
+            await fetch(`${base}/videos/${encodeURIComponent(item.id)}`, {
+              method: "DELETE",
+              headers: authHeaders()
+            });
+            log(`Deleted job ${item.id}`);
+            loadJobHistory();
+          };
+
+          actions.append(playBtn, delBtn);
+          row.append(meta, actions);
+          list.appendChild(row);
+        });
+      } catch (err) {
+        log(`Could not list /v1/videos: ${err.message}`);
+      }
+    }
+
+    function setGeneratingUI(active) {
+      $("btnGenerate").disabled = active;
+      $("btnCancel").disabled = !active;
+      $("progressWrap").style.display = active ? "flex" : "none";
+
+      if (active) {
+        state.startTime = Date.now();
+        $("progressBar").value = 10;
+        $("statusText").textContent = "Initializing diffusion on Tiiny NPU...";
+        state.clockTimer = setInterval(() => {
+          const sec = Math.floor((Date.now() - state.startTime) / 1000);
+          $("elapsedText").textContent = `${sec}s`;
+        }, 500);
+      } else {
+        stopTimers();
+      }
+    }
+
+    function stopTimers() {
+      state.polling = false;
+      if (state.pollTimer) clearTimeout(state.pollTimer);
+      if (state.clockTimer) clearInterval(state.clockTimer);
+    }
+
+    $("btnCheckDevice").addEventListener("click", inspectDevice);
+    $("btnGenerate").addEventListener("click", startGeneration);
+    $("btnCancel").addEventListener("click", () => {
+      stopTimers();
+      setGeneratingUI(false);
+      log("Polling stopped by user (note: inference on Tiiny NPU may finish in background).");
+    });
+    $("btnRefreshJobs").addEventListener("click", loadJobHistory);
+
+    $("btnDownload").addEventListener("click", () => {
+      if (!state.currentBlobUrl) return;
+      const a = document.createElement("a");
+      a.href = state.currentBlobUrl;
+      a.download = `minimax-h3-${state.currentJobId || Date.now()}.mp4`;
+      a.rel = "noopener";
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      // Android Chrome handles blob downloads more reliably when the anchor is in the DOM.
+      setTimeout(() => a.remove(), 1000);
+    });
+  </script>
+</body>
+</html>
