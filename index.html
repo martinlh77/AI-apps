@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tiiny Image Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Header: API key + Base URL -->
+  <section id="header">
+    <label for="apiKey">API Key:</label>
+    <input type="password" id="apiKey" placeholder="Paste your Tiiny key" autocomplete="off">
+
+    <label for="baseURL">Base URL:</label>
+    <select id="baseURL">
+      <option value="http://openai.api.tiiny/v1" selected>http://openai.api.tiiny/v1 (default)</option>
+      <option value="http://anthropic.api.tiiny">http://anthropic.api.tiiny</option>
+      <option value="http://ollama.api.tiiny">http://ollama.api.tiiny</option>
+      <option value="http://192.168.68.128/v1">http://192.168.68.128/v1</option>
+      <option value="http://172.30.112.85/v1">http://172.30.112.85/v1</option>
+    </select>
+
+    <button id="loadModels">Load Models</button>
+  </section>
+
+  <!-- Image Generation -->
+  <section id="imageGen">
+    <h2>Generate Image</h2>
+
+    <label for="prompt">Prompt:</label>
+    <textarea id="prompt" rows="3" placeholder="Enter image prompt"></textarea>
+
+    <div class="row">
+      <div>
+        <label for="imageModel">Image Model:</label>
+        <select id="imageModel"></select>
+      </div>
+      <div>
+        <label for="width">Width (px):</label>
+        <input type="number" id="width" value="512" min="64" step="64">
+      </div>
+      <div>
+        <label for="height">Height (px):</label>
+        <input type="number" id="height" value="512" min="64" step="64">
+      </div>
+      <div>
+        <label for="format">Format:</label>
+        <select id="format">
+          <option value="webp" selected>webp</option>
+          <option value="jpg">jpg</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="reference">Reference image (optional):</label>
+        <input type="file" id="reference" accept="image/*">
+      </div>
+      <div>
+        <button id="removeRef">Remove Reference Image</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <button id="generateBtn">Generate</button>
+      <button id="enhanceBtn">Enhance Prompt</button>
+      <button id="randomBtn">Random Prompt</button>
+    </div>
+
+    <div id="preview" class="previewArea">
+      <span id="spinner" class="spinner" hidden>🔄</span>
+      <img id="generatedImg" alt="Generated image will appear here">
+    </div>
+
+    <h3>Image Model Info</h3>
+    <pre id="imageModelInfo" class="modelInfo">Select an image model to see its details.</pre>
+  </section>
+
+  <!-- Text Model Selection -->
+  <section id="textModels">
+    <h2>Text Models (for Enhancer / Random Prompt)</h2>
+    <label for="textModel">Select Text Model:</label>
+    <select id="textModel"></select>
+
+    <h3>Text Model Info</h3>
+    <pre id="textModelInfo" class="modelInfo">Select a text model to see its details.</pre>
+  </section>
+
+  <!-- Debugging Window -->
+  <section id="debug">
+    <h2>Debugging Log</h2>
+    <textarea id="debugLog" readonly></textarea>
+    <div class="row">
+      <button id="clearLog">Clear Log</button>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
